@@ -20,12 +20,14 @@ TypeScript type safety, unit tests, integration tests, and dependency audit.
   mismatch, event id mismatch, and invalid signatures.
 - End-to-end CLI tests for `request -> dev-sign -> verify-response`.
 - CLI fixture verification tests against `NostrSeal/specs`.
+- Transport contract tests for in-memory development signing, JSON file
+  handoff, and one-shot JSON-lines stdio exchange.
 
 ## Next Test Additions
 
 - CLI failure-mode tests for malformed JSON and unsupported methods.
-- Transport contract tests before adding file, stdio, QR, serial, USB, or
-  smartcard adapters.
+- QR envelope package tests.
+- Serial framing tests before adding USB, serial, HID, or CDC adapters.
 
 ## Rule
 

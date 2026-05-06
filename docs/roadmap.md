@@ -19,6 +19,9 @@ in M2 until negative verification cases and malformed-input CLI tests are added.
 - QR envelope package.
 - Serial framing draft.
 
+Status: file, stdio, and in-memory development signer transport foundations are
+implemented. QR envelope code and serial framing remain in M3.
+
 ## Later
 
 - Browser bridge.

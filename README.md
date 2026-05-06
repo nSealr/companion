@@ -13,6 +13,8 @@ clients to hardware-backed signing.
 - `nseal dev-sign` signs requests with an explicit test-only software key.
 - `nseal verify-response` checks request ids, event template integrity, NIP-01
   event ids, and BIP-340 Schnorr signatures.
+- `packages/transport` provides the first signer transport contract plus
+  development, file, and JSON-lines stdio adapters.
 
 ## Planned Capabilities
 

@@ -23,8 +23,16 @@ clients to hardware-backed signing.
 - `packages/`: reusable core/protocol/transport modules.
 - `docs/`: implementation notes and usage guides.
 
-## License Plan
+## Quality Baseline
 
-The companion should use a strong copyleft software license such as AGPL-3.0 or
-GPL-3.0, to keep derivative signer workflows open.
+Run the repository verification loop with:
 
+```sh
+make ci
+```
+
+## License
+
+Companion software and tooling are released under the MIT License unless a file
+says otherwise. Documentation content is intended to be reusable under the
+NostrSeal documentation policy.

@@ -15,6 +15,10 @@ clients to hardware-backed signing.
   event ids, and BIP-340 Schnorr signatures.
 - `packages/transport` provides the first signer transport contract plus
   development, file, and JSON-lines stdio adapters.
+- `packages/qr` implements the v0 `nseal1:` QR envelope from
+  `NostrSeal/specs`.
+- `packages/framing` implements the first checksum-protected serial line frame
+  draft for USB CDC and UART experiments.
 
 ## Planned Capabilities
 

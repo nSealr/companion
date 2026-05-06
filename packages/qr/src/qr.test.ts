@@ -1,0 +1,25 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+import { decodeQrEnvelope, encodeQrEnvelope, QR_ENVELOPE_PREFIX } from "./qr.js";
+
+const specsRoot = resolve("../specs");
+const signEventRequest = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
+
+describe("QR envelope v0", () => {
+  it("encodes and decodes an uncompressed base64url JSON envelope", () => {
+    const envelope = encodeQrEnvelope(signEventRequest);
+
+    expect(envelope.startsWith(QR_ENVELOPE_PREFIX)).toBe(true);
+    expect(envelope).not.toContain("=");
+    expect(decodeQrEnvelope(envelope)).toEqual(signEventRequest);
+  });
+
+  it("rejects envelopes without the nseal1 prefix", () => {
+    expect(() => decodeQrEnvelope("nostr:abc")).toThrow("QR envelope must start with nseal1:");
+  });
+
+  it("rejects envelopes whose payload is not JSON", () => {
+    expect(() => decodeQrEnvelope(`${QR_ENVELOPE_PREFIX}bm90LWpzb24`)).toThrow("QR envelope payload is not valid JSON");
+  });
+});

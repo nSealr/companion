@@ -22,12 +22,14 @@ TypeScript type safety, unit tests, integration tests, and dependency audit.
 - CLI fixture verification tests against `NostrSeal/specs`.
 - Transport contract tests for in-memory development signing, JSON file
   handoff, and one-shot JSON-lines stdio exchange.
+- QR envelope round-trip and rejection tests.
+- Serial frame round-trip, unsupported type, and checksum mismatch tests.
 
 ## Next Test Additions
 
 - CLI failure-mode tests for malformed JSON and unsupported methods.
-- QR envelope package tests.
-- Serial framing tests before adding USB, serial, HID, or CDC adapters.
+- Large QR payload strategy tests once chunking or compression is designed.
+- Serial simulator tests before adding USB, serial, HID, or CDC adapters.
 
 ## Rule
 

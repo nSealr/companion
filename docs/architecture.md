@@ -25,6 +25,8 @@ signer may exist only as an explicit test harness.
 - `packages/dev-signer`: test-only signing implementation.
 - `packages/transport`: signer transport interface plus in-memory development,
   JSON file, and JSON-lines stdio adapters.
+- `packages/qr`: v0 `nseal1:` QR envelope encoding and decoding.
+- `packages/framing`: checksum-protected serial line framing draft.
 
 ## Current CLI Flow
 
@@ -52,3 +54,29 @@ The current adapters cover three development paths:
 - `JsonFileTransport`: file handoff for QR vault and offline workflow tests.
 - `JsonLineStdioTransport`: one-shot process bridge for external signer
   adapters and future hardware simulators.
+
+## QR Envelope
+
+The companion follows the shared `NostrSeal/specs` QR v0 format:
+
+```text
+nseal1:<base64url-json>
+```
+
+The v0 envelope is deliberately uncompressed and single-part. Animated QR,
+compression, fountain codes, and large payload chunking remain out of scope
+until the Pi Zero vault flow proves where those features are necessary.
+
+## Serial Frame Draft
+
+The initial serial frame is one newline-terminated ASCII line:
+
+```text
+nseal1f:<type>:<base64url-json>:<checksum>\n
+```
+
+Supported frame types are `request`, `response`, and `error`. The checksum is
+the first 16 lowercase hexadecimal characters of SHA-256 over
+`<type>:<base64url-json>`. This is not an authentication mechanism; it only
+catches accidental framing and transport corruption before the companion applies
+schema and signature verification.

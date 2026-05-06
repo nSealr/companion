@@ -8,6 +8,9 @@
 - Test-only dev signer.
 - Response verification.
 
+Status: implemented as the first companion foundation. Further hardening stays
+in M2 until negative verification cases and malformed-input CLI tests are added.
+
 ## M3: Transport Layer
 
 - File transport.
@@ -22,4 +25,3 @@
 - NIP-46/Nostr Connect integration.
 - USB/WebUSB/HID/CDC transports.
 - PC/SC smartcard adapter.
-

@@ -6,19 +6,27 @@
 make ci
 ```
 
-The baseline check verifies repository structure, license policy, docs, and CI.
+The baseline check verifies repository structure, license policy, docs, CI,
+TypeScript type safety, unit tests, integration tests, and dependency audit.
 
-## Required M2 Tests
+## M2 Tests
 
-- NIP-01 canonicalization tests.
-- BIP-340 verification tests.
-- Request generation tests.
-- Response verification tests.
-- Negative tests for schema errors, event id mismatch, pubkey mismatch,
-  request id mismatch, and invalid signatures.
-- End-to-end test: `request -> dev-sign -> verify-response`.
+- NIP-01 canonicalization tests in `packages/core`.
+- BIP-340 verification tests in `packages/core`.
+- Request and response shape validation tests in `packages/protocol`.
+- Shared fixture loading tests in `packages/fixtures`.
+- Development signer verification tests in `packages/dev-signer`.
+- Negative response verification tests for request id mismatch, template
+  mismatch, event id mismatch, and invalid signatures.
+- End-to-end CLI tests for `request -> dev-sign -> verify-response`.
+- CLI fixture verification tests against `NostrSeal/specs`.
+
+## Next Test Additions
+
+- CLI failure-mode tests for malformed JSON and unsupported methods.
+- Transport contract tests before adding file, stdio, QR, serial, USB, or
+  smartcard adapters.
 
 ## Rule
 
 Production behavior changes require test-driven development.
-

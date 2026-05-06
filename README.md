@@ -6,9 +6,16 @@ The companion is not trusted with private keys. It constructs requests, moves
 them over the selected transport, verifies device responses, and bridges Nostr
 clients to hardware-backed signing.
 
+## Current Capabilities
+
+- `nseal fixture verify` validates shared signing fixtures from `NostrSeal/specs`.
+- `nseal request sign-event` creates a signing request from an event template.
+- `nseal dev-sign` signs requests with an explicit test-only software key.
+- `nseal verify-response` checks request ids, event template integrity, NIP-01
+  event ids, and BIP-340 Schnorr signatures.
+
 ## Planned Capabilities
 
-- CLI signer test harness.
 - Browser extension / NIP-07 bridge.
 - NIP-46 / Nostr Connect request handling.
 - QR encoder and decoder for vault flows.
@@ -29,6 +36,13 @@ Run the repository verification loop with:
 
 ```sh
 make ci
+```
+
+Run the CLI from the workspace with:
+
+```sh
+pnpm nseal --help
+pnpm nseal fixture verify --specs ../specs
 ```
 
 ## License

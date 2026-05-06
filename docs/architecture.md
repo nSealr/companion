@@ -16,7 +16,7 @@ lines.
 The companion must not be trusted with production private keys. A development
 signer may exist only as an explicit test harness.
 
-## Planned Modules
+## Implemented Modules
 
 - `apps/cli`: command-line entrypoint.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
@@ -24,3 +24,14 @@ signer may exist only as an explicit test harness.
 - `packages/fixtures`: shared fixture loading.
 - `packages/dev-signer`: test-only signing implementation.
 
+## Current CLI Flow
+
+The M2 CLI flow is:
+
+1. Build a request from an unsigned Nostr event template.
+2. Produce a development response with an explicit software test key.
+3. Verify the response against the original request before any downstream use.
+
+The development signer exists only for local testing. Production signer lines
+must replace it with a hardware, vault, or smartcard transport while preserving
+the same request/response verification boundary.

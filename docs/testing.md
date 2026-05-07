@@ -35,7 +35,7 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI review-request test for rendering review JSON from a QR signing request.
 - CLI fixture verification tests against `NostrSeal/specs`, covering both
   signed-event fixtures, trusted-review fixtures, review-display-frame
-  fixtures, and QR review-transcript fixtures.
+  fixtures, QR review-transcript fixtures, and NIP-46 payload fixtures.
 - Transport contract tests for in-memory development signing, JSON file
   handoff, one-shot JSON-lines stdio exchange, and serial-frame exchange.
 - QR envelope round-trip and rejection tests.
@@ -53,7 +53,8 @@ single-repository CI. Cross-repository drift remains guarded by
   verify-response`.
 - NIP-46 payload bridge tests covering already-decrypted `sign_event` and
   `get_public_key` messages, local `ping`, NostrSeal response mapping, and
-  rejection of unsafe or unsupported payloads.
+  rejection of unsafe or unsupported payloads. The same tests consume shared
+  `NostrSeal/specs` NIP-46 payload vectors.
 
 ## Next Test Additions
 

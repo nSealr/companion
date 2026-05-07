@@ -1,0 +1,13 @@
+{
+  "name": "ping",
+  "format": "nip46-decrypted-payload-v0",
+  "request_message": {
+    "id": "nip46-ping-1",
+    "method": "ping",
+    "params": []
+  },
+  "local_response_message": {
+    "id": "nip46-ping-1",
+    "result": "pong"
+  }
+}

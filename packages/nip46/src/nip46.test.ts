@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { loadSpecsFixtures } from "../../fixtures/src/fixtures.js";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { validateRequest } from "../../protocol/src/protocol.js";
 import { nip46ResponseFromNostrSeal, nostrSealRequestFromNip46, respondToLocalNip46Request } from "./nip46.js";
@@ -76,6 +77,23 @@ describe("NIP-46 bridge payloads", () => {
       id: "ping-1",
       result: "pong"
     });
+  });
+
+  it("matches shared NIP-46 bridge vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+    const signEvent = fixtures.nip46Payloads.find((vector) => vector.name === "sign-event-kind-1-basic");
+    const getPublicKey = fixtures.nip46Payloads.find((vector) => vector.name === "get-public-key");
+    const ping = fixtures.nip46Payloads.find((vector) => vector.name === "ping");
+
+    expect(nostrSealRequestFromNip46(signEvent?.request_message)).toEqual(signEvent?.nostrseal_request);
+    expect(nip46ResponseFromNostrSeal(signEvent?.request_message.id ?? "", signEvent?.nostrseal_response)).toEqual(
+      signEvent?.response_message
+    );
+    expect(nostrSealRequestFromNip46(getPublicKey?.request_message)).toEqual(getPublicKey?.nostrseal_request);
+    expect(nip46ResponseFromNostrSeal(getPublicKey?.request_message.id ?? "", getPublicKey?.nostrseal_response)).toEqual(
+      getPublicKey?.response_message
+    );
+    expect(respondToLocalNip46Request(ping?.request_message)).toEqual(ping?.local_response_message);
   });
 
   it("rejects unsupported or unsafe NIP-46 request payloads", () => {

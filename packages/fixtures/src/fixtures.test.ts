@@ -40,4 +40,14 @@ describe("fixture loading", () => {
       "xxxxxxxxxxxxxxxxx..."
     ]);
   });
+
+  it("loads NIP-46 decrypted payload bridge vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    expect(fixtures.nip46Payloads.map((vector) => vector.name)).toEqual([
+      "get-public-key",
+      "ping",
+      "sign-event-kind-1-basic"
+    ]);
+    expect(fixtures.nip46Payloads[0].format).toBe("nip46-decrypted-payload-v0");
+  });
 });

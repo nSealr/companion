@@ -99,7 +99,7 @@ describe("nseal CLI", () => {
 
   it("verifies event and trusted-review fixtures from the specs repository", async () => {
     await expect(collectCliOutput(["fixture", "verify", "--specs", specsRoot])).resolves.toEqual([
-      "verified 2 event fixtures, 4 review fixtures, 1 review display-frame fixture, and 2 review transcript fixtures"
+      "verified 2 event fixtures, 4 review fixtures, 1 review display-frame fixture, 2 review transcript fixtures, and 3 NIP-46 payload fixtures"
     ]);
   });
 

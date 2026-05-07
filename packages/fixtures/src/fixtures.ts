@@ -66,6 +66,27 @@ export type SpecsFixtureSet = {
       approved_for_signing: boolean;
     }>;
   }>;
+  nip46Payloads: Array<{
+    name: string;
+    format: string;
+    request_message: {
+      id: string;
+      method: string;
+      params: string[];
+    };
+    nostrseal_request?: unknown;
+    nostrseal_response?: unknown;
+    response_message?: {
+      id: string;
+      result?: string;
+      error?: string;
+    };
+    local_response_message?: {
+      id: string;
+      result?: string;
+      error?: string;
+    };
+  }>;
 };
 
 function loadJson(path: string): unknown {
@@ -77,6 +98,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const reviewsRoot = resolve(specsRoot, "vectors/review");
   const reviewDisplayFramesRoot = resolve(specsRoot, "vectors/review-display-frames");
   const reviewTranscriptsRoot = resolve(specsRoot, "vectors/review-transcripts");
+  const nip46Root = resolve(specsRoot, "vectors/nip46");
   const eventFiles = readdirSync(eventsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
@@ -89,6 +111,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const reviewTranscriptFiles = readdirSync(reviewTranscriptsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
+  const nip46Files = readdirSync(nip46Root)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
   return {
     key: loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as SpecsFixtureSet["key"],
     events: eventFiles.map((file) => loadJson(resolve(eventsRoot, file)) as SpecsFixtureSet["events"][number]),
@@ -98,6 +123,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     ),
     reviewTranscripts: reviewTranscriptFiles.map(
       (file) => loadJson(resolve(reviewTranscriptsRoot, file)) as SpecsFixtureSet["reviewTranscripts"][number]
+    ),
+    nip46Payloads: nip46Files.map(
+      (file) => loadJson(resolve(nip46Root, file)) as SpecsFixtureSet["nip46Payloads"][number]
     )
   };
 }

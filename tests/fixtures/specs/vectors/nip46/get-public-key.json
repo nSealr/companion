@@ -1,0 +1,26 @@
+{
+  "name": "get-public-key",
+  "format": "nip46-decrypted-payload-v0",
+  "request_message": {
+    "id": "nip46-key-1",
+    "method": "get_public_key",
+    "params": []
+  },
+  "nostrseal_request": {
+    "version": 1,
+    "request_id": "nip46-key-1",
+    "method": "get_public_key"
+  },
+  "nostrseal_response": {
+    "version": 1,
+    "request_id": "nip46-key-1",
+    "ok": true,
+    "result": {
+      "public_key": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+    }
+  },
+  "response_message": {
+    "id": "nip46-key-1",
+    "result": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+  }
+}

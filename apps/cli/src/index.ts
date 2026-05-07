@@ -4,6 +4,11 @@ import { Command } from "commander";
 import { verifySignedEventResponse, type SignEventRequest } from "../../../packages/core/src/nostr.js";
 import { devSignRequest } from "../../../packages/dev-signer/src/dev-signer.js";
 import { loadSpecsFixtures } from "../../../packages/fixtures/src/fixtures.js";
+import {
+  nip46ResponseFromNostrSeal,
+  nostrSealRequestFromNip46,
+  respondToLocalNip46Request
+} from "../../../packages/nip46/src/nip46.js";
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
 import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
 import { reviewEventTemplate } from "../../../packages/review/src/review.js";
@@ -122,6 +127,40 @@ function validateReviewDisplayFrameFixture(name: string, fixture: unknown): void
   }
 }
 
+function assertJsonEqual(actual: unknown, expected: unknown, error: string): void {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(error);
+  }
+}
+
+function validateNip46PayloadFixture(name: string, fixture: unknown): void {
+  if (!isRecord(fixture)) throw new Error(`invalid NIP-46 fixture ${name}: fixture must be an object`);
+  if (fixture.format !== "nip46-decrypted-payload-v0") {
+    throw new Error(`invalid NIP-46 fixture ${name}: unsupported format`);
+  }
+  if (!isRecord(fixture.request_message)) {
+    throw new Error(`invalid NIP-46 fixture ${name}: request_message must be an object`);
+  }
+  if (fixture.request_message.method === "ping") {
+    assertJsonEqual(
+      respondToLocalNip46Request(fixture.request_message),
+      fixture.local_response_message,
+      `invalid NIP-46 fixture ${name}: local response mismatch`
+    );
+    return;
+  }
+  assertJsonEqual(
+    nostrSealRequestFromNip46(fixture.request_message),
+    fixture.nostrseal_request,
+    `invalid NIP-46 fixture ${name}: NostrSeal request mismatch`
+  );
+  assertJsonEqual(
+    nip46ResponseFromNostrSeal(String(fixture.request_message.id), fixture.nostrseal_response),
+    fixture.response_message,
+    `invalid NIP-46 fixture ${name}: response message mismatch`
+  );
+}
+
 function readValue(path: string, format: DataFormat): unknown {
   if (format === "qr") return decodeQrEnvelope(readFileSync(path, "utf8").trim());
   return readJson(path);
@@ -170,8 +209,11 @@ export function buildCli(): Command {
       for (const displayFrame of fixtures.reviewDisplayFrames) {
         validateReviewDisplayFrameFixture(displayFrame.name, displayFrame);
       }
+      for (const nip46Payload of fixtures.nip46Payloads) {
+        validateNip46PayloadFixture(nip46Payload.name, nip46Payload);
+      }
       console.log(
-        `verified ${fixtures.events.length} event fixtures, ${fixtures.reviews.length} review fixtures, ${fixtures.reviewDisplayFrames.length} review display-frame fixture, and ${fixtures.reviewTranscripts.length} review transcript fixtures`
+        `verified ${fixtures.events.length} event fixtures, ${fixtures.reviews.length} review fixtures, ${fixtures.reviewDisplayFrames.length} review display-frame fixture, ${fixtures.reviewTranscripts.length} review transcript fixtures, and ${fixtures.nip46Payloads.length} NIP-46 payload fixtures`
       );
     });
 

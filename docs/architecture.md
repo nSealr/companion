@@ -22,7 +22,8 @@ signer may exist only as an explicit test harness.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation and typed request/response models.
 - `packages/fixtures`: shared event, key, trusted-review,
-  review-display-frame, and QR review-transcript fixture loading.
+  review-display-frame, QR review-transcript, and NIP-46 payload fixture
+  loading.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: test-only signing implementation.
@@ -78,6 +79,11 @@ QR review-transcript vectors are also loaded and shape-checked by
 `nseal fixture verify`. They bind raw QR input to frame/button/decision
 sequences for Raspberry and ESP32 adapter tests; the companion treats them as
 conformance data, not as trusted approval authority.
+
+NIP-46 payload vectors are loaded and verified by `nseal fixture verify` so the
+host bridge and shared specs agree on decrypted `get_public_key`, `sign_event`,
+local `ping`, and response mapping behavior before relay and encryption work
+begins.
 
 The current adapters cover three development paths:
 

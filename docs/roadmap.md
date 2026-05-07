@@ -10,9 +10,9 @@
 
 Status: implemented as the first companion foundation with JSON and QR envelope
 CLI paths. Fixture verification now includes shared review-display-frame and
-QR review-transcript vectors in addition to event and trusted-review vectors.
-Malformed JSON and unsupported request-method CLI rejection tests are now
-covered.
+QR review-transcript vectors plus NIP-46 payload vectors in addition to event
+and trusted-review vectors. Malformed JSON and unsupported request-method CLI
+rejection tests are now covered.
 
 ## M3: Transport Layer
 
@@ -36,8 +36,10 @@ serial integration.
 - NostrSeal response conversion back to NIP-46 result/error strings.
 
 Status: the first decrypted-payload bridge is implemented in `packages/nip46`.
-Relay sessions, NIP-44 encryption/decryption, connection tokens, permission
-storage, and auth challenge UX remain future work.
+It consumes shared `NostrSeal/specs` NIP-46 payload vectors through unit tests
+and `nseal fixture verify`. Relay sessions, NIP-44 encryption/decryption,
+connection tokens, permission storage, and auth challenge UX remain future
+work.
 
 ## Later
 

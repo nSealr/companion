@@ -26,6 +26,48 @@ function assertFormat(format: string): asserts format is DataFormat {
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function validateReviewTranscriptFixture(name: string, fixture: unknown): void {
+  if (!isRecord(fixture)) throw new Error(`invalid review transcript fixture ${name}: fixture must be an object`);
+  if (fixture.format !== "qr-review-transcript-v0") {
+    throw new Error(`invalid review transcript fixture ${name}: unsupported format`);
+  }
+  if (typeof fixture.qr_envelope !== "string" || !fixture.qr_envelope.startsWith("nseal1:")) {
+    throw new Error(`invalid review transcript fixture ${name}: qr_envelope must be a nseal1 envelope`);
+  }
+  if (typeof fixture.approval_digest !== "string" || !/^[0-9a-f]{64}$/.test(fixture.approval_digest)) {
+    throw new Error(`invalid review transcript fixture ${name}: approval_digest must be 32-byte lowercase hex`);
+  }
+  if (!Array.isArray(fixture.buttons) || fixture.buttons.length === 0) {
+    throw new Error(`invalid review transcript fixture ${name}: buttons must be a non-empty array`);
+  }
+  if (!Array.isArray(fixture.transcript) || fixture.transcript.length !== fixture.buttons.length) {
+    throw new Error(`invalid review transcript fixture ${name}: transcript length must match buttons`);
+  }
+  for (const [index, step] of fixture.transcript.entries()) {
+    if (!isRecord(step)) throw new Error(`invalid review transcript fixture ${name}: step ${index} must be an object`);
+    const button = fixture.buttons[index];
+    if (!["next", "approve", "reject"].includes(String(button))) {
+      throw new Error(`invalid review transcript fixture ${name}: unsupported button at step ${index}`);
+    }
+    if (step.button !== button) {
+      throw new Error(`invalid review transcript fixture ${name}: button mismatch at step ${index}`);
+    }
+    if (step.decision !== null && typeof step.decision !== "boolean") {
+      throw new Error(`invalid review transcript fixture ${name}: decision must be boolean or null at step ${index}`);
+    }
+    if (typeof step.approved_for_signing !== "boolean") {
+      throw new Error(`invalid review transcript fixture ${name}: approval state must be boolean at step ${index}`);
+    }
+    if (!isRecord(step.frame) || typeof step.frame.title !== "string") {
+      throw new Error(`invalid review transcript fixture ${name}: frame must include title at step ${index}`);
+    }
+  }
+}
+
 function readValue(path: string, format: DataFormat): unknown {
   if (format === "qr") return decodeQrEnvelope(readFileSync(path, "utf8").trim());
   return readJson(path);
@@ -68,7 +110,12 @@ export function buildCli(): Command {
           throw new Error(`invalid review fixture ${review.name}: review output mismatch`);
         }
       }
-      console.log(`verified ${fixtures.events.length} event fixtures and ${fixtures.reviews.length} review fixtures`);
+      for (const transcript of fixtures.reviewTranscripts) {
+        validateReviewTranscriptFixture(transcript.name, transcript);
+      }
+      console.log(
+        `verified ${fixtures.events.length} event fixtures, ${fixtures.reviews.length} review fixtures, and ${fixtures.reviewTranscripts.length} review transcript fixtures`
+      );
     });
 
   program

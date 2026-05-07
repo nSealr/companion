@@ -20,4 +20,14 @@ describe("fixture loading", () => {
     expect(fixtures.reviews[1].review.warnings).toEqual(["Long content.", "Event references other events.", "Many tags."]);
     expect(fixtures.reviews[3].review.warnings).toEqual(["Unknown event kind.", "Empty content."]);
   });
+
+  it("loads QR review transcript vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    expect(fixtures.reviewTranscripts.map((transcript) => transcript.name)).toEqual([
+      "kind-1-basic-approve",
+      "kind-1-basic-reject"
+    ]);
+    expect(fixtures.reviewTranscripts[0].buttons).toEqual(["next", "next", "next", "approve"]);
+    expect(fixtures.reviewTranscripts[1].transcript[0].decision).toBe(false);
+  });
 });

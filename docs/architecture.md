@@ -21,7 +21,8 @@ signer may exist only as an explicit test harness.
 - `apps/cli`: command-line entrypoint.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation and typed request/response models.
-- `packages/fixtures`: shared event, key, and trusted-review fixture loading.
+- `packages/fixtures`: shared event, key, trusted-review, and QR
+  review-transcript fixture loading.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: test-only signing implementation.
@@ -65,6 +66,11 @@ completion.
 Trusted-review vectors are loaded from `NostrSeal/specs` so host tools and
 device implementations can agree on what must be shown before approval. They do
 not make the companion trusted; they are conformance data for signer UIs.
+
+QR review-transcript vectors are also loaded and shape-checked by
+`nseal fixture verify`. They bind raw QR input to frame/button/decision
+sequences for Raspberry and ESP32 adapter tests; the companion treats them as
+conformance data, not as trusted approval authority.
 
 The current adapters cover three development paths:
 

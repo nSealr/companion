@@ -35,7 +35,8 @@ signer may exist only as an explicit test harness.
   boundary, and response verification for the display-less smartcard line.
 - `packages/nip46`: decrypted NIP-46 payload bridge for `get_public_key`,
   `sign_event`, local `ping`, and conversion from NostrSeal responses back to
-  NIP-46 result/error strings.
+  NIP-46 result/error strings. It also validates requested permission strings
+  for later `connect` review and policy work.
 
 ## Current CLI Flow
 
@@ -132,6 +133,12 @@ error strings.
 This keeps NIP-46 as a host transport/bridge layer. Trusted event review and
 approval remain with the Raspberry, ESP32, smartcard-assisted, or future
 hardware-wallet signer boundary.
+
+Permission parsing is intentionally separate from permission grants. The parser
+accepts the NIP-46 `method[:params]` string form, validates numeric
+`sign_event:<kind>` selectors, and rejects `connect` as a requested permission.
+Actual grant storage, revocation, auth challenges, and user approval UX remain
+future policy layers.
 
 ## QR Envelope
 

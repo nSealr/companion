@@ -42,7 +42,8 @@ clients to hardware-backed signing.
   `SmartcardSigner` boundary against shared smartcard vectors.
 - `packages/nip46` implements the first decrypted NIP-46 payload bridge for
   `get_public_key`, `sign_event`, local `ping`, and NostrSeal response mapping.
-  Relay transport, NIP-44 encryption, connection permissions, and auth flows
+  It also parses requested permission strings for future `connect` policy
+  review. Relay transport, NIP-44 encryption, permission grants, and auth flows
   remain future work.
 
 ## Planned Capabilities

@@ -55,6 +55,9 @@ single-repository CI. Cross-repository drift remains guarded by
   `get_public_key` messages, local `ping`, NostrSeal response mapping, and
   rejection of unsafe or unsupported payloads. The same tests consume shared
   `NostrSeal/specs` NIP-46 payload vectors.
+- NIP-46 requested-permission parser tests covering method-only permissions,
+  `sign_event:<kind>` selectors, empty permission strings, and rejection of
+  malformed or unsupported entries.
 
 ## Next Test Additions
 

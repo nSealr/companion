@@ -4,7 +4,12 @@ import { describe, expect, it } from "vitest";
 import { loadSpecsFixtures } from "../../fixtures/src/fixtures.js";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { validateRequest } from "../../protocol/src/protocol.js";
-import { nip46ResponseFromNostrSeal, nostrSealRequestFromNip46, respondToLocalNip46Request } from "./nip46.js";
+import {
+  nip46ResponseFromNostrSeal,
+  nostrSealRequestFromNip46,
+  parseNip46Permissions,
+  respondToLocalNip46Request
+} from "./nip46.js";
 
 const specsRoot = resolveSpecsRoot();
 
@@ -118,5 +123,17 @@ describe("NIP-46 bridge payloads", () => {
         params: [JSON.stringify({ created_at: 1710000000, kind: 1, tags: [], content: "", sig: "00" })]
       })
     ).toThrow(/event_template must not contain sig/u);
+  });
+
+  it("parses NIP-46 permission strings without granting permissions", () => {
+    expect(parseNip46Permissions("nip44_encrypt,sign_event:4,sign_event:30023")).toEqual([
+      { method: "nip44_encrypt" },
+      { method: "sign_event", parameter: "4", event_kind: 4 },
+      { method: "sign_event", parameter: "30023", event_kind: 30023 }
+    ]);
+    expect(parseNip46Permissions("")).toEqual([]);
+    expect(() => parseNip46Permissions("sign_event:not-a-kind")).toThrow(/sign_event permission kind/u);
+    expect(() => parseNip46Permissions("connect")).toThrow(/must not request connect/u);
+    expect(() => parseNip46Permissions("unknown_method")).toThrow(/unsupported permission method/u);
   });
 });

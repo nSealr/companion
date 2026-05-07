@@ -12,6 +12,23 @@ export type Nip46ResponseMessage = {
   error?: string;
 };
 
+export type Nip46Permission = {
+  method: string;
+  parameter?: string;
+  event_kind?: number;
+};
+
+const NIP46_PERMISSION_METHODS = new Set([
+  "sign_event",
+  "nip04_encrypt",
+  "nip04_decrypt",
+  "nip44_encrypt",
+  "nip44_decrypt",
+  "get_public_key",
+  "ping",
+  "switch_relays"
+]);
+
 type NostrSealBridgeRequest =
   | {
       version: 1;
@@ -65,6 +82,30 @@ function parseJsonParam(param: string, label: string): unknown {
 function assertValidNostrSealRequest(request: NostrSealBridgeRequest): void {
   const result = validateRequest(request);
   if (!result.ok) throw new Error(result.error ?? "invalid NostrSeal request");
+}
+
+export function parseNip46Permissions(value: string): Nip46Permission[] {
+  if (value.trim() === "") return [];
+  return value.split(",").map((item) => {
+    const permission = item.trim();
+    if (permission.length === 0) throw new Error("NIP-46 permission entries must be non-empty");
+    const [method, parameter, extra] = permission.split(":");
+    if (!method || extra !== undefined) throw new Error("NIP-46 permission format is invalid");
+    if (method === "connect") throw new Error("NIP-46 permissions must not request connect");
+    if (!NIP46_PERMISSION_METHODS.has(method)) throw new Error(`unsupported permission method: ${method}`);
+    if (method === "sign_event" && parameter !== undefined) {
+      if (!/^[0-9]+$/u.test(parameter)) throw new Error("NIP-46 sign_event permission kind must be numeric");
+      return {
+        method,
+        parameter,
+        event_kind: Number(parameter)
+      };
+    }
+    if (parameter !== undefined) {
+      throw new Error(`NIP-46 permission method does not accept a parameter: ${method}`);
+    }
+    return { method };
+  });
 }
 
 export function respondToLocalNip46Request(value: unknown): Nip46ResponseMessage | undefined {

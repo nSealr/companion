@@ -34,12 +34,14 @@ serial integration.
 - `get_public_key` and `sign_event` request conversion to NostrSeal requests.
 - Local `ping` handling.
 - NostrSeal response conversion back to NIP-46 result/error strings.
+- Requested permission string parsing for future `connect` review.
 
 Status: the first decrypted-payload bridge is implemented in `packages/nip46`.
 It consumes shared `NostrSeal/specs` NIP-46 payload vectors through unit tests
-and `nseal fixture verify`. Relay sessions, NIP-44 encryption/decryption,
-connection tokens, permission storage, and auth challenge UX remain future
-work.
+and `nseal fixture verify`, and it now parses NIP-46 requested permission
+strings without granting them. Relay sessions, NIP-44 encryption/decryption,
+connection tokens, permission storage, grant review, and auth challenge UX
+remain future work.
 
 ## Later
 

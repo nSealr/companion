@@ -40,8 +40,9 @@ clients to hardware-backed signing.
   QR review-transcript, NIP-46, and smartcard vectors from `NostrSeal/specs`
   for companion, Raspberry QR vault, ESP32 firmware, and smartcard conformance
   tests.
-- `packages/smartcard` implements the first APDU codec, simulator adapter, and
-  `SmartcardSigner` boundary against shared smartcard vectors.
+- `packages/smartcard` implements the first APDU codec, simulator adapter,
+  provider-based PC/SC APDU transport boundary, and `SmartcardSigner` boundary
+  against shared smartcard vectors.
 - `packages/nip46` implements the first decrypted NIP-46 payload bridge for
   `get_public_key`, `sign_event`, local `ping`, and NostrSeal response mapping.
   It also parses `connect` requests into policy-review intents and validates

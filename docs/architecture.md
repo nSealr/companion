@@ -31,8 +31,9 @@ signer may exist only as an explicit test harness.
   JSON file, and JSON-lines stdio adapters.
 - `packages/qr`: v0 `nseal1:` QR envelope encoding and decoding.
 - `packages/framing`: checksum-protected serial line framing draft.
-- `packages/smartcard`: APDU codec, simulator adapter, `SmartcardSigner`
-  boundary, and response verification for the display-less smartcard line.
+- `packages/smartcard`: APDU codec, simulator adapter, provider-based PC/SC
+  APDU transport boundary, `SmartcardSigner` boundary, and response
+  verification for the display-less smartcard line.
 - `packages/nip46`: decrypted NIP-46 payload bridge for `get_public_key`,
   `sign_event`, local `ping`, and conversion from NostrSeal responses back to
   NIP-46 result/error strings. It also validates requested permission strings
@@ -121,6 +122,11 @@ a trusted display.
 simulator for integration work. Real PC/SC and NFC transports must implement
 the same APDU exchange interface without weakening the review acknowledgement
 requirement.
+
+The PC/SC boundary is provider-based: tests can inject fake readers and future
+desktop adapters can inject a real PC/SC provider without making a native card
+driver a required companion dependency. It is not a real-card compatibility
+claim.
 
 ## NIP-46 Bridge Boundary
 

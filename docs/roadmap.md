@@ -64,7 +64,8 @@ review, and auth challenge UX remain future work.
   `SIGN_EVENT_ID`.
 - CLI simulator path: implemented as `nseal smartcard-sim-sign`, with mandatory
   `--review-acknowledged`.
-- PC/SC/contact transport: not implemented.
+- PC/SC/contact transport boundary: implemented as a provider-injected APDU
+  exchange adapter; native reader binding and real-card tests are pending.
 - NFC/mobile transport: not implemented.
 - Production smartcard support: blocked on real card testing and display-less
   review policy hardening.

@@ -17,6 +17,20 @@ async function runCli(args: string[]): Promise<void> {
   await cli.parseAsync(args, { from: "user" });
 }
 
+async function collectCliOutput(args: string[]): Promise<string[]> {
+  const messages: string[] = [];
+  const originalLog = console.log;
+  console.log = (message?: unknown) => {
+    messages.push(String(message));
+  };
+  try {
+    await runCli(args);
+  } finally {
+    console.log = originalLog;
+  }
+  return messages;
+}
+
 describe("nseal CLI", () => {
   it("runs request -> dev-sign -> verify-response for a shared fixture template", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-"));
@@ -80,6 +94,12 @@ describe("nseal CLI", () => {
 
   it("verifies all event fixtures from the specs repository", async () => {
     await runCli(["fixture", "verify", "--specs", specsRoot]);
+  });
+
+  it("verifies event and trusted-review fixtures from the specs repository", async () => {
+    await expect(collectCliOutput(["fixture", "verify", "--specs", specsRoot])).resolves.toEqual([
+      "verified 2 event fixtures and 2 review fixtures"
+    ]);
   });
 
   it("verifies shared get_public_key responses and rejects mismatched request ids", async () => {

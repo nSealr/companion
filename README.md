@@ -8,7 +8,8 @@ clients to hardware-backed signing.
 
 ## Current Capabilities
 
-- `nseal fixture verify` validates shared signing fixtures from `NostrSeal/specs`.
+- `nseal fixture verify` validates shared signing and trusted-review fixtures
+  from `NostrSeal/specs`.
 - `nseal request sign-event` creates a signing request from an event template.
 - `nseal dev-sign` signs requests with an explicit test-only software key.
 - `nseal review-request` renders deterministic review JSON from a signing

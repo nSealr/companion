@@ -57,7 +57,16 @@ export function buildCli(): Command {
         const verification = verifySignedEventResponse(request, response);
         if (!verification.ok) throw new Error(`invalid event fixture ${event.name}: ${verification.error}`);
       }
-      console.log(`verified ${fixtures.events.length} event fixtures`);
+      for (const review of fixtures.reviews) {
+        const request = review.request as { params?: { event_template?: unknown } };
+        const requestShape = validateRequest(request);
+        if (!requestShape.ok) throw new Error(`invalid review request fixture ${review.name}: ${requestShape.error}`);
+        const actual = reviewEventTemplate(request.params?.event_template);
+        if (JSON.stringify(actual) !== JSON.stringify(review.review)) {
+          throw new Error(`invalid review fixture ${review.name}: review output mismatch`);
+        }
+      }
+      console.log(`verified ${fixtures.events.length} event fixtures and ${fixtures.reviews.length} review fixtures`);
     });
 
   program

@@ -34,6 +34,12 @@ TypeScript type safety, unit tests, integration tests, and dependency audit.
 - Shared `NostrSeal/specs` ESP32-S3 signing-disabled response conformance
   tests.
 - Shared `NostrSeal/specs` smartcard APDU vector conformance tests.
+- Smartcard signer tests covering mandatory review acknowledgement, APDU-backed
+  public-key retrieval, event-id signing, Schnorr verification, and standard
+  signed-event response verification.
+- CLI smartcard simulator tests covering rejection without
+  `--review-acknowledged` and `request -> smartcard-sim-sign ->
+  verify-response`.
 
 ## Next Test Additions
 

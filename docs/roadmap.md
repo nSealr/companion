@@ -31,4 +31,17 @@ serial integration.
 - Browser bridge.
 - NIP-46/Nostr Connect integration.
 - USB/WebUSB/HID/CDC transports.
-- PC/SC smartcard adapter backed by the implemented APDU codec.
+- PC/SC smartcard adapter backed by the implemented APDU codec and
+  `SmartcardSigner` boundary.
+
+## Smartcard Line
+
+- APDU codec and deterministic simulator: implemented.
+- `SmartcardSigner` companion boundary: implemented for `GET_PUBLIC_KEY` plus
+  `SIGN_EVENT_ID`.
+- CLI simulator path: implemented as `nseal smartcard-sim-sign`, with mandatory
+  `--review-acknowledged`.
+- PC/SC/contact transport: not implemented.
+- NFC/mobile transport: not implemented.
+- Production smartcard support: blocked on real card testing and display-less
+  review policy hardening.

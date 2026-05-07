@@ -29,8 +29,8 @@ signer may exist only as an explicit test harness.
   JSON file, and JSON-lines stdio adapters.
 - `packages/qr`: v0 `nseal1:` QR envelope encoding and decoding.
 - `packages/framing`: checksum-protected serial line framing draft.
-- `packages/smartcard`: APDU codec, simulator adapter, and response
-  verification for the display-less smartcard line.
+- `packages/smartcard`: APDU codec, simulator adapter, `SmartcardSigner`
+  boundary, and response verification for the display-less smartcard line.
 
 ## Current CLI Flow
 
@@ -81,6 +81,19 @@ The first smartcard package covers the display-less APDU contract from
 `NostrSeal/specs`: `GET_PUBLIC_KEY` and `SIGN_EVENT_ID`. It can protect key
 material in a card-like boundary, but trusted event review must still happen
 before the companion sends a 32-byte event id to a card.
+
+`SmartcardSigner` models the companion side of that boundary. It retrieves the
+card public key, computes the NIP-01 event id from the requested template, asks
+the card to sign only that 32-byte id, verifies the returned Schnorr signature,
+and emits the standard signed-event response. It refuses to sign unless the
+caller supplies an explicit review acknowledgement. That acknowledgement is a
+workflow guard for display-less smartcards, not proof that the untrusted host is
+a trusted display.
+
+`nseal smartcard-sim-sign` exposes the same flow through a test-only APDU
+simulator for integration work. Real PC/SC and NFC transports must implement
+the same APDU exchange interface without weakening the review acknowledgement
+requirement.
 
 ## QR Envelope
 

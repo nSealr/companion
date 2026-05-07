@@ -141,4 +141,32 @@ describe("nseal CLI", () => {
 
     expect(loadJson(reviewPath)).toEqual(vector.review);
   });
+
+  it("runs request -> smartcard-sim-sign -> verify-response after explicit review acknowledgement", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-smartcard-"));
+    const key = loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as { secret_key: string };
+    const request = loadJson(resolve(specsRoot, "examples/request-kind-1-basic.json"));
+    const requestPath = join(tempRoot, "request.json");
+    const responsePath = join(tempRoot, "response.json");
+
+    writeFileSync(requestPath, `${JSON.stringify(request, null, 2)}\n`, "utf8");
+
+    await expect(
+      runCli(["smartcard-sim-sign", "--secret-key", key.secret_key, "--request", requestPath, "--out", responsePath])
+    ).rejects.toThrow("smartcard signing requires explicit review acknowledgement");
+
+    await runCli([
+      "smartcard-sim-sign",
+      "--secret-key",
+      key.secret_key,
+      "--request",
+      requestPath,
+      "--review-acknowledged",
+      "--out",
+      responsePath
+    ]);
+    await runCli(["verify-response", "--request", requestPath, "--response", responsePath]);
+
+    expect(validateResponse(loadJson(responsePath)).ok).toBe(true);
+  });
 });

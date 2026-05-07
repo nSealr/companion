@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 import { readFileSync, writeFileSync } from "node:fs";
 import { Command } from "commander";
-import { verifySignedEventResponse } from "../../../packages/core/src/nostr.js";
+import { verifySignedEventResponse, type SignEventRequest } from "../../../packages/core/src/nostr.js";
 import { devSignRequest } from "../../../packages/dev-signer/src/dev-signer.js";
 import { loadSpecsFixtures } from "../../../packages/fixtures/src/fixtures.js";
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
 import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
 import { reviewEventTemplate } from "../../../packages/review/src/review.js";
+import { SmartcardSimulator } from "../../../packages/smartcard/src/apdu.js";
+import { SmartcardSigner } from "../../../packages/smartcard/src/signer.js";
 
 type DataFormat = "json" | "qr";
 
@@ -141,6 +143,41 @@ export function buildCli(): Command {
       const eventTemplate = (request as { params?: { event_template?: unknown } }).params?.event_template;
       writeJson(options.out, reviewEventTemplate(eventTemplate));
     });
+
+  program
+    .command("smartcard-sim-sign")
+    .requiredOption("--secret-key <hex>")
+    .requiredOption("--request <path>")
+    .option("--request-format <format>", "Request format: json or qr", "json")
+    .option("--review-acknowledged", "Confirm external review before sending an event id to a display-less smartcard")
+    .requiredOption("--out <path>")
+    .option("--output-format <format>", "Output format: json or qr", "json")
+    .description("Sign a request through the test-only smartcard APDU simulator")
+    .action(
+      async (options: {
+        secretKey: string;
+        request: string;
+        requestFormat: string;
+        reviewAcknowledged?: boolean;
+        out: string;
+        outputFormat: string;
+      }) => {
+        assertFormat(options.requestFormat);
+        assertFormat(options.outputFormat);
+        const request = readValue(options.request, options.requestFormat);
+        const validation = validateRequest(request);
+        if (!validation.ok) throw new Error(validation.error);
+        if ((request as { method?: string }).method !== "sign_event") {
+          throw new Error("smartcard-sim-sign supports sign_event requests only");
+        }
+        const signer = new SmartcardSigner(new SmartcardSimulator(options.secretKey));
+        const response = await signer.signEventRequest(
+          request as SignEventRequest,
+          options.reviewAcknowledged ? { acknowledged: true, source: "external-review" } : undefined
+        );
+        writeValue(options.out, response, options.outputFormat);
+      }
+    );
 
   program
     .command("verify-response")

@@ -14,6 +14,9 @@ clients to hardware-backed signing.
 - `nseal dev-sign` signs requests with an explicit test-only software key.
 - `nseal review-request` renders deterministic review JSON from a signing
   request for untrusted host-side previews and test harnesses.
+- `nseal smartcard-sim-sign` exercises the smartcard APDU signing boundary with
+  a test-only simulator and requires `--review-acknowledged` before sending the
+  event id to the display-less signer.
 - `nseal verify-response` checks request ids, event template integrity, NIP-01
   event ids, and BIP-340 Schnorr signatures.
 - CLI request, dev-sign, and verify-response commands can read/write JSON or
@@ -32,8 +35,8 @@ clients to hardware-backed signing.
   signing-disabled scaffold responses.
 - `packages/fixtures` loads shared event and trusted-review vectors from
   `NostrSeal/specs` for companion, vault, and firmware conformance tests.
-- `packages/smartcard` implements the first APDU codec and simulator adapter
-  against shared smartcard vectors.
+- `packages/smartcard` implements the first APDU codec, simulator adapter, and
+  `SmartcardSigner` boundary against shared smartcard vectors.
 
 ## Planned Capabilities
 
@@ -66,6 +69,7 @@ pnpm nseal --help
 pnpm nseal fixture verify --specs ../specs
 pnpm nseal request sign-event --event-template template.json --out request.qr --output-format qr
 pnpm nseal review-request --request request.qr --request-format qr --out review.json
+pnpm nseal smartcard-sim-sign --secret-key <test-only-hex> --request request.qr --request-format qr --review-acknowledged --out response.qr --output-format qr
 ```
 
 ## License

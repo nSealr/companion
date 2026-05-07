@@ -8,8 +8,9 @@ clients to hardware-backed signing.
 
 ## Current Capabilities
 
-- `nseal fixture verify` validates shared signing, trusted-review, and QR
-  review-transcript fixtures from `NostrSeal/specs`.
+- `nseal fixture verify` validates shared signing, trusted-review,
+  review-display-frame, and QR review-transcript fixtures from
+  `NostrSeal/specs`.
 - `nseal request sign-event` creates a signing request from an event template.
 - `nseal dev-sign` signs requests with an explicit test-only software key.
 - `nseal review-request` renders deterministic review JSON from a signing
@@ -33,9 +34,9 @@ clients to hardware-backed signing.
   companion previews. It is not a trusted approval surface.
 - Serial transport tests cover both capability discovery and explicit
   signing-disabled scaffold responses.
-- `packages/fixtures` loads shared event, trusted-review, and QR
-  review-transcript vectors from `NostrSeal/specs` for companion, Raspberry QR
-  vault, ESP32 firmware, and smartcard conformance tests.
+- `packages/fixtures` loads shared event, trusted-review, review-display-frame,
+  and QR review-transcript vectors from `NostrSeal/specs` for companion,
+  Raspberry QR vault, ESP32 firmware, and smartcard conformance tests.
 - `packages/smartcard` implements the first APDU codec, simulator adapter, and
   `SmartcardSigner` boundary against shared smartcard vectors.
 

@@ -34,8 +34,8 @@ single-repository CI. Cross-repository drift remains guarded by
   request methods.
 - CLI review-request test for rendering review JSON from a QR signing request.
 - CLI fixture verification tests against `NostrSeal/specs`, covering both
-  signed-event fixtures, trusted-review fixtures, and QR review-transcript
-  fixtures.
+  signed-event fixtures, trusted-review fixtures, review-display-frame
+  fixtures, and QR review-transcript fixtures.
 - Transport contract tests for in-memory development signing, JSON file
   handoff, one-shot JSON-lines stdio exchange, and serial-frame exchange.
 - QR envelope round-trip and rejection tests.

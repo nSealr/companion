@@ -28,6 +28,23 @@ export type SpecsFixtureSet = {
       warnings: string[];
     };
   }>;
+  reviewDisplayFrames: Array<{
+    name: string;
+    format: string;
+    source_review_vector: string;
+    page_index: number;
+    limits: {
+      max_title_chars: number;
+      max_body_lines: number;
+      max_line_chars: number;
+    };
+    frame: {
+      title: string;
+      page_indicator: string;
+      body_lines: string[];
+      action_hint: string;
+    };
+  }>;
   reviewTranscripts: Array<{
     name: string;
     format: string;
@@ -58,11 +75,15 @@ function loadJson(path: string): unknown {
 export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const eventsRoot = resolve(specsRoot, "vectors/events");
   const reviewsRoot = resolve(specsRoot, "vectors/review");
+  const reviewDisplayFramesRoot = resolve(specsRoot, "vectors/review-display-frames");
   const reviewTranscriptsRoot = resolve(specsRoot, "vectors/review-transcripts");
   const eventFiles = readdirSync(eventsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const reviewFiles = readdirSync(reviewsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const reviewDisplayFrameFiles = readdirSync(reviewDisplayFramesRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const reviewTranscriptFiles = readdirSync(reviewTranscriptsRoot)
@@ -72,6 +93,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     key: loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as SpecsFixtureSet["key"],
     events: eventFiles.map((file) => loadJson(resolve(eventsRoot, file)) as SpecsFixtureSet["events"][number]),
     reviews: reviewFiles.map((file) => loadJson(resolve(reviewsRoot, file)) as SpecsFixtureSet["reviews"][number]),
+    reviewDisplayFrames: reviewDisplayFrameFiles.map(
+      (file) => loadJson(resolve(reviewDisplayFramesRoot, file)) as SpecsFixtureSet["reviewDisplayFrames"][number]
+    ),
     reviewTranscripts: reviewTranscriptFiles.map(
       (file) => loadJson(resolve(reviewTranscriptsRoot, file)) as SpecsFixtureSet["reviewTranscripts"][number]
     )

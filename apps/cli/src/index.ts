@@ -68,6 +68,60 @@ function validateReviewTranscriptFixture(name: string, fixture: unknown): void {
   }
 }
 
+function requirePositiveIntegerField(record: Record<string, unknown>, fixtureName: string, field: string): number {
+  const value = record[field];
+  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+    throw new Error(`invalid review display-frame fixture ${fixtureName}: ${field} must be a positive integer`);
+  }
+  return value;
+}
+
+function validateReviewDisplayFrameFixture(name: string, fixture: unknown): void {
+  if (!isRecord(fixture)) throw new Error(`invalid review display-frame fixture ${name}: fixture must be an object`);
+  if (fixture.format !== "review-display-frame-v0") {
+    throw new Error(`invalid review display-frame fixture ${name}: unsupported format`);
+  }
+  if (typeof fixture.source_review_vector !== "string" || fixture.source_review_vector.length === 0) {
+    throw new Error(`invalid review display-frame fixture ${name}: source_review_vector must be a string`);
+  }
+  if (typeof fixture.page_index !== "number" || !Number.isInteger(fixture.page_index) || fixture.page_index < 0) {
+    throw new Error(`invalid review display-frame fixture ${name}: page_index must be a non-negative integer`);
+  }
+  if (!isRecord(fixture.limits)) {
+    throw new Error(`invalid review display-frame fixture ${name}: limits must be an object`);
+  }
+  const limits = fixture.limits;
+  const maxTitleChars = requirePositiveIntegerField(limits, name, "max_title_chars");
+  const maxBodyLines = requirePositiveIntegerField(limits, name, "max_body_lines");
+  const maxLineChars = requirePositiveIntegerField(limits, name, "max_line_chars");
+  if (!isRecord(fixture.frame)) {
+    throw new Error(`invalid review display-frame fixture ${name}: frame must be an object`);
+  }
+  const frame = fixture.frame;
+  if (typeof frame.title !== "string") {
+    throw new Error(`invalid review display-frame fixture ${name}: frame must include title`);
+  }
+  if (typeof frame.page_indicator !== "string") {
+    throw new Error(`invalid review display-frame fixture ${name}: frame must include page_indicator`);
+  }
+  if (!Array.isArray(frame.body_lines) || !frame.body_lines.every((line) => typeof line === "string")) {
+    throw new Error(`invalid review display-frame fixture ${name}: frame body_lines must be strings`);
+  }
+  const bodyLines = frame.body_lines;
+  if (typeof frame.action_hint !== "string") {
+    throw new Error(`invalid review display-frame fixture ${name}: frame must include action_hint`);
+  }
+  if (frame.title.length > maxTitleChars) {
+    throw new Error(`invalid review display-frame fixture ${name}: title exceeds max_title_chars`);
+  }
+  if (bodyLines.length > maxBodyLines) {
+    throw new Error(`invalid review display-frame fixture ${name}: body_lines exceeds max_body_lines`);
+  }
+  if (bodyLines.some((line) => line.length > maxLineChars)) {
+    throw new Error(`invalid review display-frame fixture ${name}: body line exceeds max_line_chars`);
+  }
+}
+
 function readValue(path: string, format: DataFormat): unknown {
   if (format === "qr") return decodeQrEnvelope(readFileSync(path, "utf8").trim());
   return readJson(path);
@@ -113,8 +167,11 @@ export function buildCli(): Command {
       for (const transcript of fixtures.reviewTranscripts) {
         validateReviewTranscriptFixture(transcript.name, transcript);
       }
+      for (const displayFrame of fixtures.reviewDisplayFrames) {
+        validateReviewDisplayFrameFixture(displayFrame.name, displayFrame);
+      }
       console.log(
-        `verified ${fixtures.events.length} event fixtures, ${fixtures.reviews.length} review fixtures, and ${fixtures.reviewTranscripts.length} review transcript fixtures`
+        `verified ${fixtures.events.length} event fixtures, ${fixtures.reviews.length} review fixtures, ${fixtures.reviewDisplayFrames.length} review display-frame fixture, and ${fixtures.reviewTranscripts.length} review transcript fixtures`
       );
     });
 

@@ -30,4 +30,14 @@ describe("fixture loading", () => {
     expect(fixtures.reviewTranscripts[0].buttons).toEqual(["next", "next", "next", "approve"]);
     expect(fixtures.reviewTranscripts[1].transcript[0].decision).toBe(false);
   });
+
+  it("loads review display-frame vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    expect(fixtures.reviewDisplayFrames.map((frame) => frame.name)).toEqual(["kind-1-long-content-page-1-20x3"]);
+    expect(fixtures.reviewDisplayFrames[0].frame.body_lines).toEqual([
+      "xxxxxxxxxxxxxxxxxxxx",
+      "xxxxxxxxxxxxxxxxxxxx",
+      "xxxxxxxxxxxxxxxxx..."
+    ]);
+  });
 });

@@ -9,9 +9,10 @@
 - Response verification.
 
 Status: implemented as the first companion foundation with JSON and QR envelope
-CLI paths. Fixture verification now includes shared QR review-transcript
-vectors in addition to event and trusted-review vectors. Malformed JSON and
-unsupported request-method CLI rejection tests are now covered.
+CLI paths. Fixture verification now includes shared review-display-frame and
+QR review-transcript vectors in addition to event and trusted-review vectors.
+Malformed JSON and unsupported request-method CLI rejection tests are now
+covered.
 
 ## M3: Transport Layer
 

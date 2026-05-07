@@ -27,6 +27,8 @@ signer may exist only as an explicit test harness.
   JSON file, and JSON-lines stdio adapters.
 - `packages/qr`: v0 `nseal1:` QR envelope encoding and decoding.
 - `packages/framing`: checksum-protected serial line framing draft.
+- `packages/smartcard`: APDU codec, simulator adapter, and response
+  verification for the display-less smartcard line.
 
 ## Current CLI Flow
 
@@ -58,6 +60,13 @@ The current adapters cover three development paths:
 - `JsonFileTransport`: file handoff for QR vault and offline workflow tests.
 - `JsonLineStdioTransport`: one-shot process bridge for external signer
   adapters and future hardware simulators.
+
+## Smartcard Boundary
+
+The first smartcard package covers the display-less APDU contract from
+`NostrSeal/specs`: `GET_PUBLIC_KEY` and `SIGN_EVENT_ID`. It can protect key
+material in a card-like boundary, but trusted event review must still happen
+before the companion sends a 32-byte event id to a card.
 
 ## QR Envelope
 

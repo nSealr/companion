@@ -29,4 +29,4 @@ larger-payload strategy, and first firmware simulator integration.
 - Browser bridge.
 - NIP-46/Nostr Connect integration.
 - USB/WebUSB/HID/CDC transports.
-- PC/SC smartcard adapter.
+- PC/SC smartcard adapter backed by the implemented APDU codec.

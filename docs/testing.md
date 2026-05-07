@@ -26,6 +26,7 @@ TypeScript type safety, unit tests, integration tests, and dependency audit.
 - QR envelope round-trip and rejection tests.
 - Serial frame round-trip, unsupported type, and checksum mismatch tests.
 - Shared `NostrSeal/specs` QR and serial transport vector conformance tests.
+- Shared `NostrSeal/specs` smartcard APDU vector conformance tests.
 
 ## Next Test Additions
 

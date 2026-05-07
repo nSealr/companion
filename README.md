@@ -21,6 +21,8 @@ clients to hardware-backed signing.
   `NostrSeal/specs`.
 - `packages/framing` implements the first checksum-protected serial line frame
   draft for USB CDC and UART experiments.
+- `packages/smartcard` implements the first APDU codec and simulator adapter
+  against shared smartcard vectors.
 
 ## Planned Capabilities
 

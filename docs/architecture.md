@@ -41,7 +41,7 @@ The M2 CLI flow is:
 3. Verify the response against the original request before any downstream use.
 
 The same commands support JSON files and v0 `nseal1:` QR envelope files so the
-desktop companion can drive the Pi Zero vault flow before camera/display
+desktop companion can drive the Raspberry QR vault flow before camera/display
 hardware is integrated.
 
 `nseal review-request` can render the same deterministic review JSON from a
@@ -105,7 +105,8 @@ nseal1:<base64url-json>
 
 The v0 envelope is deliberately uncompressed and single-part. Animated QR,
 compression, fountain codes, and large payload chunking remain out of scope
-until the Pi Zero vault flow proves where those features are necessary.
+until a Raspberry or ESP32 QR vault flow proves where those features are
+necessary.
 
 ## Serial Frame Draft
 

@@ -34,7 +34,8 @@ clients to hardware-backed signing.
 - Serial transport tests cover both capability discovery and explicit
   signing-disabled scaffold responses.
 - `packages/fixtures` loads shared event and trusted-review vectors from
-  `NostrSeal/specs` for companion, vault, and firmware conformance tests.
+  `NostrSeal/specs` for companion, Raspberry QR vault, ESP32 firmware, and
+  smartcard conformance tests.
 - `packages/smartcard` implements the first APDU codec, simulator adapter, and
   `SmartcardSigner` boundary against shared smartcard vectors.
 

@@ -30,6 +30,8 @@ single-repository CI. Cross-repository drift remains guarded by
   mismatch, event id mismatch, and invalid signatures.
 - End-to-end CLI tests for `request -> dev-sign -> verify-response`.
 - End-to-end CLI tests for QR envelope `request -> dev-sign -> verify-response`.
+- CLI failure-mode tests for malformed event-template JSON and unsupported
+  request methods.
 - CLI review-request test for rendering review JSON from a QR signing request.
 - CLI fixture verification tests against `NostrSeal/specs`, covering both
   signed-event fixtures, trusted-review fixtures, and QR review-transcript
@@ -52,7 +54,6 @@ single-repository CI. Cross-repository drift remains guarded by
 
 ## Next Test Additions
 
-- CLI failure-mode tests for malformed JSON and unsupported methods.
 - Large QR payload strategy tests once chunking or compression is designed.
 - Hardware serial smoke tests before adding WebUSB, HID, or CDC adapters.
 

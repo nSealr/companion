@@ -10,8 +10,8 @@
 
 Status: implemented as the first companion foundation with JSON and QR envelope
 CLI paths. Fixture verification now includes shared QR review-transcript
-vectors in addition to event and trusted-review vectors. Further hardening stays
-in M2 until malformed-input CLI tests are added.
+vectors in addition to event and trusted-review vectors. Malformed JSON and
+unsupported request-method CLI rejection tests are now covered.
 
 ## M3: Transport Layer
 

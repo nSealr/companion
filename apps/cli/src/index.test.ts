@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -101,6 +101,26 @@ describe("nseal CLI", () => {
     await expect(collectCliOutput(["fixture", "verify", "--specs", specsRoot])).resolves.toEqual([
       "verified 2 event fixtures, 4 review fixtures, and 2 review transcript fixtures"
     ]);
+  });
+
+  it("rejects malformed event-template JSON before writing a request", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-malformed-json-"));
+    const templatePath = join(tempRoot, "template.json");
+    const requestPath = join(tempRoot, "request.json");
+    writeFileSync(templatePath, "{not-json", "utf8");
+
+    await expect(runCli(["request", "sign-event", "--event-template", templatePath, "--out", requestPath])).rejects.toThrow();
+    expect(existsSync(requestPath)).toBe(false);
+  });
+
+  it("rejects unsupported request methods before writing output", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-unsupported-method-"));
+    const requestPath = join(tempRoot, "request.json");
+
+    await expect(runCli(["request", "nip44-encrypt", "--out", requestPath])).rejects.toThrow(
+      "unsupported request method: nip44-encrypt"
+    );
+    expect(existsSync(requestPath)).toBe(false);
   });
 
   it("verifies shared get_public_key responses and rejects mismatched request ids", async () => {

@@ -60,6 +60,8 @@ The current adapters cover three development paths:
 - `JsonFileTransport`: file handoff for QR vault and offline workflow tests.
 - `JsonLineStdioTransport`: one-shot process bridge for external signer
   adapters and future hardware simulators.
+- `SerialFrameTransport`: one-shot `nseal1f:` request/response exchange for
+  USB-serial, UART, and firmware smoke-test adapters.
 
 ## Smartcard Boundary
 

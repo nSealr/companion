@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { devSignRequest } from "../../dev-signer/src/dev-signer.js";
 import { type SignEventRequest } from "../../core/src/nostr.js";
+import { decodeSerialFrame, encodeSerialFrame } from "../../framing/src/serial.js";
 
 export type SignerTransport = {
   readonly name: string;
@@ -115,5 +116,24 @@ export class JsonLineStdioTransport implements SignerTransport {
       });
       child.stdin.end(`${JSON.stringify(request)}\n`, "utf8");
     });
+  }
+}
+
+export class SerialFrameTransport implements SignerTransport {
+  readonly name = "serial-frame";
+  private readonly exchangeFrame: (line: string) => Promise<string>;
+
+  constructor(options: { exchangeFrame: (line: string) => Promise<string> }) {
+    this.exchangeFrame = options.exchangeFrame;
+  }
+
+  async exchange(request: unknown): Promise<unknown> {
+    const requestLine = encodeSerialFrame({ type: "request", payload: request });
+    const responseLine = await this.exchangeFrame(requestLine);
+    const responseFrame = decodeSerialFrame(responseLine);
+    if (responseFrame.type !== "response") {
+      throw new Error(`serial frame transport expected response frame, got ${responseFrame.type}`);
+    }
+    return responseFrame.payload;
   }
 }

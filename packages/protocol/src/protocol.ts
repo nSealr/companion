@@ -40,8 +40,8 @@ export function validateRequest(value: unknown): ValidationResult {
   if (!isRecord(value)) return { ok: false, error: "request must be an object" };
   if (value.version !== 1) return { ok: false, error: "version must be 1" };
   if (!isRequestId(value.request_id)) return { ok: false, error: "request_id is invalid" };
-  if (value.method === "get_public_key") {
-    if ("params" in value) return { ok: false, error: "get_public_key must not include params" };
+  if (value.method === "get_capabilities" || value.method === "get_public_key") {
+    if ("params" in value) return { ok: false, error: `${value.method} must not include params` };
     return { ok: true };
   }
   if (value.method === "sign_event") {
@@ -67,6 +67,32 @@ function validateSignedEvent(value: unknown): ValidationResult {
   return { ok: true };
 }
 
+function validateCapabilities(value: unknown): ValidationResult {
+  if (!isRecord(value)) return { ok: false, error: "capabilities must be an object" };
+  if (!isRecord(value.device)) return { ok: false, error: "capabilities device must be an object" };
+  for (const field of ["name", "firmware", "hardware"]) {
+    if (typeof value.device[field] !== "string" || value.device[field].length === 0) {
+      return { ok: false, error: `capabilities device ${field} is required` };
+    }
+  }
+  for (const field of ["protocols", "methods", "transports"]) {
+    const values = value[field];
+    if (!Array.isArray(values) || values.length === 0 || !values.every((item) => typeof item === "string" && item.length > 0)) {
+      return { ok: false, error: `capabilities ${field} must be a non-empty string array` };
+    }
+  }
+  for (const method of value.methods as string[]) {
+    if (!["get_capabilities", "get_public_key", "sign_event"].includes(method)) {
+      return { ok: false, error: `unsupported capability method: ${method}` };
+    }
+  }
+  if (typeof value.signing_enabled !== "boolean") return { ok: false, error: "signing_enabled must be boolean" };
+  if (typeof value.requires_physical_approval !== "boolean") {
+    return { ok: false, error: "requires_physical_approval must be boolean" };
+  }
+  return { ok: true };
+}
+
 export function validateResponse(value: unknown): ValidationResult {
   if (!isRecord(value)) return { ok: false, error: "response must be an object" };
   if (value.version !== 1) return { ok: false, error: "version must be 1" };
@@ -80,6 +106,7 @@ export function validateResponse(value: unknown): ValidationResult {
   }
   if (value.ok === true) {
     if (!isRecord(value.result)) return { ok: false, error: "successful response requires result" };
+    if ("capabilities" in value.result) return validateCapabilities(value.result.capabilities);
     if ("public_key" in value.result) {
       return isLowerHex(value.result.public_key, 64) ? { ok: true } : { ok: false, error: "public_key is invalid" };
     }

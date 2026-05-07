@@ -16,11 +16,13 @@ clients to hardware-backed signing.
 - CLI request, dev-sign, and verify-response commands can read/write JSON or
   v0 `nseal1:` QR envelopes.
 - `packages/transport` provides the first signer transport contract plus
-  development, file, and JSON-lines stdio adapters.
+  development, file, JSON-lines stdio, and serial-frame adapters.
 - `packages/qr` implements the v0 `nseal1:` QR envelope from
   `NostrSeal/specs`.
 - `packages/framing` implements the first checksum-protected serial line frame
   draft for USB CDC and UART experiments.
+- `packages/protocol` validates capability discovery responses, including the
+  current ESP32-S3 scaffold's disabled-signing safety flags.
 - `packages/smartcard` implements the first APDU codec and simulator adapter
   against shared smartcard vectors.
 

@@ -19,10 +19,12 @@ added.
 - Simulated signer.
 - QR envelope package.
 - Serial framing draft.
+- Serial frame transport adapter.
 
-Status: file, stdio, in-memory development signer transport, QR envelope, and
-serial framing foundations are implemented. M3 remains open for CLI exposure,
-larger-payload strategy, and first firmware simulator integration.
+Status: file, stdio, in-memory development signer transport, QR envelope,
+serial framing, and serial-frame transport foundations are implemented. M3
+remains open for CLI exposure, larger-payload strategy, and first physical USB
+serial integration.
 
 ## Later
 

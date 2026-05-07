@@ -37,6 +37,8 @@ signer may exist only as an explicit test harness.
   `sign_event`, local `ping`, and conversion from NostrSeal responses back to
   NIP-46 result/error strings. It also validates requested permission strings
   and parses `connect` messages into review intents for later policy work.
+  Permission matching is present as a pure boundary; permission storage and
+  grant UX remain separate layers.
 
 ## Current CLI Flow
 
@@ -137,8 +139,11 @@ hardware-wallet signer boundary.
 Permission parsing is intentionally separate from permission grants. The parser
 accepts the NIP-46 `method[:params]` string form, validates numeric
 `sign_event:<kind>` selectors, and rejects `connect` as a requested permission.
-Actual grant storage, revocation, auth challenges, and user approval UX remain
-future policy layers.
+The matching helper derives a required permission from a later request and
+checks it against an already-approved permission set. A broad `sign_event`
+permission matches every event kind; `sign_event:<kind>` matches only that
+kind. Actual grant storage, revocation, auth challenges, and user approval UX
+remain future policy layers.
 
 `connect` parsing is also intentionally non-committal. The bridge can extract
 the remote-signer pubkey, optional secret, and requested permissions into a

@@ -18,6 +18,8 @@ export type Nip46Permission = {
   event_kind?: number;
 };
 
+export type Nip46PermissionRequirement = Nip46Permission;
+
 export type Nip46ConnectIntent = {
   id: string;
   remote_signer_pubkey: string;
@@ -134,6 +136,48 @@ export function parseNip46ConnectIntent(value: unknown): Nip46ConnectIntent {
     ...(message.params[1] !== undefined && message.params[1] !== "" ? { secret: message.params[1] } : {}),
     requested_permissions: message.params[2] !== undefined ? parseNip46Permissions(message.params[2]) : []
   };
+}
+
+export function nip46PermissionRequirementFromRequest(value: unknown): Nip46PermissionRequirement {
+  const message = requireMessage(value);
+  if (message.method === "connect") throw new Error("NIP-46 connect requires policy review");
+  if (message.method === "ping") {
+    if (message.params.length !== 0) throw new Error("NIP-46 ping params must be empty");
+    return { method: "ping" };
+  }
+  if (message.method === "get_public_key") {
+    if (message.params.length !== 0) throw new Error("NIP-46 get_public_key params must be empty");
+    return { method: "get_public_key" };
+  }
+  if (message.method === "sign_event") {
+    const request = nostrSealRequestFromNip46(message);
+    if (request.method !== "sign_event") throw new Error("NIP-46 sign_event permission request mismatch");
+    const eventTemplate = request.params.event_template;
+    if (!isRecord(eventTemplate) || typeof eventTemplate.kind !== "number") {
+      throw new Error("NIP-46 sign_event event kind is invalid");
+    }
+    return {
+      method: "sign_event",
+      parameter: String(eventTemplate.kind),
+      event_kind: eventTemplate.kind
+    };
+  }
+  throw new Error(`unsupported NIP-46 method: ${message.method}`);
+}
+
+function permissionMatchesRequirement(
+  grantedPermission: Nip46Permission,
+  requirement: Nip46PermissionRequirement
+): boolean {
+  if (grantedPermission.method !== requirement.method) return false;
+  if (requirement.method !== "sign_event") return grantedPermission.parameter === undefined;
+  if (grantedPermission.parameter === undefined) return true;
+  return grantedPermission.event_kind === requirement.event_kind;
+}
+
+export function isNip46RequestPermitted(value: unknown, grantedPermissions: readonly Nip46Permission[]): boolean {
+  const requirement = nip46PermissionRequirementFromRequest(value);
+  return grantedPermissions.some((permission) => permissionMatchesRequirement(permission, requirement));
 }
 
 export function respondToLocalNip46Request(value: unknown): Nip46ResponseMessage | undefined {

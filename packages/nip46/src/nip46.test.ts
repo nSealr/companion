@@ -5,7 +5,9 @@ import { loadSpecsFixtures } from "../../fixtures/src/fixtures.js";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { validateRequest } from "../../protocol/src/protocol.js";
 import {
+  isNip46RequestPermitted,
   nip46ResponseFromNostrSeal,
+  nip46PermissionRequirementFromRequest,
   parseNip46ConnectIntent,
   nostrSealRequestFromNip46,
   parseNip46Permissions,
@@ -159,5 +161,52 @@ describe("NIP-46 bridge payloads", () => {
     expect(() =>
       parseNip46ConnectIntent({ id: "connect-1", method: "connect", params: ["bad-pubkey"] })
     ).toThrow(/remote-signer pubkey/u);
+  });
+
+  it("matches request permissions without granting policy", () => {
+    const signEventRequest = load("examples/request-kind-1-basic.json") as {
+      params: { event_template: unknown };
+    };
+    const signEventMessage = {
+      id: "nip46-req-1",
+      method: "sign_event",
+      params: [JSON.stringify(signEventRequest.params.event_template)]
+    };
+
+    expect(nip46PermissionRequirementFromRequest(signEventMessage)).toEqual({
+      method: "sign_event",
+      parameter: "1",
+      event_kind: 1
+    });
+    expect(isNip46RequestPermitted(signEventMessage, parseNip46Permissions("sign_event:1"))).toBe(true);
+    expect(isNip46RequestPermitted(signEventMessage, parseNip46Permissions("sign_event:4"))).toBe(false);
+    expect(isNip46RequestPermitted(signEventMessage, parseNip46Permissions("sign_event"))).toBe(true);
+    expect(
+      isNip46RequestPermitted(
+        {
+          id: "nip46-key-1",
+          method: "get_public_key",
+          params: []
+        },
+        parseNip46Permissions("get_public_key")
+      )
+    ).toBe(true);
+    expect(
+      isNip46RequestPermitted(
+        {
+          id: "nip46-key-1",
+          method: "get_public_key",
+          params: []
+        },
+        []
+      )
+    ).toBe(false);
+    expect(() =>
+      nip46PermissionRequirementFromRequest({
+        id: "connect-1",
+        method: "connect",
+        params: ["4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"]
+      })
+    ).toThrow(/connect requires policy review/u);
   });
 });

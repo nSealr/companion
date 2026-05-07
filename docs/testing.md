@@ -61,6 +61,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - NIP-46 `connect` intent parser tests covering remote-signer pubkey
   validation, optional secret capture, requested permissions, and rejection of
   signer-transport routing for `connect`.
+- NIP-46 permission matching tests covering derived `sign_event:<kind>`
+  requirements, broad `sign_event` grants, method-only grants, denied requests,
+  and `connect` exclusion from post-connect request permissions.
 
 ## Next Test Additions
 

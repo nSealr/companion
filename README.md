@@ -43,8 +43,8 @@ clients to hardware-backed signing.
 - `packages/nip46` implements the first decrypted NIP-46 payload bridge for
   `get_public_key`, `sign_event`, local `ping`, and NostrSeal response mapping.
   It also parses `connect` requests into policy-review intents and validates
-  requested permission strings. Relay transport, NIP-44 encryption, permission
-  grants, and auth flows remain future work.
+  requested permission strings against later requests. Relay transport, NIP-44
+  encryption, persistent permission grants, and auth flows remain future work.
 
 ## Planned Capabilities
 

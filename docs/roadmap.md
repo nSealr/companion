@@ -36,11 +36,13 @@ serial integration.
 - NostrSeal response conversion back to NIP-46 result/error strings.
 - Requested permission string parsing for future `connect` review.
 - `connect` request parsing into explicit policy-review intents.
+- Request permission matching against explicit in-memory grant inputs.
 
 Status: the first decrypted-payload bridge is implemented in `packages/nip46`.
 It consumes shared `NostrSeal/specs` NIP-46 payload vectors through unit tests
 and `nseal fixture verify`, and it now parses NIP-46 requested permission
-strings plus `connect` intents without granting them. Relay sessions, NIP-44
+strings plus `connect` intents and can match later requests against explicit
+permission inputs without granting or persisting them. Relay sessions, NIP-44
 encryption/decryption, connection token responses, permission storage, grant
 review, and auth challenge UX remain future work.
 

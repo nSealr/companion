@@ -19,6 +19,9 @@ const key = JSON.parse(readFileSync(resolve(specsRoot, "vectors/keys/test-key-1.
   secret_key: string;
 };
 const signEventRequest = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
+const signingDisabledResponse = JSON.parse(
+  readFileSync(resolve(specsRoot, "examples/response-sign-event-disabled-esp32-s3-scaffold.json"), "utf8")
+);
 const capabilitiesRequest = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-get-capabilities.json"), "utf8"));
 const capabilitiesResponse = JSON.parse(
   readFileSync(resolve(specsRoot, "examples/response-get-capabilities-esp32-s3-scaffold.json"), "utf8")
@@ -104,6 +107,20 @@ describe("transport adapters", () => {
     const response = await transport.exchange(capabilitiesRequest);
 
     expect(response).toEqual(capabilitiesResponse);
+    expect(validateResponse(response).ok).toBe(true);
+  });
+
+  it("moves ESP32-S3 scaffold signing-disabled responses over serial frames", async () => {
+    const transport = new SerialFrameTransport({
+      exchangeFrame: async (line) => {
+        expect(decodeSerialFrame(line)).toEqual({ type: "request", payload: signEventRequest });
+        return encodeSerialFrame({ type: "response", payload: signingDisabledResponse });
+      }
+    });
+
+    const response = await transport.exchange(signEventRequest);
+
+    expect(response).toEqual(signingDisabledResponse);
     expect(validateResponse(response).ok).toBe(true);
   });
 });

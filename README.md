@@ -23,6 +23,8 @@ clients to hardware-backed signing.
   draft for USB CDC and UART experiments.
 - `packages/protocol` validates capability discovery responses, including the
   current ESP32-S3 scaffold's disabled-signing safety flags.
+- Serial transport tests cover both capability discovery and explicit
+  signing-disabled scaffold responses.
 - `packages/smartcard` implements the first APDU codec and simulator adapter
   against shared smartcard vectors.
 

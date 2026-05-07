@@ -27,6 +27,8 @@ TypeScript type safety, unit tests, integration tests, and dependency audit.
 - Serial frame round-trip, unsupported type, and checksum mismatch tests.
 - Shared `NostrSeal/specs` QR and serial transport vector conformance tests.
 - Shared `NostrSeal/specs` capability response conformance tests.
+- Shared `NostrSeal/specs` ESP32-S3 signing-disabled response conformance
+  tests.
 - Shared `NostrSeal/specs` smartcard APDU vector conformance tests.
 
 ## Next Test Additions

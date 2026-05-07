@@ -20,6 +20,10 @@ describe("protocol validation", () => {
     expect(validateResponse(load("examples/response-get-capabilities-esp32-s3-scaffold.json")).ok).toBe(true);
   });
 
+  it("accepts ESP32-S3 scaffold signing-disabled responses", () => {
+    expect(validateResponse(load("examples/response-sign-event-disabled-esp32-s3-scaffold.json")).ok).toBe(true);
+  });
+
   it("rejects invalid v0 requests", () => {
     expect(validateRequest(load("examples/invalid/request-sign-event-with-pubkey.json")).ok).toBe(false);
     expect(validateRequest(load("examples/invalid/request-unknown-method.json")).ok).toBe(false);

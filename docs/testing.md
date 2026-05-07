@@ -9,6 +9,14 @@ make ci
 The baseline check verifies repository structure, license policy, docs, CI,
 TypeScript type safety, unit tests, integration tests, and dependency audit.
 
+## Single-Repository CI
+
+Tests prefer the sibling `NostrSeal/specs` repository when the full local
+workspace is present. GitHub Actions checks out `NostrSeal/companion` by itself,
+so tests fall back to fixture snapshots under `tests/fixtures/specs` in
+single-repository CI. Cross-repository drift remains guarded by
+`NostrSeal/lab` integration, which runs against the live sibling repositories.
+
 ## M2 Tests
 
 - NIP-01 canonicalization tests in `packages/core`.

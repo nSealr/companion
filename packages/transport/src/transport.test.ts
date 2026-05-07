@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { verifySignedEventResponse } from "../../core/src/nostr.js";
+import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../framing/src/serial.js";
 import { validateResponse } from "../../protocol/src/protocol.js";
 import {
@@ -14,7 +15,7 @@ import {
   writeJsonFile
 } from "./transport.js";
 
-const specsRoot = resolve("../specs");
+const specsRoot = resolveSpecsRoot();
 const key = JSON.parse(readFileSync(resolve(specsRoot, "vectors/keys/test-key-1.json"), "utf8")) as {
   secret_key: string;
 };

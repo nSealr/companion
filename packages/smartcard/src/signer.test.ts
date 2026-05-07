@@ -2,10 +2,11 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { verifySignedEventResponse, type SignEventRequest } from "../../core/src/nostr.js";
+import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { SmartcardSimulator } from "./apdu.js";
 import { SmartcardSigner } from "./signer.js";
 
-const specsRoot = resolve("../specs");
+const specsRoot = resolveSpecsRoot();
 const key = JSON.parse(readFileSync(resolve(specsRoot, "vectors/keys/test-key-1.json"), "utf8")) as {
   public_key: string;
   secret_key: string;

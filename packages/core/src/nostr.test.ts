@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { computeEventId, verifySchnorrSignature, verifySignedEventResponse } from "./nostr.js";
 
-const specsRoot = resolve("../specs");
+const specsRoot = resolveSpecsRoot();
 const basicVector = JSON.parse(
   readFileSync(resolve(specsRoot, "vectors/events/kind-1-basic.json"), "utf8")
 );

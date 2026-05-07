@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { decodeSerialFrame, encodeSerialFrame, SERIAL_FRAME_PREFIX } from "./serial.js";
 
-const specsRoot = resolve("../specs");
+const specsRoot = resolveSpecsRoot();
 const signEventRequest = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
 const serialVector = JSON.parse(readFileSync(resolve(specsRoot, "vectors/transports/serial-frame-request-kind-1-basic.json"), "utf8"));
 

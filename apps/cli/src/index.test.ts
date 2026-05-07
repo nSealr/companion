@@ -2,11 +2,12 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { resolveSpecsRoot } from "../../../packages/fixtures/src/specs-root.js";
 import { validateResponse } from "../../../packages/protocol/src/protocol.js";
 import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
 import { buildCli } from "./index.js";
 
-const specsRoot = resolve("../specs");
+const specsRoot = resolveSpecsRoot();
 
 function loadJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));

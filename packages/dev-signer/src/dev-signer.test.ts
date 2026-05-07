@@ -2,9 +2,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { verifySignedEventResponse } from "../../core/src/nostr.js";
+import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { devSignRequest } from "./dev-signer.js";
 
-const specsRoot = resolve("../specs");
+const specsRoot = resolveSpecsRoot();
 const key = JSON.parse(readFileSync(resolve(specsRoot, "vectors/keys/test-key-1.json"), "utf8"));
 const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
 
@@ -16,4 +17,3 @@ describe("dev signer", () => {
     expect(verifySignedEventResponse(request, response).ok).toBe(true);
   });
 });
-

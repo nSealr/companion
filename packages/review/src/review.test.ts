@@ -1,11 +1,11 @@
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadSpecsFixtures } from "../../fixtures/src/fixtures.js";
+import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { reviewEventTemplate } from "./review.js";
 
 describe("trusted review model", () => {
   it("matches every shared trusted-review vector", () => {
-    const fixtures = loadSpecsFixtures(resolve("../specs"));
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
 
     for (const vector of fixtures.reviews) {
       const request = vector.request as {

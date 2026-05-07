@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { validateRequest, validateResponse } from "./protocol.js";
 
-const specsRoot = resolve("../specs");
+const specsRoot = resolveSpecsRoot();
 
 function load(rel: string): unknown {
   return JSON.parse(readFileSync(resolve(specsRoot, rel), "utf8"));

@@ -26,6 +26,9 @@ const capabilitiesRequest = JSON.parse(readFileSync(resolve(specsRoot, "examples
 const capabilitiesResponse = JSON.parse(
   readFileSync(resolve(specsRoot, "examples/response-get-capabilities-esp32-s3-scaffold.json"), "utf8")
 );
+const publicKeyVector = JSON.parse(
+  readFileSync(resolve(specsRoot, "vectors/devices/esp32-s3-get-public-key-dev.json"), "utf8")
+);
 
 describe("transport adapters", () => {
   it("signs through the in-memory development signer transport", async () => {
@@ -121,6 +124,20 @@ describe("transport adapters", () => {
     const response = await transport.exchange(signEventRequest);
 
     expect(response).toEqual(signingDisabledResponse);
+    expect(validateResponse(response).ok).toBe(true);
+  });
+
+  it("moves ESP32-S3 scaffold public-key responses over serial frames", async () => {
+    const transport = new SerialFrameTransport({
+      exchangeFrame: async (line) => {
+        expect(decodeSerialFrame(line)).toEqual({ type: "request", payload: publicKeyVector.request });
+        return encodeSerialFrame({ type: "response", payload: publicKeyVector.response });
+      }
+    });
+
+    const response = await transport.exchange(publicKeyVector.request);
+
+    expect(response).toEqual(publicKeyVector.response);
     expect(validateResponse(response).ok).toBe(true);
   });
 });

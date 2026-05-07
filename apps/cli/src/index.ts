@@ -128,6 +128,9 @@ export function buildCli(): Command {
       const response = readValue(options.response, options.responseFormat);
       const responseShape = validateResponse(response);
       if (!responseShape.ok) throw new Error(responseShape.error);
+      if ((response as { request_id?: unknown }).request_id !== (request as { request_id?: unknown }).request_id) {
+        throw new Error("response request_id does not match request");
+      }
       if ((response as { ok?: boolean }).ok === true && (request as { method?: string }).method === "sign_event") {
         const result = verifySignedEventResponse(request, response);
         if (!result.ok) throw new Error(result.error);

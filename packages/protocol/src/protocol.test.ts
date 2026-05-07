@@ -20,6 +20,15 @@ describe("protocol validation", () => {
     expect(validateResponse(load("examples/response-get-capabilities-esp32-s3-scaffold.json")).ok).toBe(true);
   });
 
+  it("accepts valid v0 public-key requests and responses", () => {
+    expect(validateRequest(load("examples/request-get-public-key.json")).ok).toBe(true);
+    expect(validateResponse(load("examples/response-get-public-key.json")).ok).toBe(true);
+    expect(load("vectors/devices/esp32-s3-get-public-key-dev.json")).toMatchObject({
+      request: load("examples/request-get-public-key.json"),
+      response: load("examples/response-get-public-key.json")
+    });
+  });
+
   it("accepts ESP32-S3 scaffold signing-disabled responses", () => {
     expect(validateResponse(load("examples/response-sign-event-disabled-esp32-s3-scaffold.json")).ok).toBe(true);
   });

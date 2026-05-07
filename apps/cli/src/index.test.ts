@@ -81,4 +81,28 @@ describe("nseal CLI", () => {
   it("verifies all event fixtures from the specs repository", async () => {
     await runCli(["fixture", "verify", "--specs", specsRoot]);
   });
+
+  it("verifies shared get_public_key responses and rejects mismatched request ids", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-pubkey-"));
+    const vector = loadJson(resolve(specsRoot, "vectors/devices/esp32-s3-get-public-key-dev.json")) as {
+      request: unknown;
+      response: { request_id: string };
+    };
+    const requestPath = join(tempRoot, "request.json");
+    const responsePath = join(tempRoot, "response.json");
+    const mismatchedResponsePath = join(tempRoot, "mismatched-response.json");
+
+    writeFileSync(requestPath, `${JSON.stringify(vector.request, null, 2)}\n`, "utf8");
+    writeFileSync(responsePath, `${JSON.stringify(vector.response, null, 2)}\n`, "utf8");
+    writeFileSync(
+      mismatchedResponsePath,
+      `${JSON.stringify({ ...vector.response, request_id: "different-request" }, null, 2)}\n`,
+      "utf8"
+    );
+
+    await runCli(["verify-response", "--request", requestPath, "--response", responsePath]);
+    await expect(runCli(["verify-response", "--request", requestPath, "--response", mismatchedResponsePath])).rejects.toThrow(
+      "response request_id does not match request"
+    );
+  });
 });

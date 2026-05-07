@@ -46,7 +46,8 @@ clients to hardware-backed signing.
 - QR encoder and decoder for vault flows.
 - USB, WebUSB, HID, CDC, and WebSerial transport experiments.
 - PC/SC and NFC smartcard adapter.
-- TROPIC01 USB DevKit research adapter.
+- TROPIC01 USB DevKit research adapter for the custom persistent-secret
+  hardware-wallet family.
 - Relay publish and response verification tools.
 
 ## Initial Layout

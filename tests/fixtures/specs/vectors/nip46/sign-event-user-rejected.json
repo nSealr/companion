@@ -1,0 +1,38 @@
+{
+  "name": "sign-event-user-rejected",
+  "format": "nip46-decrypted-payload-v0",
+  "request_message": {
+    "id": "nip46-reject-1",
+    "method": "sign_event",
+    "params": [
+      "{\"created_at\":1710000000,\"kind\":1,\"tags\":[],\"content\":\"NostrSeal fixture: basic kind 1 event.\"}"
+    ]
+  },
+  "nostrseal_request": {
+    "version": 1,
+    "request_id": "nip46-reject-1",
+    "method": "sign_event",
+    "params": {
+      "event_template": {
+        "created_at": 1710000000,
+        "kind": 1,
+        "tags": [],
+        "content": "NostrSeal fixture: basic kind 1 event."
+      }
+    }
+  },
+  "nostrseal_response": {
+    "version": 1,
+    "request_id": "nip46-reject-1",
+    "ok": false,
+    "error": {
+      "code": "user_rejected",
+      "message": "User rejected the signing request.",
+      "retryable": true
+    }
+  },
+  "response_message": {
+    "id": "nip46-reject-1",
+    "error": "user_rejected: User rejected the signing request."
+  }
+}

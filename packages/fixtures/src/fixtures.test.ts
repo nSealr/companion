@@ -46,7 +46,8 @@ describe("fixture loading", () => {
     expect(fixtures.nip46Payloads.map((vector) => vector.name)).toEqual([
       "get-public-key",
       "ping",
-      "sign-event-kind-1-basic"
+      "sign-event-kind-1-basic",
+      "sign-event-user-rejected"
     ]);
     expect(fixtures.nip46Payloads[0].format).toBe("nip46-decrypted-payload-v0");
   });

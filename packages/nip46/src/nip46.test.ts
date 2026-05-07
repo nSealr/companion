@@ -91,9 +91,11 @@ describe("NIP-46 bridge payloads", () => {
     const fixtures = loadSpecsFixtures(specsRoot);
     const signEvent = fixtures.nip46Payloads.find((vector) => vector.name === "sign-event-kind-1-basic");
     const rejectedSignEvent = fixtures.nip46Payloads.find((vector) => vector.name === "sign-event-user-rejected");
+    const connect = fixtures.nip46Payloads.find((vector) => vector.name === "connect-policy-review");
     const getPublicKey = fixtures.nip46Payloads.find((vector) => vector.name === "get-public-key");
     const ping = fixtures.nip46Payloads.find((vector) => vector.name === "ping");
 
+    expect(parseNip46ConnectIntent(connect?.request_message)).toEqual(connect?.connect_intent);
     expect(nostrSealRequestFromNip46(signEvent?.request_message)).toEqual(signEvent?.nostrseal_request);
     expect(nip46ResponseFromNostrSeal(signEvent?.request_message.id ?? "", signEvent?.nostrseal_response)).toEqual(
       signEvent?.response_message

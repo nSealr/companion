@@ -8,6 +8,7 @@ import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/
 import {
   nip46ResponseFromNostrSeal,
   nostrSealRequestFromNip46,
+  parseNip46ConnectIntent,
   respondToLocalNip46Request
 } from "../../../packages/nip46/src/nip46.js";
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
@@ -147,6 +148,14 @@ function validateNip46PayloadFixture(name: string, fixture: unknown): void {
       respondToLocalNip46Request(fixture.request_message),
       fixture.local_response_message,
       `invalid NIP-46 fixture ${name}: local response mismatch`
+    );
+    return;
+  }
+  if (fixture.request_message.method === "connect") {
+    assertJsonEqual(
+      parseNip46ConnectIntent(fixture.request_message),
+      fixture.connect_intent,
+      `invalid NIP-46 fixture ${name}: connect intent mismatch`
     );
     return;
   }

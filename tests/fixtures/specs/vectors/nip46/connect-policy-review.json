@@ -1,0 +1,28 @@
+{
+  "name": "connect-policy-review",
+  "format": "nip46-decrypted-payload-v0",
+  "request_message": {
+    "id": "nip46-connect-1",
+    "method": "connect",
+    "params": [
+      "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+      "secret-1",
+      "sign_event:1,nip44_encrypt"
+    ]
+  },
+  "connect_intent": {
+    "id": "nip46-connect-1",
+    "remote_signer_pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+    "secret": "secret-1",
+    "requested_permissions": [
+      {
+        "method": "sign_event",
+        "parameter": "1",
+        "event_kind": 1
+      },
+      {
+        "method": "nip44_encrypt"
+      }
+    ]
+  }
+}

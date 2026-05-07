@@ -86,6 +86,16 @@ export type SpecsFixtureSet = {
       result?: string;
       error?: string;
     };
+    connect_intent?: {
+      id: string;
+      remote_signer_pubkey: string;
+      secret?: string;
+      requested_permissions: Array<{
+        method: string;
+        parameter?: string;
+        event_kind?: number;
+      }>;
+    };
   }>;
 };
 

@@ -44,6 +44,7 @@ describe("fixture loading", () => {
   it("loads NIP-46 decrypted payload bridge vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
     expect(fixtures.nip46Payloads.map((vector) => vector.name)).toEqual([
+      "connect-policy-review",
       "get-public-key",
       "ping",
       "sign-event-kind-1-basic",

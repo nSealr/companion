@@ -153,7 +153,8 @@ remain future policy layers.
 the remote-signer pubkey, optional secret, and requested permissions into a
 review intent, but it does not return `ack`, echo secrets, persist grants, or
 authorize a client. A later policy layer must review and explicitly approve
-that intent.
+that intent. The same boundary is now covered by a shared `NostrSeal/specs`
+NIP-46 vector and `nseal fixture verify`.
 
 ## QR Envelope
 

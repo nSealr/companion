@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { validateResponse } from "../../../packages/protocol/src/protocol.js";
-import { decodeQrEnvelope } from "../../../packages/qr/src/qr.js";
+import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
 import { buildCli } from "./index.js";
 
 const specsRoot = resolve("../specs");
@@ -104,5 +104,21 @@ describe("nseal CLI", () => {
     await expect(runCli(["verify-response", "--request", requestPath, "--response", mismatchedResponsePath])).rejects.toThrow(
       "response request_id does not match request"
     );
+  });
+
+  it("renders an untrusted review preview from a QR signing request", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-review-"));
+    const vector = loadJson(resolve(specsRoot, "vectors/review/kind-1-tags.json")) as {
+      request: unknown;
+      review: unknown;
+    };
+    const requestPath = join(tempRoot, "request.qr");
+    const reviewPath = join(tempRoot, "review.json");
+
+    writeFileSync(requestPath, `${encodeQrEnvelope(vector.request)}\n`, "utf8");
+
+    await runCli(["review-request", "--request", requestPath, "--request-format", "qr", "--out", reviewPath]);
+
+    expect(loadJson(reviewPath)).toEqual(vector.review);
   });
 });

@@ -22,6 +22,8 @@ signer may exist only as an explicit test harness.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation and typed request/response models.
 - `packages/fixtures`: shared event, key, and trusted-review fixture loading.
+- `packages/review`: deterministic event-template review summary generation
+  for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: test-only signing implementation.
 - `packages/transport`: signer transport interface plus in-memory development,
   JSON file, and JSON-lines stdio adapters.
@@ -41,6 +43,12 @@ The M2 CLI flow is:
 The same commands support JSON files and v0 `nseal1:` QR envelope files so the
 desktop companion can drive the Pi Zero vault flow before camera/display
 hardware is integrated.
+
+`nseal review-request` can render the same deterministic review JSON from a
+JSON or QR `sign_event` request. This is deliberately labeled as an untrusted
+preview: it helps users and automated tests see what a conforming signer should
+display, but approval authority still belongs to the vault, firmware, or card
+line holding the key.
 
 The development signer exists only for local testing. Production signer lines
 must replace it with a hardware, vault, or smartcard transport while preserving

@@ -11,6 +11,8 @@ clients to hardware-backed signing.
 - `nseal fixture verify` validates shared signing fixtures from `NostrSeal/specs`.
 - `nseal request sign-event` creates a signing request from an event template.
 - `nseal dev-sign` signs requests with an explicit test-only software key.
+- `nseal review-request` renders deterministic review JSON from a signing
+  request for untrusted host-side previews and test harnesses.
 - `nseal verify-response` checks request ids, event template integrity, NIP-01
   event ids, and BIP-340 Schnorr signatures.
 - CLI request, dev-sign, and verify-response commands can read/write JSON or
@@ -23,6 +25,8 @@ clients to hardware-backed signing.
   draft for USB CDC and UART experiments.
 - `packages/protocol` validates capability discovery responses, including the
   current ESP32-S3 scaffold's disabled-signing safety flags.
+- `packages/review` mirrors the shared trusted-review vector semantics for
+  companion previews. It is not a trusted approval surface.
 - Serial transport tests cover both capability discovery and explicit
   signing-disabled scaffold responses.
 - `packages/fixtures` loads shared event and trusted-review vectors from
@@ -60,6 +64,7 @@ Run the CLI from the workspace with:
 pnpm nseal --help
 pnpm nseal fixture verify --specs ../specs
 pnpm nseal request sign-event --event-template template.json --out request.qr --output-format qr
+pnpm nseal review-request --request request.qr --request-format qr --out review.json
 ```
 
 ## License

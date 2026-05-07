@@ -15,11 +15,14 @@ TypeScript type safety, unit tests, integration tests, and dependency audit.
 - BIP-340 verification tests in `packages/core`.
 - Request and response shape validation tests in `packages/protocol`.
 - Shared fixture loading tests in `packages/fixtures`.
+- Trusted-review model tests in `packages/review` against every shared review
+  vector from `NostrSeal/specs`.
 - Development signer verification tests in `packages/dev-signer`.
 - Negative response verification tests for request id mismatch, template
   mismatch, event id mismatch, and invalid signatures.
 - End-to-end CLI tests for `request -> dev-sign -> verify-response`.
 - End-to-end CLI tests for QR envelope `request -> dev-sign -> verify-response`.
+- CLI review-request test for rendering review JSON from a QR signing request.
 - CLI fixture verification tests against `NostrSeal/specs`.
 - Transport contract tests for in-memory development signing, JSON file
   handoff, one-shot JSON-lines stdio exchange, and serial-frame exchange.

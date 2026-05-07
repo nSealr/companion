@@ -6,6 +6,7 @@ import { devSignRequest } from "../../../packages/dev-signer/src/dev-signer.js";
 import { loadSpecsFixtures } from "../../../packages/fixtures/src/fixtures.js";
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
 import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
+import { reviewEventTemplate } from "../../../packages/review/src/review.js";
 
 type DataFormat = "json" | "qr";
 
@@ -112,6 +113,24 @@ export function buildCli(): Command {
         throw new Error("dev-sign supports sign_event requests only");
       }
       writeValue(options.out, devSignRequest(request as Parameters<typeof devSignRequest>[0], options.secretKey), options.outputFormat);
+    });
+
+  program
+    .command("review-request")
+    .requiredOption("--request <path>")
+    .option("--request-format <format>", "Request format: json or qr", "json")
+    .requiredOption("--out <path>")
+    .description("Render an untrusted local review preview for a signing request")
+    .action((options: { request: string; requestFormat: string; out: string }) => {
+      assertFormat(options.requestFormat);
+      const request = readValue(options.request, options.requestFormat);
+      const validation = validateRequest(request);
+      if (!validation.ok) throw new Error(validation.error);
+      if ((request as { method?: string }).method !== "sign_event") {
+        throw new Error("review-request supports sign_event requests only");
+      }
+      const eventTemplate = (request as { params?: { event_template?: unknown } }).params?.event_template;
+      writeJson(options.out, reviewEventTemplate(eventTemplate));
     });
 
   program

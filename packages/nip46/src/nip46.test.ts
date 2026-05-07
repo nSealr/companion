@@ -112,6 +112,12 @@ describe("NIP-46 bridge payloads", () => {
       getPublicKey?.response_message
     );
     expect(respondToLocalNip46Request(ping?.request_message)).toEqual(ping?.local_response_message);
+    for (const vector of [signEvent, rejectedSignEvent, getPublicKey, ping]) {
+      expect(nip46PermissionRequirementFromRequest(vector?.request_message)).toEqual(vector?.permission_requirement);
+      for (const check of vector?.permission_checks ?? []) {
+        expect(isNip46RequestPermitted(vector?.request_message, check.granted_permissions)).toBe(check.permitted);
+      }
+    }
   });
 
   it("rejects unsupported or unsafe NIP-46 request payloads", () => {

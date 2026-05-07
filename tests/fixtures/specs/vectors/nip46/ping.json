@@ -6,6 +6,31 @@
     "method": "ping",
     "params": []
   },
+  "permission_requirement": {
+    "method": "ping"
+  },
+  "permission_checks": [
+    {
+      "granted_permissions": [
+        {
+          "method": "ping"
+        }
+      ],
+      "permitted": true
+    },
+    {
+      "granted_permissions": [],
+      "permitted": false
+    },
+    {
+      "granted_permissions": [
+        {
+          "method": "get_public_key"
+        }
+      ],
+      "permitted": false
+    }
+  ],
   "local_response_message": {
     "id": "nip46-ping-1",
     "result": "pong"

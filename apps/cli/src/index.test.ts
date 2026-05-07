@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -102,6 +102,22 @@ describe("nseal CLI", () => {
     await expect(collectCliOutput(["fixture", "verify", "--specs", specsRoot])).resolves.toEqual([
       "verified 2 event fixtures, 4 review fixtures, 1 review display-frame fixture, 2 review transcript fixtures, and 5 NIP-46 payload fixtures"
     ]);
+  });
+
+  it("rejects NIP-46 permission policy fixture drift", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-nip46-policy-"));
+    const tempSpecsRoot = join(tempRoot, "specs");
+    cpSync(specsRoot, tempSpecsRoot, { recursive: true });
+    const vectorPath = resolve(tempSpecsRoot, "vectors/nip46/sign-event-kind-1-basic.json");
+    const vector = loadJson(vectorPath) as {
+      permission_checks: Array<{ permitted: boolean }>;
+    };
+    vector.permission_checks[0].permitted = false;
+    writeFileSync(vectorPath, `${JSON.stringify(vector, null, 2)}\n`, "utf8");
+
+    await expect(runCli(["fixture", "verify", "--specs", tempSpecsRoot])).rejects.toThrow(
+      /permission check mismatch/u
+    );
   });
 
   it("rejects malformed event-template JSON before writing a request", async () => {

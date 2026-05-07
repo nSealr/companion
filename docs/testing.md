@@ -66,7 +66,8 @@ single-repository CI. Cross-repository drift remains guarded by
   includes a `connect` policy-review intent vector.
 - NIP-46 permission matching tests covering derived `sign_event:<kind>`
   requirements, broad `sign_event` grants, method-only grants, denied requests,
-  and `connect` exclusion from post-connect request permissions.
+  and `connect` exclusion from post-connect request permissions. The CLI fixture
+  verifier also rejects drift in shared permission policy checks.
 
 ## Next Test Additions
 

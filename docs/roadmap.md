@@ -44,7 +44,8 @@ It consumes shared `NostrSeal/specs` NIP-46 payload vectors through unit tests
 and `nseal fixture verify`, and it now parses NIP-46 requested permission
 strings plus `connect` intents and can match later requests against explicit
 permission inputs without granting or persisting them. The `connect` intent
-path is now pinned by a shared specs vector. Relay sessions, NIP-44
+path and non-`connect` permission policy checks are now pinned by shared specs
+vectors. Relay sessions, NIP-44
 encryption/decryption, connection token responses, permission storage, grant
 review, and auth challenge UX remain future work.
 

@@ -74,6 +74,19 @@ export type SpecsFixtureSet = {
       method: string;
       params: string[];
     };
+    permission_requirement?: {
+      method: string;
+      parameter?: string;
+      event_kind?: number;
+    };
+    permission_checks?: Array<{
+      granted_permissions: Array<{
+        method: string;
+        parameter?: string;
+        event_kind?: number;
+      }>;
+      permitted: boolean;
+    }>;
     nostrseal_request?: unknown;
     nostrseal_response?: unknown;
     response_message?: {

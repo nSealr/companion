@@ -11,6 +11,31 @@
     "request_id": "nip46-key-1",
     "method": "get_public_key"
   },
+  "permission_requirement": {
+    "method": "get_public_key"
+  },
+  "permission_checks": [
+    {
+      "granted_permissions": [
+        {
+          "method": "get_public_key"
+        }
+      ],
+      "permitted": true
+    },
+    {
+      "granted_permissions": [],
+      "permitted": false
+    },
+    {
+      "granted_permissions": [
+        {
+          "method": "sign_event"
+        }
+      ],
+      "permitted": false
+    }
+  ],
   "nostrseal_response": {
     "version": 1,
     "request_id": "nip46-key-1",

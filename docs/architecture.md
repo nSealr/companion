@@ -37,8 +37,9 @@ signer may exist only as an explicit test harness.
   `sign_event`, local `ping`, and conversion from NostrSeal responses back to
   NIP-46 result/error strings. It also validates requested permission strings
   and parses `connect` messages into review intents for later policy work.
-  Permission matching is present as a pure boundary; permission storage and
-  grant UX remain separate layers.
+  Permission matching is present as a pure boundary and is pinned by shared
+  permission policy fixture checks; permission storage and grant UX remain
+  separate layers.
 
 ## Current CLI Flow
 
@@ -85,8 +86,8 @@ conformance data, not as trusted approval authority.
 
 NIP-46 payload vectors are loaded and verified by `nseal fixture verify` so the
 host bridge and shared specs agree on decrypted `get_public_key`, `sign_event`,
-local `ping`, and response mapping behavior before relay and encryption work
-begins.
+local `ping`, response mapping, and permission policy behavior before relay and
+encryption work begins.
 
 The current adapters cover three development paths:
 
@@ -146,8 +147,9 @@ accepts the NIP-46 `method[:params]` string form, validates numeric
 The matching helper derives a required permission from a later request and
 checks it against an already-approved permission set. A broad `sign_event`
 permission matches every event kind; `sign_event:<kind>` matches only that
-kind. Actual grant storage, revocation, auth challenges, and user approval UX
-remain future policy layers.
+kind. Shared specs fixtures now include the derived requirement and
+positive/negative permission checks for conformance. Actual grant storage,
+revocation, auth challenges, and user approval UX remain future policy layers.
 
 `connect` parsing is also intentionally non-committal. The bridge can extract
 the remote-signer pubkey, optional secret, and requested permissions into a

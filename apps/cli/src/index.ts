@@ -6,9 +6,12 @@ import { devSignRequest } from "../../../packages/dev-signer/src/dev-signer.js";
 import { loadSpecsFixtures } from "../../../packages/fixtures/src/fixtures.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/src/serial.js";
 import {
+  isNip46RequestPermitted,
+  nip46PermissionRequirementFromRequest,
   nip46ResponseFromNostrSeal,
   nostrSealRequestFromNip46,
   parseNip46ConnectIntent,
+  type Nip46Permission,
   respondToLocalNip46Request
 } from "../../../packages/nip46/src/nip46.js";
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
@@ -135,6 +138,26 @@ function assertJsonEqual(actual: unknown, expected: unknown, error: string): voi
   }
 }
 
+function validateNip46PermissionPolicyFixture(name: string, fixture: Record<string, unknown>): void {
+  assertJsonEqual(
+    nip46PermissionRequirementFromRequest(fixture.request_message),
+    fixture.permission_requirement,
+    `invalid NIP-46 fixture ${name}: permission requirement mismatch`
+  );
+  if (!Array.isArray(fixture.permission_checks) || fixture.permission_checks.length === 0) {
+    throw new Error(`invalid NIP-46 fixture ${name}: permission checks must be a non-empty array`);
+  }
+  for (const [index, check] of fixture.permission_checks.entries()) {
+    if (!isRecord(check) || !Array.isArray(check.granted_permissions)) {
+      throw new Error(`invalid NIP-46 fixture ${name}: permission check ${index} must include granted permissions`);
+    }
+    const grantedPermissions = check.granted_permissions as Nip46Permission[];
+    if (check.permitted !== isNip46RequestPermitted(fixture.request_message, grantedPermissions)) {
+      throw new Error(`invalid NIP-46 fixture ${name}: permission check mismatch at ${index}`);
+    }
+  }
+}
+
 function validateNip46PayloadFixture(name: string, fixture: unknown): void {
   if (!isRecord(fixture)) throw new Error(`invalid NIP-46 fixture ${name}: fixture must be an object`);
   if (fixture.format !== "nip46-decrypted-payload-v0") {
@@ -144,6 +167,7 @@ function validateNip46PayloadFixture(name: string, fixture: unknown): void {
     throw new Error(`invalid NIP-46 fixture ${name}: request_message must be an object`);
   }
   if (fixture.request_message.method === "ping") {
+    validateNip46PermissionPolicyFixture(name, fixture);
     assertJsonEqual(
       respondToLocalNip46Request(fixture.request_message),
       fixture.local_response_message,
@@ -152,6 +176,9 @@ function validateNip46PayloadFixture(name: string, fixture: unknown): void {
     return;
   }
   if (fixture.request_message.method === "connect") {
+    if ("permission_requirement" in fixture || "permission_checks" in fixture) {
+      throw new Error(`invalid NIP-46 fixture ${name}: connect must not include permission policy`);
+    }
     assertJsonEqual(
       parseNip46ConnectIntent(fixture.request_message),
       fixture.connect_intent,
@@ -159,6 +186,7 @@ function validateNip46PayloadFixture(name: string, fixture: unknown): void {
     );
     return;
   }
+  validateNip46PermissionPolicyFixture(name, fixture);
   assertJsonEqual(
     nostrSealRequestFromNip46(fixture.request_message),
     fixture.nostrseal_request,

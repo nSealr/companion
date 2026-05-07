@@ -24,6 +24,8 @@ clients to hardware-backed signing.
   v0 `nseal1:` QR envelopes.
 - `packages/transport` provides the first signer transport contract plus
   development, file, JSON-lines stdio, and serial-frame adapters.
+- `nseal serial-frame` exposes offline serial-frame request wrapping and
+  response unwrapping helpers for ESP32 bring-up and lab captures.
 - `packages/qr` implements the v0 `nseal1:` QR envelope from
   `NostrSeal/specs`.
 - `packages/framing` implements the first checksum-protected serial line frame
@@ -52,7 +54,7 @@ clients to hardware-backed signing.
 - Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,
   permissions, and auth challenges.
 - QR encoder and decoder for vault flows.
-- USB, WebUSB, HID, CDC, and WebSerial transport experiments.
+- Physical USB, WebUSB, HID, CDC, and WebSerial transport experiments.
 - PC/SC and NFC smartcard adapter.
 - TROPIC01 USB DevKit research adapter for the custom persistent-secret
   hardware-wallet family.

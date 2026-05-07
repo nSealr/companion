@@ -96,6 +96,10 @@ The current adapters cover three development paths:
   adapters and future hardware simulators.
 - `SerialFrameTransport`: one-shot `nseal1f:` request/response exchange for
   USB-serial, UART, and firmware smoke-test adapters.
+- `nseal serial-frame wrap-request` and `nseal serial-frame unwrap-response`:
+  offline CLI helpers for producing validated serial request frames and
+  decoding validated serial response frames during ESP32 bring-up. They do not
+  open a physical USB, CDC, HID, WebUSB, or WebSerial connection.
 
 ## Smartcard Boundary
 

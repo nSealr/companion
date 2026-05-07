@@ -4,6 +4,7 @@ import { Command } from "commander";
 import { verifySignedEventResponse, type SignEventRequest } from "../../../packages/core/src/nostr.js";
 import { devSignRequest } from "../../../packages/dev-signer/src/dev-signer.js";
 import { loadSpecsFixtures } from "../../../packages/fixtures/src/fixtures.js";
+import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/src/serial.js";
 import {
   nip46ResponseFromNostrSeal,
   nostrSealRequestFromNip46,
@@ -324,6 +325,39 @@ export function buildCli(): Command {
         writeValue(options.out, response, options.outputFormat);
       }
     );
+
+  const serialFrame = program.command("serial-frame").description("Encode and decode newline serial frames");
+
+  serialFrame
+    .command("wrap-request")
+    .requiredOption("--request <path>")
+    .option("--request-format <format>", "Request format: json or qr", "json")
+    .requiredOption("--out <path>")
+    .description("Wrap a validated request as a serial request frame")
+    .action((options: { request: string; requestFormat: string; out: string }) => {
+      assertFormat(options.requestFormat);
+      const request = readValue(options.request, options.requestFormat);
+      const validation = validateRequest(request);
+      if (!validation.ok) throw new Error(validation.error);
+      writeFileSync(options.out, encodeSerialFrame({ type: "request", payload: request }), "utf8");
+    });
+
+  serialFrame
+    .command("unwrap-response")
+    .requiredOption("--response-frame <path>")
+    .requiredOption("--out <path>")
+    .option("--output-format <format>", "Output format: json or qr", "json")
+    .description("Decode and validate a serial response frame")
+    .action((options: { responseFrame: string; out: string; outputFormat: string }) => {
+      assertFormat(options.outputFormat);
+      const frame = decodeSerialFrame(readFileSync(options.responseFrame, "utf8").trim());
+      if (frame.type !== "response") {
+        throw new Error(`serial-frame unwrap-response expected response frame, got ${frame.type}`);
+      }
+      const validation = validateResponse(frame.payload);
+      if (!validation.ok) throw new Error(validation.error);
+      writeValue(options.out, frame.payload, options.outputFormat);
+    });
 
   program
     .command("verify-response")

@@ -22,11 +22,12 @@ rejection tests are now covered.
 - QR envelope package.
 - Serial framing draft.
 - Serial frame transport adapter.
+- CLI serial-frame wrapping and unwrapping helpers.
 
 Status: file, stdio, in-memory development signer transport, QR envelope,
-serial framing, and serial-frame transport foundations are implemented. M3
-remains open for CLI exposure, larger-payload strategy, and first physical USB
-serial integration.
+serial framing, serial-frame transport foundations, and offline CLI
+serial-frame helpers are implemented. M3 remains open for larger-payload
+strategy and first physical USB serial integration.
 
 ## M4: NIP-46 Payload Bridge
 

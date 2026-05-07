@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "../../../packages/fixtures/src/specs-root.js";
+import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/src/serial.js";
 import { validateResponse } from "../../../packages/protocol/src/protocol.js";
 import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
 import { buildCli } from "./index.js";
@@ -145,6 +146,29 @@ describe("nseal CLI", () => {
     await expect(runCli(["verify-response", "--request", requestPath, "--response", mismatchedResponsePath])).rejects.toThrow(
       "response request_id does not match request"
     );
+  });
+
+  it("wraps requests and unwraps responses as serial frames", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-serial-frame-"));
+    const request = loadJson(resolve(specsRoot, "examples/request-get-capabilities.json"));
+    const response = loadJson(resolve(specsRoot, "examples/response-get-capabilities-esp32-s3-scaffold.json"));
+    const requestPath = join(tempRoot, "request.json");
+    const requestFramePath = join(tempRoot, "request.frame");
+    const responseFramePath = join(tempRoot, "response.frame");
+    const responsePath = join(tempRoot, "response.json");
+
+    writeFileSync(requestPath, `${JSON.stringify(request, null, 2)}\n`, "utf8");
+
+    await runCli(["serial-frame", "wrap-request", "--request", requestPath, "--out", requestFramePath]);
+    expect(decodeSerialFrame(readFileSync(requestFramePath, "utf8").trim())).toEqual({
+      type: "request",
+      payload: request
+    });
+
+    writeFileSync(responseFramePath, `${encodeSerialFrame({ type: "response", payload: response })}\n`, "utf8");
+
+    await runCli(["serial-frame", "unwrap-response", "--response-frame", responseFramePath, "--out", responsePath]);
+    expect(loadJson(responsePath)).toEqual(response);
   });
 
   it("renders an untrusted review preview from a QR signing request", async () => {

@@ -38,6 +38,8 @@ single-repository CI. Cross-repository drift remains guarded by
   fixtures, QR review-transcript fixtures, and NIP-46 payload fixtures.
 - Transport contract tests for in-memory development signing, JSON file
   handoff, one-shot JSON-lines stdio exchange, and serial-frame exchange.
+- CLI serial-frame tests covering validated request wrapping and response-frame
+  unwrapping.
 - QR envelope round-trip and rejection tests.
 - Serial frame round-trip, unsupported type, and checksum mismatch tests.
 - Shared `NostrSeal/specs` QR and serial transport vector conformance tests.

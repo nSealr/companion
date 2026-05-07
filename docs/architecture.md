@@ -36,7 +36,7 @@ signer may exist only as an explicit test harness.
 - `packages/nip46`: decrypted NIP-46 payload bridge for `get_public_key`,
   `sign_event`, local `ping`, and conversion from NostrSeal responses back to
   NIP-46 result/error strings. It also validates requested permission strings
-  for later `connect` review and policy work.
+  and parses `connect` messages into review intents for later policy work.
 
 ## Current CLI Flow
 
@@ -139,6 +139,12 @@ accepts the NIP-46 `method[:params]` string form, validates numeric
 `sign_event:<kind>` selectors, and rejects `connect` as a requested permission.
 Actual grant storage, revocation, auth challenges, and user approval UX remain
 future policy layers.
+
+`connect` parsing is also intentionally non-committal. The bridge can extract
+the remote-signer pubkey, optional secret, and requested permissions into a
+review intent, but it does not return `ack`, echo secrets, persist grants, or
+authorize a client. A later policy layer must review and explicitly approve
+that intent.
 
 ## QR Envelope
 

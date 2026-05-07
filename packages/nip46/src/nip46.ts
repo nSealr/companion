@@ -18,6 +18,13 @@ export type Nip46Permission = {
   event_kind?: number;
 };
 
+export type Nip46ConnectIntent = {
+  id: string;
+  remote_signer_pubkey: string;
+  secret?: string;
+  requested_permissions: Nip46Permission[];
+};
+
 const NIP46_PERMISSION_METHODS = new Set([
   "sign_event",
   "nip04_encrypt",
@@ -51,6 +58,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function requireNip46Id(value: unknown): string {
   if (typeof value !== "string" || !/^[A-Za-z0-9._:-]{1,128}$/u.test(value)) {
     throw new Error("NIP-46 request id is invalid");
+  }
+  return value;
+}
+
+function requireXOnlyPubkey(value: unknown, label: string): string {
+  if (typeof value !== "string" || !/^[0-9a-f]{64}$/u.test(value)) {
+    throw new Error(`NIP-46 ${label} must be a 32-byte lowercase hex pubkey`);
   }
   return value;
 }
@@ -108,6 +122,20 @@ export function parseNip46Permissions(value: string): Nip46Permission[] {
   });
 }
 
+export function parseNip46ConnectIntent(value: unknown): Nip46ConnectIntent {
+  const message = requireMessage(value);
+  if (message.method !== "connect") throw new Error("NIP-46 connect intent requires connect method");
+  if (message.params.length < 1 || message.params.length > 3) {
+    throw new Error("NIP-46 connect requires remote-signer pubkey plus optional secret and permissions");
+  }
+  return {
+    id: message.id,
+    remote_signer_pubkey: requireXOnlyPubkey(message.params[0], "remote-signer pubkey"),
+    ...(message.params[1] !== undefined && message.params[1] !== "" ? { secret: message.params[1] } : {}),
+    requested_permissions: message.params[2] !== undefined ? parseNip46Permissions(message.params[2]) : []
+  };
+}
+
 export function respondToLocalNip46Request(value: unknown): Nip46ResponseMessage | undefined {
   const message = requireMessage(value);
   if (message.method !== "ping") return undefined;
@@ -122,6 +150,9 @@ export function nostrSealRequestFromNip46(value: unknown): NostrSealBridgeReques
   const message = requireMessage(value);
   if (message.method === "ping") {
     throw new Error("NIP-46 ping is handled locally");
+  }
+  if (message.method === "connect") {
+    throw new Error("NIP-46 connect requires policy review");
   }
   if (message.method === "get_public_key") {
     if (message.params.length !== 0) throw new Error("NIP-46 get_public_key params must be empty");

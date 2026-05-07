@@ -6,6 +6,7 @@ import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { validateRequest } from "../../protocol/src/protocol.js";
 import {
   nip46ResponseFromNostrSeal,
+  parseNip46ConnectIntent,
   nostrSealRequestFromNip46,
   parseNip46Permissions,
   respondToLocalNip46Request
@@ -135,5 +136,28 @@ describe("NIP-46 bridge payloads", () => {
     expect(() => parseNip46Permissions("sign_event:not-a-kind")).toThrow(/sign_event permission kind/u);
     expect(() => parseNip46Permissions("connect")).toThrow(/must not request connect/u);
     expect(() => parseNip46Permissions("unknown_method")).toThrow(/unsupported permission method/u);
+  });
+
+  it("parses connect requests as policy-review intents without acknowledging them", () => {
+    const remoteSignerPubkey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
+
+    expect(
+      parseNip46ConnectIntent({
+        id: "connect-1",
+        method: "connect",
+        params: [remoteSignerPubkey, "secret-1", "sign_event:1,nip44_encrypt"]
+      })
+    ).toEqual({
+      id: "connect-1",
+      remote_signer_pubkey: remoteSignerPubkey,
+      secret: "secret-1",
+      requested_permissions: [{ method: "sign_event", parameter: "1", event_kind: 1 }, { method: "nip44_encrypt" }]
+    });
+    expect(() =>
+      nostrSealRequestFromNip46({ id: "connect-1", method: "connect", params: [remoteSignerPubkey] })
+    ).toThrow(/requires policy review/u);
+    expect(() =>
+      parseNip46ConnectIntent({ id: "connect-1", method: "connect", params: ["bad-pubkey"] })
+    ).toThrow(/remote-signer pubkey/u);
   });
 });

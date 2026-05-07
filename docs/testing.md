@@ -24,6 +24,7 @@ TypeScript type safety, unit tests, integration tests, and dependency audit.
   handoff, and one-shot JSON-lines stdio exchange.
 - QR envelope round-trip and rejection tests.
 - Serial frame round-trip, unsupported type, and checksum mismatch tests.
+- Shared `NostrSeal/specs` QR and serial transport vector conformance tests.
 
 ## Next Test Additions
 

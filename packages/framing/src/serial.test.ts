@@ -5,6 +5,7 @@ import { decodeSerialFrame, encodeSerialFrame, SERIAL_FRAME_PREFIX } from "./ser
 
 const specsRoot = resolve("../specs");
 const signEventRequest = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
+const serialVector = JSON.parse(readFileSync(resolve(specsRoot, "vectors/transports/serial-frame-request-kind-1-basic.json"), "utf8"));
 
 describe("serial framing draft", () => {
   it("round-trips a request frame as one newline-terminated ASCII line", () => {
@@ -12,7 +13,9 @@ describe("serial framing draft", () => {
 
     expect(frame.startsWith(SERIAL_FRAME_PREFIX)).toBe(true);
     expect(frame.endsWith("\n")).toBe(true);
+    expect(frame).toBe(serialVector.frame);
     expect(decodeSerialFrame(frame)).toEqual({ type: "request", payload: signEventRequest });
+    expect(decodeSerialFrame(serialVector.frame)).toEqual({ type: serialVector.type, payload: serialVector.decoded });
   });
 
   it("rejects frames with unsupported types", () => {

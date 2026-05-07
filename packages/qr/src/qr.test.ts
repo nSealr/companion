@@ -5,6 +5,7 @@ import { decodeQrEnvelope, encodeQrEnvelope, QR_ENVELOPE_PREFIX } from "./qr.js"
 
 const specsRoot = resolve("../specs");
 const signEventRequest = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
+const qrVector = JSON.parse(readFileSync(resolve(specsRoot, "vectors/transports/qr-envelope-kind-1-basic.json"), "utf8"));
 
 describe("QR envelope v0", () => {
   it("encodes and decodes an uncompressed base64url JSON envelope", () => {
@@ -12,7 +13,9 @@ describe("QR envelope v0", () => {
 
     expect(envelope.startsWith(QR_ENVELOPE_PREFIX)).toBe(true);
     expect(envelope).not.toContain("=");
+    expect(envelope).toBe(qrVector.envelope);
     expect(decodeQrEnvelope(envelope)).toEqual(signEventRequest);
+    expect(decodeQrEnvelope(qrVector.envelope)).toEqual(qrVector.decoded);
   });
 
   it("rejects envelopes without the nseal1 prefix", () => {

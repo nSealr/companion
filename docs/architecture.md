@@ -32,6 +32,9 @@ signer may exist only as an explicit test harness.
 - `packages/framing`: checksum-protected serial line framing draft.
 - `packages/smartcard`: APDU codec, simulator adapter, `SmartcardSigner`
   boundary, and response verification for the display-less smartcard line.
+- `packages/nip46`: decrypted NIP-46 payload bridge for `get_public_key`,
+  `sign_event`, local `ping`, and conversion from NostrSeal responses back to
+  NIP-46 result/error strings.
 
 ## Current CLI Flow
 
@@ -104,6 +107,25 @@ a trusted display.
 simulator for integration work. Real PC/SC and NFC transports must implement
 the same APDU exchange interface without weakening the review acknowledgement
 requirement.
+
+## NIP-46 Bridge Boundary
+
+The first NIP-46 module handles only already-decrypted JSON-RPC-like payloads
+from NIP-46 kind `24133` content. It does not implement relay subscriptions,
+NIP-44 encryption/decryption, connection tokens, permission persistence, or auth
+challenge UX.
+
+The bridge maps `get_public_key` and `sign_event` messages into standard
+NostrSeal v1 requests so any signer transport can handle them behind the same
+verification boundary. `ping` is answered locally with `pong` because it does
+not require a key-holding device. Signed-event responses are returned as
+NIP-46 result strings containing JSON-stringified Nostr events; public-key
+responses return the hex key string; NostrSeal error responses become NIP-46
+error strings.
+
+This keeps NIP-46 as a host transport/bridge layer. Trusted event review and
+approval remain with the Raspberry, ESP32, smartcard-assisted, or future
+hardware-wallet signer boundary.
 
 ## QR Envelope
 

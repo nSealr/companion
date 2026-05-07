@@ -51,6 +51,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI smartcard simulator tests covering rejection without
   `--review-acknowledged` and `request -> smartcard-sim-sign ->
   verify-response`.
+- NIP-46 payload bridge tests covering already-decrypted `sign_event` and
+  `get_public_key` messages, local `ping`, NostrSeal response mapping, and
+  rejection of unsafe or unsupported payloads.
 
 ## Next Test Additions
 

@@ -28,10 +28,21 @@ serial framing, and serial-frame transport foundations are implemented. M3
 remains open for CLI exposure, larger-payload strategy, and first physical USB
 serial integration.
 
+## M4: NIP-46 Payload Bridge
+
+- Decrypted JSON-RPC-like content mapping.
+- `get_public_key` and `sign_event` request conversion to NostrSeal requests.
+- Local `ping` handling.
+- NostrSeal response conversion back to NIP-46 result/error strings.
+
+Status: the first decrypted-payload bridge is implemented in `packages/nip46`.
+Relay sessions, NIP-44 encryption/decryption, connection tokens, permission
+storage, and auth challenge UX remain future work.
+
 ## Later
 
 - Browser bridge.
-- NIP-46/Nostr Connect integration.
+- Full NIP-46/Nostr Connect relay session integration.
 - USB/WebUSB/HID/CDC transports.
 - PC/SC smartcard adapter backed by the implemented APDU codec and
   `SmartcardSigner` boundary.

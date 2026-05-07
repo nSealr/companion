@@ -39,11 +39,16 @@ clients to hardware-backed signing.
   Raspberry QR vault, ESP32 firmware, and smartcard conformance tests.
 - `packages/smartcard` implements the first APDU codec, simulator adapter, and
   `SmartcardSigner` boundary against shared smartcard vectors.
+- `packages/nip46` implements the first decrypted NIP-46 payload bridge for
+  `get_public_key`, `sign_event`, local `ping`, and NostrSeal response mapping.
+  Relay transport, NIP-44 encryption, connection permissions, and auth flows
+  remain future work.
 
 ## Planned Capabilities
 
 - Browser extension / NIP-07 bridge.
-- NIP-46 / Nostr Connect request handling.
+- Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,
+  permissions, and auth challenges.
 - QR encoder and decoder for vault flows.
 - USB, WebUSB, HID, CDC, and WebSerial transport experiments.
 - PC/SC and NFC smartcard adapter.

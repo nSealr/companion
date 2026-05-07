@@ -8,8 +8,9 @@
 - Test-only dev signer.
 - Response verification.
 
-Status: implemented as the first companion foundation. Further hardening stays
-in M2 until negative verification cases and malformed-input CLI tests are added.
+Status: implemented as the first companion foundation with JSON and QR envelope
+CLI paths. Further hardening stays in M2 until malformed-input CLI tests are
+added.
 
 ## M3: Transport Layer
 

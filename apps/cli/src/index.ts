@@ -5,6 +5,9 @@ import { verifySignedEventResponse } from "../../../packages/core/src/nostr.js";
 import { devSignRequest } from "../../../packages/dev-signer/src/dev-signer.js";
 import { loadSpecsFixtures } from "../../../packages/fixtures/src/fixtures.js";
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
+import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
+
+type DataFormat = "json" | "qr";
 
 function readJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));
@@ -12,6 +15,25 @@ function readJson(path: string): unknown {
 
 function writeJson(path: string, value: unknown): void {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+function assertFormat(format: string): asserts format is DataFormat {
+  if (format !== "json" && format !== "qr") {
+    throw new Error(`unsupported format: ${format}`);
+  }
+}
+
+function readValue(path: string, format: DataFormat): unknown {
+  if (format === "qr") return decodeQrEnvelope(readFileSync(path, "utf8").trim());
+  return readJson(path);
+}
+
+function writeValue(path: string, value: unknown, format: DataFormat): void {
+  if (format === "qr") {
+    writeFileSync(path, `${encodeQrEnvelope(value)}\n`, "utf8");
+    return;
+  }
+  writeJson(path, value);
 }
 
 export function buildCli(): Command {
@@ -42,14 +64,16 @@ export function buildCli(): Command {
     .argument("<method>")
     .requiredOption("--out <path>")
     .option("--event-template <path>")
+    .option("--output-format <format>", "Output format: json or qr", "json")
     .description("Create a NostrSeal request")
-    .action((method: string, options: { out: string; eventTemplate?: string }) => {
+    .action((method: string, options: { out: string; eventTemplate?: string; outputFormat: string }) => {
+      assertFormat(options.outputFormat);
       if (method === "pubkey") {
-        writeJson(options.out, {
+        writeValue(options.out, {
           version: 1,
           request_id: "req-pubkey-1",
           method: "get_public_key"
-        });
+        }, options.outputFormat);
         return;
       }
       if (method === "sign-event") {
@@ -64,7 +88,7 @@ export function buildCli(): Command {
         };
         const validation = validateRequest(request);
         if (!validation.ok) throw new Error(validation.error);
-        writeJson(options.out, request);
+        writeValue(options.out, request, options.outputFormat);
         return;
       }
       throw new Error(`unsupported request method: ${method}`);
@@ -74,26 +98,34 @@ export function buildCli(): Command {
     .command("dev-sign")
     .requiredOption("--secret-key <hex>")
     .requiredOption("--request <path>")
+    .option("--request-format <format>", "Request format: json or qr", "json")
     .requiredOption("--out <path>")
+    .option("--output-format <format>", "Output format: json or qr", "json")
     .description("Sign a request with a test-only software signer")
-    .action((options: { secretKey: string; request: string; out: string }) => {
-      const request = readJson(options.request);
+    .action((options: { secretKey: string; request: string; requestFormat: string; out: string; outputFormat: string }) => {
+      assertFormat(options.requestFormat);
+      assertFormat(options.outputFormat);
+      const request = readValue(options.request, options.requestFormat);
       const validation = validateRequest(request);
       if (!validation.ok) throw new Error(validation.error);
       if ((request as { method?: string }).method !== "sign_event") {
         throw new Error("dev-sign supports sign_event requests only");
       }
-      writeJson(options.out, devSignRequest(request as Parameters<typeof devSignRequest>[0], options.secretKey));
+      writeValue(options.out, devSignRequest(request as Parameters<typeof devSignRequest>[0], options.secretKey), options.outputFormat);
     });
 
   program
     .command("verify-response")
     .requiredOption("--request <path>")
+    .option("--request-format <format>", "Request format: json or qr", "json")
     .requiredOption("--response <path>")
+    .option("--response-format <format>", "Response format: json or qr", "json")
     .description("Verify a signer response against the original request")
-    .action((options: { request: string; response: string }) => {
-      const request = readJson(options.request);
-      const response = readJson(options.response);
+    .action((options: { request: string; requestFormat: string; response: string; responseFormat: string }) => {
+      assertFormat(options.requestFormat);
+      assertFormat(options.responseFormat);
+      const request = readValue(options.request, options.requestFormat);
+      const response = readValue(options.response, options.responseFormat);
       const responseShape = validateResponse(response);
       if (!responseShape.ok) throw new Error(responseShape.error);
       if ((response as { ok?: boolean }).ok === true && (request as { method?: string }).method === "sign_event") {
@@ -109,4 +141,3 @@ export function buildCli(): Command {
 if (import.meta.url === `file://${process.argv[1]}`) {
   await buildCli().parseAsync(process.argv);
 }
-

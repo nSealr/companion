@@ -19,6 +19,7 @@ TypeScript type safety, unit tests, integration tests, and dependency audit.
 - Negative response verification tests for request id mismatch, template
   mismatch, event id mismatch, and invalid signatures.
 - End-to-end CLI tests for `request -> dev-sign -> verify-response`.
+- End-to-end CLI tests for QR envelope `request -> dev-sign -> verify-response`.
 - CLI fixture verification tests against `NostrSeal/specs`.
 - Transport contract tests for in-memory development signing, JSON file
   handoff, and one-shot JSON-lines stdio exchange.

@@ -36,6 +36,10 @@ The M2 CLI flow is:
 2. Produce a development response with an explicit software test key.
 3. Verify the response against the original request before any downstream use.
 
+The same commands support JSON files and v0 `nseal1:` QR envelope files so the
+desktop companion can drive the Pi Zero vault flow before camera/display
+hardware is integrated.
+
 The development signer exists only for local testing. Production signer lines
 must replace it with a hardware, vault, or smartcard transport while preserving
 the same request/response verification boundary.

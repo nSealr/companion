@@ -120,6 +120,22 @@ describe("nseal CLI", () => {
     );
   });
 
+  it("rejects NIP-46 bridge decision fixture drift", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-nip46-bridge-decision-"));
+    const tempSpecsRoot = join(tempRoot, "specs");
+    cpSync(specsRoot, tempSpecsRoot, { recursive: true });
+    const vectorPath = resolve(tempSpecsRoot, "vectors/nip46/ping.json");
+    const vector = loadJson(vectorPath) as {
+      bridge_decisions: Array<{ decision: { response_message: { result: string } } }>;
+    };
+    vector.bridge_decisions[0].decision.response_message.result = "wrong";
+    writeFileSync(vectorPath, `${JSON.stringify(vector, null, 2)}\n`, "utf8");
+
+    await expect(runCli(["fixture", "verify", "--specs", tempSpecsRoot])).rejects.toThrow(
+      /bridge decision mismatch/u
+    );
+  });
+
   it("rejects malformed event-template JSON before writing a request", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-malformed-json-"));
     const templatePath = join(tempRoot, "template.json");

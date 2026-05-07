@@ -27,6 +27,27 @@ export type Nip46ConnectIntent = {
   requested_permissions: Nip46Permission[];
 };
 
+export type Nip46BridgeDecision =
+  | {
+      type: "connect_review";
+      connect_intent: Nip46ConnectIntent;
+    }
+  | {
+      type: "local_response";
+      permission_requirement: Nip46PermissionRequirement;
+      response_message: Nip46ResponseMessage;
+    }
+  | {
+      type: "signer_request";
+      permission_requirement: Nip46PermissionRequirement;
+      nostrseal_request: NostrSealBridgeRequest;
+    }
+  | {
+      type: "permission_denied";
+      permission_requirement: Nip46PermissionRequirement;
+      response_message: Nip46ResponseMessage;
+    };
+
 const NIP46_PERMISSION_METHODS = new Set([
   "sign_event",
   "nip04_encrypt",
@@ -178,6 +199,58 @@ function permissionMatchesRequirement(
 export function isNip46RequestPermitted(value: unknown, grantedPermissions: readonly Nip46Permission[]): boolean {
   const requirement = nip46PermissionRequirementFromRequest(value);
   return grantedPermissions.some((permission) => permissionMatchesRequirement(permission, requirement));
+}
+
+function formatNip46Permission(permission: Nip46PermissionRequirement): string {
+  if (permission.method === "sign_event" && permission.parameter !== undefined) {
+    return `sign_event:${permission.parameter}`;
+  }
+  return permission.method;
+}
+
+function permissionDeniedResponse(id: string, requirement: Nip46PermissionRequirement): Nip46ResponseMessage {
+  return {
+    id,
+    error: `permission_denied: request requires approved permission ${formatNip46Permission(requirement)}`
+  };
+}
+
+export function decideNip46BridgeAction(
+  value: unknown,
+  grantedPermissions: readonly Nip46Permission[]
+): Nip46BridgeDecision {
+  const message = requireMessage(value);
+  if (message.method === "connect") {
+    return {
+      type: "connect_review",
+      connect_intent: parseNip46ConnectIntent(message)
+    };
+  }
+
+  const requirement = nip46PermissionRequirementFromRequest(message);
+  if (!grantedPermissions.some((permission) => permissionMatchesRequirement(permission, requirement))) {
+    return {
+      type: "permission_denied",
+      permission_requirement: requirement,
+      response_message: permissionDeniedResponse(message.id, requirement)
+    };
+  }
+
+  if (message.method === "ping") {
+    const response = respondToLocalNip46Request(message);
+    if (response === undefined) throw new Error("NIP-46 ping response was not generated");
+    return {
+      type: "local_response",
+      permission_requirement: requirement,
+      response_message: response
+    };
+  }
+
+  return {
+    type: "signer_request",
+    permission_requirement: requirement,
+    nostrseal_request: nostrSealRequestFromNip46(message)
+  };
 }
 
 export function respondToLocalNip46Request(value: unknown): Nip46ResponseMessage | undefined {

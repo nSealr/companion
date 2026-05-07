@@ -70,6 +70,9 @@ single-repository CI. Cross-repository drift remains guarded by
   requirements, broad `sign_event` grants, method-only grants, denied requests,
   and `connect` exclusion from post-connect request permissions. The CLI fixture
   verifier also rejects drift in shared permission policy checks.
+- NIP-46 bridge decision tests covering permitted signer routing, denied signer
+  routing, local `ping`, denied `ping`, and `connect` review intent output. The
+  CLI fixture verifier also rejects drift in shared bridge decision vectors.
 
 ## Next Test Additions
 

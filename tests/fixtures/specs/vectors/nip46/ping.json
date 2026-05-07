@@ -31,6 +31,38 @@
       "permitted": false
     }
   ],
+  "bridge_decisions": [
+    {
+      "granted_permissions": [
+        {
+          "method": "ping"
+        }
+      ],
+      "decision": {
+        "type": "local_response",
+        "permission_requirement": {
+          "method": "ping"
+        },
+        "response_message": {
+          "id": "nip46-ping-1",
+          "result": "pong"
+        }
+      }
+    },
+    {
+      "granted_permissions": [],
+      "decision": {
+        "type": "permission_denied",
+        "permission_requirement": {
+          "method": "ping"
+        },
+        "response_message": {
+          "id": "nip46-ping-1",
+          "error": "permission_denied: request requires approved permission ping"
+        }
+      }
+    }
+  ],
   "local_response_message": {
     "id": "nip46-ping-1",
     "result": "pong"

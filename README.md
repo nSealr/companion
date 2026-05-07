@@ -10,7 +10,8 @@ clients to hardware-backed signing.
 
 - `nseal fixture verify` validates shared signing, trusted-review,
   review-display-frame, QR review-transcript, and NIP-46 payload fixtures from
-  `NostrSeal/specs`, including NIP-46 permission policy checks.
+  `NostrSeal/specs`, including NIP-46 permission policy checks and bridge
+  decisions.
 - `nseal request sign-event` creates a signing request from an event template.
 - `nseal dev-sign` signs requests with an explicit test-only software key.
 - `nseal review-request` renders deterministic review JSON from a signing
@@ -47,9 +48,10 @@ clients to hardware-backed signing.
   `get_public_key`, `sign_event`, local `ping`, and NostrSeal response mapping.
   It also parses `connect` requests into policy-review intents and validates
   requested permission strings against later requests. Shared specs vectors now
-  pin the derived permission requirements and positive/negative permission
-  checks. Relay transport, NIP-44 encryption, persistent permission grants, and
-  auth flows remain future work.
+  pin the derived permission requirements, positive/negative permission checks,
+  and bridge decisions for signer routing, local response routing, `connect`
+  review, and permission-denied responses. Relay transport, NIP-44 encryption,
+  persistent permission grants, and auth flows remain future work.
 
 ## Planned Capabilities
 

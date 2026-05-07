@@ -36,6 +36,39 @@
       "permitted": false
     }
   ],
+  "bridge_decisions": [
+    {
+      "granted_permissions": [
+        {
+          "method": "get_public_key"
+        }
+      ],
+      "decision": {
+        "type": "signer_request",
+        "permission_requirement": {
+          "method": "get_public_key"
+        },
+        "nostrseal_request": {
+          "version": 1,
+          "request_id": "nip46-key-1",
+          "method": "get_public_key"
+        }
+      }
+    },
+    {
+      "granted_permissions": [],
+      "decision": {
+        "type": "permission_denied",
+        "permission_requirement": {
+          "method": "get_public_key"
+        },
+        "response_message": {
+          "id": "nip46-key-1",
+          "error": "permission_denied: request requires approved permission get_public_key"
+        }
+      }
+    }
+  ],
   "nostrseal_response": {
     "version": 1,
     "request_id": "nip46-key-1",

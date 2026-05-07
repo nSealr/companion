@@ -39,8 +39,11 @@ signer may exist only as an explicit test harness.
   NIP-46 result/error strings. It also validates requested permission strings
   and parses `connect` messages into review intents for later policy work.
   Permission matching is present as a pure boundary and is pinned by shared
-  permission policy fixture checks; permission storage and grant UX remain
-  separate layers.
+  permission policy fixture checks. Bridge decision output is also present: a
+  permitted request can become a signer request, `ping` can produce a local
+  response, `connect` can produce a review intent, and missing permissions
+  produce deterministic NIP-46 errors before signer transport. Permission
+  storage and grant UX remain separate layers.
 
 ## Current CLI Flow
 
@@ -154,8 +157,10 @@ The matching helper derives a required permission from a later request and
 checks it against an already-approved permission set. A broad `sign_event`
 permission matches every event kind; `sign_event:<kind>` matches only that
 kind. Shared specs fixtures now include the derived requirement and
-positive/negative permission checks for conformance. Actual grant storage,
-revocation, auth challenges, and user approval UX remain future policy layers.
+positive/negative permission checks for conformance. The bridge decision helper
+uses the same matching result to produce signer routing, local `ping`, `connect`
+review, or permission-denied responses. Actual grant storage, revocation, auth
+challenges, and user approval UX remain future policy layers.
 
 `connect` parsing is also intentionally non-committal. The bridge can extract
 the remote-signer pubkey, optional secret, and requested permissions into a

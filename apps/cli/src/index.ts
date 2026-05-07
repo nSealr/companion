@@ -6,6 +6,7 @@ import { devSignRequest } from "../../../packages/dev-signer/src/dev-signer.js";
 import { loadSpecsFixtures } from "../../../packages/fixtures/src/fixtures.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/src/serial.js";
 import {
+  decideNip46BridgeAction,
   isNip46RequestPermitted,
   nip46PermissionRequirementFromRequest,
   nip46ResponseFromNostrSeal,
@@ -158,6 +159,22 @@ function validateNip46PermissionPolicyFixture(name: string, fixture: Record<stri
   }
 }
 
+function validateNip46BridgeDecisionFixtures(name: string, fixture: Record<string, unknown>): void {
+  if (!Array.isArray(fixture.bridge_decisions) || fixture.bridge_decisions.length === 0) {
+    throw new Error(`invalid NIP-46 fixture ${name}: bridge decisions must be a non-empty array`);
+  }
+  for (const [index, check] of fixture.bridge_decisions.entries()) {
+    if (!isRecord(check) || !Array.isArray(check.granted_permissions)) {
+      throw new Error(`invalid NIP-46 fixture ${name}: bridge decision ${index} must include granted permissions`);
+    }
+    assertJsonEqual(
+      decideNip46BridgeAction(fixture.request_message, check.granted_permissions as Nip46Permission[]),
+      check.decision,
+      `invalid NIP-46 fixture ${name}: bridge decision mismatch at ${index}`
+    );
+  }
+}
+
 function validateNip46PayloadFixture(name: string, fixture: unknown): void {
   if (!isRecord(fixture)) throw new Error(`invalid NIP-46 fixture ${name}: fixture must be an object`);
   if (fixture.format !== "nip46-decrypted-payload-v0") {
@@ -166,6 +183,7 @@ function validateNip46PayloadFixture(name: string, fixture: unknown): void {
   if (!isRecord(fixture.request_message)) {
     throw new Error(`invalid NIP-46 fixture ${name}: request_message must be an object`);
   }
+  validateNip46BridgeDecisionFixtures(name, fixture);
   if (fixture.request_message.method === "ping") {
     validateNip46PermissionPolicyFixture(name, fixture);
     assertJsonEqual(

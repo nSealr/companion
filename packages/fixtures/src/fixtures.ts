@@ -87,6 +87,14 @@ export type SpecsFixtureSet = {
       }>;
       permitted: boolean;
     }>;
+    bridge_decisions?: Array<{
+      granted_permissions: Array<{
+        method: string;
+        parameter?: string;
+        event_kind?: number;
+      }>;
+      decision: unknown;
+    }>;
     nostrseal_request?: unknown;
     nostrseal_response?: unknown;
     response_message?: {

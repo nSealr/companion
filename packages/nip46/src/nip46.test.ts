@@ -5,6 +5,7 @@ import { loadSpecsFixtures } from "../../fixtures/src/fixtures.js";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { validateRequest } from "../../protocol/src/protocol.js";
 import {
+  decideNip46BridgeAction,
   isNip46RequestPermitted,
   nip46ResponseFromNostrSeal,
   nip46PermissionRequirementFromRequest,
@@ -118,6 +119,12 @@ describe("NIP-46 bridge payloads", () => {
         expect(isNip46RequestPermitted(vector?.request_message, check.granted_permissions)).toBe(check.permitted);
       }
     }
+    for (const vector of fixtures.nip46Payloads) {
+      expect(vector.bridge_decisions?.length).toBeGreaterThan(0);
+      for (const check of vector.bridge_decisions ?? []) {
+        expect(decideNip46BridgeAction(vector.request_message, check.granted_permissions)).toEqual(check.decision);
+      }
+    }
   });
 
   it("rejects unsupported or unsafe NIP-46 request payloads", () => {
@@ -216,5 +223,100 @@ describe("NIP-46 bridge payloads", () => {
         params: ["4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"]
       })
     ).toThrow(/connect requires policy review/u);
+  });
+
+  it("decides whether a NIP-46 request may reach signer transport", () => {
+    const signEventRequest = load("examples/request-kind-1-basic.json") as {
+      params: { event_template: unknown };
+    };
+    const signEventMessage = {
+      id: "nip46-req-1",
+      method: "sign_event",
+      params: [JSON.stringify(signEventRequest.params.event_template)]
+    };
+
+    expect(decideNip46BridgeAction(signEventMessage, parseNip46Permissions("sign_event:1"))).toEqual({
+      type: "signer_request",
+      permission_requirement: {
+        method: "sign_event",
+        parameter: "1",
+        event_kind: 1
+      },
+      nostrseal_request: {
+        version: 1,
+        request_id: "nip46-req-1",
+        method: "sign_event",
+        params: {
+          event_template: signEventRequest.params.event_template
+        }
+      }
+    });
+
+    expect(decideNip46BridgeAction(signEventMessage, parseNip46Permissions("sign_event:4"))).toEqual({
+      type: "permission_denied",
+      permission_requirement: {
+        method: "sign_event",
+        parameter: "1",
+        event_kind: 1
+      },
+      response_message: {
+        id: "nip46-req-1",
+        error: "permission_denied: request requires approved permission sign_event:1"
+      }
+    });
+  });
+
+  it("keeps local ping and connect inside the NIP-46 policy boundary", () => {
+    const remoteSignerPubkey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
+
+    expect(
+      decideNip46BridgeAction(
+        {
+          id: "ping-1",
+          method: "ping",
+          params: []
+        },
+        parseNip46Permissions("ping")
+      )
+    ).toEqual({
+      type: "local_response",
+      permission_requirement: {
+        method: "ping"
+      },
+      response_message: {
+        id: "ping-1",
+        result: "pong"
+      }
+    });
+
+    expect(decideNip46BridgeAction({ id: "ping-1", method: "ping", params: [] }, [])).toEqual({
+      type: "permission_denied",
+      permission_requirement: {
+        method: "ping"
+      },
+      response_message: {
+        id: "ping-1",
+        error: "permission_denied: request requires approved permission ping"
+      }
+    });
+
+    expect(
+      decideNip46BridgeAction(
+        {
+          id: "connect-1",
+          method: "connect",
+          params: [remoteSignerPubkey, "secret-1", "sign_event:1"]
+        },
+        []
+      )
+    ).toEqual({
+      type: "connect_review",
+      connect_intent: {
+        id: "connect-1",
+        remote_signer_pubkey: remoteSignerPubkey,
+        secret: "secret-1",
+        requested_permissions: [{ method: "sign_event", parameter: "1", event_kind: 1 }]
+      }
+    });
   });
 });

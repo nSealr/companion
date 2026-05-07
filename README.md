@@ -25,6 +25,8 @@ clients to hardware-backed signing.
   current ESP32-S3 scaffold's disabled-signing safety flags.
 - Serial transport tests cover both capability discovery and explicit
   signing-disabled scaffold responses.
+- `packages/fixtures` loads shared event and trusted-review vectors from
+  `NostrSeal/specs` for companion, vault, and firmware conformance tests.
 - `packages/smartcard` implements the first APDU codec and simulator adapter
   against shared smartcard vectors.
 

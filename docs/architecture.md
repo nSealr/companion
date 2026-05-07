@@ -21,7 +21,7 @@ signer may exist only as an explicit test harness.
 - `apps/cli`: command-line entrypoint.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation and typed request/response models.
-- `packages/fixtures`: shared fixture loading.
+- `packages/fixtures`: shared event, key, and trusted-review fixture loading.
 - `packages/dev-signer`: test-only signing implementation.
 - `packages/transport`: signer transport interface plus in-memory development,
   JSON file, and JSON-lines stdio adapters.
@@ -53,6 +53,10 @@ adapters are responsible for moving JSON request and response envelopes only.
 The companion remains responsible for validating request/response shape and
 cryptographically verifying successful signed-event responses after transport
 completion.
+
+Trusted-review vectors are loaded from `NostrSeal/specs` so host tools and
+device implementations can agree on what must be shown before approval. They do
+not make the companion trusted; they are conformance data for signer UIs.
 
 The current adapters cover three development paths:
 

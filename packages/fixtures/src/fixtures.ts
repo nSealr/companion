@@ -14,6 +14,20 @@ export type SpecsFixtureSet = {
     event_id: string;
     signature: string;
   }>;
+  reviews: Array<{
+    name: string;
+    request: unknown;
+    review: {
+      kind: number;
+      kind_name: string;
+      created_at: number;
+      content_preview: string;
+      content_length: number;
+      tag_count: number;
+      tag_summary: string[];
+      warnings: string[];
+    };
+  }>;
 };
 
 function loadJson(path: string): unknown {
@@ -22,12 +36,16 @@ function loadJson(path: string): unknown {
 
 export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const eventsRoot = resolve(specsRoot, "vectors/events");
+  const reviewsRoot = resolve(specsRoot, "vectors/review");
   const eventFiles = readdirSync(eventsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const reviewFiles = readdirSync(reviewsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   return {
     key: loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as SpecsFixtureSet["key"],
-    events: eventFiles.map((file) => loadJson(resolve(eventsRoot, file)) as SpecsFixtureSet["events"][number])
+    events: eventFiles.map((file) => loadJson(resolve(eventsRoot, file)) as SpecsFixtureSet["events"][number]),
+    reviews: reviewFiles.map((file) => loadJson(resolve(reviewsRoot, file)) as SpecsFixtureSet["reviews"][number])
   };
 }
-

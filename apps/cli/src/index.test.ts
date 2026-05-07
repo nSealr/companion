@@ -136,6 +136,56 @@ describe("nseal CLI", () => {
     );
   });
 
+  it("writes NIP-46 bridge decisions without opening relay or signer transports", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-nip46-decision-"));
+    const signEventVector = loadJson(resolve(specsRoot, "vectors/nip46/sign-event-kind-1-basic.json")) as {
+      request_message: unknown;
+      bridge_decisions: Array<{
+        decision: unknown;
+      }>;
+    };
+    const connectVector = loadJson(resolve(specsRoot, "vectors/nip46/connect-policy-review.json")) as {
+      request_message: unknown;
+      bridge_decisions: Array<{
+        decision: unknown;
+      }>;
+    };
+    const signEventMessagePath = join(tempRoot, "sign-event-message.json");
+    const connectMessagePath = join(tempRoot, "connect-message.json");
+    const permittedDecisionPath = join(tempRoot, "permitted-decision.json");
+    const deniedDecisionPath = join(tempRoot, "denied-decision.json");
+    const connectDecisionPath = join(tempRoot, "connect-decision.json");
+
+    writeFileSync(signEventMessagePath, `${JSON.stringify(signEventVector.request_message, null, 2)}\n`, "utf8");
+    writeFileSync(connectMessagePath, `${JSON.stringify(connectVector.request_message, null, 2)}\n`, "utf8");
+
+    await runCli([
+      "nip46",
+      "decide",
+      "--message",
+      signEventMessagePath,
+      "--permissions",
+      "sign_event:1",
+      "--out",
+      permittedDecisionPath
+    ]);
+    await runCli([
+      "nip46",
+      "decide",
+      "--message",
+      signEventMessagePath,
+      "--permissions",
+      "sign_event:4",
+      "--out",
+      deniedDecisionPath
+    ]);
+    await runCli(["nip46", "decide", "--message", connectMessagePath, "--out", connectDecisionPath]);
+
+    expect(loadJson(permittedDecisionPath)).toEqual(signEventVector.bridge_decisions[0].decision);
+    expect(loadJson(deniedDecisionPath)).toEqual(signEventVector.bridge_decisions[1].decision);
+    expect(loadJson(connectDecisionPath)).toEqual(connectVector.bridge_decisions[0].decision);
+  });
+
   it("rejects malformed event-template JSON before writing a request", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-malformed-json-"));
     const templatePath = join(tempRoot, "template.json");

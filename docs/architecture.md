@@ -162,6 +162,11 @@ uses the same matching result to produce signer routing, local `ping`, `connect`
 review, or permission-denied responses. Actual grant storage, revocation, auth
 challenges, and user approval UX remain future policy layers.
 
+`nseal nip46 decide` exposes that boundary as a file-backed test harness for
+already-decrypted payloads. It writes the same deterministic decision JSON used
+by shared vectors and does not open relay sessions, decrypt NIP-44 payloads,
+persist grants, or contact signer transports.
+
 `connect` parsing is also intentionally non-committal. The bridge can extract
 the remote-signer pubkey, optional secret, and requested permissions into a
 review intent, but it does not return `ack`, echo secrets, persist grants, or

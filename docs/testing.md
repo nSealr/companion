@@ -73,6 +73,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - NIP-46 bridge decision tests covering permitted signer routing, denied signer
   routing, local `ping`, denied `ping`, and `connect` review intent output. The
   CLI fixture verifier also rejects drift in shared bridge decision vectors.
+- CLI NIP-46 decision tests covering `nseal nip46 decide` against shared
+  permitted, denied, and `connect` bridge-decision vectors without opening relay
+  or signer transports.
 
 ## Next Test Additions
 

@@ -27,6 +27,9 @@ clients to hardware-backed signing.
   development, file, JSON-lines stdio, and serial-frame adapters.
 - `nseal serial-frame` exposes offline serial-frame request wrapping and
   response unwrapping helpers for ESP32 bring-up and lab captures.
+- `nseal nip46 decide` writes the bridge decision for an already-decrypted
+  NIP-46 payload using explicit permission inputs. It does not open relays,
+  decrypt NIP-44 payloads, persist grants, or contact signer transports.
 - `packages/qr` implements the v0 `nseal1:` QR envelope from
   `NostrSeal/specs`.
 - `packages/framing` implements the first checksum-protected serial line frame
@@ -86,6 +89,7 @@ pnpm nseal --help
 pnpm nseal fixture verify --specs ../specs
 pnpm nseal request sign-event --event-template template.json --out request.qr --output-format qr
 pnpm nseal review-request --request request.qr --request-format qr --out review.json
+pnpm nseal nip46 decide --message nip46-message.json --permissions sign_event:1 --out decision.json
 pnpm nseal smartcard-sim-sign --secret-key <test-only-hex> --request request.qr --request-format qr --review-acknowledged --out response.qr --output-format qr
 ```
 

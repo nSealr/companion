@@ -12,6 +12,7 @@ import {
   nip46ResponseFromNostrSeal,
   nostrSealRequestFromNip46,
   parseNip46ConnectIntent,
+  parseNip46Permissions,
   type Nip46Permission,
   respondToLocalNip46Request
 } from "../../../packages/nip46/src/nip46.js";
@@ -412,6 +413,20 @@ export function buildCli(): Command {
       const validation = validateResponse(frame.payload);
       if (!validation.ok) throw new Error(validation.error);
       writeValue(options.out, frame.payload, options.outputFormat);
+    });
+
+  const nip46 = program.command("nip46").description("Inspect already-decrypted NIP-46 payloads");
+
+  nip46
+    .command("decide")
+    .requiredOption("--message <path>")
+    .option("--permissions <value>", "Comma-separated approved NIP-46 permissions", "")
+    .requiredOption("--out <path>")
+    .description("Write the bridge decision for an already-decrypted NIP-46 request")
+    .action((options: { message: string; permissions: string; out: string }) => {
+      const message = readJson(options.message);
+      const permissions = parseNip46Permissions(options.permissions);
+      writeJson(options.out, decideNip46BridgeAction(message, permissions));
     });
 
   program

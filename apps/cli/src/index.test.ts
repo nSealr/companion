@@ -100,7 +100,7 @@ describe("nseal CLI", () => {
 
   it("verifies event and trusted-review fixtures from the specs repository", async () => {
     await expect(collectCliOutput(["fixture", "verify", "--specs", specsRoot])).resolves.toEqual([
-      "verified 2 event fixtures, 4 review fixtures, 1 review display-frame fixture, 2 review transcript fixtures, and 5 NIP-46 payload fixtures"
+      "verified 2 event fixtures, 4 review fixtures, 1 review display-frame fixture, 2 review transcript fixtures, 5 NIP-46 payload fixtures, and 1 NIP-46 policy-file fixture"
     ]);
   });
 
@@ -133,6 +133,22 @@ describe("nseal CLI", () => {
 
     await expect(runCli(["fixture", "verify", "--specs", tempSpecsRoot])).rejects.toThrow(
       /bridge decision mismatch/u
+    );
+  });
+
+  it("rejects NIP-46 policy-file fixture drift", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-nip46-policy-file-"));
+    const tempSpecsRoot = join(tempRoot, "specs");
+    cpSync(specsRoot, tempSpecsRoot, { recursive: true });
+    const policyPath = resolve(tempSpecsRoot, "vectors/nip46-policy-files/sign-event-kind-1-approved.json");
+    const policy = loadJson(policyPath) as {
+      approved_permissions: Array<{ event_kind: number }>;
+    };
+    policy.approved_permissions[0].event_kind = 4;
+    writeFileSync(policyPath, `${JSON.stringify(policy, null, 2)}\n`, "utf8");
+
+    await expect(runCli(["fixture", "verify", "--specs", tempSpecsRoot])).rejects.toThrow(
+      /NIP-46 policy-file fixture/u
     );
   });
 
@@ -195,22 +211,10 @@ describe("nseal CLI", () => {
       }>;
     };
     const messagePath = join(tempRoot, "message.json");
-    const policyPath = join(tempRoot, "policy.json");
+    const policyPath = resolve(specsRoot, "vectors/nip46-policy-files/sign-event-kind-1-approved.json");
     const decisionPath = join(tempRoot, "decision.json");
 
     writeFileSync(messagePath, `${JSON.stringify(signEventVector.request_message, null, 2)}\n`, "utf8");
-    writeFileSync(
-      policyPath,
-      `${JSON.stringify(
-        {
-          format: "nseal-nip46-policy-v0",
-          approved_permissions: [{ method: "sign_event", parameter: "1", event_kind: 1 }]
-        },
-        null,
-        2
-      )}\n`,
-      "utf8"
-    );
 
     await runCli(["nip46", "decide", "--message", messagePath, "--policy-file", policyPath, "--out", decisionPath]);
 
@@ -223,22 +227,10 @@ describe("nseal CLI", () => {
       request_message: unknown;
     };
     const messagePath = join(tempRoot, "message.json");
-    const policyPath = join(tempRoot, "policy.json");
+    const policyPath = resolve(specsRoot, "vectors/nip46-policy-files/sign-event-kind-1-approved.json");
     const decisionPath = join(tempRoot, "decision.json");
 
     writeFileSync(messagePath, `${JSON.stringify(signEventVector.request_message, null, 2)}\n`, "utf8");
-    writeFileSync(
-      policyPath,
-      `${JSON.stringify(
-        {
-          format: "nseal-nip46-policy-v0",
-          approved_permissions: [{ method: "sign_event", parameter: "1", event_kind: 1 }]
-        },
-        null,
-        2
-      )}\n`,
-      "utf8"
-    );
 
     await expect(
       runCli([

@@ -118,10 +118,23 @@ export type SpecsFixtureSet = {
       }>;
     };
   }>;
+  nip46PolicyFiles: Array<{
+    name: string;
+    format: string;
+    approved_permissions: Array<{
+      method: string;
+      parameter?: string;
+      event_kind?: number;
+    }>;
+  }>;
 };
 
 function loadJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));
+}
+
+function fileStem(file: string): string {
+  return file.replace(/\.json$/, "");
 }
 
 export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
@@ -130,6 +143,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const reviewDisplayFramesRoot = resolve(specsRoot, "vectors/review-display-frames");
   const reviewTranscriptsRoot = resolve(specsRoot, "vectors/review-transcripts");
   const nip46Root = resolve(specsRoot, "vectors/nip46");
+  const nip46PolicyFilesRoot = resolve(specsRoot, "vectors/nip46-policy-files");
   const eventFiles = readdirSync(eventsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
@@ -145,6 +159,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const nip46Files = readdirSync(nip46Root)
     .filter((file) => file.endsWith(".json"))
     .sort();
+  const nip46PolicyFiles = readdirSync(nip46PolicyFilesRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
   return {
     key: loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as SpecsFixtureSet["key"],
     events: eventFiles.map((file) => loadJson(resolve(eventsRoot, file)) as SpecsFixtureSet["events"][number]),
@@ -157,6 +174,13 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     ),
     nip46Payloads: nip46Files.map(
       (file) => loadJson(resolve(nip46Root, file)) as SpecsFixtureSet["nip46Payloads"][number]
+    ),
+    nip46PolicyFiles: nip46PolicyFiles.map(
+      (file) =>
+        ({
+          ...(loadJson(resolve(nip46PolicyFilesRoot, file)) as Record<string, unknown>),
+          name: fileStem(file)
+        }) as SpecsFixtureSet["nip46PolicyFiles"][number]
     )
   };
 }

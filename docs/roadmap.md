@@ -9,10 +9,10 @@
 - Response verification.
 
 Status: implemented as the first companion foundation with JSON and QR envelope
-CLI paths. Fixture verification now includes shared review-display-frame and
-QR review-transcript vectors plus NIP-46 payload vectors in addition to event
-and trusted-review vectors. Malformed JSON and unsupported request-method CLI
-rejection tests are now covered.
+CLI paths. Fixture verification now includes shared review-display-frame,
+QR review-transcript, NIP-46 payload, and NIP-46 policy-file vectors in
+addition to event and trusted-review vectors. Malformed JSON and unsupported
+request-method CLI rejection tests are now covered.
 
 ## M3: Transport Layer
 
@@ -53,9 +53,9 @@ vectors. Bridge decisions are also pinned by shared specs vectors, including
 permission-denied NIP-46 responses before a request reaches signer transport.
 `nseal nip46 decide` exposes those decisions as a file-backed CLI harness for
 integration tests. The command can read explicit permissions from the command
-line or from a `nseal-nip46-policy-v0` policy file, but it does not create,
-update, approve, or persist grants by itself. It also does not add relay,
-encryption, or signer I/O.
+line or from a `nseal-nip46-policy-v0` policy file pinned by shared specs
+vectors, but it does not create, update, approve, or persist grants by itself.
+It also does not add relay, encryption, or signer I/O.
 Relay sessions, NIP-44 encryption/decryption, connection token responses,
 permission storage, grant review, and auth challenge UX remain future work.
 

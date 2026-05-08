@@ -35,7 +35,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI review-request test for rendering review JSON from a QR signing request.
 - CLI fixture verification tests against `NostrSeal/specs`, covering both
   signed-event fixtures, trusted-review fixtures, review-display-frame
-  fixtures, QR review-transcript fixtures, and NIP-46 payload fixtures.
+  fixtures, QR review-transcript fixtures, NIP-46 payload fixtures, and NIP-46
+  policy-file fixtures.
 - Transport contract tests for in-memory development signing, JSON file
   handoff, one-shot JSON-lines stdio exchange, and serial-frame exchange.
 - CLI serial-frame tests covering validated request wrapping and response-frame
@@ -78,7 +79,9 @@ single-repository CI. Cross-repository drift remains guarded by
   or signer transports.
 - CLI NIP-46 policy-file tests covering read-only
   `nseal-nip46-policy-v0` permission input and rejection of ambiguous
-  `--permissions` plus `--policy-file` usage.
+  `--permissions` plus `--policy-file` usage. The positive case consumes the
+  shared `NostrSeal/specs` policy-file vector instead of an inline local copy.
+  The CLI fixture verifier also rejects drift in shared policy-file vectors.
 
 ## Next Test Additions
 

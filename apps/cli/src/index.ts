@@ -42,36 +42,54 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function readNip46PolicyPermissions(path: string): Nip46Permission[] {
-  const policy = readJson(path);
+function parseNip46PolicyPermission(permission: unknown, context: string): Nip46Permission {
+  if (!isRecord(permission) || typeof permission.method !== "string") {
+    throw new Error(`${context} permission entries must include method`);
+  }
+  if (/[,:]/u.test(permission.method)) {
+    throw new Error(`${context} permission method must not include parameter separators`);
+  }
+  if (permission.method === "sign_event" && permission.parameter !== undefined) {
+    if (typeof permission.parameter !== "string" || !/^[0-9]+$/u.test(permission.parameter)) {
+      throw new Error(`${context} sign_event permission parameter must be numeric`);
+    }
+    if (permission.event_kind !== Number(permission.parameter)) {
+      throw new Error(`${context} sign_event permission event_kind must match parameter`);
+    }
+    return {
+      method: permission.method,
+      parameter: permission.parameter,
+      event_kind: permission.event_kind
+    };
+  }
+  if ("parameter" in permission || "event_kind" in permission) {
+    throw new Error(`${context} non-parameter permission must not include parameter data`);
+  }
+  let parsed: Nip46Permission[];
+  try {
+    parsed = parseNip46Permissions(permission.method);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`${context}: ${message}`);
+  }
+  if (parsed.length !== 1) {
+    throw new Error(`${context} permission entry must describe exactly one permission`);
+  }
+  return parsed[0];
+}
+
+function parseNip46PolicyPermissions(policy: unknown, context = "NIP-46 policy file"): Nip46Permission[] {
   if (!isRecord(policy) || policy.format !== "nseal-nip46-policy-v0") {
-    throw new Error("NIP-46 policy file must use format nseal-nip46-policy-v0");
+    throw new Error(`${context} must use format nseal-nip46-policy-v0`);
   }
   if (!Array.isArray(policy.approved_permissions)) {
-    throw new Error("NIP-46 policy file must include approved_permissions");
+    throw new Error(`${context} must include approved_permissions`);
   }
-  return policy.approved_permissions.map((permission) => {
-    if (!isRecord(permission) || typeof permission.method !== "string") {
-      throw new Error("NIP-46 policy permission entries must include method");
-    }
-    if (permission.method === "sign_event" && permission.parameter !== undefined) {
-      if (typeof permission.parameter !== "string" || !/^[0-9]+$/u.test(permission.parameter)) {
-        throw new Error("NIP-46 policy sign_event permission parameter must be numeric");
-      }
-      if (permission.event_kind !== Number(permission.parameter)) {
-        throw new Error("NIP-46 policy sign_event permission event_kind must match parameter");
-      }
-      return {
-        method: permission.method,
-        parameter: permission.parameter,
-        event_kind: permission.event_kind
-      };
-    }
-    if ("parameter" in permission || "event_kind" in permission) {
-      throw new Error("NIP-46 policy non-parameter permission must not include parameter data");
-    }
-    return parseNip46Permissions(permission.method)[0];
-  });
+  return policy.approved_permissions.map((permission) => parseNip46PolicyPermission(permission, context));
+}
+
+function readNip46PolicyPermissions(path: string): Nip46Permission[] {
+  return parseNip46PolicyPermissions(readJson(path));
 }
 
 function validateReviewTranscriptFixture(name: string, fixture: unknown): void {
@@ -250,6 +268,10 @@ function validateNip46PayloadFixture(name: string, fixture: unknown): void {
   );
 }
 
+function validateNip46PolicyFileFixture(name: string, fixture: unknown): void {
+  parseNip46PolicyPermissions(fixture, `invalid NIP-46 policy-file fixture ${name}`);
+}
+
 function readValue(path: string, format: DataFormat): unknown {
   if (format === "qr") return decodeQrEnvelope(readFileSync(path, "utf8").trim());
   return readJson(path);
@@ -301,8 +323,15 @@ export function buildCli(): Command {
       for (const nip46Payload of fixtures.nip46Payloads) {
         validateNip46PayloadFixture(nip46Payload.name, nip46Payload);
       }
+      for (const nip46PolicyFile of fixtures.nip46PolicyFiles) {
+        validateNip46PolicyFileFixture(nip46PolicyFile.name, nip46PolicyFile);
+      }
+      const policyFileFixtureLabel =
+        fixtures.nip46PolicyFiles.length === 1
+          ? "1 NIP-46 policy-file fixture"
+          : `${fixtures.nip46PolicyFiles.length} NIP-46 policy-file fixtures`;
       console.log(
-        `verified ${fixtures.events.length} event fixtures, ${fixtures.reviews.length} review fixtures, ${fixtures.reviewDisplayFrames.length} review display-frame fixture, ${fixtures.reviewTranscripts.length} review transcript fixtures, and ${fixtures.nip46Payloads.length} NIP-46 payload fixtures`
+        `verified ${fixtures.events.length} event fixtures, ${fixtures.reviews.length} review fixtures, ${fixtures.reviewDisplayFrames.length} review display-frame fixture, ${fixtures.reviewTranscripts.length} review transcript fixtures, ${fixtures.nip46Payloads.length} NIP-46 payload fixtures, and ${policyFileFixtureLabel}`
       );
     });
 

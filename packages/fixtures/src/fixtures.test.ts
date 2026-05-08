@@ -52,4 +52,10 @@ describe("fixture loading", () => {
     ]);
     expect(fixtures.nip46Payloads[0].format).toBe("nip46-decrypted-payload-v0");
   });
+
+  it("loads NIP-46 policy-file vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    expect(fixtures.nip46PolicyFiles.map((policy) => policy.name)).toEqual(["sign-event-kind-1-approved"]);
+    expect(fixtures.nip46PolicyFiles[0].format).toBe("nseal-nip46-policy-v0");
+  });
 });

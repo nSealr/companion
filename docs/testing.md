@@ -83,11 +83,20 @@ single-repository CI. Cross-repository drift remains guarded by
   `--permissions` plus `--policy-file` usage. The positive case consumes the
   shared `NostrSeal/specs` policy-file vector instead of an inline local copy.
   The CLI fixture verifier also rejects drift in shared policy-file vectors.
+- Pre-signing hardening tests must reject every shared invalid vector that
+  reaches companion-owned parsing: unsafe event-template fields, unsafe integer
+  values, resource-limit violations, malformed QR/serial envelopes, malformed
+  NIP-46 payloads, and invalid policy files.
+- Nostr conformance oracle tests must compare companion event id/signature
+  behavior with `nostr-tools` in tests, while keeping production code free of
+  unnecessary oracle coupling.
 
 ## Next Test Additions
 
 - Large QR payload strategy tests once chunking or compression is designed.
 - Hardware serial smoke tests before adding WebUSB, HID, or CDC adapters.
+- M4.5 hardening-vector coverage before full NIP-46 sessions, browser
+  extension work, persistent grants, or production signer I/O.
 
 ## Rule
 

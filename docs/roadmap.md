@@ -59,6 +59,23 @@ It also does not add relay, encryption, or signer I/O.
 Relay sessions, NIP-44 encryption/decryption, connection token responses,
 permission storage, grant review, and auth challenge UX remain future work.
 
+## M4.5: Pre-Signing Contract Hardening
+
+- Move NIP-46 policy-file parsing into package-owned logic so CLI commands stay
+  thin wrappers.
+- Add a central NostrSeal v0 limit profile in protocol code and enforce it in
+  signing-request validation.
+- Make NIP-46 bridge conversion reuse standard request validation so unsafe
+  already-decrypted payloads cannot bypass the signing-request validator.
+- Add tests for shared malicious vectors and deterministic rejection before any
+  signer transport is contacted or output file is written.
+- Add a `nostr-tools` test oracle for NIP-01 canonical event hash/signature
+  conformance without coupling production code to that dependency.
+
+Status: blocker before browser extension work, full NIP-46 relay sessions,
+NIP-44 handling, persistent grants, `connect` acknowledgement, signer I/O, or
+production signing claims.
+
 ## Later
 
 - Browser bridge.

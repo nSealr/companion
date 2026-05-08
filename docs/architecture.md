@@ -16,6 +16,13 @@ lines.
 The companion must not be trusted with production private keys. A development
 signer may exist only as an explicit test harness.
 
+Before any production signer I/O, browser extension, full NIP-46 relay session,
+or persistent grant layer is added, companion code must pass the M4.5
+pre-signing hardening gate. Signing-request validation, NIP-46 bridge
+conversion, QR/serial decoding, and policy-file parsing must share explicit
+NostrSeal v0 limits and deterministic rejection behavior. CLI commands should
+only adapt file/argument I/O around package-owned validation logic.
+
 ## Implemented Modules
 
 - `apps/cli`: command-line entrypoint.
@@ -96,6 +103,11 @@ encryption work begins.
 NIP-46 policy-file vectors are loaded and verified by `nseal fixture verify` so
 explicit approved-permission inputs stay normalized across specs, companion,
 and lab integration. They are read-only conformance files, not a grant store.
+
+Pre-signing hardening vectors are the companion's rejection oracle for unsafe
+input. They must be evaluated before signer transport, dev signing,
+smartcard-sim signing, or NIP-46 routing can proceed, and failures must not
+write output artifacts.
 
 The current adapters cover three development paths:
 

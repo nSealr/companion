@@ -11,11 +11,13 @@
 Status: implemented as the first companion foundation with JSON and QR envelope
 CLI paths. Fixture verification now includes shared review-display-frame,
 QR review-transcript, NIP-46 payload, NIP-46 policy-file, limit-profile, and
-invalid hardening vectors in addition to event and trusted-review vectors.
-Malformed JSON and unsupported request-method CLI rejection tests are now
-covered. `verify-response` now validates the original request before accepting
-any response, so malformed request files cannot be certified by pairing them
-with a validly shaped response.
+invalid hardening vectors in addition to event and trusted-review vectors. The
+shared invalid-vector set now includes strict response-shape rejection for
+ambiguous result payloads, error/result mixing, and unknown top-level response
+fields. Malformed JSON and unsupported request-method CLI rejection tests are
+now covered. `verify-response` now validates the original request before
+accepting any response, so malformed request files cannot be certified by
+pairing them with a validly shaped response.
 
 ## M3: Transport Layer
 

@@ -58,4 +58,16 @@ describe("protocol validation", () => {
       expect(result.error, vector.name).toContain(vector.expected_error);
     }
   });
+
+  it("rejects shared invalid response vectors deterministically", () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+    const responseVectors = fixtures.invalidVectors.filter((vector) => vector.category === "response");
+
+    expect(responseVectors.length).toBeGreaterThan(0);
+    for (const vector of responseVectors) {
+      const result = validateResponse(vector.response);
+      expect(result.ok, vector.name).toBe(false);
+      expect(result.error, vector.name).toContain(vector.expected_error);
+    }
+  });
 });

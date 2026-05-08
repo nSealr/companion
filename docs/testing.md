@@ -102,8 +102,9 @@ single-repository CI. Cross-repository drift remains guarded by
   The CLI fixture verifier also rejects drift in shared policy-file vectors.
 - Pre-signing hardening tests must reject every shared invalid vector that
   reaches companion-owned parsing: unsafe event-template fields, unsafe integer
-  values, resource-limit violations, malformed QR/serial envelopes, malformed
-  NIP-46 payloads, and invalid policy files.
+  values, resource-limit violations, malformed or ambiguous responses,
+  malformed QR/serial envelopes, malformed NIP-46 payloads, and invalid policy
+  files.
 - Nostr conformance oracle tests must compare companion event id/signature
   behavior with `nostr-tools` in tests, while keeping production code free of
   unnecessary oracle coupling.

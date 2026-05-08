@@ -112,6 +112,8 @@ export function validateRequest(value: unknown): ValidationResult {
 
 function validateSignedEvent(value: unknown): ValidationResult {
   if (!isRecord(value)) return { ok: false, error: "event must be an object" };
+  const extra = unknownFields(value, ["id", "pubkey", "created_at", "kind", "tags", "content", "sig"]);
+  if (extra.length > 0) return { ok: false, error: `event contains unknown fields: ${extra.join(", ")}` };
   if (!isLowerHex(value.id, 64)) return { ok: false, error: "event id must be 32-byte lowercase hex" };
   if (!isLowerHex(value.pubkey, 64)) return { ok: false, error: "event pubkey must be 32-byte lowercase hex" };
   if (!isSafeNonNegativeInteger(value.created_at)) return { ok: false, error: "created_at must be a non-negative integer" };
@@ -152,9 +154,12 @@ function validateCapabilities(value: unknown): ValidationResult {
 
 export function validateResponse(value: unknown): ValidationResult {
   if (!isRecord(value)) return { ok: false, error: "response must be an object" };
+  const extra = unknownFields(value, ["version", "request_id", "ok", "result", "error"]);
+  if (extra.length > 0) return { ok: false, error: `unknown top-level response fields: ${extra.join(", ")}` };
   if (value.version !== 1) return { ok: false, error: "version must be 1" };
   if (!isRequestId(value.request_id)) return { ok: false, error: "request_id is invalid" };
   if (value.ok === false) {
+    if ("result" in value) return { ok: false, error: "error response must not include result" };
     if (!isRecord(value.error)) return { ok: false, error: "error response requires error object" };
     if (typeof value.error.code !== "string") return { ok: false, error: "error code is required" };
     if (typeof value.error.message !== "string" || value.error.message.length === 0) return { ok: false, error: "error message is required" };
@@ -162,12 +167,20 @@ export function validateResponse(value: unknown): ValidationResult {
     return { ok: true };
   }
   if (value.ok === true) {
+    if ("error" in value) return { ok: false, error: "successful response must not include error" };
     if (!isRecord(value.result)) return { ok: false, error: "successful response requires result" };
-    if ("capabilities" in value.result) return validateCapabilities(value.result.capabilities);
-    if ("public_key" in value.result) {
-      return isLowerHex(value.result.public_key, 64) ? { ok: true } : { ok: false, error: "public_key is invalid" };
+    const result = value.result;
+    const resultExtra = unknownFields(result, ["capabilities", "public_key", "event"]);
+    if (resultExtra.length > 0) return { ok: false, error: `successful response result contains unknown fields: ${resultExtra.join(", ")}` };
+    const resultFields = ["capabilities", "public_key", "event"].filter((field) => field in result);
+    if (resultFields.length !== 1) {
+      return { ok: false, error: "successful response result must contain exactly one result field" };
     }
-    if ("event" in value.result) return validateSignedEvent(value.result.event);
+    if ("capabilities" in result) return validateCapabilities(result.capabilities);
+    if ("public_key" in result) {
+      return isLowerHex(result.public_key, 64) ? { ok: true } : { ok: false, error: "public_key is invalid" };
+    }
+    if ("event" in result) return validateSignedEvent(result.event);
     return { ok: false, error: "successful response result is empty" };
   }
   return { ok: false, error: "ok must be true or false" };

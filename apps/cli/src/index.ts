@@ -245,6 +245,7 @@ function validateInvalidHardeningFixture(fixture: {
   category: string;
   expected_error: string;
   request?: unknown;
+  response?: unknown;
   envelope?: string;
   frame?: string;
   request_message?: unknown;
@@ -253,6 +254,13 @@ function validateInvalidHardeningFixture(fixture: {
   if (fixture.category === "signing-request") {
     expectFixtureRejection(fixture.name, fixture.expected_error, () => {
       const result = validateRequest(fixture.request);
+      if (!result.ok) throw new Error(result.error);
+    });
+    return;
+  }
+  if (fixture.category === "response") {
+    expectFixtureRejection(fixture.name, fixture.expected_error, () => {
+      const result = validateResponse(fixture.response);
       if (!result.ok) throw new Error(result.error);
     });
     return;

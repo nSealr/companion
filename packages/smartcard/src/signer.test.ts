@@ -12,6 +12,9 @@ const key = JSON.parse(readFileSync(resolve(specsRoot, "vectors/keys/test-key-1.
   secret_key: string;
 };
 const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8")) as SignEventRequest;
+const unsafeTemplateVector = JSON.parse(
+  readFileSync(resolve(specsRoot, "vectors/invalid/request-event-template-pubkey.json"), "utf8")
+) as { request: SignEventRequest; expected_error: string };
 
 describe("SmartcardSigner", () => {
   it("refuses to sign unless an external review acknowledgement is supplied", async () => {
@@ -33,5 +36,16 @@ describe("SmartcardSigner", () => {
     expect(response.result.event.id).toHaveLength(64);
     expect(response.result.event.sig).toHaveLength(128);
     expect(verifySignedEventResponse(request, response).ok).toBe(true);
+  });
+
+  it("rejects unsafe requests before sending an event id to the card", async () => {
+    const signer = new SmartcardSigner(new SmartcardSimulator(key.secret_key));
+
+    await expect(
+      signer.signEventRequest(unsafeTemplateVector.request, {
+        acknowledged: true,
+        source: "external-review"
+      })
+    ).rejects.toThrow(unsafeTemplateVector.expected_error);
   });
 });

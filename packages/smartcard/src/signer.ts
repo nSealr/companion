@@ -7,6 +7,7 @@ import {
   type SignEventRequest,
   type SignEventResponse
 } from "../../core/src/nostr.js";
+import { validateRequest } from "../../protocol/src/protocol.js";
 import { CommandApdu, GET_PUBLIC_KEY_INS, NOSTRSEAL_CLA, ResponseApdu, SIGN_EVENT_ID_INS, SW_NO_ERROR } from "./apdu.js";
 
 export type SmartcardApduTransport = {
@@ -20,6 +21,8 @@ export type SmartcardReviewAcknowledgement = {
 };
 
 function assertSignEventRequest(request: SignEventRequest): void {
+  const validation = validateRequest(request);
+  if (!validation.ok) throw new Error(validation.error);
   if (request.version !== 1 || request.method !== "sign_event" || !request.params?.event_template) {
     throw new Error("SmartcardSigner only supports v0 sign_event requests");
   }

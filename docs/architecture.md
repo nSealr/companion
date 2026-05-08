@@ -141,7 +141,10 @@ the card to sign only that 32-byte id, verifies the returned Schnorr signature,
 and emits the standard signed-event response. It refuses to sign unless the
 caller supplies an explicit review acknowledgement. That acknowledgement is a
 workflow guard for display-less smartcards, not proof that the untrusted host is
-a trusted display.
+a trusted display. It also reuses the shared request validator before APDU
+exchange, so package callers cannot bypass CLI validation with host-supplied
+`id`, `pubkey`, `sig`, malformed tags, oversized content, or other unsafe
+`sign_event` shapes.
 
 `nseal smartcard-sim-sign` exposes the same flow through a test-only APDU
 simulator for integration work. Real PC/SC and NFC transports must implement

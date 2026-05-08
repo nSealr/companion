@@ -1,7 +1,7 @@
 export const NOSTRSEAL_V0_LIMITS = {
   max_request_id_length: 128,
   max_decoded_request_json_bytes: 704,
-  max_static_qr_decoded_json_bytes: 512,
+  max_static_qr_decoded_json_bytes: 704,
   max_serial_frame_bytes: 1024,
   max_nip46_decrypted_message_json_bytes: 1024,
   max_content_utf8_bytes: 512,

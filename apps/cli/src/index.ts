@@ -265,7 +265,15 @@ function validateInvalidHardeningFixture(fixture: {
   }
   if (fixture.category === "serial-frame") {
     expectFixtureRejection(fixture.name, fixture.expected_error, () => {
-      decodeSerialFrame(String(fixture.frame));
+      const frame = decodeSerialFrame(String(fixture.frame));
+      if (frame.type === "request") {
+        const result = validateRequest(frame.payload);
+        if (!result.ok) throw new Error(result.error);
+      }
+      if (frame.type === "response") {
+        const result = validateResponse(frame.payload);
+        if (!result.ok) throw new Error(result.error);
+      }
     });
     return;
   }

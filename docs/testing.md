@@ -42,6 +42,8 @@ single-repository CI. Cross-repository drift remains guarded by
   handoff, one-shot JSON-lines stdio exchange, and serial-frame exchange.
 - CLI serial-frame tests covering validated request wrapping and response-frame
   unwrapping.
+- Fixture verification rejects valid serial frames whose decoded request
+  metadata violates the shared specs profile.
 - QR envelope round-trip and rejection tests.
 - Serial frame round-trip, unsupported type, and checksum mismatch tests.
 - Shared `NostrSeal/specs` QR and serial transport vector conformance tests.

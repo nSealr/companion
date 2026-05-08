@@ -39,6 +39,14 @@ describe("transport adapters", () => {
     expect(verifySignedEventResponse(signEventRequest, response).ok).toBe(true);
   });
 
+  it("rejects invalid development signer transport requests before signing", async () => {
+    const transport = new DevSignerTransport(key.secret_key);
+
+    await expect(transport.exchange({ ...signEventRequest, request_id: "bad request id" })).rejects.toThrow(
+      "transport request invalid: request_id is invalid"
+    );
+  });
+
   it("moves request and response JSON through files", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-file-"));
     const requestPath = join(tempRoot, "request.json");
@@ -60,6 +68,30 @@ describe("transport adapters", () => {
 
     expect(readJsonFile(requestPath)).toEqual(signEventRequest);
     await expect(transport.readResponse()).resolves.toEqual(expectedResponse);
+  });
+
+  it("rejects invalid file transport requests before writing them", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-file-invalid-request-"));
+    const requestPath = join(tempRoot, "request.json");
+    const responsePath = join(tempRoot, "response.json");
+    const transport = new JsonFileTransport({ requestPath, responsePath });
+
+    await expect(transport.writeRequest({ version: 1, request_id: "bad request id", method: "get_capabilities" })).rejects.toThrow(
+      "transport request invalid: request_id is invalid"
+    );
+    expect(() => readFileSync(requestPath, "utf8")).toThrow();
+  });
+
+  it("rejects invalid file transport responses before returning them", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-file-invalid-response-"));
+    const requestPath = join(tempRoot, "request.json");
+    const responsePath = join(tempRoot, "response.json");
+    const transport = new JsonFileTransport({ requestPath, responsePath });
+
+    writeJsonFile(responsePath, { version: 1, request_id: signEventRequest.request_id });
+
+    await expect(transport.readResponse()).rejects.toThrow("transport response invalid: ok must be true or false");
+    expect(() => readFileSync(requestPath, "utf8")).toThrow();
   });
 
   it("exchanges one JSON request and response over stdio JSON lines", async () => {
@@ -98,6 +130,39 @@ describe("transport adapters", () => {
         retryable: false
       }
     });
+  });
+
+  it("rejects invalid stdio transport requests before spawning a signer", async () => {
+    const transport = new JsonLineStdioTransport({
+      command: "/definitely/missing/nseal-stdio-signer"
+    });
+
+    await expect(transport.exchange({ version: 1, request_id: "bad request id", method: "get_capabilities" })).rejects.toThrow(
+      "transport request invalid: request_id is invalid"
+    );
+  });
+
+  it("rejects invalid stdio transport responses before returning them", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-stdio-invalid-response-"));
+    const signerPath = join(tempRoot, "stdio-signer.mjs");
+    writeFileSync(
+      signerPath,
+      [
+        "import { createInterface } from 'node:readline';",
+        "const rl = createInterface({ input: process.stdin });",
+        "rl.once('line', () => {",
+        "  process.stdout.write(JSON.stringify({ version: 1, request_id: 'req-sign-event-1' }) + '\\n');",
+        "});"
+      ].join("\n"),
+      "utf8"
+    );
+
+    const transport = new JsonLineStdioTransport({
+      command: process.execPath,
+      args: [signerPath]
+    });
+
+    await expect(transport.exchange(signEventRequest)).rejects.toThrow("transport response invalid: ok must be true or false");
   });
 
   it("exchanges one request and response over serial frames", async () => {

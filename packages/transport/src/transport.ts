@@ -18,13 +18,30 @@ export function writeJsonFile(path: string, value: unknown): void {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
+function assertValidRequest(value: unknown, label = "transport request"): void {
+  const validation = validateRequest(value);
+  if (!validation.ok) {
+    throw new Error(`${label} invalid: ${validation.error}`);
+  }
+}
+
+function assertValidResponse(value: unknown, label = "transport response"): void {
+  const validation = validateResponse(value);
+  if (!validation.ok) {
+    throw new Error(`${label} invalid: ${validation.error}`);
+  }
+}
+
 export class DevSignerTransport implements SignerTransport {
   readonly name = "dev-signer";
 
   constructor(private readonly secretKeyHex: string) {}
 
   async exchange(request: unknown): Promise<unknown> {
-    return devSignRequest(request as SignEventRequest, this.secretKeyHex);
+    assertValidRequest(request);
+    const response = devSignRequest(request as SignEventRequest, this.secretKeyHex);
+    assertValidResponse(response);
+    return response;
   }
 }
 
@@ -39,11 +56,14 @@ export class JsonFileTransport implements SignerTransport {
   }
 
   async writeRequest(request: unknown): Promise<void> {
+    assertValidRequest(request);
     writeJsonFile(this.requestPath, request);
   }
 
   async readResponse(): Promise<unknown> {
-    return readJsonFile(this.responsePath);
+    const response = readJsonFile(this.responsePath);
+    assertValidResponse(response);
+    return response;
   }
 
   async exchange(request: unknown): Promise<unknown> {
@@ -67,6 +87,7 @@ export class JsonLineStdioTransport implements SignerTransport {
   }
 
   async exchange(request: unknown): Promise<unknown> {
+    assertValidRequest(request);
     return new Promise((resolve, reject) => {
       const child = spawn(this.command, this.args, {
         cwd: this.cwd,
@@ -105,7 +126,9 @@ export class JsonLineStdioTransport implements SignerTransport {
         if (newlineIndex === -1) return;
         const line = stdout.slice(0, newlineIndex);
         try {
-          succeed(JSON.parse(line));
+          const response = JSON.parse(line);
+          assertValidResponse(response);
+          succeed(response);
         } catch (error) {
           fail(error instanceof Error ? error : new Error(String(error)));
         }
@@ -129,20 +152,14 @@ export class SerialFrameTransport implements SignerTransport {
   }
 
   async exchange(request: unknown): Promise<unknown> {
-    const requestValidation = validateRequest(request);
-    if (!requestValidation.ok) {
-      throw new Error(`serial frame request invalid: ${requestValidation.error}`);
-    }
+    assertValidRequest(request, "serial frame request");
     const requestLine = encodeSerialFrame({ type: "request", payload: request });
     const responseLine = await this.exchangeFrame(requestLine);
     const responseFrame = decodeSerialFrame(responseLine);
     if (responseFrame.type !== "response") {
       throw new Error(`serial frame transport expected response frame, got ${responseFrame.type}`);
     }
-    const validation = validateResponse(responseFrame.payload);
-    if (!validation.ok) {
-      throw new Error(`serial frame response invalid: ${validation.error}`);
-    }
+    assertValidResponse(responseFrame.payload, "serial frame response");
     return responseFrame.payload;
   }
 }

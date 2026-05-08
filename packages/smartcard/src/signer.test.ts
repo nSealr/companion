@@ -23,6 +23,18 @@ describe("SmartcardSigner", () => {
     await expect(signer.signEventRequest(request)).rejects.toThrow("smartcard signing requires explicit review acknowledgement");
   });
 
+  it("rejects trusted-display acknowledgement for display-less smartcards", async () => {
+    const signer = new SmartcardSigner(new SmartcardSimulator(key.secret_key));
+    const trustedDisplayAcknowledgement = {
+      acknowledged: true,
+      source: "trusted-display"
+    } as unknown as Parameters<typeof signer.signEventRequest>[1];
+
+    await expect(signer.signEventRequest(request, trustedDisplayAcknowledgement)).rejects.toThrow(
+      "display-less smartcard signing requires external review acknowledgement"
+    );
+  });
+
   it("signs a Nostr event request through card APDUs after review acknowledgement", async () => {
     const signer = new SmartcardSigner(new SmartcardSimulator(key.secret_key));
 

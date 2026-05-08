@@ -55,7 +55,8 @@ single-repository CI. Cross-repository drift remains guarded by
   public-key retrieval, event-id signing, Schnorr verification, and standard
   signed-event response verification.
 - Smartcard signer negative tests covering shared unsafe request rejection
-  before an event id is sent to a card transport.
+  before an event id is sent to a card transport and rejection of
+  `trusted-display` acknowledgement for display-less cards.
 - Smartcard PC/SC boundary tests covering fake reader exchange, malformed
   response data-byte rejection, and clear provider/no-reader/connection setup
   errors without requiring native PC/SC dependencies or hardware.

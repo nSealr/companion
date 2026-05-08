@@ -16,7 +16,7 @@ export type SmartcardApduTransport = {
 
 export type SmartcardReviewAcknowledgement = {
   acknowledged: true;
-  source: "external-review" | "trusted-display";
+  source: "external-review";
   approvalDigest?: string;
 };
 
@@ -31,6 +31,9 @@ function assertSignEventRequest(request: SignEventRequest): void {
 function assertReviewAcknowledged(acknowledgement?: SmartcardReviewAcknowledgement): asserts acknowledgement is SmartcardReviewAcknowledgement {
   if (acknowledgement?.acknowledged !== true) {
     throw new Error("smartcard signing requires explicit review acknowledgement");
+  }
+  if (acknowledgement.source !== "external-review") {
+    throw new Error("display-less smartcard signing requires external review acknowledgement");
   }
 }
 

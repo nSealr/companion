@@ -308,6 +308,48 @@ describe("nseal CLI", () => {
     );
   });
 
+  it("rejects invalid original requests before verifying responses", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-verify-request-"));
+    const requestPath = join(tempRoot, "request.json");
+    const responsePath = join(tempRoot, "response.json");
+    writeFileSync(
+      requestPath,
+      `${JSON.stringify(
+        {
+          version: 1,
+          request_id: "req-invalid-original",
+          method: "get_capabilities",
+          unexpected: true
+        },
+        null,
+        2
+      )}\n`,
+      "utf8"
+    );
+    writeFileSync(
+      responsePath,
+      `${JSON.stringify(
+        {
+          version: 1,
+          request_id: "req-invalid-original",
+          ok: false,
+          error: {
+            code: "user_rejected",
+            message: "Rejected",
+            retryable: false
+          }
+        },
+        null,
+        2
+      )}\n`,
+      "utf8"
+    );
+
+    await expect(runCli(["verify-response", "--request", requestPath, "--response", responsePath])).rejects.toThrow(
+      "unknown top-level fields"
+    );
+  });
+
   it("wraps requests and unwraps responses as serial frames", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-serial-frame-"));
     const request = loadJson(resolve(specsRoot, "examples/request-get-capabilities.json"));

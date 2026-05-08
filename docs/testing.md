@@ -29,6 +29,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - Negative response verification tests for request id mismatch, template
   mismatch, event id mismatch, and invalid signatures.
 - End-to-end CLI tests for `request -> dev-sign -> verify-response`.
+- CLI `verify-response` tests reject invalid original requests before accepting
+  otherwise valid response shapes.
 - End-to-end CLI tests for QR envelope `request -> dev-sign -> verify-response`.
 - CLI failure-mode tests for malformed event-template JSON and unsupported
   request methods.

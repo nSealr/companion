@@ -553,6 +553,8 @@ export function buildCli(): Command {
       assertFormat(options.requestFormat);
       assertFormat(options.responseFormat);
       const request = readValue(options.request, options.requestFormat);
+      const requestShape = validateRequest(request);
+      if (!requestShape.ok) throw new Error(requestShape.error);
       const response = readValue(options.response, options.responseFormat);
       const responseShape = validateResponse(response);
       if (!responseShape.ok) throw new Error(responseShape.error);

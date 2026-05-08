@@ -24,7 +24,7 @@ single-repository CI. Cross-repository drift remains guarded by
 - Request and response shape validation tests in `packages/protocol`.
 - Shared fixture loading tests in `packages/fixtures`.
 - Trusted-review model tests in `packages/review` against every shared review
-  vector from `NostrSeal/specs`.
+  and review-screen `approval_digest` vector from `NostrSeal/specs`.
 - Development signer verification tests in `packages/dev-signer`.
 - Negative response verification tests for request id mismatch, template
   mismatch, event id mismatch, and invalid signatures.
@@ -56,7 +56,10 @@ single-repository CI. Cross-repository drift remains guarded by
   signed-event response verification.
 - Smartcard signer negative tests covering shared unsafe request rejection
   before an event id is sent to a card transport and rejection of
-  `trusted-display` acknowledgement for display-less cards.
+  `trusted-display` acknowledgement or mismatched `approvalDigest` for
+  display-less cards.
+- CLI tests covering `review-request --screen-review` output against shared
+  screen-review vectors and `smartcard-sim-sign --approval-digest` rejection.
 - Smartcard PC/SC boundary tests covering fake reader exchange, malformed
   response data-byte rejection, and clear provider/no-reader/connection setup
   errors without requiring native PC/SC dependencies or hardware.

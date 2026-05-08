@@ -19,7 +19,7 @@ import {
 } from "../../../packages/nip46/src/nip46.js";
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
 import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
-import { reviewEventTemplate } from "../../../packages/review/src/review.js";
+import { reviewEventTemplate, screenReviewForRequest } from "../../../packages/review/src/review.js";
 import { SmartcardSimulator } from "../../../packages/smartcard/src/apdu.js";
 import { SmartcardSigner } from "../../../packages/smartcard/src/signer.js";
 
@@ -334,6 +334,14 @@ export function buildCli(): Command {
           throw new Error(`invalid review fixture ${review.name}: review output mismatch`);
         }
       }
+      for (const reviewScreen of fixtures.reviewScreens) {
+        const requestShape = validateRequest(reviewScreen.request);
+        if (!requestShape.ok) throw new Error(`invalid review-screen request fixture ${reviewScreen.name}: ${requestShape.error}`);
+        const actual = screenReviewForRequest(reviewScreen.request);
+        if (JSON.stringify(actual) !== JSON.stringify(reviewScreen.screen_review)) {
+          throw new Error(`invalid review-screen fixture ${reviewScreen.name}: screen_review output mismatch`);
+        }
+      }
       for (const transcript of fixtures.reviewTranscripts) {
         validateReviewTranscriptFixture(transcript.name, transcript);
       }
@@ -354,7 +362,7 @@ export function buildCli(): Command {
           ? "1 NIP-46 policy-file fixture"
           : `${fixtures.nip46PolicyFiles.length} NIP-46 policy-file fixtures`;
       console.log(
-        `verified ${fixtures.events.length} event fixtures, ${fixtures.reviews.length} review fixtures, ${fixtures.reviewDisplayFrames.length} review display-frame fixture, ${fixtures.reviewTranscripts.length} review transcript fixtures, ${fixtures.nip46Payloads.length} NIP-46 payload fixtures, ${policyFileFixtureLabel}, and ${fixtures.invalidVectors.length} invalid hardening fixtures`
+        `verified ${fixtures.events.length} event fixtures, ${fixtures.reviews.length} review fixtures, ${fixtures.reviewScreens.length} review-screen fixtures, ${fixtures.reviewDisplayFrames.length} review display-frame fixture, ${fixtures.reviewTranscripts.length} review transcript fixtures, ${fixtures.nip46Payloads.length} NIP-46 payload fixtures, ${policyFileFixtureLabel}, and ${fixtures.invalidVectors.length} invalid hardening fixtures`
       );
     });
 
@@ -417,15 +425,20 @@ export function buildCli(): Command {
     .command("review-request")
     .requiredOption("--request <path>")
     .option("--request-format <format>", "Request format: json or qr", "json")
+    .option("--screen-review", "Render deterministic screen-review pages with approval digest")
     .requiredOption("--out <path>")
     .description("Render an untrusted local review preview for a signing request")
-    .action((options: { request: string; requestFormat: string; out: string }) => {
+    .action((options: { request: string; requestFormat: string; screenReview?: boolean; out: string }) => {
       assertFormat(options.requestFormat);
       const request = readValue(options.request, options.requestFormat);
       const validation = validateRequest(request);
       if (!validation.ok) throw new Error(validation.error);
       if ((request as { method?: string }).method !== "sign_event") {
         throw new Error("review-request supports sign_event requests only");
+      }
+      if (options.screenReview === true) {
+        writeJson(options.out, screenReviewForRequest(request));
+        return;
       }
       const eventTemplate = (request as { params?: { event_template?: unknown } }).params?.event_template;
       writeJson(options.out, reviewEventTemplate(eventTemplate));
@@ -437,6 +450,7 @@ export function buildCli(): Command {
     .requiredOption("--request <path>")
     .option("--request-format <format>", "Request format: json or qr", "json")
     .option("--review-acknowledged", "Confirm external review before sending an event id to a display-less smartcard")
+    .option("--approval-digest <hex>", "Bind the display-less smartcard acknowledgement to a reviewed request digest")
     .requiredOption("--out <path>")
     .option("--output-format <format>", "Output format: json or qr", "json")
     .description("Sign a request through the test-only smartcard APDU simulator")
@@ -446,6 +460,7 @@ export function buildCli(): Command {
         request: string;
         requestFormat: string;
         reviewAcknowledged?: boolean;
+        approvalDigest?: string;
         out: string;
         outputFormat: string;
       }) => {
@@ -457,10 +472,15 @@ export function buildCli(): Command {
         if ((request as { method?: string }).method !== "sign_event") {
           throw new Error("smartcard-sim-sign supports sign_event requests only");
         }
+        if (options.approvalDigest !== undefined && options.reviewAcknowledged !== true) {
+          throw new Error("approval digest requires --review-acknowledged");
+        }
         const signer = new SmartcardSigner(new SmartcardSimulator(options.secretKey));
         const response = await signer.signEventRequest(
           request as SignEventRequest,
-          options.reviewAcknowledged ? { acknowledged: true, source: "external-review" } : undefined
+          options.reviewAcknowledged
+            ? { acknowledged: true, source: "external-review", approvalDigest: options.approvalDigest }
+            : undefined
         );
         writeValue(options.out, response, options.outputFormat);
       }

@@ -28,6 +28,21 @@ export type SpecsFixtureSet = {
       warnings: string[];
     };
   }>;
+  reviewScreens: Array<{
+    name: string;
+    request: unknown;
+    review: SpecsFixtureSet["reviews"][number]["review"];
+    screen_review: {
+      format: "screen-pages";
+      request_id: string;
+      approval_digest: string;
+      pages: Array<{
+        title: string;
+        lines: string[];
+        action: "next" | "approve_or_reject";
+      }>;
+    };
+  }>;
   reviewDisplayFrames: Array<{
     name: string;
     format: string;
@@ -157,6 +172,7 @@ function fileStem(file: string): string {
 export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const eventsRoot = resolve(specsRoot, "vectors/events");
   const reviewsRoot = resolve(specsRoot, "vectors/review");
+  const reviewScreensRoot = resolve(specsRoot, "vectors/review-screens");
   const reviewDisplayFramesRoot = resolve(specsRoot, "vectors/review-display-frames");
   const reviewTranscriptsRoot = resolve(specsRoot, "vectors/review-transcripts");
   const nip46Root = resolve(specsRoot, "vectors/nip46");
@@ -166,6 +182,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const reviewFiles = readdirSync(reviewsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const reviewScreenFiles = readdirSync(reviewScreensRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const reviewDisplayFrameFiles = readdirSync(reviewDisplayFramesRoot)
@@ -188,6 +207,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     limits: loadJson(resolve(specsRoot, "vectors/limits/nseal-v0.json")) as SpecsFixtureSet["limits"],
     events: eventFiles.map((file) => loadJson(resolve(eventsRoot, file)) as SpecsFixtureSet["events"][number]),
     reviews: reviewFiles.map((file) => loadJson(resolve(reviewsRoot, file)) as SpecsFixtureSet["reviews"][number]),
+    reviewScreens: reviewScreenFiles.map(
+      (file) => loadJson(resolve(reviewScreensRoot, file)) as SpecsFixtureSet["reviewScreens"][number]
+    ),
     reviewDisplayFrames: reviewDisplayFrameFiles.map(
       (file) => loadJson(resolve(reviewDisplayFramesRoot, file)) as SpecsFixtureSet["reviewDisplayFrames"][number]
     ),

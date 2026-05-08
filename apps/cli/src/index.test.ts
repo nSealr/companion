@@ -100,7 +100,7 @@ describe("nseal CLI", () => {
 
   it("verifies event and trusted-review fixtures from the specs repository", async () => {
     await expect(collectCliOutput(["fixture", "verify", "--specs", specsRoot])).resolves.toEqual([
-      "verified 2 event fixtures, 4 review fixtures, 1 review display-frame fixture, 2 review transcript fixtures, 5 NIP-46 payload fixtures, 1 NIP-46 policy-file fixture, and 40 invalid hardening fixtures"
+      "verified 2 event fixtures, 4 review fixtures, 2 review-screen fixtures, 1 review display-frame fixture, 2 review transcript fixtures, 5 NIP-46 payload fixtures, 1 NIP-46 policy-file fixture, and 40 invalid hardening fixtures"
     ]);
   });
 
@@ -347,18 +347,54 @@ describe("nseal CLI", () => {
     expect(loadJson(reviewPath)).toEqual(vector.review);
   });
 
+  it("renders screen-review pages with approval digest from a QR signing request", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-screen-review-"));
+    const vector = loadJson(resolve(specsRoot, "vectors/review-screens/kind-1-tags.json")) as {
+      request: unknown;
+      screen_review: unknown;
+    };
+    const requestPath = join(tempRoot, "request.qr");
+    const reviewPath = join(tempRoot, "screen-review.json");
+
+    writeFileSync(requestPath, `${encodeQrEnvelope(vector.request)}\n`, "utf8");
+
+    await runCli(["review-request", "--request", requestPath, "--request-format", "qr", "--screen-review", "--out", reviewPath]);
+
+    expect(loadJson(reviewPath)).toEqual(vector.screen_review);
+  });
+
   it("runs request -> smartcard-sim-sign -> verify-response after explicit review acknowledgement", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-smartcard-"));
     const key = loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as { secret_key: string };
     const request = loadJson(resolve(specsRoot, "examples/request-kind-1-basic.json"));
+    const screenReview = loadJson(resolve(specsRoot, "vectors/review-screens/kind-1-basic.json")) as {
+      screen_review: { approval_digest: string };
+    };
     const requestPath = join(tempRoot, "request.json");
     const responsePath = join(tempRoot, "response.json");
+    const mismatchResponsePath = join(tempRoot, "mismatch-response.json");
 
     writeFileSync(requestPath, `${JSON.stringify(request, null, 2)}\n`, "utf8");
 
     await expect(
       runCli(["smartcard-sim-sign", "--secret-key", key.secret_key, "--request", requestPath, "--out", responsePath])
     ).rejects.toThrow("smartcard signing requires explicit review acknowledgement");
+
+    await expect(
+      runCli([
+        "smartcard-sim-sign",
+        "--secret-key",
+        key.secret_key,
+        "--request",
+        requestPath,
+        "--review-acknowledged",
+        "--approval-digest",
+        "00".repeat(32),
+        "--out",
+        mismatchResponsePath
+      ])
+    ).rejects.toThrow("approval_digest_mismatch");
+    expect(existsSync(mismatchResponsePath)).toBe(false);
 
     await runCli([
       "smartcard-sim-sign",
@@ -367,6 +403,8 @@ describe("nseal CLI", () => {
       "--request",
       requestPath,
       "--review-acknowledged",
+      "--approval-digest",
+      screenReview.screen_review.approval_digest,
       "--out",
       responsePath
     ]);

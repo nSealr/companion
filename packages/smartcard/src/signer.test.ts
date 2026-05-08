@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { verifySignedEventResponse, type SignEventRequest } from "../../core/src/nostr.js";
+import { approvalDigestForRequest } from "../../review/src/review.js";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { SmartcardSimulator } from "./apdu.js";
 import { SmartcardSigner } from "./signer.js";
@@ -35,12 +36,31 @@ describe("SmartcardSigner", () => {
     );
   });
 
+  it("rejects mismatched approval digest before APDU exchange", async () => {
+    const transport = {
+      exchange: vi.fn(async () => {
+        throw new Error("APDU exchange must not run");
+      })
+    };
+    const signer = new SmartcardSigner(transport);
+
+    await expect(
+      signer.signEventRequest(request, {
+        acknowledged: true,
+        source: "external-review",
+        approvalDigest: "00".repeat(32)
+      })
+    ).rejects.toThrow("approval_digest_mismatch");
+    expect(transport.exchange).not.toHaveBeenCalled();
+  });
+
   it("signs a Nostr event request through card APDUs after review acknowledgement", async () => {
     const signer = new SmartcardSigner(new SmartcardSimulator(key.secret_key));
 
     const response = await signer.signEventRequest(request, {
       acknowledged: true,
-      source: "external-review"
+      source: "external-review",
+      approvalDigest: approvalDigestForRequest(request)
     });
 
     expect(response.request_id).toBe(request.request_id);

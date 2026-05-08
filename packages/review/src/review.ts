@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 export type EventReview = {
   kind: number;
   kind_name: string;
@@ -7,6 +9,19 @@ export type EventReview = {
   tag_count: number;
   tag_summary: string[];
   warnings: string[];
+};
+
+export type ReviewPage = {
+  title: string;
+  lines: string[];
+  action: "next" | "approve_or_reject";
+};
+
+export type ScreenReview = {
+  format: "screen-pages";
+  request_id: string;
+  approval_digest: string;
+  pages: ReviewPage[];
 };
 
 const KIND_NAMES = new Map<number, string>([
@@ -95,4 +110,114 @@ export function reviewEventTemplate(value: unknown): EventReview {
     tag_summary: tagSummary(template.tags),
     warnings
   };
+}
+
+function tagPageLines(review: EventReview): string[] {
+  if (review.tag_count === 0) return ["No tags"];
+  const label = review.tag_count === 1 ? "1 tag" : `${review.tag_count} tags`;
+  return [label, ...review.tag_summary.map((item) => String(item))];
+}
+
+export function renderReviewPages(review: EventReview): ReviewPage[] {
+  const pages: ReviewPage[] = [
+    {
+      title: "Event",
+      lines: [`Kind ${review.kind}`, String(review.kind_name), `Created ${review.created_at}`],
+      action: "next"
+    },
+    {
+      title: "Content",
+      lines: [String(review.content_preview)],
+      action: "next"
+    },
+    {
+      title: "Tags",
+      lines: tagPageLines(review),
+      action: "next"
+    }
+  ];
+
+  if (review.warnings.length > 0) {
+    pages.push({
+      title: "Warnings",
+      lines: review.warnings.map((warning) => String(warning)),
+      action: "approve_or_reject"
+    });
+  } else {
+    pages.push({
+      title: "Decision",
+      lines: ["Approve signing only if all pages match."],
+      action: "approve_or_reject"
+    });
+  }
+  return pages;
+}
+
+function requireSignEventRequest(value: unknown): {
+  version: 1;
+  request_id: string;
+  method: "sign_event";
+  params: { event_template: unknown };
+} {
+  if (!isRecord(value)) throw new Error("screen review requires request object");
+  if (value.version !== 1) throw new Error("screen review requires version 1");
+  if (typeof value.request_id !== "string") throw new Error("screen review requires request_id");
+  if (value.method !== "sign_event") throw new Error("screen review supports sign_event requests only");
+  if (!isRecord(value.params) || !("event_template" in value.params)) {
+    throw new Error("screen review requires params.event_template");
+  }
+  return {
+    version: 1,
+    request_id: value.request_id,
+    method: "sign_event",
+    params: { event_template: value.params.event_template }
+  };
+}
+
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    const encoded = JSON.stringify(value);
+    if (encoded === undefined) throw new Error("unsupported value in approval digest");
+    return encoded;
+  }
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
+  if (isRecord(value)) {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
+      .join(",")}}`;
+  }
+  throw new Error("unsupported value in approval digest");
+}
+
+function approvalDigestForScreenReview(
+  request: ReturnType<typeof requireSignEventRequest>,
+  review: EventReview,
+  pages: ReviewPage[]
+): string {
+  const payload = {
+    version: request.version,
+    method: request.method,
+    request_id: request.request_id,
+    event_template: request.params.event_template,
+    review,
+    pages
+  };
+  return createHash("sha256").update(canonicalJson(payload), "utf8").digest("hex");
+}
+
+export function screenReviewForRequest(value: unknown): ScreenReview {
+  const request = requireSignEventRequest(value);
+  const review = reviewEventTemplate(request.params.event_template);
+  const pages = renderReviewPages(review);
+  return {
+    format: "screen-pages",
+    request_id: request.request_id,
+    approval_digest: approvalDigestForScreenReview(request, review, pages),
+    pages
+  };
+}
+
+export function approvalDigestForRequest(value: unknown): string {
+  return screenReviewForRequest(value).approval_digest;
 }

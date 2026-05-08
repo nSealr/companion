@@ -96,9 +96,10 @@ pins the cross-repo behavior.
 - APDU codec and deterministic simulator: implemented.
 - `SmartcardSigner` companion boundary: implemented for `GET_PUBLIC_KEY` plus
   `SIGN_EVENT_ID`, with shared request validation and external-review-only
-  acknowledgement before APDU exchange.
+  acknowledgement before APDU exchange. Optional external `approvalDigest`
+  binding is checked against shared review-screen vectors before APDU exchange.
 - CLI simulator path: implemented as `nseal smartcard-sim-sign`, with mandatory
-  `--review-acknowledged`.
+  `--review-acknowledged` and optional `--approval-digest`.
 - PC/SC/contact transport boundary: implemented as a provider-injected APDU
   exchange adapter with setup-error normalization and response byte validation;
   native reader binding and real-card tests are pending.

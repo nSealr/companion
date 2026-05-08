@@ -143,15 +143,19 @@ caller supplies an explicit review acknowledgement. That acknowledgement is a
 workflow guard for display-less smartcards, not proof that the untrusted host is
 a trusted display. The display-less signer boundary therefore accepts only
 `external-review` acknowledgement; any future trusted-display smartcard product
-must be modeled as a separate trusted-review surface. It also reuses the shared
+must be modeled as a separate trusted-review surface. When an external
+`approvalDigest` is supplied, the signer recomputes the shared screen-review
+digest and rejects mismatches before APDU exchange. It also reuses the shared
 request validator before APDU exchange, so package callers cannot bypass CLI
 validation with host-supplied `id`, `pubkey`, `sig`, malformed tags, oversized
 content, or other unsafe `sign_event` shapes.
 
-`nseal smartcard-sim-sign` exposes the same flow through a test-only APDU
-simulator for integration work. Real PC/SC and NFC transports must implement
-the same APDU exchange interface without weakening the review acknowledgement
-requirement.
+`nseal review-request --screen-review` renders the same deterministic screen
+pages and `approval_digest` used by the shared vectors. `nseal
+smartcard-sim-sign` exposes the APDU flow through a test-only simulator,
+including optional `--approval-digest` binding for the external review
+acknowledgement. Real PC/SC and NFC transports must implement the same APDU
+exchange interface without weakening the review acknowledgement requirement.
 
 The PC/SC boundary is provider-based: tests can inject fake readers and future
 desktop adapters can inject a real PC/SC provider without making a native card

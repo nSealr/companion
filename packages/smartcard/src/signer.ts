@@ -8,6 +8,7 @@ import {
   type SignEventResponse
 } from "../../core/src/nostr.js";
 import { validateRequest } from "../../protocol/src/protocol.js";
+import { approvalDigestForRequest } from "../../review/src/review.js";
 import { CommandApdu, GET_PUBLIC_KEY_INS, NOSTRSEAL_CLA, ResponseApdu, SIGN_EVENT_ID_INS, SW_NO_ERROR } from "./apdu.js";
 
 export type SmartcardApduTransport = {
@@ -37,6 +38,16 @@ function assertReviewAcknowledged(acknowledgement?: SmartcardReviewAcknowledgeme
   }
 }
 
+function assertApprovalDigestMatches(request: SignEventRequest, acknowledgement: SmartcardReviewAcknowledgement): void {
+  if (acknowledgement.approvalDigest === undefined) return;
+  if (!/^[0-9a-f]{64}$/u.test(acknowledgement.approvalDigest)) {
+    throw new Error("approval_digest must be 32-byte lowercase hex");
+  }
+  if (acknowledgement.approvalDigest !== approvalDigestForRequest(request)) {
+    throw new Error("approval_digest_mismatch: external review digest does not match request");
+  }
+}
+
 function assertSuccessfulApdu(response: ResponseApdu, expectedDataLength: number, label: string): void {
   if (response.statusWord !== SW_NO_ERROR) {
     throw new Error(`${label} APDU failed with status ${response.statusWordHex()}`);
@@ -61,6 +72,7 @@ export class SmartcardSigner {
   ): Promise<SignEventResponse> {
     assertSignEventRequest(request);
     assertReviewAcknowledged(acknowledgement);
+    assertApprovalDigestMatches(request, acknowledgement);
 
     const pubkey = await this.getPublicKey();
     const eventWithoutSignature = {

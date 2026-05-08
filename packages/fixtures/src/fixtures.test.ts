@@ -31,6 +31,14 @@ describe("fixture loading", () => {
     expect(fixtures.reviewTranscripts[1].transcript[0].decision).toBe(false);
   });
 
+  it("loads trusted review-screen vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    expect(fixtures.reviewScreens.map((screen) => screen.name)).toEqual(["kind-1-basic", "kind-1-tags"]);
+    expect(fixtures.reviewScreens[0].screen_review.approval_digest).toBe(
+      "10d93d266ec46780242669220c2b65dc45fd63ee91df04b8b7cee147d26717e3"
+    );
+  });
+
   it("loads review display-frame vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
     expect(fixtures.reviewDisplayFrames.map((frame) => frame.name)).toEqual(["kind-1-long-content-page-1-20x3"]);

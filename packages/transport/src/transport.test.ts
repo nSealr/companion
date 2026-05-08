@@ -30,6 +30,7 @@ const capabilitiesResponse = JSON.parse(
 const publicKeyVector = JSON.parse(
   readFileSync(resolve(specsRoot, "vectors/devices/esp32-s3-get-public-key-dev.json"), "utf8")
 );
+const basicEventVector = JSON.parse(readFileSync(resolve(specsRoot, "vectors/events/kind-1-basic.json"), "utf8"));
 
 describe("transport adapters", () => {
   it("signs through the in-memory development signer transport", async () => {
@@ -248,6 +249,26 @@ describe("transport adapters", () => {
 
     expect(response).toEqual(signingDisabledResponse);
     expect(validateResponse(response).ok).toBe(true);
+  });
+
+  it("rejects successful sign_event serial responses with invalid signatures before returning from transport", async () => {
+    const invalidSignedResponse = {
+      ...basicEventVector.response,
+      result: {
+        event: {
+          ...basicEventVector.response.result.event,
+          sig: "00".repeat(64)
+        }
+      }
+    };
+    const transport = new SerialFrameTransport({
+      exchangeFrame: async (line) => {
+        expect(decodeSerialFrame(line)).toEqual({ type: "request", payload: basicEventVector.request });
+        return encodeSerialFrame({ type: "response", payload: invalidSignedResponse });
+      }
+    });
+
+    await expect(transport.exchange(basicEventVector.request)).rejects.toThrow("signed event signature is invalid");
   });
 
   it("moves ESP32-S3 scaffold public-key responses over serial frames", async () => {

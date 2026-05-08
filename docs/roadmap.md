@@ -35,10 +35,12 @@ serial-frame helpers are implemented. Transport adapters now validate outbound
 request payloads and inbound response payloads at their boundary, including the
 development signer, JSON file handoff, JSON-lines stdio, and serial-frame
 adapters. Exchange adapters also reject otherwise valid responses whose
-`request_id` does not match the outbound request. Malformed requests, malformed
-device responses, or stale/mismatched responses cannot bypass the standard
-protocol shape gates through these adapters. M3 remains open for larger-payload
-strategy and first physical USB serial integration.
+`request_id` does not match the outbound request, and they cryptographically
+verify successful `sign_event` responses before returning them. Malformed
+requests, malformed device responses, invalid signed-event output, or
+stale/mismatched responses cannot bypass the standard protocol and verification
+gates through these adapters. M3 remains open for larger-payload strategy and
+first physical USB serial integration.
 
 ## M4: NIP-46 Payload Bridge
 

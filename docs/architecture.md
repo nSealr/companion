@@ -86,6 +86,13 @@ The companion remains responsible for validating request/response shape and
 cryptographically verifying successful signed-event responses after transport
 completion.
 
+The shared transport boundary now enforces that verification before returning
+from `exchange`: request shape is checked before sending, response shape and
+`request_id` are checked after receiving, and successful `sign_event` responses
+must pass NIP-01 event-id and BIP-340 signature verification against the
+original request. Error responses such as `signing_disabled` can still return
+as valid refusals.
+
 Trusted-review vectors are loaded from `NostrSeal/specs` so host tools and
 device implementations can agree on what must be shown before approval. They do
 not make the companion trusted; they are conformance data for signer UIs.

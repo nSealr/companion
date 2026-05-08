@@ -24,6 +24,9 @@ clients to hardware-backed signing.
   setup and APDU transmit failures without claiming real-card support.
 - `nseal verify-response` checks request ids, event template integrity, NIP-01
   event ids, and BIP-340 Schnorr signatures.
+- Transport exchanges now apply the same successful `sign_event` verification
+  before returning a signed event response, so serial/file/stdio adapters cannot
+  hand invalid signatures to higher layers as accepted output.
 - CLI request, dev-sign, and verify-response commands can read/write JSON or
   v0 `nseal1:` QR envelopes.
 - `packages/transport` provides the first signer transport contract plus

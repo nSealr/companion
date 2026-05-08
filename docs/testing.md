@@ -28,6 +28,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - Development signer verification tests in `packages/dev-signer`.
 - Negative response verification tests for request id mismatch, template
   mismatch, event id mismatch, and invalid signatures.
+- Transport exchange tests proving successful `sign_event` responses are
+  verified against the original request before file, stdio, or serial adapters
+  return them to higher layers.
 - End-to-end CLI tests for `request -> dev-sign -> verify-response`.
 - CLI `verify-response` tests reject invalid original requests before accepting
   otherwise valid response shapes.

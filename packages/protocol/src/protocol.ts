@@ -92,9 +92,9 @@ export function validateRequest(value: unknown): ValidationResult {
   if (value.version !== 1) return { ok: false, error: "version must be 1" };
   if (!isRequestId(value.request_id)) return { ok: false, error: "request_id is invalid" };
   if (value.method === "get_capabilities" || value.method === "get_public_key") {
+    if ("params" in value) return { ok: false, error: `${value.method} must not include params` };
     const extra = unknownFields(value, ["version", "request_id", "method"]);
     if (extra.length > 0) return { ok: false, error: `unknown top-level fields: ${extra.join(", ")}` };
-    if ("params" in value) return { ok: false, error: `${value.method} must not include params` };
     return { ok: true };
   }
   if (value.method === "sign_event") {

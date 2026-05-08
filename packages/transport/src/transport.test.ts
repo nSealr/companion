@@ -141,4 +141,15 @@ describe("transport adapters", () => {
     expect(response).toEqual(publicKeyVector.response);
     expect(validateResponse(response).ok).toBe(true);
   });
+
+  it("rejects invalid serial response payloads before returning from transport", async () => {
+    const transport = new SerialFrameTransport({
+      exchangeFrame: async () => encodeSerialFrame({
+        type: "response",
+        payload: { version: 1, request_id: capabilitiesRequest.request_id }
+      })
+    });
+
+    await expect(transport.exchange(capabilitiesRequest)).rejects.toThrow("serial frame response invalid: ok must be true or false");
+  });
 });

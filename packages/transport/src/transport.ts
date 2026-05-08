@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { devSignRequest } from "../../dev-signer/src/dev-signer.js";
 import { type SignEventRequest } from "../../core/src/nostr.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../framing/src/serial.js";
+import { validateResponse } from "../../protocol/src/protocol.js";
 
 export type SignerTransport = {
   readonly name: string;
@@ -133,6 +134,10 @@ export class SerialFrameTransport implements SignerTransport {
     const responseFrame = decodeSerialFrame(responseLine);
     if (responseFrame.type !== "response") {
       throw new Error(`serial frame transport expected response frame, got ${responseFrame.type}`);
+    }
+    const validation = validateResponse(responseFrame.payload);
+    if (!validation.ok) {
+      throw new Error(`serial frame response invalid: ${validation.error}`);
     }
     return responseFrame.payload;
   }

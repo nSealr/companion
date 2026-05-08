@@ -101,4 +101,20 @@ describe("PC/SC smartcard transport boundary", () => {
       ])
     ).rejects.toThrow(/PC\/SC reader connection failed/u);
   });
+
+  it("fails clearly when APDU exchange fails after reader connection", async () => {
+    const command = CommandApdu.fromHex(getPublicKeyVector.command_hex);
+    const transport = await PcscApduTransport.fromFirstReader(async () => [
+      {
+        connect: async () => ({
+          transmit: async () => {
+            throw new Error("card removed");
+          }
+        })
+      }
+    ]);
+
+    await expect(transport.exchange(command)).rejects.toThrow(PcscUnavailableError);
+    await expect(transport.exchange(command)).rejects.toThrow(/PC\/SC APDU exchange failed/u);
+  });
 });

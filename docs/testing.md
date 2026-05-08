@@ -62,7 +62,8 @@ single-repository CI. Cross-repository drift remains guarded by
   screen-review vectors and `smartcard-sim-sign --approval-digest` rejection.
 - Smartcard PC/SC boundary tests covering fake reader exchange, malformed
   response data-byte rejection, and clear provider/no-reader/connection setup
-  errors without requiring native PC/SC dependencies or hardware.
+  and APDU transmit errors without requiring native PC/SC dependencies or
+  hardware.
 - CLI smartcard simulator tests covering rejection without
   `--review-acknowledged` and `request -> smartcard-sim-sign ->
   verify-response`.

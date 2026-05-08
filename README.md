@@ -20,6 +20,8 @@ clients to hardware-backed signing.
 - `nseal smartcard-sim-sign` exercises the smartcard APDU signing boundary with
   a test-only simulator and requires `--review-acknowledged` before sending the
   event id to the display-less signer.
+- `packages/smartcard` includes fake-reader PC/SC boundary tests that normalize
+  setup and APDU transmit failures without claiming real-card support.
 - `nseal verify-response` checks request ids, event template integrity, NIP-01
   event ids, and BIP-340 Schnorr signatures.
 - CLI request, dev-sign, and verify-response commands can read/write JSON or

@@ -64,7 +64,12 @@ export class PcscApduTransport {
   }
 
   async exchange(command: CommandApdu): Promise<ResponseApdu> {
-    const response = await this.connection.transmit(command.toBytes());
+    let response: PcscTransmitResult;
+    try {
+      response = await this.connection.transmit(command.toBytes());
+    } catch {
+      throw new PcscUnavailableError("PC/SC APDU exchange failed");
+    }
     assertStatusByte(response.sw1, "sw1");
     assertStatusByte(response.sw2, "sw2");
     return new ResponseApdu(responseDataToBytes(response.data), (response.sw1 << 8) | response.sw2);

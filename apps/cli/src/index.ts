@@ -42,6 +42,38 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function readNip46PolicyPermissions(path: string): Nip46Permission[] {
+  const policy = readJson(path);
+  if (!isRecord(policy) || policy.format !== "nseal-nip46-policy-v0") {
+    throw new Error("NIP-46 policy file must use format nseal-nip46-policy-v0");
+  }
+  if (!Array.isArray(policy.approved_permissions)) {
+    throw new Error("NIP-46 policy file must include approved_permissions");
+  }
+  return policy.approved_permissions.map((permission) => {
+    if (!isRecord(permission) || typeof permission.method !== "string") {
+      throw new Error("NIP-46 policy permission entries must include method");
+    }
+    if (permission.method === "sign_event" && permission.parameter !== undefined) {
+      if (typeof permission.parameter !== "string" || !/^[0-9]+$/u.test(permission.parameter)) {
+        throw new Error("NIP-46 policy sign_event permission parameter must be numeric");
+      }
+      if (permission.event_kind !== Number(permission.parameter)) {
+        throw new Error("NIP-46 policy sign_event permission event_kind must match parameter");
+      }
+      return {
+        method: permission.method,
+        parameter: permission.parameter,
+        event_kind: permission.event_kind
+      };
+    }
+    if ("parameter" in permission || "event_kind" in permission) {
+      throw new Error("NIP-46 policy non-parameter permission must not include parameter data");
+    }
+    return parseNip46Permissions(permission.method)[0];
+  });
+}
+
 function validateReviewTranscriptFixture(name: string, fixture: unknown): void {
   if (!isRecord(fixture)) throw new Error(`invalid review transcript fixture ${name}: fixture must be an object`);
   if (fixture.format !== "qr-review-transcript-v0") {
@@ -421,11 +453,17 @@ export function buildCli(): Command {
     .command("decide")
     .requiredOption("--message <path>")
     .option("--permissions <value>", "Comma-separated approved NIP-46 permissions", "")
+    .option("--policy-file <path>", "Read approved NIP-46 permissions from a policy file")
     .requiredOption("--out <path>")
     .description("Write the bridge decision for an already-decrypted NIP-46 request")
-    .action((options: { message: string; permissions: string; out: string }) => {
+    .action((options: { message: string; permissions: string; policyFile?: string; out: string }) => {
       const message = readJson(options.message);
-      const permissions = parseNip46Permissions(options.permissions);
+      if (options.policyFile && options.permissions.trim() !== "") {
+        throw new Error("--policy-file cannot be combined with --permissions");
+      }
+      const permissions = options.policyFile
+        ? readNip46PolicyPermissions(options.policyFile)
+        : parseNip46Permissions(options.permissions);
       writeJson(options.out, decideNip46BridgeAction(message, permissions));
     });
 

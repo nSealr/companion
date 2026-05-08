@@ -186,6 +186,76 @@ describe("nseal CLI", () => {
     expect(loadJson(connectDecisionPath)).toEqual(connectVector.bridge_decisions[0].decision);
   });
 
+  it("can read NIP-46 approved permissions from an explicit policy file", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-nip46-policy-file-"));
+    const signEventVector = loadJson(resolve(specsRoot, "vectors/nip46/sign-event-kind-1-basic.json")) as {
+      request_message: unknown;
+      bridge_decisions: Array<{
+        decision: unknown;
+      }>;
+    };
+    const messagePath = join(tempRoot, "message.json");
+    const policyPath = join(tempRoot, "policy.json");
+    const decisionPath = join(tempRoot, "decision.json");
+
+    writeFileSync(messagePath, `${JSON.stringify(signEventVector.request_message, null, 2)}\n`, "utf8");
+    writeFileSync(
+      policyPath,
+      `${JSON.stringify(
+        {
+          format: "nseal-nip46-policy-v0",
+          approved_permissions: [{ method: "sign_event", parameter: "1", event_kind: 1 }]
+        },
+        null,
+        2
+      )}\n`,
+      "utf8"
+    );
+
+    await runCli(["nip46", "decide", "--message", messagePath, "--policy-file", policyPath, "--out", decisionPath]);
+
+    expect(loadJson(decisionPath)).toEqual(signEventVector.bridge_decisions[0].decision);
+  });
+
+  it("rejects ambiguous NIP-46 permission sources", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-nip46-ambiguous-policy-"));
+    const signEventVector = loadJson(resolve(specsRoot, "vectors/nip46/sign-event-kind-1-basic.json")) as {
+      request_message: unknown;
+    };
+    const messagePath = join(tempRoot, "message.json");
+    const policyPath = join(tempRoot, "policy.json");
+    const decisionPath = join(tempRoot, "decision.json");
+
+    writeFileSync(messagePath, `${JSON.stringify(signEventVector.request_message, null, 2)}\n`, "utf8");
+    writeFileSync(
+      policyPath,
+      `${JSON.stringify(
+        {
+          format: "nseal-nip46-policy-v0",
+          approved_permissions: [{ method: "sign_event", parameter: "1", event_kind: 1 }]
+        },
+        null,
+        2
+      )}\n`,
+      "utf8"
+    );
+
+    await expect(
+      runCli([
+        "nip46",
+        "decide",
+        "--message",
+        messagePath,
+        "--permissions",
+        "sign_event:1",
+        "--policy-file",
+        policyPath,
+        "--out",
+        decisionPath
+      ])
+    ).rejects.toThrow("--policy-file cannot be combined with --permissions");
+  });
+
   it("rejects malformed event-template JSON before writing a request", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-malformed-json-"));
     const templatePath = join(tempRoot, "template.json");

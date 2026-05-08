@@ -164,8 +164,10 @@ challenges, and user approval UX remain future policy layers.
 
 `nseal nip46 decide` exposes that boundary as a file-backed test harness for
 already-decrypted payloads. It writes the same deterministic decision JSON used
-by shared vectors and does not open relay sessions, decrypt NIP-44 payloads,
-persist grants, or contact signer transports.
+by shared vectors. The command accepts either an explicit permission string or
+a read-only `nseal-nip46-policy-v0` policy file. It does not create or update
+policy files, open relay sessions, decrypt NIP-44 payloads, persist grants, or
+contact signer transports.
 
 `connect` parsing is also intentionally non-committal. The bridge can extract
 the remote-signer pubkey, optional secret, and requested permissions into a

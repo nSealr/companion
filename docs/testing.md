@@ -76,6 +76,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI NIP-46 decision tests covering `nseal nip46 decide` against shared
   permitted, denied, and `connect` bridge-decision vectors without opening relay
   or signer transports.
+- CLI NIP-46 policy-file tests covering read-only
+  `nseal-nip46-policy-v0` permission input and rejection of ambiguous
+  `--permissions` plus `--policy-file` usage.
 
 ## Next Test Additions
 

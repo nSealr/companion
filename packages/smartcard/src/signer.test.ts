@@ -54,6 +54,23 @@ describe("SmartcardSigner", () => {
     expect(transport.exchange).not.toHaveBeenCalled();
   });
 
+  it("rejects missing approval digest before APDU exchange", async () => {
+    const transport = {
+      exchange: vi.fn(async () => {
+        throw new Error("APDU exchange must not run");
+      })
+    };
+    const signer = new SmartcardSigner(transport);
+
+    await expect(
+      signer.signEventRequest(request, {
+        acknowledged: true,
+        source: "external-review"
+      } as unknown as Parameters<typeof signer.signEventRequest>[1])
+    ).rejects.toThrow("approval_digest is required for display-less smartcard signing");
+    expect(transport.exchange).not.toHaveBeenCalled();
+  });
+
   it("signs a Nostr event request through card APDUs after review acknowledgement", async () => {
     const signer = new SmartcardSigner(new SmartcardSimulator(key.secret_key));
 
@@ -76,7 +93,8 @@ describe("SmartcardSigner", () => {
     await expect(
       signer.signEventRequest(unsafeTemplateVector.request, {
         acknowledged: true,
-        source: "external-review"
+        source: "external-review",
+        approvalDigest: "00".repeat(32)
       })
     ).rejects.toThrow(unsafeTemplateVector.expected_error);
   });

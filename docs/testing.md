@@ -56,8 +56,8 @@ single-repository CI. Cross-repository drift remains guarded by
   signed-event response verification.
 - Smartcard signer negative tests covering shared unsafe request rejection
   before an event id is sent to a card transport and rejection of
-  `trusted-display` acknowledgement or mismatched `approvalDigest` for
-  display-less cards.
+  `trusted-display` acknowledgement plus missing or mismatched
+  `approvalDigest` for display-less cards.
 - CLI tests covering `review-request --screen-review` output against shared
   screen-review vectors and `smartcard-sim-sign --approval-digest` rejection.
 - Smartcard PC/SC boundary tests covering fake reader exchange, malformed

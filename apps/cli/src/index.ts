@@ -450,7 +450,7 @@ export function buildCli(): Command {
     .requiredOption("--request <path>")
     .option("--request-format <format>", "Request format: json or qr", "json")
     .option("--review-acknowledged", "Confirm external review before sending an event id to a display-less smartcard")
-    .option("--approval-digest <hex>", "Bind the display-less smartcard acknowledgement to a reviewed request digest")
+    .option("--approval-digest <hex>", "Required with --review-acknowledged; binds acknowledgement to a reviewed request digest")
     .requiredOption("--out <path>")
     .option("--output-format <format>", "Output format: json or qr", "json")
     .description("Sign a request through the test-only smartcard APDU simulator")
@@ -475,13 +475,16 @@ export function buildCli(): Command {
         if (options.approvalDigest !== undefined && options.reviewAcknowledged !== true) {
           throw new Error("approval digest requires --review-acknowledged");
         }
+        let acknowledgement: Parameters<SmartcardSigner["signEventRequest"]>[1];
+        if (options.reviewAcknowledged === true) {
+          const approvalDigest = options.approvalDigest;
+          if (approvalDigest === undefined) {
+            throw new Error("approval_digest is required for display-less smartcard signing");
+          }
+          acknowledgement = { acknowledged: true, source: "external-review", approvalDigest };
+        }
         const signer = new SmartcardSigner(new SmartcardSimulator(options.secretKey));
-        const response = await signer.signEventRequest(
-          request as SignEventRequest,
-          options.reviewAcknowledged
-            ? { acknowledged: true, source: "external-review", approvalDigest: options.approvalDigest }
-            : undefined
-        );
+        const response = await signer.signEventRequest(request as SignEventRequest, acknowledgement);
         writeValue(options.out, response, options.outputFormat);
       }
     );

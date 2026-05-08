@@ -388,6 +388,20 @@ describe("nseal CLI", () => {
         "--request",
         requestPath,
         "--review-acknowledged",
+        "--out",
+        responsePath
+      ])
+    ).rejects.toThrow("approval_digest is required for display-less smartcard signing");
+    expect(existsSync(responsePath)).toBe(false);
+
+    await expect(
+      runCli([
+        "smartcard-sim-sign",
+        "--secret-key",
+        key.secret_key,
+        "--request",
+        requestPath,
+        "--review-acknowledged",
         "--approval-digest",
         "00".repeat(32),
         "--out",

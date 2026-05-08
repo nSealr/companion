@@ -18,7 +18,7 @@ export type SmartcardApduTransport = {
 export type SmartcardReviewAcknowledgement = {
   acknowledged: true;
   source: "external-review";
-  approvalDigest?: string;
+  approvalDigest: string;
 };
 
 function assertSignEventRequest(request: SignEventRequest): void {
@@ -39,7 +39,9 @@ function assertReviewAcknowledged(acknowledgement?: SmartcardReviewAcknowledgeme
 }
 
 function assertApprovalDigestMatches(request: SignEventRequest, acknowledgement: SmartcardReviewAcknowledgement): void {
-  if (acknowledgement.approvalDigest === undefined) return;
+  if (acknowledgement.approvalDigest === undefined) {
+    throw new Error("approval_digest is required for display-less smartcard signing");
+  }
   if (!/^[0-9a-f]{64}$/u.test(acknowledgement.approvalDigest)) {
     throw new Error("approval_digest must be 32-byte lowercase hex");
   }

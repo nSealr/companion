@@ -70,6 +70,25 @@ describe("transport adapters", () => {
     await expect(transport.readResponse()).resolves.toEqual(expectedResponse);
   });
 
+  it("rejects file transport exchange responses for a different request id", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-file-mismatched-response-"));
+    const requestPath = join(tempRoot, "request.json");
+    const responsePath = join(tempRoot, "response.json");
+    const transport = new JsonFileTransport({ requestPath, responsePath });
+    writeJsonFile(responsePath, {
+      version: 1,
+      request_id: "different-request",
+      ok: false,
+      error: {
+        code: "user_rejected",
+        message: "Rejected in file handoff test",
+        retryable: false
+      }
+    });
+
+    await expect(transport.exchange(signEventRequest)).rejects.toThrow("transport response request_id does not match request");
+  });
+
   it("rejects invalid file transport requests before writing them", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-file-invalid-request-"));
     const requestPath = join(tempRoot, "request.json");
@@ -132,6 +151,33 @@ describe("transport adapters", () => {
     });
   });
 
+  it("rejects stdio transport responses for a different request id", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-stdio-mismatched-response-"));
+    const signerPath = join(tempRoot, "stdio-signer.mjs");
+    writeFileSync(
+      signerPath,
+      [
+        "import { createInterface } from 'node:readline';",
+        "const rl = createInterface({ input: process.stdin });",
+        "rl.once('line', () => {",
+        "  process.stdout.write(JSON.stringify({",
+        "    version: 1,",
+        "    request_id: 'different-request',",
+        "    ok: false,",
+        "    error: { code: 'user_rejected', message: 'Rejected by stdio test signer', retryable: false }",
+        "  }) + '\\n');",
+        "});"
+      ].join("\n"),
+      "utf8"
+    );
+    const transport = new JsonLineStdioTransport({
+      command: process.execPath,
+      args: [signerPath]
+    });
+
+    await expect(transport.exchange(signEventRequest)).rejects.toThrow("transport response request_id does not match request");
+  });
+
   it("rejects invalid stdio transport requests before spawning a signer", async () => {
     const transport = new JsonLineStdioTransport({
       command: "/definitely/missing/nseal-stdio-signer"
@@ -177,6 +223,17 @@ describe("transport adapters", () => {
 
     expect(response).toEqual(capabilitiesResponse);
     expect(validateResponse(response).ok).toBe(true);
+  });
+
+  it("rejects serial response payloads for a different request id", async () => {
+    const transport = new SerialFrameTransport({
+      exchangeFrame: async () => encodeSerialFrame({
+        type: "response",
+        payload: { ...capabilitiesResponse, request_id: "different-request" }
+      })
+    });
+
+    await expect(transport.exchange(capabilitiesRequest)).rejects.toThrow("serial frame response request_id does not match request");
   });
 
   it("moves ESP32-S3 scaffold signing-disabled responses over serial frames", async () => {

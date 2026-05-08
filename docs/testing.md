@@ -43,6 +43,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - Transport boundary tests require outbound request payloads and inbound device
   response payloads to pass standard NostrSeal protocol validation for
   development signer, JSON file, JSON-lines stdio, and serial-frame adapters.
+  Exchange tests also reject validly shaped responses with mismatched
+  `request_id` values.
 - CLI serial-frame tests covering validated request wrapping and response-frame
   unwrapping.
 - Fixture verification rejects valid serial frames whose decoded request

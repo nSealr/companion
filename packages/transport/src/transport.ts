@@ -32,6 +32,16 @@ function assertValidResponse(value: unknown, label = "transport response"): void
   }
 }
 
+function requestIdOf(value: unknown): string {
+  return (value as { request_id: string }).request_id;
+}
+
+function assertResponseMatchesRequest(request: unknown, response: unknown, label = "transport response"): void {
+  if (requestIdOf(response) !== requestIdOf(request)) {
+    throw new Error(`${label} request_id does not match request`);
+  }
+}
+
 export class DevSignerTransport implements SignerTransport {
   readonly name = "dev-signer";
 
@@ -41,6 +51,7 @@ export class DevSignerTransport implements SignerTransport {
     assertValidRequest(request);
     const response = devSignRequest(request as SignEventRequest, this.secretKeyHex);
     assertValidResponse(response);
+    assertResponseMatchesRequest(request, response);
     return response;
   }
 }
@@ -68,7 +79,9 @@ export class JsonFileTransport implements SignerTransport {
 
   async exchange(request: unknown): Promise<unknown> {
     await this.writeRequest(request);
-    return this.readResponse();
+    const response = await this.readResponse();
+    assertResponseMatchesRequest(request, response);
+    return response;
   }
 }
 
@@ -128,6 +141,7 @@ export class JsonLineStdioTransport implements SignerTransport {
         try {
           const response = JSON.parse(line);
           assertValidResponse(response);
+          assertResponseMatchesRequest(request, response);
           succeed(response);
         } catch (error) {
           fail(error instanceof Error ? error : new Error(String(error)));
@@ -160,6 +174,7 @@ export class SerialFrameTransport implements SignerTransport {
       throw new Error(`serial frame transport expected response frame, got ${responseFrame.type}`);
     }
     assertValidResponse(responseFrame.payload, "serial frame response");
+    assertResponseMatchesRequest(request, responseFrame.payload, "serial frame response");
     return responseFrame.payload;
   }
 }

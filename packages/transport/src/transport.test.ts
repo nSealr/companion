@@ -152,4 +152,19 @@ describe("transport adapters", () => {
 
     await expect(transport.exchange(capabilitiesRequest)).rejects.toThrow("serial frame response invalid: ok must be true or false");
   });
+
+  it("rejects invalid serial request payloads before writing to transport", async () => {
+    let exchangeCalled = false;
+    const transport = new SerialFrameTransport({
+      exchangeFrame: async () => {
+        exchangeCalled = true;
+        return encodeSerialFrame({ type: "response", payload: capabilitiesResponse });
+      }
+    });
+
+    await expect(transport.exchange({ version: 1, request_id: "invalid request id", method: "get_capabilities" })).rejects.toThrow(
+      "serial frame request invalid: request_id is invalid"
+    );
+    expect(exchangeCalled).toBe(false);
+  });
 });

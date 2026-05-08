@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { devSignRequest } from "../../dev-signer/src/dev-signer.js";
 import { type SignEventRequest } from "../../core/src/nostr.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../framing/src/serial.js";
-import { validateResponse } from "../../protocol/src/protocol.js";
+import { validateRequest, validateResponse } from "../../protocol/src/protocol.js";
 
 export type SignerTransport = {
   readonly name: string;
@@ -129,6 +129,10 @@ export class SerialFrameTransport implements SignerTransport {
   }
 
   async exchange(request: unknown): Promise<unknown> {
+    const requestValidation = validateRequest(request);
+    if (!requestValidation.ok) {
+      throw new Error(`serial frame request invalid: ${requestValidation.error}`);
+    }
     const requestLine = encodeSerialFrame({ type: "request", payload: request });
     const responseLine = await this.exchangeFrame(requestLine);
     const responseFrame = decodeSerialFrame(responseLine);

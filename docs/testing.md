@@ -40,8 +40,9 @@ single-repository CI. Cross-repository drift remains guarded by
   invalid hardening vectors.
 - Transport contract tests for in-memory development signing, JSON file
   handoff, one-shot JSON-lines stdio exchange, and serial-frame exchange.
-- Serial-frame transport tests require decoded device response payloads to pass
-  standard NostrSeal response validation before the adapter returns them.
+- Serial-frame transport tests require outbound request payloads and decoded
+  device response payloads to pass standard NostrSeal protocol validation at
+  the adapter boundary.
 - CLI serial-frame tests covering validated request wrapping and response-frame
   unwrapping.
 - Fixture verification rejects valid serial frames whose decoded request

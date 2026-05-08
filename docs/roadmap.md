@@ -28,9 +28,10 @@ covered.
 Status: file, stdio, in-memory development signer transport, QR envelope,
 serial framing, serial-frame transport foundations, and offline CLI
 serial-frame helpers are implemented. `SerialFrameTransport` now validates
-decoded response payloads before returning them to callers, so malformed device
-responses cannot bypass the protocol response shape gate through this adapter.
-M3 remains open for larger-payload strategy and first physical USB serial
+request payloads before writing a frame and validates decoded response payloads
+before returning them to callers, so malformed requests or device responses
+cannot bypass the standard protocol shape gates through this adapter. M3
+remains open for larger-payload strategy and first physical USB serial
 integration.
 
 ## M4: NIP-46 Payload Bridge

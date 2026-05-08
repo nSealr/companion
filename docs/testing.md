@@ -55,8 +55,8 @@ single-repository CI. Cross-repository drift remains guarded by
   public-key retrieval, event-id signing, Schnorr verification, and standard
   signed-event response verification.
 - Smartcard PC/SC boundary tests covering fake reader exchange, malformed
-  response data-byte rejection, and clear no-reader errors without requiring
-  native PC/SC dependencies or hardware.
+  response data-byte rejection, and clear provider/no-reader/connection setup
+  errors without requiring native PC/SC dependencies or hardware.
 - CLI smartcard simulator tests covering rejection without
   `--review-acknowledged` and `request -> smartcard-sim-sign ->
   verify-response`.

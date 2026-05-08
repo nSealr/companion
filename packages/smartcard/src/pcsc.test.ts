@@ -67,4 +67,38 @@ describe("PC/SC smartcard transport boundary", () => {
     await expect(PcscApduTransport.fromFirstReader(async () => [])).rejects.toThrow(PcscUnavailableError);
     await expect(PcscApduTransport.fromFirstReader(async () => [])).rejects.toThrow(/no PC\/SC smartcard readers/u);
   });
+
+  it("fails clearly when the PC/SC provider cannot enumerate readers", async () => {
+    await expect(
+      PcscApduTransport.fromFirstReader(async () => {
+        throw new Error("native provider missing");
+      })
+    ).rejects.toThrow(PcscUnavailableError);
+    await expect(
+      PcscApduTransport.fromFirstReader(async () => {
+        throw new Error("native provider missing");
+      })
+    ).rejects.toThrow(/PC\/SC reader provider failed/u);
+  });
+
+  it("fails clearly when a reader connection cannot be opened", async () => {
+    await expect(
+      PcscApduTransport.fromFirstReader(async () => [
+        {
+          connect: async () => {
+            throw new Error("reader is locked");
+          }
+        }
+      ])
+    ).rejects.toThrow(PcscUnavailableError);
+    await expect(
+      PcscApduTransport.fromFirstReader(async () => [
+        {
+          connect: async () => {
+            throw new Error("reader is locked");
+          }
+        }
+      ])
+    ).rejects.toThrow(/PC\/SC reader connection failed/u);
+  });
 });

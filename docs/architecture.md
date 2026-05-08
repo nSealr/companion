@@ -150,10 +150,11 @@ requirement.
 
 The PC/SC boundary is provider-based: tests can inject fake readers and future
 desktop adapters can inject a real PC/SC provider without making a native card
-driver a required companion dependency. It validates response status bytes and
-numeric response data bytes before constructing response APDUs, so a malformed
-provider response cannot be silently truncated. It is not a real-card
-compatibility claim.
+driver a required companion dependency. It normalizes provider and reader
+connection failures into `PcscUnavailableError` before any APDU exchange. It
+also validates response status bytes and numeric response data bytes before
+constructing response APDUs, so a malformed provider response cannot be
+silently truncated. It is not a real-card compatibility claim.
 
 ## NIP-46 Bridge Boundary
 

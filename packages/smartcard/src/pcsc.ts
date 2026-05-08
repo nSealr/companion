@@ -46,10 +46,20 @@ export class PcscApduTransport {
   constructor(private readonly connection: PcscConnection) {}
 
   static async fromFirstReader(readers: PcscReaderProvider): Promise<PcscApduTransport> {
-    const readerList = await readers();
+    let readerList: PcscReader[];
+    try {
+      readerList = await readers();
+    } catch (error) {
+      throw new PcscUnavailableError("PC/SC reader provider failed");
+    }
     if (readerList.length === 0) throw new PcscUnavailableError("no PC/SC smartcard readers found");
-    const connection = await readerList[0].connect();
-    await connection.connect?.();
+    let connection: PcscConnection;
+    try {
+      connection = await readerList[0].connect();
+      await connection.connect?.();
+    } catch (error) {
+      throw new PcscUnavailableError("PC/SC reader connection failed");
+    }
     return new PcscApduTransport(connection);
   }
 

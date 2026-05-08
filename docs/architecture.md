@@ -27,24 +27,28 @@ only adapt file/argument I/O around package-owned validation logic.
 
 - `apps/cli`: command-line entrypoint.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
-- `packages/protocol`: schema validation and typed request/response models.
+- `packages/protocol`: schema validation, typed request/response models, and
+  the central NostrSeal v0 implementation limit profile used by companion
+  parsers.
 - `packages/fixtures`: shared event, key, trusted-review,
-  review-display-frame, QR review-transcript, NIP-46 payload, and NIP-46
-  policy-file fixture loading.
+  review-display-frame, QR review-transcript, NIP-46 payload, NIP-46
+  policy-file, limit-profile, and invalid hardening fixture loading.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: test-only signing implementation.
 - `packages/transport`: signer transport interface plus in-memory development,
   JSON file, and JSON-lines stdio adapters.
 - `packages/qr`: v0 `nseal1:` QR envelope encoding and decoding.
-- `packages/framing`: checksum-protected serial line framing draft.
+- `packages/framing`: checksum-protected serial line framing draft with the
+  shared v0 serial-frame byte limit.
 - `packages/smartcard`: APDU codec, simulator adapter, provider-based PC/SC
   APDU transport boundary, `SmartcardSigner` boundary, and response
   verification for the display-less smartcard line.
 - `packages/nip46`: decrypted NIP-46 payload bridge for `get_public_key`,
   `sign_event`, local `ping`, and conversion from NostrSeal responses back to
   NIP-46 result/error strings. It also validates requested permission strings
-  and parses `connect` messages into review intents for later policy work.
+  and policy files, and parses `connect` messages into review intents for later
+  policy work.
   Permission matching is present as a pure boundary and is pinned by shared
   permission policy fixture checks. Bridge decision output is also present: a
   permitted request can become a signer request, `ping` can produce a local
@@ -102,7 +106,9 @@ encryption work begins.
 
 NIP-46 policy-file vectors are loaded and verified by `nseal fixture verify` so
 explicit approved-permission inputs stay normalized across specs, companion,
-and lab integration. They are read-only conformance files, not a grant store.
+and lab integration. Package code owns the parser; the CLI only reads files and
+passes parsed policies into bridge decisions. They are read-only conformance
+files, not a grant store.
 
 Pre-signing hardening vectors are the companion's rejection oracle for unsafe
 input. They must be evaluated before signer transport, dev signing,
@@ -206,6 +212,9 @@ The v0 envelope is deliberately uncompressed and single-part. Animated QR,
 compression, fountain codes, and large payload chunking remain out of scope
 until a Raspberry or ESP32 QR vault flow proves where those features are
 necessary.
+The decoder enforces the shared static QR decoded JSON byte limit and rejects
+padded base64url, invalid UTF-8, malformed JSON, and malformed prefixes before
+any review or signing flow can consume the payload.
 
 ## Serial Frame Draft
 
@@ -220,3 +229,5 @@ the first 16 lowercase hexadecimal characters of SHA-256 over
 `<type>:<base64url-json>`. This is not an authentication mechanism; it only
 catches accidental framing and transport corruption before the companion applies
 schema and signature verification.
+The decoder enforces the shared complete-frame byte limit and rejects malformed
+payloads before JSON parsing.

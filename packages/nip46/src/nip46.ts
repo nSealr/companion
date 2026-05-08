@@ -1,4 +1,5 @@
 import { validateRequest, validateResponse } from "../../protocol/src/protocol.js";
+import { compactJsonUtf8ByteLength, NOSTRSEAL_V0_LIMITS } from "../../protocol/src/limits.js";
 
 export type Nip46RequestMessage = {
   id: string;
@@ -87,13 +88,16 @@ function requireNip46Id(value: unknown): string {
 
 function requireXOnlyPubkey(value: unknown, label: string): string {
   if (typeof value !== "string" || !/^[0-9a-f]{64}$/u.test(value)) {
-    throw new Error(`NIP-46 ${label} must be a 32-byte lowercase hex pubkey`);
+    throw new Error(`NIP-46 ${label} must be 32-byte lowercase hex`);
   }
   return value;
 }
 
 function requireMessage(value: unknown): Nip46RequestMessage {
   if (!isRecord(value)) throw new Error("NIP-46 message must be an object");
+  if (compactJsonUtf8ByteLength(value) > NOSTRSEAL_V0_LIMITS.max_nip46_decrypted_message_json_bytes) {
+    throw new Error("NIP-46 decrypted message JSON exceeds max_nip46_decrypted_message_json_bytes");
+  }
   const id = requireNip46Id(value.id);
   if (typeof value.method !== "string" || value.method.length === 0) {
     throw new Error("NIP-46 method is required");
@@ -145,6 +149,54 @@ export function parseNip46Permissions(value: string): Nip46Permission[] {
   });
 }
 
+function parseNip46PolicyPermission(permission: unknown, context: string): Nip46Permission {
+  if (!isRecord(permission) || typeof permission.method !== "string") {
+    throw new Error(`${context}: permission entries must include method`);
+  }
+  if (!NIP46_PERMISSION_METHODS.has(permission.method)) {
+    throw new Error(`${context}: permission method is invalid`);
+  }
+  if (permission.method === "sign_event") {
+    if (permission.parameter === undefined) {
+      if (Object.keys(permission).length !== 1) {
+        throw new Error(`${context}: broad sign_event permission must only include method`);
+      }
+      return { method: "sign_event" };
+    }
+    if (
+      typeof permission.parameter !== "string" ||
+      !/^[0-9]+$/u.test(permission.parameter) ||
+      typeof permission.event_kind !== "number" ||
+      !Number.isInteger(permission.event_kind) ||
+      permission.event_kind !== Number(permission.parameter)
+    ) {
+      throw new Error(`${context}: sign_event permission parameter must match event_kind`);
+    }
+    if (Object.keys(permission).some((key) => !["method", "parameter", "event_kind"].includes(key))) {
+      throw new Error(`${context}: sign_event permission contains unknown fields`);
+    }
+    return {
+      method: "sign_event",
+      parameter: permission.parameter,
+      event_kind: permission.event_kind
+    };
+  }
+  if ("parameter" in permission || "event_kind" in permission || Object.keys(permission).length !== 1) {
+    throw new Error(`${context}: non-sign_event permission must only include method`);
+  }
+  return { method: permission.method };
+}
+
+export function parseNip46PolicyFile(policy: unknown, context = "NIP-46 policy file"): Nip46Permission[] {
+  if (!isRecord(policy) || policy.format !== "nseal-nip46-policy-v0") {
+    throw new Error(`${context}: must use format nseal-nip46-policy-v0`);
+  }
+  if (!Array.isArray(policy.approved_permissions)) {
+    throw new Error(`${context}: approved_permissions must be a list`);
+  }
+  return policy.approved_permissions.map((permission) => parseNip46PolicyPermission(permission, context));
+}
+
 export function parseNip46ConnectIntent(value: unknown): Nip46ConnectIntent {
   const message = requireMessage(value);
   if (message.method !== "connect") throw new Error("NIP-46 connect intent requires connect method");
@@ -153,7 +205,7 @@ export function parseNip46ConnectIntent(value: unknown): Nip46ConnectIntent {
   }
   return {
     id: message.id,
-    remote_signer_pubkey: requireXOnlyPubkey(message.params[0], "remote-signer pubkey"),
+    remote_signer_pubkey: requireXOnlyPubkey(message.params[0], "connect remote-signer pubkey"),
     ...(message.params[1] !== undefined && message.params[1] !== "" ? { secret: message.params[1] } : {}),
     requested_permissions: message.params[2] !== undefined ? parseNip46Permissions(message.params[2]) : []
   };

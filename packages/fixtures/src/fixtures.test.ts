@@ -58,4 +58,44 @@ describe("fixture loading", () => {
     expect(fixtures.nip46PolicyFiles.map((policy) => policy.name)).toEqual(["sign-event-kind-1-approved"]);
     expect(fixtures.nip46PolicyFiles[0].format).toBe("nseal-nip46-policy-v0");
   });
+
+  it("loads implementation limits and invalid hardening vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    expect(fixtures.limits.format).toBe("nostrseal-implementation-limits-v0");
+    expect(fixtures.limits.name).toBe("nostrseal-v0");
+    expect(fixtures.limits.limits.max_request_id_length).toBe(128);
+    expect(fixtures.invalidVectors.map((vector) => vector.name)).toEqual([
+      "nip46-connect-invalid-pubkey",
+      "nip46-permission-malformed",
+      "nip46-policy-method-unsupported",
+      "nip46-policy-sign-event-kind-mismatch",
+      "nip46-sign-event-param-not-json",
+      "nip46-sign-event-param-unsafe-template",
+      "qr-envelope-invalid-utf8",
+      "qr-envelope-malformed",
+      "qr-envelope-oversized",
+      "qr-envelope-padded",
+      "request-content-over-limit",
+      "request-created-at-float",
+      "request-created-at-negative",
+      "request-created-at-string",
+      "request-created-at-unsafe-integer",
+      "request-event-template-id",
+      "request-event-template-pubkey",
+      "request-event-template-sig",
+      "request-json-over-limit",
+      "request-kind-float",
+      "request-kind-negative",
+      "request-kind-string",
+      "request-kind-unsafe-integer",
+      "request-tag-field-too-long",
+      "request-tag-item-not-string",
+      "request-tags-not-array",
+      "request-too-many-tags",
+      "request-unknown-top-level-field",
+      "serial-frame-checksum-mismatch",
+      "serial-frame-malformed-payload",
+      "serial-frame-oversized"
+    ]);
+  });
 });

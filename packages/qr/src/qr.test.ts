@@ -20,10 +20,20 @@ describe("QR envelope v0", () => {
   });
 
   it("rejects envelopes without the nseal1 prefix", () => {
-    expect(() => decodeQrEnvelope("nostr:abc")).toThrow("QR envelope must start with nseal1:");
+    expect(() => decodeQrEnvelope("nostr:abc")).toThrow("QR envelope requires nseal1 prefix");
   });
 
   it("rejects envelopes whose payload is not JSON", () => {
     expect(() => decodeQrEnvelope(`${QR_ENVELOPE_PREFIX}bm90LWpzb24`)).toThrow("QR envelope payload is not valid JSON");
+  });
+
+  it("rejects shared invalid QR hardening vectors deterministically", () => {
+    const fixtures = JSON.parse(readFileSync(resolve(specsRoot, "vectors/limits/nseal-v0.json"), "utf8"));
+    expect(fixtures.name).toBe("nostrseal-v0");
+    const invalidRoot = resolve(specsRoot, "vectors/invalid");
+    for (const name of ["qr-envelope-invalid-utf8", "qr-envelope-malformed", "qr-envelope-oversized", "qr-envelope-padded"]) {
+      const vector = JSON.parse(readFileSync(resolve(invalidRoot, `${name}.json`), "utf8"));
+      expect(() => decodeQrEnvelope(vector.envelope), name).toThrow(vector.expected_error);
+    }
   });
 });

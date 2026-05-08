@@ -127,6 +127,23 @@ export type SpecsFixtureSet = {
       event_kind?: number;
     }>;
   }>;
+  limits: {
+    format: string;
+    name: string;
+    limits: Record<string, number>;
+    integer_policy: Record<string, unknown>;
+  };
+  invalidVectors: Array<{
+    name: string;
+    format: string;
+    category: "signing-request" | "qr-envelope" | "serial-frame" | "nip46" | "nip46-policy-file";
+    expected_error: string;
+    request?: unknown;
+    envelope?: string;
+    frame?: string;
+    request_message?: unknown;
+    policy_file?: unknown;
+  }>;
 };
 
 function loadJson(path: string): unknown {
@@ -144,6 +161,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const reviewTranscriptsRoot = resolve(specsRoot, "vectors/review-transcripts");
   const nip46Root = resolve(specsRoot, "vectors/nip46");
   const nip46PolicyFilesRoot = resolve(specsRoot, "vectors/nip46-policy-files");
+  const invalidVectorsRoot = resolve(specsRoot, "vectors/invalid");
   const eventFiles = readdirSync(eventsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
@@ -162,8 +180,12 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const nip46PolicyFiles = readdirSync(nip46PolicyFilesRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
+  const invalidVectorFiles = readdirSync(invalidVectorsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
   return {
     key: loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as SpecsFixtureSet["key"],
+    limits: loadJson(resolve(specsRoot, "vectors/limits/nseal-v0.json")) as SpecsFixtureSet["limits"],
     events: eventFiles.map((file) => loadJson(resolve(eventsRoot, file)) as SpecsFixtureSet["events"][number]),
     reviews: reviewFiles.map((file) => loadJson(resolve(reviewsRoot, file)) as SpecsFixtureSet["reviews"][number]),
     reviewDisplayFrames: reviewDisplayFrameFiles.map(
@@ -181,6 +203,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
           ...(loadJson(resolve(nip46PolicyFilesRoot, file)) as Record<string, unknown>),
           name: fileStem(file)
         }) as SpecsFixtureSet["nip46PolicyFiles"][number]
+    ),
+    invalidVectors: invalidVectorFiles.map(
+      (file) => loadJson(resolve(invalidVectorsRoot, file)) as SpecsFixtureSet["invalidVectors"][number]
     )
   };
 }

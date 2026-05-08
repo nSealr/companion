@@ -10,9 +10,10 @@
 
 Status: implemented as the first companion foundation with JSON and QR envelope
 CLI paths. Fixture verification now includes shared review-display-frame,
-QR review-transcript, NIP-46 payload, and NIP-46 policy-file vectors in
-addition to event and trusted-review vectors. Malformed JSON and unsupported
-request-method CLI rejection tests are now covered.
+QR review-transcript, NIP-46 payload, NIP-46 policy-file, limit-profile, and
+invalid hardening vectors in addition to event and trusted-review vectors.
+Malformed JSON and unsupported request-method CLI rejection tests are now
+covered.
 
 ## M3: Transport Layer
 
@@ -55,7 +56,9 @@ permission-denied NIP-46 responses before a request reaches signer transport.
 integration tests. The command can read explicit permissions from the command
 line or from a `nseal-nip46-policy-v0` policy file pinned by shared specs
 vectors, but it does not create, update, approve, or persist grants by itself.
-It also does not add relay, encryption, or signer I/O.
+Policy-file parsing is now package-owned in `packages/nip46`, leaving the CLI
+as a file/argument adapter. It also does not add relay, encryption, or signer
+I/O.
 Relay sessions, NIP-44 encryption/decryption, connection token responses,
 permission storage, grant review, and auth challenge UX remain future work.
 
@@ -72,9 +75,13 @@ permission storage, grant review, and auth challenge UX remain future work.
 - Add a `nostr-tools` test oracle for NIP-01 canonical event hash/signature
   conformance without coupling production code to that dependency.
 
-Status: blocker before browser extension work, full NIP-46 relay sessions,
-NIP-44 handling, persistent grants, `connect` acknowledgement, signer I/O, or
-production signing claims.
+Status: implemented for companion-owned boundaries. `packages/protocol`
+enforces the shared v0 limits, QR/serial decoders reject malformed or oversized
+frames, `packages/nip46` owns policy-file parsing and request conversion, CLI
+decision commands fail before writing output, and test-only Nostr conformance
+is cross-checked with `nostr-tools`. The broader program gate remains a blocker
+until Raspberry and ESP32 consume the applicable vectors and lab integration
+pins the cross-repo behavior.
 
 ## Later
 

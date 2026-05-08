@@ -11,7 +11,8 @@ clients to hardware-backed signing.
 - `nseal fixture verify` validates shared signing, trusted-review,
   review-display-frame, QR review-transcript, NIP-46 payload, and NIP-46
   policy-file fixtures from `NostrSeal/specs`, including NIP-46 permission
-  policy checks and bridge decisions.
+  policy checks, bridge decisions, implementation limits, and invalid
+  hardening vectors.
 - `nseal request sign-event` creates a signing request from an event template.
 - `nseal dev-sign` signs requests with an explicit test-only software key.
 - `nseal review-request` renders deterministic review JSON from a signing
@@ -32,11 +33,14 @@ clients to hardware-backed signing.
   It does not open relays, decrypt NIP-44 payloads, persist grants, or contact
   signer transports.
 - `packages/qr` implements the v0 `nseal1:` QR envelope from
-  `NostrSeal/specs`.
+  `NostrSeal/specs`, including malformed/padded/invalid-UTF-8/oversized
+  rejection.
 - `packages/framing` implements the first checksum-protected serial line frame
-  draft for USB CDC and UART experiments.
-- `packages/protocol` validates capability discovery responses, including the
-  current ESP32-S3 scaffold's disabled-signing safety flags.
+  draft for USB CDC and UART experiments, including shared frame-size limits.
+- `packages/protocol` validates request/response shape, centralizes the
+  companion copy of the shared v0 implementation limits, and validates
+  capability discovery responses, including the current ESP32-S3 scaffold's
+  disabled-signing safety flags.
 - `packages/review` mirrors the shared trusted-review vector semantics for
   companion previews. It is not a trusted approval surface.
 - Serial transport tests cover both capability discovery and explicit
@@ -51,12 +55,13 @@ clients to hardware-backed signing.
   status and data bytes before constructing response APDUs.
 - `packages/nip46` implements the first decrypted NIP-46 payload bridge for
   `get_public_key`, `sign_event`, local `ping`, and NostrSeal response mapping.
-  It also parses `connect` requests into policy-review intents and validates
-  requested permission strings against later requests. Shared specs vectors now
-  pin the derived permission requirements, positive/negative permission checks,
-  and bridge decisions for signer routing, local response routing, `connect`
-  review, and permission-denied responses. Relay transport, NIP-44 encryption,
-  persistent permission grants, and auth flows remain future work.
+  It also parses `connect` requests into policy-review intents, validates
+  requested permission strings, and owns the read-only policy-file parser used
+  by the CLI. Shared specs vectors now pin the derived permission requirements,
+  positive/negative permission checks, bridge decisions, and invalid payload
+  rejection for signer routing, local response routing, `connect` review, and
+  permission-denied responses. Relay transport, NIP-44 encryption, persistent
+  permission grants, and auth flows remain future work.
 
 ## Planned Capabilities
 

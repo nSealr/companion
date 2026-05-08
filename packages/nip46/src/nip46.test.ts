@@ -10,6 +10,7 @@ import {
   nip46ResponseFromNostrSeal,
   nip46PermissionRequirementFromRequest,
   parseNip46ConnectIntent,
+  parseNip46PolicyFile,
   nostrSealRequestFromNip46,
   parseNip46Permissions,
   respondToLocalNip46Request
@@ -140,7 +141,7 @@ describe("NIP-46 bridge payloads", () => {
         method: "sign_event",
         params: [JSON.stringify({ created_at: 1710000000, kind: 1, tags: [], content: "", sig: "00" })]
       })
-    ).toThrow(/event_template must not contain sig/u);
+    ).toThrow(/event_template contains forbidden fields/u);
   });
 
   it("parses NIP-46 permission strings without granting permissions", () => {
@@ -153,6 +154,29 @@ describe("NIP-46 bridge payloads", () => {
     expect(() => parseNip46Permissions("sign_event:not-a-kind")).toThrow(/sign_event permission kind/u);
     expect(() => parseNip46Permissions("connect")).toThrow(/must not request connect/u);
     expect(() => parseNip46Permissions("unknown_method")).toThrow(/unsupported permission method/u);
+  });
+
+  it("parses policy files in package code instead of CLI code", () => {
+    const policy = load("vectors/nip46-policy-files/sign-event-kind-1-approved.json");
+
+    expect(parseNip46PolicyFile(policy)).toEqual([{ method: "sign_event", parameter: "1", event_kind: 1 }]);
+  });
+
+  it("rejects shared invalid NIP-46 hardening vectors deterministically", () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+    const vectors = fixtures.invalidVectors.filter((vector) => vector.category === "nip46" || vector.category === "nip46-policy-file");
+
+    expect(vectors.length).toBeGreaterThan(0);
+    for (const vector of vectors) {
+      const action = () => {
+        if (vector.category === "nip46-policy-file") {
+          parseNip46PolicyFile(vector.policy_file);
+          return;
+        }
+        decideNip46BridgeAction(vector.request_message, []);
+      };
+      expect(action, vector.name).toThrow(vector.expected_error);
+    }
   });
 
   it("parses connect requests as policy-review intents without acknowledging them", () => {

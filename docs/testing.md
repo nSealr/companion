@@ -36,7 +36,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI fixture verification tests against `NostrSeal/specs`, covering both
   signed-event fixtures, trusted-review fixtures, review-display-frame
   fixtures, QR review-transcript fixtures, NIP-46 payload fixtures, and NIP-46
-  policy-file fixtures.
+  policy-file fixtures, plus the shared implementation-limit profile and
+  invalid hardening vectors.
 - Transport contract tests for in-memory development signing, JSON file
   handoff, one-shot JSON-lines stdio exchange, and serial-frame exchange.
 - CLI serial-frame tests covering validated request wrapping and response-frame

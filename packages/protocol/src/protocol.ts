@@ -1,3 +1,10 @@
+import {
+  compactJsonUtf8ByteLength,
+  isSafeNonNegativeInteger,
+  NOSTRSEAL_V0_LIMITS,
+  utf8ByteLength
+} from "./limits.js";
+
 export type ValidationResult = {
   ok: boolean;
   error?: string;
@@ -8,44 +15,94 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isRequestId(value: unknown): value is string {
-  return typeof value === "string" && /^[A-Za-z0-9._:-]{1,128}$/u.test(value);
+  return typeof value === "string" && /^[A-Za-z0-9._:-]+$/u.test(value) && value.length <= NOSTRSEAL_V0_LIMITS.max_request_id_length;
 }
 
 function isLowerHex(value: unknown, length: number): value is string {
   return typeof value === "string" && new RegExp(`^[0-9a-f]{${length}}$`, "u").test(value);
 }
 
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+function unknownFields(value: Record<string, unknown>, allowed: readonly string[]): string[] {
+  const allowedSet = new Set(allowed);
+  return Object.keys(value).filter((key) => !allowedSet.has(key));
+}
+
+function validateSafeIntegerField(field: "created_at" | "kind", value: unknown): ValidationResult {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    return { ok: false, error: `event_template ${field} must be a non-negative safe integer` };
+  }
+  if (!Number.isSafeInteger(value) || value > NOSTRSEAL_V0_LIMITS.max_safe_integer) {
+    return { ok: false, error: `event_template ${field} exceeds max_safe_integer` };
+  }
+  return { ok: true };
 }
 
 function validateEventTemplate(value: unknown): ValidationResult {
   if (!isRecord(value)) return { ok: false, error: "event_template must be an object" };
-  for (const forbidden of ["id", "pubkey", "sig"]) {
-    if (forbidden in value) return { ok: false, error: `event_template must not contain ${forbidden}` };
+  const forbidden = ["id", "pubkey", "sig"].filter((field) => field in value);
+  if (forbidden.length > 0) {
+    return { ok: false, error: `event_template contains forbidden fields: ${forbidden.join(", ")}` };
   }
-  if (!isNonNegativeInteger(value.created_at)) return { ok: false, error: "created_at must be a non-negative integer" };
-  if (!isNonNegativeInteger(value.kind)) return { ok: false, error: "kind must be a non-negative integer" };
-  if (!Array.isArray(value.tags) || !value.tags.every((tag) => Array.isArray(tag) && tag.every((item) => typeof item === "string"))) {
-    return { ok: false, error: "tags must be an array of string arrays" };
+  const extra = unknownFields(value, ["created_at", "kind", "tags", "content", "id", "pubkey", "sig"]);
+  if (extra.length > 0) return { ok: false, error: `event_template contains unknown fields: ${extra.join(", ")}` };
+
+  const createdAt = validateSafeIntegerField("created_at", value.created_at);
+  if (!createdAt.ok) return createdAt;
+  const kind = validateSafeIntegerField("kind", value.kind);
+  if (!kind.ok) return kind;
+
+  if (!Array.isArray(value.tags)) {
+    return { ok: false, error: "event_template tags must be an array" };
+  }
+  if (value.tags.length > NOSTRSEAL_V0_LIMITS.max_tag_count) {
+    return { ok: false, error: "event_template tags exceeds max_tag_count" };
+  }
+  let totalTagBytes = 0;
+  for (const [tagIndex, tag] of value.tags.entries()) {
+    if (!Array.isArray(tag)) return { ok: false, error: `event_template tags[${tagIndex}] must be an array` };
+    if (tag.length > NOSTRSEAL_V0_LIMITS.max_tag_fields_per_tag) {
+      return { ok: false, error: `event_template tags[${tagIndex}] exceeds max_tag_fields_per_tag` };
+    }
+    for (const [fieldIndex, item] of tag.entries()) {
+      if (typeof item !== "string") {
+        return { ok: false, error: `event_template tags[${tagIndex}][${fieldIndex}] must be a string` };
+      }
+      const itemBytes = utf8ByteLength(item);
+      totalTagBytes += itemBytes;
+      if (itemBytes > NOSTRSEAL_V0_LIMITS.max_tag_field_utf8_bytes) {
+        return { ok: false, error: "event_template tag field exceeds max_tag_field_utf8_bytes" };
+      }
+    }
+  }
+  if (totalTagBytes > NOSTRSEAL_V0_LIMITS.max_total_tag_utf8_bytes) {
+    return { ok: false, error: "event_template tags exceed max_total_tag_utf8_bytes" };
   }
   if (typeof value.content !== "string") return { ok: false, error: "content must be a string" };
-  const allowed = new Set(["created_at", "kind", "tags", "content"]);
-  const extra = Object.keys(value).filter((key) => !allowed.has(key));
-  if (extra.length > 0) return { ok: false, error: `event_template contains unknown fields: ${extra.join(", ")}` };
+  if (utf8ByteLength(value.content) > NOSTRSEAL_V0_LIMITS.max_content_utf8_bytes) {
+    return { ok: false, error: "event_template content exceeds max_content_utf8_bytes" };
+  }
   return { ok: true };
 }
 
 export function validateRequest(value: unknown): ValidationResult {
   if (!isRecord(value)) return { ok: false, error: "request must be an object" };
+  if (compactJsonUtf8ByteLength(value) > NOSTRSEAL_V0_LIMITS.max_decoded_request_json_bytes) {
+    return { ok: false, error: "decoded request JSON exceeds max_decoded_request_json_bytes" };
+  }
   if (value.version !== 1) return { ok: false, error: "version must be 1" };
   if (!isRequestId(value.request_id)) return { ok: false, error: "request_id is invalid" };
   if (value.method === "get_capabilities" || value.method === "get_public_key") {
+    const extra = unknownFields(value, ["version", "request_id", "method"]);
+    if (extra.length > 0) return { ok: false, error: `unknown top-level fields: ${extra.join(", ")}` };
     if ("params" in value) return { ok: false, error: `${value.method} must not include params` };
     return { ok: true };
   }
   if (value.method === "sign_event") {
+    const extra = unknownFields(value, ["version", "request_id", "method", "params"]);
+    if (extra.length > 0) return { ok: false, error: `unknown top-level fields: ${extra.join(", ")}` };
     if (!isRecord(value.params)) return { ok: false, error: "sign_event requires params" };
+    const paramExtra = unknownFields(value.params, ["event_template"]);
+    if (paramExtra.length > 0) return { ok: false, error: `sign_event params contain unknown fields: ${paramExtra.join(", ")}` };
     const result = validateEventTemplate(value.params.event_template);
     if (!result.ok) return result;
     return { ok: true };
@@ -57,8 +114,8 @@ function validateSignedEvent(value: unknown): ValidationResult {
   if (!isRecord(value)) return { ok: false, error: "event must be an object" };
   if (!isLowerHex(value.id, 64)) return { ok: false, error: "event id must be 32-byte lowercase hex" };
   if (!isLowerHex(value.pubkey, 64)) return { ok: false, error: "event pubkey must be 32-byte lowercase hex" };
-  if (!isNonNegativeInteger(value.created_at)) return { ok: false, error: "created_at must be a non-negative integer" };
-  if (!isNonNegativeInteger(value.kind)) return { ok: false, error: "kind must be a non-negative integer" };
+  if (!isSafeNonNegativeInteger(value.created_at)) return { ok: false, error: "created_at must be a non-negative integer" };
+  if (!isSafeNonNegativeInteger(value.kind)) return { ok: false, error: "kind must be a non-negative integer" };
   if (!Array.isArray(value.tags) || !value.tags.every((tag) => Array.isArray(tag) && tag.every((item) => typeof item === "string"))) {
     return { ok: false, error: "tags must be an array of string arrays" };
   }

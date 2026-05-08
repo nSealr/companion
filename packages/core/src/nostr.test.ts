@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { getEventHash, verifyEvent } from "nostr-tools/pure";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { computeEventId, verifySchnorrSignature, verifySignedEventResponse } from "./nostr.js";
 
@@ -14,6 +15,11 @@ const basicResponse = JSON.parse(readFileSync(resolve(specsRoot, "examples/respo
 describe("Nostr core verification", () => {
   it("computes the NIP-01 event id from canonical serialization", () => {
     expect(computeEventId(basicVector.signed_event)).toBe(basicVector.event_id);
+  });
+
+  it("matches nostr-tools event hash and signature verification", () => {
+    expect(getEventHash(basicVector.signed_event)).toBe(basicVector.event_id);
+    expect(verifyEvent(basicVector.signed_event)).toBe(true);
   });
 
   it("verifies the BIP-340 signature from the shared fixture", () => {

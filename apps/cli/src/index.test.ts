@@ -100,7 +100,7 @@ describe("nseal CLI", () => {
 
   it("verifies event and trusted-review fixtures from the specs repository", async () => {
     await expect(collectCliOutput(["fixture", "verify", "--specs", specsRoot])).resolves.toEqual([
-      "verified 2 event fixtures, 4 review fixtures, 1 review display-frame fixture, 2 review transcript fixtures, 5 NIP-46 payload fixtures, and 1 NIP-46 policy-file fixture"
+      "verified 2 event fixtures, 4 review fixtures, 1 review display-frame fixture, 2 review transcript fixtures, 5 NIP-46 payload fixtures, 1 NIP-46 policy-file fixture, and 31 invalid hardening fixtures"
     ]);
   });
 
@@ -246,6 +246,22 @@ describe("nseal CLI", () => {
         decisionPath
       ])
     ).rejects.toThrow("--policy-file cannot be combined with --permissions");
+  });
+
+  it("rejects invalid NIP-46 decisions before writing output", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-nip46-hardening-"));
+    const vector = loadJson(resolve(specsRoot, "vectors/invalid/nip46-sign-event-param-unsafe-template.json")) as {
+      request_message: unknown;
+    };
+    const messagePath = join(tempRoot, "message.json");
+    const decisionPath = join(tempRoot, "decision.json");
+
+    writeFileSync(messagePath, `${JSON.stringify(vector.request_message, null, 2)}\n`, "utf8");
+
+    await expect(
+      runCli(["nip46", "decide", "--message", messagePath, "--permissions", "sign_event", "--out", decisionPath])
+    ).rejects.toThrow("event_template contains forbidden fields");
+    expect(existsSync(decisionPath)).toBe(false);
   });
 
   it("rejects malformed event-template JSON before writing a request", async () => {

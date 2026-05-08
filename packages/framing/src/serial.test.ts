@@ -32,6 +32,14 @@ describe("serial framing draft", () => {
     const badChecksum = checksum === "0".repeat(16) ? "1".repeat(16) : "0".repeat(16);
     const corrupted = frame.replace(checksum, badChecksum);
 
-    expect(() => decodeSerialFrame(corrupted)).toThrow("serial frame checksum mismatch");
+    expect(() => decodeSerialFrame(corrupted)).toThrow("serial checksum mismatch");
+  });
+
+  it("rejects shared invalid serial hardening vectors deterministically", () => {
+    const invalidRoot = resolve(specsRoot, "vectors/invalid");
+    for (const name of ["serial-frame-checksum-mismatch", "serial-frame-malformed-payload", "serial-frame-oversized"]) {
+      const vector = JSON.parse(readFileSync(resolve(invalidRoot, `${name}.json`), "utf8"));
+      expect(() => decodeSerialFrame(vector.frame), name).toThrow(vector.expected_error);
+    }
   });
 });

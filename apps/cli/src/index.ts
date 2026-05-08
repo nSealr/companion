@@ -12,6 +12,7 @@ import {
   nip46ResponseFromNostrSeal,
   nostrSealRequestFromNip46,
   parseNip46ConnectIntent,
+  parseNip46PolicyFile,
   parseNip46Permissions,
   type Nip46Permission,
   respondToLocalNip46Request
@@ -42,54 +43,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function parseNip46PolicyPermission(permission: unknown, context: string): Nip46Permission {
-  if (!isRecord(permission) || typeof permission.method !== "string") {
-    throw new Error(`${context} permission entries must include method`);
-  }
-  if (/[,:]/u.test(permission.method)) {
-    throw new Error(`${context} permission method must not include parameter separators`);
-  }
-  if (permission.method === "sign_event" && permission.parameter !== undefined) {
-    if (typeof permission.parameter !== "string" || !/^[0-9]+$/u.test(permission.parameter)) {
-      throw new Error(`${context} sign_event permission parameter must be numeric`);
-    }
-    if (permission.event_kind !== Number(permission.parameter)) {
-      throw new Error(`${context} sign_event permission event_kind must match parameter`);
-    }
-    return {
-      method: permission.method,
-      parameter: permission.parameter,
-      event_kind: permission.event_kind
-    };
-  }
-  if ("parameter" in permission || "event_kind" in permission) {
-    throw new Error(`${context} non-parameter permission must not include parameter data`);
-  }
-  let parsed: Nip46Permission[];
-  try {
-    parsed = parseNip46Permissions(permission.method);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`${context}: ${message}`);
-  }
-  if (parsed.length !== 1) {
-    throw new Error(`${context} permission entry must describe exactly one permission`);
-  }
-  return parsed[0];
-}
-
-function parseNip46PolicyPermissions(policy: unknown, context = "NIP-46 policy file"): Nip46Permission[] {
-  if (!isRecord(policy) || policy.format !== "nseal-nip46-policy-v0") {
-    throw new Error(`${context} must use format nseal-nip46-policy-v0`);
-  }
-  if (!Array.isArray(policy.approved_permissions)) {
-    throw new Error(`${context} must include approved_permissions`);
-  }
-  return policy.approved_permissions.map((permission) => parseNip46PolicyPermission(permission, context));
-}
-
 function readNip46PolicyPermissions(path: string): Nip46Permission[] {
-  return parseNip46PolicyPermissions(readJson(path));
+  return parseNip46PolicyFile(readJson(path));
 }
 
 function validateReviewTranscriptFixture(name: string, fixture: unknown): void {
@@ -269,7 +224,64 @@ function validateNip46PayloadFixture(name: string, fixture: unknown): void {
 }
 
 function validateNip46PolicyFileFixture(name: string, fixture: unknown): void {
-  parseNip46PolicyPermissions(fixture, `invalid NIP-46 policy-file fixture ${name}`);
+  parseNip46PolicyFile(fixture, `invalid NIP-46 policy-file fixture ${name}`);
+}
+
+function expectFixtureRejection(name: string, expectedError: string, action: () => void): void {
+  try {
+    action();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.includes(expectedError)) {
+      throw new Error(`invalid hardening fixture ${name}: expected ${expectedError}, got ${message}`);
+    }
+    return;
+  }
+  throw new Error(`invalid hardening fixture ${name}: unexpectedly accepted`);
+}
+
+function validateInvalidHardeningFixture(fixture: {
+  name: string;
+  category: string;
+  expected_error: string;
+  request?: unknown;
+  envelope?: string;
+  frame?: string;
+  request_message?: unknown;
+  policy_file?: unknown;
+}): void {
+  if (fixture.category === "signing-request") {
+    expectFixtureRejection(fixture.name, fixture.expected_error, () => {
+      const result = validateRequest(fixture.request);
+      if (!result.ok) throw new Error(result.error);
+    });
+    return;
+  }
+  if (fixture.category === "qr-envelope") {
+    expectFixtureRejection(fixture.name, fixture.expected_error, () => {
+      decodeQrEnvelope(String(fixture.envelope));
+    });
+    return;
+  }
+  if (fixture.category === "serial-frame") {
+    expectFixtureRejection(fixture.name, fixture.expected_error, () => {
+      decodeSerialFrame(String(fixture.frame));
+    });
+    return;
+  }
+  if (fixture.category === "nip46") {
+    expectFixtureRejection(fixture.name, fixture.expected_error, () => {
+      decideNip46BridgeAction(fixture.request_message, []);
+    });
+    return;
+  }
+  if (fixture.category === "nip46-policy-file") {
+    expectFixtureRejection(fixture.name, fixture.expected_error, () => {
+      parseNip46PolicyFile(fixture.policy_file);
+    });
+    return;
+  }
+  throw new Error(`invalid hardening fixture ${fixture.name}: unsupported category ${fixture.category}`);
 }
 
 function readValue(path: string, format: DataFormat): unknown {
@@ -326,12 +338,15 @@ export function buildCli(): Command {
       for (const nip46PolicyFile of fixtures.nip46PolicyFiles) {
         validateNip46PolicyFileFixture(nip46PolicyFile.name, nip46PolicyFile);
       }
+      for (const invalidVector of fixtures.invalidVectors) {
+        validateInvalidHardeningFixture(invalidVector);
+      }
       const policyFileFixtureLabel =
         fixtures.nip46PolicyFiles.length === 1
           ? "1 NIP-46 policy-file fixture"
           : `${fixtures.nip46PolicyFiles.length} NIP-46 policy-file fixtures`;
       console.log(
-        `verified ${fixtures.events.length} event fixtures, ${fixtures.reviews.length} review fixtures, ${fixtures.reviewDisplayFrames.length} review display-frame fixture, ${fixtures.reviewTranscripts.length} review transcript fixtures, ${fixtures.nip46Payloads.length} NIP-46 payload fixtures, and ${policyFileFixtureLabel}`
+        `verified ${fixtures.events.length} event fixtures, ${fixtures.reviews.length} review fixtures, ${fixtures.reviewDisplayFrames.length} review display-frame fixture, ${fixtures.reviewTranscripts.length} review transcript fixtures, ${fixtures.nip46Payloads.length} NIP-46 payload fixtures, ${policyFileFixtureLabel}, and ${fixtures.invalidVectors.length} invalid hardening fixtures`
       );
     });
 

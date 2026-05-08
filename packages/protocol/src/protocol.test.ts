@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
+import { loadSpecsFixtures } from "../../fixtures/src/fixtures.js";
+import { NOSTRSEAL_V0_LIMITS } from "./limits.js";
 import { validateRequest, validateResponse } from "./protocol.js";
 
 const specsRoot = resolveSpecsRoot();
@@ -37,5 +39,23 @@ describe("protocol validation", () => {
   it("rejects invalid v0 requests", () => {
     expect(validateRequest(load("examples/invalid/request-sign-event-with-pubkey.json")).ok).toBe(false);
     expect(validateRequest(load("examples/invalid/request-unknown-method.json")).ok).toBe(false);
+  });
+
+  it("mirrors the shared NostrSeal v0 implementation limits", () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+
+    expect(NOSTRSEAL_V0_LIMITS).toEqual(fixtures.limits.limits);
+  });
+
+  it("rejects shared invalid signing-request vectors deterministically", () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+    const requestVectors = fixtures.invalidVectors.filter((vector) => vector.category === "signing-request");
+
+    expect(requestVectors.length).toBeGreaterThan(0);
+    for (const vector of requestVectors) {
+      const result = validateRequest(vector.request);
+      expect(result.ok, vector.name).toBe(false);
+      expect(result.error, vector.name).toContain(vector.expected_error);
+    }
   });
 });

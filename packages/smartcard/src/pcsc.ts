@@ -8,7 +8,7 @@ export class PcscUnavailableError extends Error {
 }
 
 export type PcscTransmitResult = {
-  data: Uint8Array;
+  data: Uint8Array | readonly number[];
   sw1: number;
   sw2: number;
 };
@@ -30,6 +30,18 @@ function assertStatusByte(value: number, label: string): void {
   }
 }
 
+function responseDataToBytes(data: Uint8Array | readonly number[]): Uint8Array<ArrayBuffer> {
+  const bytes = Array.from(data, (byte) => {
+    if (!Number.isInteger(byte) || byte < 0 || byte > 0xff) {
+      throw new Error("PC/SC response data bytes must fit in one byte");
+    }
+    return byte;
+  });
+  const responseData = new Uint8Array(bytes.length);
+  responseData.set(bytes);
+  return responseData;
+}
+
 export class PcscApduTransport {
   constructor(private readonly connection: PcscConnection) {}
 
@@ -45,6 +57,6 @@ export class PcscApduTransport {
     const response = await this.connection.transmit(command.toBytes());
     assertStatusByte(response.sw1, "sw1");
     assertStatusByte(response.sw2, "sw2");
-    return new ResponseApdu(Uint8Array.from(response.data), (response.sw1 << 8) | response.sw2);
+    return new ResponseApdu(responseDataToBytes(response.data), (response.sw1 << 8) | response.sw2);
   }
 }

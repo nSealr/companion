@@ -89,9 +89,10 @@ Status: implemented for companion-owned boundaries. `packages/protocol`
 enforces the shared v0 limits, QR/serial decoders reject malformed or oversized
 frames, `packages/nip46` owns policy-file parsing and request conversion, CLI
 decision commands fail before writing output, and test-only Nostr conformance
-is cross-checked with `nostr-tools`. The broader program gate remains a blocker
-until Raspberry and ESP32 consume the applicable vectors and lab integration
-pins the cross-repo behavior.
+is cross-checked with `nostr-tools`. `NostrSeal/lab` now pins the cross-repo
+behavior after Raspberry and ESP32 consumed the applicable vectors. The gate
+still blocks full NIP-46 relay sessions, browser extension work, persistent
+grants, and production signer I/O.
 
 ## Later
 

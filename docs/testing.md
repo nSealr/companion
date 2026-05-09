@@ -8,6 +8,8 @@ make ci
 
 The baseline check verifies repository structure, license policy, docs, CI,
 TypeScript type safety, unit tests, integration tests, and dependency audit.
+The Makefile pins `pnpm@10.33.4`; it uses a global `pnpm` when present and
+falls back to `npm exec` on development machines that only have Node/npm.
 
 ## Single-Repository CI
 

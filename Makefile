@@ -1,19 +1,22 @@
+PNPM_VERSION := 10.33.4
+PNPM ?= $(shell command -v pnpm >/dev/null 2>&1 && printf '%s' pnpm || printf '%s' 'npm exec --yes --package=pnpm@$(PNPM_VERSION) -- pnpm')
+
 .PHONY: setup test lint audit docs ci
 
 setup:
-	pnpm install
+	$(PNPM) install
 
 test:
 	python3 scripts/verify_repo.py
-	pnpm test
+	$(PNPM) test
 
 lint:
 	python3 scripts/verify_repo.py
-	pnpm lint
+	$(PNPM) lint
 
 audit:
 	python3 scripts/verify_repo.py
-	pnpm audit --prod
+	$(PNPM) audit --prod
 
 docs:
 	python3 scripts/verify_repo.py

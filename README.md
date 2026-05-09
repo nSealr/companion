@@ -110,6 +110,9 @@ Run the repository verification loop with:
 make ci
 ```
 
+The Makefile pins `pnpm@10.33.4`; it uses a global `pnpm` when available and
+falls back to `npm exec` when only Node/npm is installed.
+
 Run the CLI from the workspace with:
 
 ```sh

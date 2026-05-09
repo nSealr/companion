@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import sys
 
@@ -44,6 +45,23 @@ def expected_license_marker() -> str:
     return LICENSE_MARKERS.get(REPO, "MIT License")
 
 
+def verify_companion_tooling(errors: list[str]) -> None:
+    package_path = ROOT / "package.json"
+    makefile_path = ROOT / "Makefile"
+    if not package_path.exists() or not makefile_path.exists():
+        return
+
+    package = json.loads(package_path.read_text(encoding="utf-8"))
+    if package.get("packageManager") != "pnpm@10.33.4":
+        errors.append("package.json must pin packageManager to pnpm@10.33.4")
+
+    makefile = makefile_path.read_text(encoding="utf-8")
+    if "PNPM_VERSION := 10.33.4" not in makefile:
+        errors.append("Makefile must declare PNPM_VERSION := 10.33.4")
+    if "npm exec --yes --package=pnpm@$(PNPM_VERSION) -- pnpm" not in makefile:
+        errors.append("Makefile must provide a pinned npm exec fallback for pnpm")
+
+
 def main() -> int:
     errors: list[str] = []
 
@@ -70,6 +88,9 @@ def main() -> int:
         readme_text = readme.read_text(encoding="utf-8")
         if "## License" not in readme_text:
             errors.append("README.md must include a License section")
+
+    if REPO == "companion":
+        verify_companion_tooling(errors)
 
     if errors:
         for error in errors:

@@ -45,6 +45,9 @@ single-repository CI. Cross-repository drift remains guarded by
   invalid hardening vectors.
 - Transport contract tests for in-memory development signing, JSON file
   handoff, one-shot JSON-lines stdio exchange, and serial-frame exchange.
+- JSON-lines stdio transport tests proving unterminated oversized stdout is
+  rejected before process-close fallback errors and stderr diagnostics are
+  capped before being included in exit failures.
 - Transport boundary tests require outbound request payloads and inbound device
   response payloads to pass standard NostrSeal protocol validation for
   development signer, JSON file, JSON-lines stdio, and serial-frame adapters.

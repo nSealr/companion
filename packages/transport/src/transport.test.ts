@@ -216,6 +216,32 @@ describe("transport adapters", () => {
     await expect(transport.exchange(signEventRequest)).rejects.toThrow("transport response invalid: ok must be true or false");
   });
 
+  it("rejects stdio signer output that exceeds the bounded response line buffer", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-stdio-oversized-output-"));
+    const signerPath = join(tempRoot, "stdio-signer.mjs");
+    writeFileSync(signerPath, "process.stdout.write('unterminated');\n", "utf8");
+    const transport = new JsonLineStdioTransport({
+      command: process.execPath,
+      args: [signerPath],
+      maxOutputLineBytes: 8
+    });
+
+    await expect(transport.exchange(signEventRequest)).rejects.toThrow(/stdout exceeded max_output_line_bytes/u);
+  });
+
+  it("caps stdio signer stderr included in exit failures", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-stdio-oversized-stderr-"));
+    const signerPath = join(tempRoot, "stdio-signer.mjs");
+    writeFileSync(signerPath, "process.stderr.write('diagnostic output');\nprocess.exit(2);\n", "utf8");
+    const transport = new JsonLineStdioTransport({
+      command: process.execPath,
+      args: [signerPath],
+      maxStderrBytes: 8
+    });
+
+    await expect(transport.exchange(signEventRequest)).rejects.toThrow(/stderr: diagnost\.\.\.<stderr truncated>/u);
+  });
+
   it("exchanges one request and response over serial frames", async () => {
     const transport = new SerialFrameTransport({
       exchangeFrame: async (line) => {

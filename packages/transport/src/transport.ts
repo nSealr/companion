@@ -166,6 +166,17 @@ function assertResponseVerifiedAgainstRequest(request: unknown, response: unknow
   }
 }
 
+function truncateUtf8(value: string, maxBytes: number): string {
+  let result = "";
+  for (const char of value) {
+    if (utf8ByteLength(result + char) > maxBytes) {
+      return result;
+    }
+    result += char;
+  }
+  return result;
+}
+
 export class DevSignerTransport implements SignerTransport {
   readonly name = "dev-signer";
 
@@ -215,12 +226,23 @@ export class JsonLineStdioTransport implements SignerTransport {
   private readonly args: string[];
   private readonly cwd?: string;
   private readonly env?: NodeJS.ProcessEnv;
+  private readonly maxOutputLineBytes: number;
+  private readonly maxStderrBytes: number;
 
-  constructor(options: { command: string; args?: string[]; cwd?: string; env?: NodeJS.ProcessEnv }) {
+  constructor(options: {
+    command: string;
+    args?: string[];
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+    maxOutputLineBytes?: number;
+    maxStderrBytes?: number;
+  }) {
     this.command = options.command;
     this.args = options.args ?? [];
     this.cwd = options.cwd;
     this.env = options.env;
+    this.maxOutputLineBytes = options.maxOutputLineBytes ?? NOSTRSEAL_V0_LIMITS.max_serial_frame_bytes;
+    this.maxStderrBytes = options.maxStderrBytes ?? NOSTRSEAL_V0_LIMITS.max_serial_frame_bytes;
   }
 
   async exchange(request: unknown): Promise<unknown> {
@@ -238,6 +260,9 @@ export class JsonLineStdioTransport implements SignerTransport {
       const fail = (error: Error): void => {
         if (settled) return;
         settled = true;
+        if (child.exitCode === null && child.signalCode === null && !child.killed) {
+          child.kill();
+        }
         reject(error);
       };
 
@@ -256,9 +281,16 @@ export class JsonLineStdioTransport implements SignerTransport {
       child.stderr.setEncoding("utf8");
       child.stderr.on("data", (chunk: string) => {
         stderr += chunk;
+        if (utf8ByteLength(stderr) > this.maxStderrBytes) {
+          stderr = `${truncateUtf8(stderr, this.maxStderrBytes)}...<stderr truncated>`;
+        }
       });
       child.stdout.on("data", (chunk: string) => {
         stdout += chunk;
+        if (utf8ByteLength(stdout) > this.maxOutputLineBytes) {
+          fail(new Error("stdio signer stdout exceeded max_output_line_bytes before newline response"));
+          return;
+        }
         const newlineIndex = stdout.indexOf("\n");
         if (newlineIndex === -1) return;
         const line = stdout.slice(0, newlineIndex);

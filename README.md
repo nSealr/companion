@@ -31,7 +31,9 @@ clients to hardware-backed signing.
 - CLI request, dev-sign, and verify-response commands can read/write JSON or
   v0 `nseal1:` QR envelopes.
 - `packages/transport` provides the first signer transport contract plus
-  development, file, JSON-lines stdio, and serial-frame adapters.
+  development, file, JSON-lines stdio, and serial-frame adapters. The stdio
+  adapter bounds response-line output and captured stderr before accepting or
+  reporting external signer process results.
 - The serial-line transport boundary can drive an injected newline-oriented
   port, normalize common serial line endings, ignore device log lines, and
   reuse the same serial-frame validation before a native USB/WebSerial binding

@@ -43,7 +43,9 @@ adapters. Exchange adapters also reject otherwise valid responses whose
 verify successful `sign_event` responses before returning them. Malformed
 requests, malformed device responses, invalid signed-event output, or
 stale/mismatched responses cannot bypass the standard protocol and verification
-gates through these adapters. The injected serial-line boundary can drive a
+gates through these adapters. The JSON-lines stdio adapter now bounds
+unterminated response output and captured stderr diagnostics from external
+signer processes. The injected serial-line boundary can drive a
 newline-oriented port while ignoring device log lines and normalizing common
 serial line endings, preparing physical USB serial integration without adding a
 native dependency to CI. A stream-backed line-port adapter is also in place so

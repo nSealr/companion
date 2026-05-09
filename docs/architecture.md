@@ -134,9 +134,10 @@ The current adapters cover three development paths:
   USB-serial, UART, and firmware smoke-test adapters.
 - `SerialLineTransport`: newline-oriented serial transport boundary with an
   injected port. It writes a validated `nseal1f:` request frame, skips
-  non-protocol device log lines, normalizes `LF`/`CRLF` line endings, then
-  returns through the same response shape, request-id, and signed-output
-  verification gate as `SerialFrameTransport`.
+  non-protocol device log lines, normalizes `LF`/`CRLF` line endings, rejects
+  silent ports with a deterministic response timeout, then returns through the
+  same response shape, request-id, and signed-output verification gate as
+  `SerialFrameTransport`.
 - `SerialLineStreamPort`: dependency-free Node stream adapter for the
   serial-line boundary. It buffers chunked readable-stream output into complete
   lines, rejects any buffered line that exceeds the shared v0 serial-frame byte

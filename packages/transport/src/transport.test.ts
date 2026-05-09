@@ -392,6 +392,25 @@ describe("transport adapters", () => {
     await expect(transport.exchange(capabilitiesRequest)).resolves.toEqual(capabilitiesResponse);
   });
 
+  it("rejects serial line exchanges that do not receive a response before the timeout", async () => {
+    const transport = new SerialLineTransport({
+      port: {
+        writeLine: async () => {},
+        readLine: async () => new Promise<string | null>(() => {})
+      },
+      responseTimeoutMs: 10
+    });
+
+    await expect(
+      Promise.race([
+        transport.exchange(capabilitiesRequest),
+        new Promise<never>((_resolve, reject) => {
+          setTimeout(() => reject(new Error("exchange did not time out")), 50);
+        })
+      ])
+    ).rejects.toThrow(/serial line transport timed out before response/u);
+  });
+
   it("exchanges over a stream-backed serial line port with chunked device output", async () => {
     const input = new PassThrough();
     const output = new PassThrough();

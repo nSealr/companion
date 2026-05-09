@@ -347,10 +347,12 @@ export class SerialLineTransport implements SignerTransport {
   readonly name = "serial-line";
   private readonly port: SerialLinePort;
   private readonly maxIgnoredLines: number;
+  private readonly responseTimeoutMs: number;
 
-  constructor(options: { port: SerialLinePort; maxIgnoredLines?: number }) {
+  constructor(options: { port: SerialLinePort; maxIgnoredLines?: number; responseTimeoutMs?: number }) {
     this.port = options.port;
     this.maxIgnoredLines = options.maxIgnoredLines ?? 32;
+    this.responseTimeoutMs = options.responseTimeoutMs ?? 30_000;
   }
 
   async exchange(request: unknown): Promise<unknown> {
@@ -358,7 +360,7 @@ export class SerialLineTransport implements SignerTransport {
       exchangeFrame: async (line) => {
         await this.port.writeLine(line);
         for (let ignored = 0; ignored <= this.maxIgnoredLines; ignored += 1) {
-          const responseLine = await this.port.readLine();
+          const responseLine = await this.readLineWithTimeout();
           if (responseLine === null) {
             throw new Error("serial line transport reached end of input before response");
           }
@@ -370,5 +372,23 @@ export class SerialLineTransport implements SignerTransport {
       }
     });
     return transport.exchange(request);
+  }
+
+  private async readLineWithTimeout(): Promise<string | null> {
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        this.port.readLine(),
+        new Promise<never>((_resolve, reject) => {
+          timeout = setTimeout(() => {
+            reject(new Error(`serial line transport timed out before response after ${this.responseTimeoutMs}ms`));
+          }, this.responseTimeoutMs);
+        })
+      ]);
+    } finally {
+      if (timeout !== undefined) {
+        clearTimeout(timeout);
+      }
+    }
   }
 }

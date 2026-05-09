@@ -33,7 +33,8 @@ clients to hardware-backed signing.
 - `packages/transport` provides the first signer transport contract plus
   development, file, JSON-lines stdio, and serial-frame adapters. The stdio
   adapter bounds response-line output and captured stderr before accepting or
-  reporting external signer process results.
+  reporting external signer process results, and times out silent processes
+  that do not emit a response.
 - The serial-line transport boundary can drive an injected newline-oriented
   port, normalize common serial line endings, ignore device log lines, and
   reuse the same serial-frame validation before a native USB/WebSerial binding

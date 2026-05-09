@@ -242,6 +242,26 @@ describe("transport adapters", () => {
     await expect(transport.exchange(signEventRequest)).rejects.toThrow(/stderr: diagnost\.\.\.<stderr truncated>/u);
   });
 
+  it("rejects silent stdio signers that do not respond before the timeout", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-stdio-timeout-"));
+    const signerPath = join(tempRoot, "stdio-signer.mjs");
+    writeFileSync(signerPath, "setTimeout(() => process.exit(0), 200);\n", "utf8");
+    const transport = new JsonLineStdioTransport({
+      command: process.execPath,
+      args: [signerPath],
+      responseTimeoutMs: 10
+    });
+
+    await expect(
+      Promise.race([
+        transport.exchange(signEventRequest),
+        new Promise<never>((_resolve, reject) => {
+          setTimeout(() => reject(new Error("exchange did not time out")), 50);
+        })
+      ])
+    ).rejects.toThrow(/stdio signer timed out before response/u);
+  });
+
   it("exchanges one request and response over serial frames", async () => {
     const transport = new SerialFrameTransport({
       exchangeFrame: async (line) => {

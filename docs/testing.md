@@ -47,7 +47,8 @@ single-repository CI. Cross-repository drift remains guarded by
   handoff, one-shot JSON-lines stdio exchange, and serial-frame exchange.
 - JSON-lines stdio transport tests proving unterminated oversized stdout is
   rejected before process-close fallback errors and stderr diagnostics are
-  capped before being included in exit failures.
+  capped before being included in exit failures. They also prove silent signer
+  processes are rejected by a deterministic response timeout.
 - Transport boundary tests require outbound request payloads and inbound device
   response payloads to pass standard NostrSeal protocol validation for
   development signer, JSON file, JSON-lines stdio, and serial-frame adapters.

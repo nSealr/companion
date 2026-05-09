@@ -128,7 +128,8 @@ The current adapters cover three development paths:
 - `JsonFileTransport`: file handoff for QR vault and offline workflow tests.
 - `JsonLineStdioTransport`: one-shot process bridge for external signer
   adapters and future hardware simulators. It bounds the pre-newline response
-  buffer and captured stderr before returning or reporting process output.
+  buffer and captured stderr before returning or reporting process output, and
+  terminates silent signer processes after a bounded response timeout.
 - `SerialFrameTransport`: one-shot `nseal1f:` request/response exchange for
   USB-serial, UART, and firmware smoke-test adapters.
 - `SerialLineTransport`: newline-oriented serial transport boundary with an

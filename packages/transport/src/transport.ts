@@ -228,6 +228,7 @@ export class JsonLineStdioTransport implements SignerTransport {
   private readonly env?: NodeJS.ProcessEnv;
   private readonly maxOutputLineBytes: number;
   private readonly maxStderrBytes: number;
+  private readonly responseTimeoutMs: number;
 
   constructor(options: {
     command: string;
@@ -236,6 +237,7 @@ export class JsonLineStdioTransport implements SignerTransport {
     env?: NodeJS.ProcessEnv;
     maxOutputLineBytes?: number;
     maxStderrBytes?: number;
+    responseTimeoutMs?: number;
   }) {
     this.command = options.command;
     this.args = options.args ?? [];
@@ -243,6 +245,7 @@ export class JsonLineStdioTransport implements SignerTransport {
     this.env = options.env;
     this.maxOutputLineBytes = options.maxOutputLineBytes ?? NOSTRSEAL_V0_LIMITS.max_serial_frame_bytes;
     this.maxStderrBytes = options.maxStderrBytes ?? NOSTRSEAL_V0_LIMITS.max_serial_frame_bytes;
+    this.responseTimeoutMs = options.responseTimeoutMs ?? 30_000;
   }
 
   async exchange(request: unknown): Promise<unknown> {
@@ -256,10 +259,14 @@ export class JsonLineStdioTransport implements SignerTransport {
       let stdout = "";
       let stderr = "";
       let settled = false;
+      const responseTimer = setTimeout(() => {
+        fail(new Error(`stdio signer timed out before response after ${this.responseTimeoutMs}ms`));
+      }, this.responseTimeoutMs);
 
       const fail = (error: Error): void => {
         if (settled) return;
         settled = true;
+        clearTimeout(responseTimer);
         if (child.exitCode === null && child.signalCode === null && !child.killed) {
           child.kill();
         }
@@ -269,6 +276,7 @@ export class JsonLineStdioTransport implements SignerTransport {
       const succeed = (response: unknown): void => {
         if (settled) return;
         settled = true;
+        clearTimeout(responseTimer);
         resolve(response);
       };
 

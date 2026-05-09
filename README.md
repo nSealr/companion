@@ -35,6 +35,8 @@ clients to hardware-backed signing.
   port, normalize common serial line endings, ignore device log lines, and
   reuse the same serial-frame validation before a native USB/WebSerial binding
   exists.
+- `SerialLineStreamPort` adapts Node readable/writable streams into that
+  newline-oriented port interface for dependency-free serial integration tests.
 - `nseal serial-frame` exposes offline serial-frame request wrapping and
   response unwrapping helpers for ESP32 bring-up and lab captures.
 - `nseal nip46 decide` writes the bridge decision for an already-decrypted

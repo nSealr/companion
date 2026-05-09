@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
+import { type Readable, type Writable } from "node:stream";
 import { devSignRequest } from "../../dev-signer/src/dev-signer.js";
 import { type SignEventRequest, verifySignedEventResponse } from "../../core/src/nostr.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../framing/src/serial.js";
@@ -14,6 +15,91 @@ export type SerialLinePort = {
   writeLine(line: string): Promise<void>;
   readLine(): Promise<string | null>;
 };
+
+export class SerialLineStreamPort implements SerialLinePort {
+  private readonly input: Readable;
+  private readonly output: Writable;
+  private buffer = "";
+  private ended = false;
+  private inputError: Error | null = null;
+  private readonly waiters: Array<() => void> = [];
+
+  constructor(options: { input: Readable; output: Writable; encoding?: BufferEncoding }) {
+    const encoding = options.encoding ?? "utf8";
+    this.input = options.input;
+    this.output = options.output;
+    this.input.setEncoding(encoding);
+    this.input.on("data", (chunk: string | Buffer) => {
+      this.buffer += typeof chunk === "string" ? chunk : chunk.toString(encoding);
+      this.notifyWaiters();
+    });
+    this.input.on("end", () => {
+      this.ended = true;
+      this.notifyWaiters();
+    });
+    this.input.on("error", (error) => {
+      this.inputError = error instanceof Error ? error : new Error(String(error));
+      this.notifyWaiters();
+    });
+  }
+
+  async writeLine(line: string): Promise<void> {
+    const outputLine = line.endsWith("\n") ? line : `${line}\n`;
+    await new Promise<void>((resolve, reject) => {
+      this.output.write(outputLine, "utf8", (error?: Error | null) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      });
+    });
+  }
+
+  async readLine(): Promise<string | null> {
+    while (true) {
+      if (this.inputError) {
+        throw this.inputError;
+      }
+      const line = this.shiftLine();
+      if (line !== null) {
+        return line;
+      }
+      if (this.ended) {
+        if (this.buffer.length === 0) {
+          return null;
+        }
+        const trailingLine = this.buffer;
+        this.buffer = "";
+        return trailingLine;
+      }
+      await this.waitForInput();
+    }
+  }
+
+  private shiftLine(): string | null {
+    const newlineIndex = this.buffer.indexOf("\n");
+    if (newlineIndex === -1) {
+      return null;
+    }
+    const line = this.buffer.slice(0, newlineIndex + 1);
+    this.buffer = this.buffer.slice(newlineIndex + 1);
+    return line;
+  }
+
+  private async waitForInput(): Promise<void> {
+    await new Promise<void>((resolve) => {
+      this.waiters.push(resolve);
+    });
+  }
+
+  private notifyWaiters(): void {
+    const waiters = this.waiters.splice(0);
+    for (const waiter of waiters) {
+      waiter();
+    }
+  }
+}
 
 export function readJsonFile(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));

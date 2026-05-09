@@ -61,6 +61,9 @@ single-repository CI. Cross-repository drift remains guarded by
   write a request frame, ignore device log lines, normalize common serial line
   endings, and reuse the verified serial-frame response path through an
   injected line port.
+- Stream-backed serial-line port tests proving chunked readable-stream output
+  and writable-stream request frames behave like the injected port contract
+  without a native serial dependency.
 - Shared `NostrSeal/specs` capability response conformance tests.
 - Shared `NostrSeal/specs` ESP32-S3 signing-disabled response conformance
   tests.

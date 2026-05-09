@@ -29,6 +29,8 @@ pairing them with a validly shaped response.
 - Serial frame transport adapter.
 - Injected serial-line transport boundary for future native USB/WebSerial
   adapters.
+- Stream-backed serial-line port adapter for dependency-free hardware adapter
+  tests.
 - CLI serial-frame wrapping and unwrapping helpers.
 
 Status: file, stdio, in-memory development signer transport, QR envelope,
@@ -44,7 +46,9 @@ stale/mismatched responses cannot bypass the standard protocol and verification
 gates through these adapters. The injected serial-line boundary can drive a
 newline-oriented port while ignoring device log lines and normalizing common
 serial line endings, preparing physical USB serial integration without adding a
-native dependency to CI. M3 remains open for larger-payload strategy and first
+native dependency to CI. A stream-backed line-port adapter is also in place so
+future native USB/WebSerial bindings can be tested through Node streams before
+opening real hardware. M3 remains open for larger-payload strategy and first
 physical USB serial binding.
 
 ## M4: NIP-46 Payload Bridge

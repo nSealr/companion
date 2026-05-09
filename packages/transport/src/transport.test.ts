@@ -1,6 +1,8 @@
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { PassThrough } from "node:stream";
+import { once } from "node:events";
 import { describe, expect, it } from "vitest";
 import { verifySignedEventResponse } from "../../core/src/nostr.js";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
@@ -11,6 +13,7 @@ import {
   JsonFileTransport,
   JsonLineStdioTransport,
   SerialFrameTransport,
+  SerialLineStreamPort,
   SerialLineTransport,
   readJsonFile,
   writeJsonFile
@@ -341,5 +344,24 @@ describe("transport adapters", () => {
     });
 
     await expect(transport.exchange(capabilitiesRequest)).resolves.toEqual(capabilitiesResponse);
+  });
+
+  it("exchanges over a stream-backed serial line port with chunked device output", async () => {
+    const input = new PassThrough();
+    const output = new PassThrough();
+    const transport = new SerialLineTransport({
+      port: new SerialLineStreamPort({ input, output })
+    });
+    const responseLine = encodeSerialFrame({ type: "response", payload: capabilitiesResponse }).replace("\n", "\r\n");
+
+    const exchange = transport.exchange(capabilitiesRequest);
+    const [written] = (await once(output, "data")) as [Buffer];
+    expect(decodeSerialFrame(written.toString("utf8"))).toEqual({ type: "request", payload: capabilitiesRequest });
+
+    input.write("I (321) boot: ignored log\r\n");
+    input.write(responseLine.slice(0, 12));
+    input.write(responseLine.slice(12));
+
+    await expect(exchange).resolves.toEqual(capabilitiesResponse);
   });
 });

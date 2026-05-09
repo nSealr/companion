@@ -135,6 +135,9 @@ The current adapters cover three development paths:
   non-protocol device log lines, normalizes `LF`/`CRLF` line endings, then
   returns through the same response shape, request-id, and signed-output
   verification gate as `SerialFrameTransport`.
+- `SerialLineStreamPort`: dependency-free Node stream adapter for the
+  serial-line boundary. It buffers chunked readable-stream output into complete
+  lines and writes newline-terminated request frames to a writable stream.
 - `nseal serial-frame wrap-request` and `nseal serial-frame unwrap-response`:
   offline CLI helpers for producing validated serial request frames and
   decoding validated serial response frames during ESP32 bring-up. They do not

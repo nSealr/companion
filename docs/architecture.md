@@ -130,6 +130,10 @@ The current adapters cover three development paths:
   adapters and future hardware simulators.
 - `SerialFrameTransport`: one-shot `nseal1f:` request/response exchange for
   USB-serial, UART, and firmware smoke-test adapters.
+- `SerialLineTransport`: newline-oriented serial transport boundary with an
+  injected port. It writes a validated `nseal1f:` request frame, skips
+  non-protocol device log lines, then returns through the same response shape,
+  request-id, and signed-output verification gate as `SerialFrameTransport`.
 - `nseal serial-frame wrap-request` and `nseal serial-frame unwrap-response`:
   offline CLI helpers for producing validated serial request frames and
   decoding validated serial response frames during ESP32 bring-up. They do not

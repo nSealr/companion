@@ -11,6 +11,7 @@ import {
   JsonFileTransport,
   JsonLineStdioTransport,
   SerialFrameTransport,
+  SerialLineTransport,
   readJsonFile,
   writeJsonFile
 } from "./transport.js";
@@ -309,5 +310,24 @@ describe("transport adapters", () => {
       "serial frame request invalid: request_id is invalid"
     );
     expect(exchangeCalled).toBe(false);
+  });
+
+  it("exchanges one request over an injected serial line port while ignoring device logs", async () => {
+    const writtenLines: string[] = [];
+    const incomingLines = [
+      "I (123) boot: device log before protocol frame\n",
+      encodeSerialFrame({ type: "response", payload: capabilitiesResponse })
+    ];
+    const transport = new SerialLineTransport({
+      port: {
+        writeLine: async (line) => {
+          writtenLines.push(line);
+        },
+        readLine: async () => incomingLines.shift() ?? null
+      }
+    });
+
+    await expect(transport.exchange(capabilitiesRequest)).resolves.toEqual(capabilitiesResponse);
+    expect(decodeSerialFrame(writtenLines[0])).toEqual({ type: "request", payload: capabilitiesRequest });
   });
 });

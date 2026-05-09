@@ -10,6 +10,11 @@ export type SignerTransport = {
   exchange(request: unknown): Promise<unknown>;
 };
 
+export type SerialLinePort = {
+  writeLine(line: string): Promise<void>;
+  readLine(): Promise<string | null>;
+};
+
 export function readJsonFile(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));
 }
@@ -187,5 +192,35 @@ export class SerialFrameTransport implements SignerTransport {
     assertValidResponse(responseFrame.payload, "serial frame response");
     assertResponseVerifiedAgainstRequest(request, responseFrame.payload, "serial frame response");
     return responseFrame.payload;
+  }
+}
+
+export class SerialLineTransport implements SignerTransport {
+  readonly name = "serial-line";
+  private readonly port: SerialLinePort;
+  private readonly maxIgnoredLines: number;
+
+  constructor(options: { port: SerialLinePort; maxIgnoredLines?: number }) {
+    this.port = options.port;
+    this.maxIgnoredLines = options.maxIgnoredLines ?? 32;
+  }
+
+  async exchange(request: unknown): Promise<unknown> {
+    const transport = new SerialFrameTransport({
+      exchangeFrame: async (line) => {
+        await this.port.writeLine(line);
+        for (let ignored = 0; ignored <= this.maxIgnoredLines; ignored += 1) {
+          const responseLine = await this.port.readLine();
+          if (responseLine === null) {
+            throw new Error("serial line transport reached end of input before response");
+          }
+          if (responseLine.startsWith("nseal1f:")) {
+            return responseLine;
+          }
+        }
+        throw new Error("serial line transport did not receive a protocol frame");
+      }
+    });
+    return transport.exchange(request);
   }
 }

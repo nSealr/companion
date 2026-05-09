@@ -27,6 +27,8 @@ pairing them with a validly shaped response.
 - QR envelope package.
 - Serial framing draft.
 - Serial frame transport adapter.
+- Injected serial-line transport boundary for future native USB/WebSerial
+  adapters.
 - CLI serial-frame wrapping and unwrapping helpers.
 
 Status: file, stdio, in-memory development signer transport, QR envelope,
@@ -39,8 +41,10 @@ adapters. Exchange adapters also reject otherwise valid responses whose
 verify successful `sign_event` responses before returning them. Malformed
 requests, malformed device responses, invalid signed-event output, or
 stale/mismatched responses cannot bypass the standard protocol and verification
-gates through these adapters. M3 remains open for larger-payload strategy and
-first physical USB serial integration.
+gates through these adapters. The injected serial-line boundary can drive a
+newline-oriented port while ignoring device log lines, preparing physical USB
+serial integration without adding a native dependency to CI. M3 remains open
+for larger-payload strategy and first physical USB serial binding.
 
 ## M4: NIP-46 Payload Bridge
 

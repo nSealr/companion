@@ -31,6 +31,9 @@ clients to hardware-backed signing.
   v0 `nseal1:` QR envelopes.
 - `packages/transport` provides the first signer transport contract plus
   development, file, JSON-lines stdio, and serial-frame adapters.
+- The serial-line transport boundary can drive an injected newline-oriented
+  port, ignore device log lines, and reuse the same serial-frame validation
+  before a native USB/WebSerial binding exists.
 - `nseal serial-frame` exposes offline serial-frame request wrapping and
   response unwrapping helpers for ESP32 bring-up and lab captures.
 - `nseal nip46 decide` writes the bridge decision for an already-decrypted

@@ -124,9 +124,9 @@ grants, and production signer I/O.
 - CLI simulator path: implemented as `nseal smartcard-sim-sign`, with mandatory
   `--review-acknowledged` and `--approval-digest`.
 - PC/SC/contact transport boundary: implemented as a provider-injected APDU
-  exchange adapter with setup-error normalization, APDU transmit-error
-  normalization, and response byte validation; native reader binding and
-  real-card tests are pending.
+  exchange adapter with setup-error normalization, malformed reader-list
+  rejection, APDU transmit-error normalization, and response byte validation;
+  native reader binding and real-card tests are pending.
 - NFC/mobile transport: not implemented.
 - Production smartcard support: blocked on real card testing and display-less
   review policy hardening.

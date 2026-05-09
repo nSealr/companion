@@ -81,6 +81,15 @@ describe("PC/SC smartcard transport boundary", () => {
     ).rejects.toThrow(/PC\/SC reader provider failed/u);
   });
 
+  it("fails clearly when the PC/SC provider returns a malformed reader list", async () => {
+    const malformedReaderProvider = async () => null as unknown as never;
+
+    await expect(PcscApduTransport.fromFirstReader(malformedReaderProvider)).rejects.toThrow(PcscUnavailableError);
+    await expect(
+      PcscApduTransport.fromFirstReader(malformedReaderProvider)
+    ).rejects.toThrow(/PC\/SC reader provider failed/u);
+  });
+
   it("fails clearly when a reader connection cannot be opened", async () => {
     await expect(
       PcscApduTransport.fromFirstReader(async () => [

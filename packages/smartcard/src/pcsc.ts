@@ -49,6 +49,9 @@ export class PcscApduTransport {
     let readerList: PcscReader[];
     try {
       readerList = await readers();
+      if (!Array.isArray(readerList)) {
+        throw new Error("reader provider did not return a reader list");
+      }
     } catch (error) {
       throw new PcscUnavailableError("PC/SC reader provider failed");
     }

@@ -23,6 +23,15 @@ describe("protocol validation", () => {
     expect(validateResponse(load("examples/response-get-capabilities-esp32-s3-scaffold.json")).ok).toBe(true);
   });
 
+  it("accepts valid v0 signing-status requests and ESP32-S3 scaffold responses", () => {
+    expect(validateRequest(load("examples/request-get-signing-status.json")).ok).toBe(true);
+    expect(validateResponse(load("examples/response-get-signing-status-esp32-s3-scaffold.json")).ok).toBe(true);
+    expect(load("vectors/devices/esp32-s3-signing-status-disabled.json")).toMatchObject({
+      request: load("examples/request-get-signing-status.json"),
+      response: load("examples/response-get-signing-status-esp32-s3-scaffold.json")
+    });
+  });
+
   it("accepts valid v0 public-key requests and responses", () => {
     expect(validateRequest(load("examples/request-get-public-key.json")).ok).toBe(true);
     expect(validateResponse(load("examples/response-get-public-key.json")).ok).toBe(true);

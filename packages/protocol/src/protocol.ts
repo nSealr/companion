@@ -10,6 +10,21 @@ export type ValidationResult = {
   error?: string;
 };
 
+const PARAMETERLESS_METHODS = ["get_capabilities", "get_signing_status", "get_public_key"] as const;
+const CAPABILITY_METHODS = [...PARAMETERLESS_METHODS, "sign_event"] as const;
+const SIGNING_STATUS_GATES = [
+  "runtime_signing_feature",
+  "parser_limits",
+  "trusted_review_display",
+  "physical_approval_controls",
+  "approval_digest_binding",
+  "key_provisioning",
+  "secure_boot",
+  "flash_encryption",
+  "debug_lock",
+  "companion_signed_output_verification"
+] as const;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -91,7 +106,7 @@ export function validateRequest(value: unknown): ValidationResult {
   }
   if (value.version !== 1) return { ok: false, error: "version must be 1" };
   if (!isRequestId(value.request_id)) return { ok: false, error: "request_id is invalid" };
-  if (value.method === "get_capabilities" || value.method === "get_public_key") {
+  if (typeof value.method === "string" && (PARAMETERLESS_METHODS as readonly string[]).includes(value.method)) {
     if ("params" in value) return { ok: false, error: `${value.method} must not include params` };
     const extra = unknownFields(value, ["version", "request_id", "method"]);
     if (extra.length > 0) return { ok: false, error: `unknown top-level fields: ${extra.join(", ")}` };
@@ -141,13 +156,30 @@ function validateCapabilities(value: unknown): ValidationResult {
     }
   }
   for (const method of value.methods as string[]) {
-    if (!["get_capabilities", "get_public_key", "sign_event"].includes(method)) {
+    if (!(CAPABILITY_METHODS as readonly string[]).includes(method)) {
       return { ok: false, error: `unsupported capability method: ${method}` };
     }
   }
   if (typeof value.signing_enabled !== "boolean") return { ok: false, error: "signing_enabled must be boolean" };
   if (typeof value.requires_physical_approval !== "boolean") {
     return { ok: false, error: "requires_physical_approval must be boolean" };
+  }
+  return { ok: true };
+}
+
+function validateSigningStatus(value: unknown): ValidationResult {
+  if (!isRecord(value)) return { ok: false, error: "signing_status must be an object" };
+  const extra = unknownFields(value, ["signing_enabled", "missing_gates"]);
+  if (extra.length > 0) return { ok: false, error: `signing_status contains unknown fields: ${extra.join(", ")}` };
+  if (typeof value.signing_enabled !== "boolean") return { ok: false, error: "signing_status signing_enabled must be boolean" };
+  if (!Array.isArray(value.missing_gates)) return { ok: false, error: "signing_status missing_gates must be an array" };
+  const seen = new Set<string>();
+  for (const gate of value.missing_gates) {
+    if (typeof gate !== "string" || !(SIGNING_STATUS_GATES as readonly string[]).includes(gate)) {
+      return { ok: false, error: `unsupported signing_status missing gate: ${String(gate)}` };
+    }
+    if (seen.has(gate)) return { ok: false, error: `duplicate signing_status missing gate: ${gate}` };
+    seen.add(gate);
   }
   return { ok: true };
 }
@@ -170,13 +202,14 @@ export function validateResponse(value: unknown): ValidationResult {
     if ("error" in value) return { ok: false, error: "successful response must not include error" };
     if (!isRecord(value.result)) return { ok: false, error: "successful response requires result" };
     const result = value.result;
-    const resultExtra = unknownFields(result, ["capabilities", "public_key", "event"]);
+    const resultExtra = unknownFields(result, ["capabilities", "signing_status", "public_key", "event"]);
     if (resultExtra.length > 0) return { ok: false, error: `successful response result contains unknown fields: ${resultExtra.join(", ")}` };
-    const resultFields = ["capabilities", "public_key", "event"].filter((field) => field in result);
+    const resultFields = ["capabilities", "signing_status", "public_key", "event"].filter((field) => field in result);
     if (resultFields.length !== 1) {
       return { ok: false, error: "successful response result must contain exactly one result field" };
     }
     if ("capabilities" in result) return validateCapabilities(result.capabilities);
+    if ("signing_status" in result) return validateSigningStatus(result.signing_status);
     if ("public_key" in result) {
       return isLowerHex(result.public_key, 64) ? { ok: true } : { ok: false, error: "public_key is invalid" };
     }

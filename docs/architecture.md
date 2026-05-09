@@ -135,13 +135,14 @@ The current adapters cover three development paths:
 - `SerialLineTransport`: newline-oriented serial transport boundary with an
   injected port. It writes a validated `nseal1f:` request frame, skips
   non-protocol device log lines, normalizes `LF`/`CRLF` line endings, rejects
-  silent ports with a deterministic response timeout, then returns through the
-  same response shape, request-id, and signed-output verification gate as
-  `SerialFrameTransport`.
+  stalled writes and silent ports with deterministic timeouts, then returns
+  through the same response shape, request-id, and signed-output verification
+  gate as `SerialFrameTransport`.
 - `SerialLineStreamPort`: dependency-free Node stream adapter for the
   serial-line boundary. It buffers chunked readable-stream output into complete
   lines, rejects any buffered line that exceeds the shared v0 serial-frame byte
-  limit, and writes newline-terminated request frames to a writable stream.
+  limit, writes newline-terminated request frames to a writable stream, and can
+  close its underlying streams after failed exchanges.
 - `nseal serial-frame wrap-request` and `nseal serial-frame unwrap-response`:
   offline CLI helpers for producing validated serial request frames and
   decoding validated serial response frames during ESP32 bring-up. They do not

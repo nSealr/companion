@@ -69,8 +69,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - Shared `NostrSeal/specs` QR and serial transport vector conformance tests.
 - Serial-line transport tests proving a future native USB/WebSerial adapter can
   write a request frame, ignore device log lines, normalize common serial line
-  endings, reject silent ports with a deterministic response timeout, and reuse
-  the verified serial-frame response path through an injected line port.
+  endings, reject stalled writes and silent ports with deterministic timeouts,
+  close stream-backed ports, and reuse the verified serial-frame response path
+  through an injected line port.
 - Stream-backed serial-line port tests proving chunked readable-stream output
   and writable-stream request frames behave like the injected port contract
   without a native serial dependency. They also prove unterminated oversized

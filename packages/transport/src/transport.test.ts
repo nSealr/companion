@@ -411,6 +411,25 @@ describe("transport adapters", () => {
     ).rejects.toThrow(/serial line transport timed out before response/u);
   });
 
+  it("rejects serial line exchanges that cannot write before the timeout", async () => {
+    const transport = new SerialLineTransport({
+      port: {
+        writeLine: async () => new Promise<void>(() => {}),
+        readLine: async () => null
+      },
+      responseTimeoutMs: 10
+    });
+
+    await expect(
+      Promise.race([
+        transport.exchange(capabilitiesRequest),
+        new Promise<never>((_resolve, reject) => {
+          setTimeout(() => reject(new Error("exchange did not time out")), 50);
+        })
+      ])
+    ).rejects.toThrow(/serial line transport timed out before write completed/u);
+  });
+
   it("exchanges over a stream-backed serial line port with chunked device output", async () => {
     const input = new PassThrough();
     const output = new PassThrough();
@@ -458,5 +477,16 @@ describe("transport adapters", () => {
     await expect(port.readLine()).resolves.toBe("a\n");
     await expect(port.readLine()).resolves.toBe("b\n");
     await expect(port.readLine()).resolves.toBe("c\n");
+  });
+
+  it("can close stream-backed serial line ports after failed exchanges", async () => {
+    const input = new PassThrough();
+    const output = new PassThrough();
+    const port = new SerialLineStreamPort({ input, output });
+
+    port.close();
+
+    expect(input.destroyed).toBe(true);
+    expect(output.destroyed).toBe(true);
   });
 });

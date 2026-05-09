@@ -52,12 +52,13 @@ signer processes, and it times out silent signer processes that do not return
 a JSON-line response. The injected serial-line boundary can drive a
 newline-oriented port while ignoring device log lines and normalizing common
 serial line endings. It now also rejects silent ports with a deterministic
-response timeout, preparing physical USB serial integration without adding a
-native dependency to CI. A stream-backed line-port adapter is also in place so
-future native USB/WebSerial bindings can be tested through Node streams before
-opening real hardware, and that adapter now bounds buffered lines with the
-shared v0 serial-frame byte limit. M3 remains open for larger-payload strategy
-and first physical USB serial binding.
+response timeout and stalled writes with a deterministic write timeout,
+preparing physical USB serial integration without adding a native dependency to
+CI. A stream-backed line-port adapter is also in place so future native
+USB/WebSerial bindings can be tested through Node streams before opening real
+hardware, and that adapter now bounds buffered lines with the shared v0
+serial-frame byte limit. M3 remains open for larger-payload strategy and a
+production-grade native USB/WebSerial binding.
 
 ## M4: NIP-46 Payload Bridge
 

@@ -123,7 +123,7 @@ pnpm nseal request sign-event --event-template template.json --out request.qr --
 pnpm nseal review-request --request request.qr --request-format qr --out review.json
 pnpm nseal nip46 decide --message nip46-message.json --permissions sign_event:1 --out decision.json
 pnpm nseal nip46 decide --message nip46-message.json --policy-file policy.json --out decision.json
-pnpm nseal smartcard-sim-sign --secret-key <test-only-hex> --request request.qr --request-format qr --review-acknowledged --out response.qr --output-format qr
+pnpm nseal smartcard-sim-sign --secret-key <test-only-hex> --request request.qr --request-format qr --review-acknowledged --approval-digest <approval-digest-hex> --out response.qr --output-format qr
 ```
 
 ## License

@@ -15,6 +15,7 @@ export type SignerTransport = {
 export type SerialLinePort = {
   writeLine(line: string): Promise<void>;
   readLine(): Promise<string | null>;
+  close?(): Promise<void> | void;
 };
 
 export class SerialLineStreamPort implements SerialLinePort {
@@ -81,6 +82,13 @@ export class SerialLineStreamPort implements SerialLinePort {
       }
       await this.waitForInput();
     }
+  }
+
+  close(): void {
+    this.ended = true;
+    this.input.destroy();
+    this.output.destroy();
+    this.notifyWaiters();
   }
 
   private shiftLine(): string | null {
@@ -358,7 +366,7 @@ export class SerialLineTransport implements SignerTransport {
   async exchange(request: unknown): Promise<unknown> {
     const transport = new SerialFrameTransport({
       exchangeFrame: async (line) => {
-        await this.port.writeLine(line);
+        await this.writeLineWithTimeout(line);
         for (let ignored = 0; ignored <= this.maxIgnoredLines; ignored += 1) {
           const responseLine = await this.readLineWithTimeout();
           if (responseLine === null) {
@@ -374,14 +382,28 @@ export class SerialLineTransport implements SignerTransport {
     return transport.exchange(request);
   }
 
+  private async writeLineWithTimeout(line: string): Promise<void> {
+    await this.withTimeout(
+      this.port.writeLine(line),
+      `serial line transport timed out before write completed after ${this.responseTimeoutMs}ms`
+    );
+  }
+
   private async readLineWithTimeout(): Promise<string | null> {
+    return this.withTimeout(
+      this.port.readLine(),
+      `serial line transport timed out before response after ${this.responseTimeoutMs}ms`
+    );
+  }
+
+  private async withTimeout<T>(operation: Promise<T>, timeoutMessage: string): Promise<T> {
     let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
       return await Promise.race([
-        this.port.readLine(),
+        operation,
         new Promise<never>((_resolve, reject) => {
           timeout = setTimeout(() => {
-            reject(new Error(`serial line transport timed out before response after ${this.responseTimeoutMs}ms`));
+            reject(new Error(timeoutMessage));
           }, this.responseTimeoutMs);
         })
       ]);

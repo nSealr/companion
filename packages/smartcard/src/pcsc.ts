@@ -31,6 +31,9 @@ function assertStatusByte(value: number, label: string): void {
 }
 
 function responseDataToBytes(data: Uint8Array | readonly number[]): Uint8Array<ArrayBuffer> {
+  if (!(data instanceof Uint8Array) && !Array.isArray(data)) {
+    throw new Error("PC/SC response data must be a byte array");
+  }
   const bytes = Array.from(data, (byte) => {
     if (!Number.isInteger(byte) || byte < 0 || byte > 0xff) {
       throw new Error("PC/SC response data bytes must fit in one byte");

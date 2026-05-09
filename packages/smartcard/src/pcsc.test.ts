@@ -63,6 +63,23 @@ describe("PC/SC smartcard transport boundary", () => {
     await expect(transport.exchange(command)).rejects.toThrow(/PC\/SC response data bytes must fit in one byte/u);
   });
 
+  it("rejects PC/SC responses without byte data", async () => {
+    const command = CommandApdu.fromHex(getPublicKeyVector.command_hex);
+    const connection = new FakePcscConnection({
+      data: undefined as unknown as Uint8Array,
+      sw1: 0x90,
+      sw2: 0x00
+    });
+
+    const transport = await PcscApduTransport.fromFirstReader(async () => [
+      {
+        connect: async () => connection
+      }
+    ]);
+
+    await expect(transport.exchange(command)).rejects.toThrow(/PC\/SC response data must be a byte array/u);
+  });
+
   it("fails clearly when no PC/SC reader is available", async () => {
     await expect(PcscApduTransport.fromFirstReader(async () => [])).rejects.toThrow(PcscUnavailableError);
     await expect(PcscApduTransport.fromFirstReader(async () => [])).rejects.toThrow(/no PC\/SC smartcard readers/u);

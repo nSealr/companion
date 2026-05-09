@@ -48,8 +48,9 @@ newline-oriented port while ignoring device log lines and normalizing common
 serial line endings, preparing physical USB serial integration without adding a
 native dependency to CI. A stream-backed line-port adapter is also in place so
 future native USB/WebSerial bindings can be tested through Node streams before
-opening real hardware. M3 remains open for larger-payload strategy and first
-physical USB serial binding.
+opening real hardware, and that adapter now bounds buffered lines with the
+shared v0 serial-frame byte limit. M3 remains open for larger-payload strategy
+and first physical USB serial binding.
 
 ## M4: NIP-46 Payload Bridge
 

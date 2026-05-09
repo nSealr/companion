@@ -364,4 +364,34 @@ describe("transport adapters", () => {
 
     await expect(exchange).resolves.toEqual(capabilitiesResponse);
   });
+
+  it("rejects stream-backed serial input that exceeds the bounded line buffer", async () => {
+    const input = new PassThrough();
+    const output = new PassThrough();
+    const port = new SerialLineStreamPort({ input, output, maxBufferedBytes: 8 });
+    const read = port.readLine();
+
+    input.write("unterminated");
+
+    await expect(
+      Promise.race([
+        read,
+        new Promise<never>((_resolve, reject) => {
+          setTimeout(() => reject(new Error("read did not reject")), 25);
+        })
+      ])
+    ).rejects.toThrow(/serial line port buffer exceeded/u);
+  });
+
+  it("does not reject batched short serial lines whose total chunk exceeds the line limit", async () => {
+    const input = new PassThrough();
+    const output = new PassThrough();
+    const port = new SerialLineStreamPort({ input, output, maxBufferedBytes: 4 });
+
+    input.write("a\nb\nc\n");
+
+    await expect(port.readLine()).resolves.toBe("a\n");
+    await expect(port.readLine()).resolves.toBe("b\n");
+    await expect(port.readLine()).resolves.toBe("c\n");
+  });
 });

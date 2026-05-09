@@ -4,6 +4,7 @@ import { type Readable, type Writable } from "node:stream";
 import { devSignRequest } from "../../dev-signer/src/dev-signer.js";
 import { type SignEventRequest, verifySignedEventResponse } from "../../core/src/nostr.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../framing/src/serial.js";
+import { NOSTRSEAL_V0_LIMITS, utf8ByteLength } from "../../protocol/src/limits.js";
 import { validateRequest, validateResponse } from "../../protocol/src/protocol.js";
 
 export type SignerTransport = {
@@ -23,14 +24,19 @@ export class SerialLineStreamPort implements SerialLinePort {
   private ended = false;
   private inputError: Error | null = null;
   private readonly waiters: Array<() => void> = [];
+  private readonly maxBufferedBytes: number;
 
-  constructor(options: { input: Readable; output: Writable; encoding?: BufferEncoding }) {
+  constructor(options: { input: Readable; output: Writable; encoding?: BufferEncoding; maxBufferedBytes?: number }) {
     const encoding = options.encoding ?? "utf8";
     this.input = options.input;
     this.output = options.output;
+    this.maxBufferedBytes = options.maxBufferedBytes ?? NOSTRSEAL_V0_LIMITS.max_serial_frame_bytes;
     this.input.setEncoding(encoding);
     this.input.on("data", (chunk: string | Buffer) => {
       this.buffer += typeof chunk === "string" ? chunk : chunk.toString(encoding);
+      if (!this.inputError && this.hasOversizedBufferedLine()) {
+        this.inputError = new Error("serial line port buffer exceeded max_serial_frame_bytes");
+      }
       this.notifyWaiters();
     });
     this.input.on("end", () => {
@@ -85,6 +91,22 @@ export class SerialLineStreamPort implements SerialLinePort {
     const line = this.buffer.slice(0, newlineIndex + 1);
     this.buffer = this.buffer.slice(newlineIndex + 1);
     return line;
+  }
+
+  private hasOversizedBufferedLine(): boolean {
+    let lineStart = 0;
+    while (true) {
+      const newlineIndex = this.buffer.indexOf("\n", lineStart);
+      if (newlineIndex === -1) {
+        break;
+      }
+      const completeLine = this.buffer.slice(lineStart, newlineIndex + 1);
+      if (utf8ByteLength(completeLine) > this.maxBufferedBytes) {
+        return true;
+      }
+      lineStart = newlineIndex + 1;
+    }
+    return utf8ByteLength(this.buffer.slice(lineStart)) > this.maxBufferedBytes;
   }
 
   private async waitForInput(): Promise<void> {

@@ -19,6 +19,12 @@ describe("serial framing draft", () => {
     expect(decodeSerialFrame(serialVector.frame)).toEqual({ type: serialVector.type, payload: serialVector.decoded });
   });
 
+  it("accepts CRLF-terminated frames from serial line readers", () => {
+    const frame = encodeSerialFrame({ type: "request", payload: signEventRequest });
+
+    expect(decodeSerialFrame(frame.replace("\n", "\r\n"))).toEqual({ type: "request", payload: signEventRequest });
+  });
+
   it("rejects frames with unsupported types", () => {
     const frame = encodeSerialFrame({ type: "request", payload: signEventRequest }).replace(":request:", ":pubkey:");
 

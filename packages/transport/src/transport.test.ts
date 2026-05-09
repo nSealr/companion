@@ -330,4 +330,16 @@ describe("transport adapters", () => {
     await expect(transport.exchange(capabilitiesRequest)).resolves.toEqual(capabilitiesResponse);
     expect(decodeSerialFrame(writtenLines[0])).toEqual({ type: "request", payload: capabilitiesRequest });
   });
+
+  it("accepts CRLF-terminated serial protocol lines from device ports", async () => {
+    const crlfResponseLine = encodeSerialFrame({ type: "response", payload: capabilitiesResponse }).replace("\n", "\r\n");
+    const transport = new SerialLineTransport({
+      port: {
+        writeLine: async () => {},
+        readLine: async () => crlfResponseLine
+      }
+    });
+
+    await expect(transport.exchange(capabilitiesRequest)).resolves.toEqual(capabilitiesResponse);
+  });
 });

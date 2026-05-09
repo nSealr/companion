@@ -28,6 +28,16 @@ function checksum(type: SerialFrameType, payload: string): string {
   return createHash("sha256").update(`${type}:${payload}`, "utf8").digest("hex").slice(0, 16);
 }
 
+function stripLineEnding(line: string): string {
+  if (line.endsWith("\r\n")) {
+    return line.slice(0, -2);
+  }
+  if (line.endsWith("\n") || line.endsWith("\r")) {
+    return line.slice(0, -1);
+  }
+  return line;
+}
+
 export function encodeSerialFrame(frame: SerialFrame): string {
   const payload = Buffer.from(JSON.stringify(frame.payload), "utf8").toString("base64url");
   const frameChecksum = checksum(frame.type, payload);
@@ -38,7 +48,7 @@ export function decodeSerialFrame(line: string): SerialFrame {
   if (utf8ByteLength(line) > NOSTRSEAL_V0_LIMITS.max_serial_frame_bytes) {
     throw new Error("serial frame exceeds max_serial_frame_bytes");
   }
-  const normalized = line.endsWith("\n") ? line.slice(0, -1) : line;
+  const normalized = stripLineEnding(line);
   if (!normalized.startsWith(SERIAL_FRAME_PREFIX)) {
     throw new Error(`serial frame must start with ${SERIAL_FRAME_PREFIX}`);
   }

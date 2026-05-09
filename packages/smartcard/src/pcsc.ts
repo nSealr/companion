@@ -45,6 +45,12 @@ function responseDataToBytes(data: Uint8Array | readonly number[]): Uint8Array<A
   return responseData;
 }
 
+function assertTransmitResult(response: PcscTransmitResult): void {
+  if (typeof response !== "object" || response === null || Array.isArray(response)) {
+    throw new Error("PC/SC transmit result must be an object");
+  }
+}
+
 export class PcscApduTransport {
   constructor(private readonly connection: PcscConnection) {}
 
@@ -76,6 +82,7 @@ export class PcscApduTransport {
     } catch {
       throw new PcscUnavailableError("PC/SC APDU exchange failed");
     }
+    assertTransmitResult(response);
     assertStatusByte(response.sw1, "sw1");
     assertStatusByte(response.sw2, "sw2");
     return new ResponseApdu(responseDataToBytes(response.data), (response.sw1 << 8) | response.sw2);

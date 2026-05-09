@@ -178,10 +178,10 @@ driver a required companion dependency. It normalizes provider enumeration
 failures, malformed reader-list results, and reader connection failures into
 `PcscUnavailableError` before any APDU exchange, and normalizes APDU transmit
 failures into the same error family after a connection is opened. It also
-validates response status bytes, response data shape, and numeric response data
-bytes before constructing response APDUs, so a malformed provider response
-cannot be silently truncated or surfaced as a generic runtime type error. It is
-not a real-card compatibility claim.
+validates transmit-result shape, response status bytes, response data shape, and
+numeric response data bytes before constructing response APDUs, so a malformed
+provider response cannot be silently truncated or surfaced as a generic runtime
+type error. It is not a real-card compatibility claim.
 
 ## NIP-46 Bridge Boundary
 

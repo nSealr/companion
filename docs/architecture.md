@@ -145,6 +145,11 @@ The current adapters cover three development paths:
   offline CLI helpers for producing validated serial request frames and
   decoding validated serial response frames during ESP32 bring-up. They do not
   open a physical USB, CDC, HID, WebUSB, or WebSerial connection.
+- `nseal request get-capabilities`, `nseal request get-public-key`, and
+  `nseal request get-signing-status`: host-side generators for non-sensitive
+  parameterless device requests. They validate caller-supplied request ids
+  before writing output and are useful for serial-frame hardware captures
+  without involving signing.
 
 ## Smartcard Boundary
 

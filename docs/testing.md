@@ -32,6 +32,10 @@ single-repository CI. Cross-repository drift remains guarded by
   verified against the original request before file, stdio, or serial adapters
   return them to higher layers.
 - End-to-end CLI tests for `request -> dev-sign -> verify-response`.
+- CLI request-generation tests for parameterless device requests:
+  `get_capabilities`, `get_public_key`, and `get_signing_status`, including
+  caller-supplied request ids and rejection before writing output on invalid
+  request ids.
 - CLI `verify-response` tests reject invalid original requests before accepting
   otherwise valid response shapes.
 - End-to-end CLI tests for QR envelope `request -> dev-sign -> verify-response`.

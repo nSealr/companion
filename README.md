@@ -13,7 +13,10 @@ clients to hardware-backed signing.
   policy-file fixtures from `NostrSeal/specs`, including NIP-46 permission
   policy checks, bridge decisions, implementation limits, and invalid
   hardening vectors.
-- `nseal request sign-event` creates a signing request from an event template.
+- `nseal request` creates signing requests from event templates and
+  parameterless device requests for `get_capabilities`, `get_public_key`, and
+  `get_signing_status`, with caller-supplied `--request-id` support for
+  hardware traces.
 - `nseal dev-sign` signs requests with an explicit test-only software key.
 - `nseal review-request` renders deterministic review JSON from a signing
   request for untrusted host-side previews and test harnesses.
@@ -112,6 +115,7 @@ Run the CLI from the workspace with:
 ```sh
 pnpm nseal --help
 pnpm nseal fixture verify --specs ../specs
+pnpm nseal request get-signing-status --request-id req-status-1 --out status-request.json
 pnpm nseal request sign-event --event-template template.json --out request.qr --output-format qr
 pnpm nseal review-request --request request.qr --request-format qr --out review.json
 pnpm nseal nip46 decide --message nip46-message.json --permissions sign_event:1 --out decision.json

@@ -25,6 +25,15 @@ import { SmartcardSigner } from "../../../packages/smartcard/src/signer.js";
 
 type DataFormat = "json" | "qr";
 
+const PARAMETERLESS_REQUEST_METHODS: Record<string, { protocolMethod: string; defaultRequestId: string }> = {
+  capabilities: { protocolMethod: "get_capabilities", defaultRequestId: "req-capabilities-1" },
+  "get-capabilities": { protocolMethod: "get_capabilities", defaultRequestId: "req-capabilities-1" },
+  pubkey: { protocolMethod: "get_public_key", defaultRequestId: "req-pubkey-1" },
+  "get-public-key": { protocolMethod: "get_public_key", defaultRequestId: "req-public-key-1" },
+  "signing-status": { protocolMethod: "get_signing_status", defaultRequestId: "req-signing-status-1" },
+  "get-signing-status": { protocolMethod: "get_signing_status", defaultRequestId: "req-signing-status-1" }
+};
+
 function readJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));
 }
@@ -379,23 +388,28 @@ export function buildCli(): Command {
     .argument("<method>")
     .requiredOption("--out <path>")
     .option("--event-template <path>")
+    .option("--request-id <id>")
     .option("--output-format <format>", "Output format: json or qr", "json")
     .description("Create a NostrSeal request")
-    .action((method: string, options: { out: string; eventTemplate?: string; outputFormat: string }) => {
+    .action((method: string, options: { out: string; eventTemplate?: string; requestId?: string; outputFormat: string }) => {
       assertFormat(options.outputFormat);
-      if (method === "pubkey") {
-        writeValue(options.out, {
+      const parameterlessMethod = PARAMETERLESS_REQUEST_METHODS[method];
+      if (parameterlessMethod) {
+        const request = {
           version: 1,
-          request_id: "req-pubkey-1",
-          method: "get_public_key"
-        }, options.outputFormat);
+          request_id: options.requestId ?? parameterlessMethod.defaultRequestId,
+          method: parameterlessMethod.protocolMethod
+        };
+        const validation = validateRequest(request);
+        if (!validation.ok) throw new Error(validation.error);
+        writeValue(options.out, request, options.outputFormat);
         return;
       }
       if (method === "sign-event") {
         if (!options.eventTemplate) throw new Error("--event-template is required for sign-event");
         const request = {
           version: 1,
-          request_id: "req-sign-event-1",
+          request_id: options.requestId ?? "req-sign-event-1",
           method: "sign_event",
           params: {
             event_template: readJson(options.eventTemplate)

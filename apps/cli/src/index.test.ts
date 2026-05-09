@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "../../../packages/fixtures/src/specs-root.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/src/serial.js";
-import { validateResponse } from "../../../packages/protocol/src/protocol.js";
+import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
 import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
 import { buildCli } from "./index.js";
 
@@ -34,6 +34,40 @@ async function collectCliOutput(args: string[]): Promise<string[]> {
 }
 
 describe("nseal CLI", () => {
+  it("creates parameterless device requests with caller supplied request ids", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-device-requests-"));
+    const cases = [
+      ["get-capabilities", "req-cli-capabilities", "get_capabilities"],
+      ["get-public-key", "req-cli-public-key", "get_public_key"],
+      ["get-signing-status", "req-cli-signing-status", "get_signing_status"]
+    ] as const;
+
+    for (const [cliMethod, requestId, protocolMethod] of cases) {
+      const requestPath = join(tempRoot, `${cliMethod}.json`);
+
+      await runCli(["request", cliMethod, "--request-id", requestId, "--out", requestPath]);
+
+      const request = loadJson(requestPath);
+      expect(request).toEqual({
+        version: 1,
+        request_id: requestId,
+        method: protocolMethod
+      });
+      expect(validateRequest(request).ok).toBe(true);
+    }
+  });
+
+  it("rejects invalid caller supplied request ids before writing device requests", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-device-request-id-"));
+    const requestPath = join(tempRoot, "request.json");
+
+    await expect(
+      runCli(["request", "get-signing-status", "--request-id", "invalid request id", "--out", requestPath])
+    ).rejects.toThrow("request_id is invalid");
+
+    expect(existsSync(requestPath)).toBe(false);
+  });
+
   it("runs request -> dev-sign -> verify-response for a shared fixture template", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-"));
     const key = loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as { secret_key: string };

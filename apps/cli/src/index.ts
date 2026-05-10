@@ -20,6 +20,7 @@ import {
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
 import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
 import {
+  REVIEW_DETAIL_BODY_LINE_STYLES as REVIEW_DETAIL_BODY_LINE_STYLE_VALUES,
   renderReviewDetailPages,
   reviewEventTemplate,
   screenReviewForRequest,
@@ -37,7 +38,7 @@ const DEFAULT_REVIEW_DETAIL_PAGE_LIMITS: ReviewDetailPageLimits = {
   max_compact_body_lines: 9,
   max_compact_line_chars: 48
 };
-const REVIEW_DETAIL_BODY_LINE_STYLES = new Set(["meta", "normal", "value"]);
+const REVIEW_DETAIL_BODY_LINE_STYLES = new Set<string>(REVIEW_DETAIL_BODY_LINE_STYLE_VALUES);
 
 const PARAMETERLESS_REQUEST_METHODS: Record<string, { protocolMethod: string; defaultRequestId: string }> = {
   capabilities: { protocolMethod: "get_capabilities", defaultRequestId: "req-capabilities-1" },

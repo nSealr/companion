@@ -16,7 +16,8 @@ export type ReviewPage = {
   action: "next" | "approve_or_reject";
 };
 
-export type ReviewBodyLineStyle = "normal" | "meta" | "label" | "value";
+export const REVIEW_DETAIL_BODY_LINE_STYLES = ["meta", "normal", "value"] as const;
+export type ReviewBodyLineStyle = (typeof REVIEW_DETAIL_BODY_LINE_STYLES)[number];
 
 export type ReviewDetailPageLimits = {
   max_title_chars: number;

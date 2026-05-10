@@ -3,12 +3,17 @@ import { loadSpecsFixtures } from "../../fixtures/src/fixtures.js";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import {
   approvalDigestForRequest,
+  REVIEW_DETAIL_BODY_LINE_STYLES,
   renderReviewDetailPages,
   reviewEventTemplate,
   screenReviewForRequest
 } from "./review.js";
 
 describe("trusted review model", () => {
+  it("exports only the shared review detail-page body styles", () => {
+    expect(REVIEW_DETAIL_BODY_LINE_STYLES).toEqual(["meta", "normal", "value"]);
+  });
+
   it("matches every shared trusted-review vector", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
 

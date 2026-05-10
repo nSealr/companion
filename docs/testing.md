@@ -72,7 +72,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - Fixture verification rejects valid serial frames whose decoded request
   metadata violates the shared specs profile.
 - QR envelope round-trip and rejection tests.
-- Serial frame round-trip, unsupported type, and checksum mismatch tests.
+- Serial frame round-trip, unsupported type, checksum mismatch, and encode-side
+  `max_serial_frame_bytes` rejection tests.
 - Shared `NostrSeal/specs` QR and serial transport vector conformance tests.
 - Serial-line transport tests proving a future native USB/WebSerial adapter can
   write a request frame, ignore device log lines, normalize common serial line

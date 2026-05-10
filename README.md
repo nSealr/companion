@@ -56,7 +56,8 @@ clients to hardware-backed signing.
   `NostrSeal/specs`, including malformed/padded/invalid-UTF-8/oversized
   rejection.
 - `packages/framing` implements the first checksum-protected serial line frame
-  draft for USB CDC and UART experiments, including shared frame-size limits.
+  draft for USB CDC and UART experiments, including shared frame-size limits on
+  both decode and encode.
 - `packages/protocol` validates request/response shape, centralizes the
   companion copy of the shared v0 implementation limits, and validates
   capability discovery responses, including the current ESP32-S3 scaffold's

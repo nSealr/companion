@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
+import { NOSTRSEAL_V0_LIMITS } from "../../protocol/src/limits.js";
 import { decodeSerialFrame, encodeSerialFrame, SERIAL_FRAME_PREFIX } from "./serial.js";
 
 const specsRoot = resolveSpecsRoot();
@@ -23,6 +24,15 @@ describe("serial framing draft", () => {
     const frame = encodeSerialFrame({ type: "request", payload: signEventRequest });
 
     expect(decodeSerialFrame(frame.replace("\n", "\r\n"))).toEqual({ type: "request", payload: signEventRequest });
+  });
+
+  it("rejects encoded frames that would exceed max_serial_frame_bytes", () => {
+    expect(() =>
+      encodeSerialFrame({
+        type: "request",
+        payload: { data: "x".repeat(NOSTRSEAL_V0_LIMITS.max_serial_frame_bytes) }
+      })
+    ).toThrow("serial frame exceeds max_serial_frame_bytes");
   });
 
   it("rejects frames with unsupported types", () => {

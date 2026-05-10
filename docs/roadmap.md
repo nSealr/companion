@@ -80,6 +80,8 @@ a production-grade native USB/WebSerial binding.
 - NostrSeal response conversion back to NIP-46 result/error strings.
 - Requested permission string parsing for future `connect` review.
 - `connect` request parsing into explicit policy-review intents.
+- Deterministic `connect` review-page rendering without echoing secrets or
+  creating grants.
 - Request permission matching against explicit in-memory grant inputs.
 - Bridge decisions for permitted signer routing, local `ping`, `connect`
   review, and denied permissions.
@@ -91,16 +93,18 @@ It consumes shared `NostrSeal/specs` NIP-46 payload vectors through unit tests
 and `nseal fixture verify`, and it now parses NIP-46 requested permission
 strings plus `connect` intents and can match later requests against explicit
 permission inputs without granting or persisting them. The `connect` intent
-path and non-`connect` permission policy checks are now pinned by shared specs
-vectors. Bridge decisions are also pinned by shared specs vectors, including
-permission-denied NIP-46 responses before a request reaches signer transport.
-`nseal nip46 decide` exposes those decisions as a file-backed CLI harness for
-integration tests. The command can read explicit permissions from the command
+path, deterministic `connect` review pages, and non-`connect` permission
+policy checks are now pinned by shared specs vectors. Bridge decisions are also
+pinned by shared specs vectors, including permission-denied NIP-46 responses
+before a request reaches signer transport. `nseal nip46 decide` exposes those
+decisions as a file-backed CLI harness for integration tests. `nseal nip46
+review-connect` exposes only the deterministic review pages for a `connect`
+message. The decision command can read explicit permissions from the command
 line or from a `nseal-nip46-policy-v0` policy file pinned by shared specs
-vectors, but it does not create, update, approve, or persist grants by itself.
-Policy-file parsing is now package-owned in `packages/nip46`, leaving the CLI
-as a file/argument adapter. It also does not add relay, encryption, or signer
-I/O.
+vectors, but neither command creates, updates, approves, or persists grants by
+itself. Policy-file parsing is now package-owned in `packages/nip46`, leaving
+the CLI as a file/argument adapter. These paths also do not add relay,
+encryption, or signer I/O.
 Relay sessions, NIP-44 encryption/decryption, connection token responses,
 permission storage, grant review, and auth challenge UX remain future work.
 

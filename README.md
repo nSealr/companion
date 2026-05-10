@@ -54,6 +54,10 @@ clients to hardware-backed signing.
   NIP-46 payload using explicit permission inputs or a read-only policy file.
   It does not open relays, decrypt NIP-44 payloads, persist grants, or contact
   signer transports.
+- `nseal nip46 review-connect` writes deterministic review pages for an
+  already-decrypted NIP-46 `connect` request. It shows the remote signer
+  pubkey, whether a secret was provided, and requested permissions without
+  echoing the secret value or approving the client.
 - `packages/qr` implements the v0 `nseal1:` QR envelope from
   `NostrSeal/specs`, including malformed/padded/invalid-UTF-8/oversized
   rejection.
@@ -81,13 +85,14 @@ clients to hardware-backed signing.
   output before reader connection.
 - `packages/nip46` implements the first decrypted NIP-46 payload bridge for
   `get_public_key`, `sign_event`, local `ping`, and NostrSeal response mapping.
-  It also parses `connect` requests into policy-review intents, validates
-  requested permission strings, and owns the read-only policy-file parser used
-  by the CLI. Shared specs vectors now pin the derived permission requirements,
-  positive/negative permission checks, bridge decisions, and invalid payload
-  rejection for signer routing, local response routing, `connect` review, and
-  permission-denied responses. Relay transport, NIP-44 encryption, persistent
-  permission grants, and auth flows remain future work.
+  It also parses `connect` requests into policy-review intents and deterministic
+  review pages, validates requested permission strings, and owns the read-only
+  policy-file parser used by the CLI. Shared specs vectors now pin the derived
+  permission requirements, positive/negative permission checks, bridge
+  decisions, `connect` review pages, and invalid payload rejection for signer
+  routing, local response routing, `connect` review, and permission-denied
+  responses. Relay transport, NIP-44 encryption, persistent permission grants,
+  and auth flows remain future work.
 
 ## Planned Capabilities
 
@@ -129,6 +134,7 @@ pnpm nseal review-request --request request.qr --request-format qr --out review.
 pnpm nseal review-request --request request.qr --request-format qr --detail-pages --max-compact-line-chars 48 --out review-detail-pages.json
 pnpm nseal nip46 decide --message nip46-message.json --permissions sign_event:1 --out decision.json
 pnpm nseal nip46 decide --message nip46-message.json --policy-file policy.json --out decision.json
+pnpm nseal nip46 review-connect --message nip46-connect.json --out connect-review.json
 pnpm nseal smartcard-sim-sign --secret-key <test-only-hex> --request request.qr --request-format qr --review-acknowledged --approval-digest <approval-digest-hex> --out response.qr --output-format qr
 ```
 

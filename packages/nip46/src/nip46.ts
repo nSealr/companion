@@ -28,6 +28,19 @@ export type Nip46ConnectIntent = {
   requested_permissions: Nip46Permission[];
 };
 
+export type Nip46ConnectReview = {
+  format: "nseal-nip46-connect-review-v0";
+  id: string;
+  remote_signer_pubkey: string;
+  secret_present: boolean;
+  requested_permissions: Nip46Permission[];
+  pages: Array<{
+    title: string;
+    page_indicator: string;
+    body_lines: string[];
+  }>;
+};
+
 export type Nip46BridgeDecision =
   | {
       type: "connect_review";
@@ -211,6 +224,44 @@ export function parseNip46ConnectIntent(value: unknown): Nip46ConnectIntent {
   };
 }
 
+export function nip46PermissionLabel(permission: Nip46PermissionRequirement): string {
+  if (permission.method === "sign_event" && permission.parameter !== undefined) {
+    return `sign_event:${permission.parameter}`;
+  }
+  return permission.method;
+}
+
+export function reviewNip46ConnectIntent(intent: Nip46ConnectIntent): Nip46ConnectReview {
+  const permissionLines = intent.requested_permissions.map((permission) => nip46PermissionLabel(permission));
+  return {
+    format: "nseal-nip46-connect-review-v0",
+    id: intent.id,
+    remote_signer_pubkey: intent.remote_signer_pubkey,
+    secret_present: intent.secret !== undefined,
+    requested_permissions: intent.requested_permissions,
+    pages: [
+      {
+        title: "Connect",
+        page_indicator: "Page 1/2",
+        body_lines: [
+          "Remote signer",
+          intent.remote_signer_pubkey,
+          `Secret: ${intent.secret !== undefined ? "provided" : "none"}`
+        ]
+      },
+      {
+        title: "Permissions",
+        page_indicator: "Page 2/2",
+        body_lines: permissionLines.length > 0 ? permissionLines : ["No permissions requested"]
+      }
+    ]
+  };
+}
+
+export function reviewNip46ConnectMessage(value: unknown): Nip46ConnectReview {
+  return reviewNip46ConnectIntent(parseNip46ConnectIntent(value));
+}
+
 export function nip46PermissionRequirementFromRequest(value: unknown): Nip46PermissionRequirement {
   const message = requireMessage(value);
   if (message.method === "connect") throw new Error("NIP-46 connect requires policy review");
@@ -253,17 +304,10 @@ export function isNip46RequestPermitted(value: unknown, grantedPermissions: read
   return grantedPermissions.some((permission) => permissionMatchesRequirement(permission, requirement));
 }
 
-function formatNip46Permission(permission: Nip46PermissionRequirement): string {
-  if (permission.method === "sign_event" && permission.parameter !== undefined) {
-    return `sign_event:${permission.parameter}`;
-  }
-  return permission.method;
-}
-
 function permissionDeniedResponse(id: string, requirement: Nip46PermissionRequirement): Nip46ResponseMessage {
   return {
     id,
-    error: `permission_denied: request requires approved permission ${formatNip46Permission(requirement)}`
+    error: `permission_denied: request requires approved permission ${nip46PermissionLabel(requirement)}`
   };
 }
 

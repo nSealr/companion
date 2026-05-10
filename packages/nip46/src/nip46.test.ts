@@ -13,6 +13,7 @@ import {
   parseNip46PolicyFile,
   nostrSealRequestFromNip46,
   parseNip46Permissions,
+  reviewNip46ConnectMessage,
   respondToLocalNip46Request
 } from "./nip46.js";
 
@@ -98,6 +99,9 @@ describe("NIP-46 bridge payloads", () => {
     const ping = fixtures.nip46Payloads.find((vector) => vector.name === "ping");
 
     expect(parseNip46ConnectIntent(connect?.request_message)).toEqual(connect?.connect_intent);
+    expect(reviewNip46ConnectMessage(connect?.request_message)).toEqual(
+      (connect as { connect_review?: unknown } | undefined)?.connect_review
+    );
     expect(nostrSealRequestFromNip46(signEvent?.request_message)).toEqual(signEvent?.nostrseal_request);
     expect(nip46ResponseFromNostrSeal(signEvent?.request_message.id ?? "", signEvent?.nostrseal_response)).toEqual(
       signEvent?.response_message
@@ -200,6 +204,37 @@ describe("NIP-46 bridge payloads", () => {
     expect(() =>
       parseNip46ConnectIntent({ id: "connect-1", method: "connect", params: ["bad-pubkey"] })
     ).toThrow(/remote-signer pubkey/u);
+  });
+
+  it("renders connect review pages without echoing the secret value", () => {
+    const remoteSignerPubkey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
+
+    const review = reviewNip46ConnectMessage({
+      id: "connect-1",
+      method: "connect",
+      params: [remoteSignerPubkey, "secret-1", "sign_event:1,nip44_encrypt"]
+    });
+
+    expect(review).toEqual({
+      format: "nseal-nip46-connect-review-v0",
+      id: "connect-1",
+      remote_signer_pubkey: remoteSignerPubkey,
+      secret_present: true,
+      requested_permissions: [{ method: "sign_event", parameter: "1", event_kind: 1 }, { method: "nip44_encrypt" }],
+      pages: [
+        {
+          title: "Connect",
+          page_indicator: "Page 1/2",
+          body_lines: ["Remote signer", remoteSignerPubkey, "Secret: provided"]
+        },
+        {
+          title: "Permissions",
+          page_indicator: "Page 2/2",
+          body_lines: ["sign_event:1", "nip44_encrypt"]
+        }
+      ]
+    });
+    expect(JSON.stringify(review)).not.toContain("secret-1");
   });
 
   it("matches request permissions without granting policy", () => {

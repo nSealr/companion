@@ -114,10 +114,11 @@ single-repository CI. Cross-repository drift remains guarded by
 - NIP-46 requested-permission parser tests covering method-only permissions,
   `sign_event:<kind>` selectors, empty permission strings, and rejection of
   malformed or unsupported entries.
-- NIP-46 `connect` intent parser tests covering remote-signer pubkey
-  validation, optional secret capture, requested permissions, and rejection of
-  signer-transport routing for `connect`. The shared specs fixture suite now
-  includes a `connect` policy-review intent vector.
+- NIP-46 `connect` intent and review renderer tests covering remote-signer
+  pubkey validation, optional secret capture, secret-presence display without
+  secret-value echo, requested permissions, and rejection of signer-transport
+  routing for `connect`. The shared specs fixture suite now includes a
+  `connect` policy-review intent and review-page vector.
 - NIP-46 permission matching tests covering derived `sign_event:<kind>`
   requirements, broad `sign_event` grants, method-only grants, denied requests,
   and `connect` exclusion from post-connect request permissions. The CLI fixture
@@ -125,9 +126,10 @@ single-repository CI. Cross-repository drift remains guarded by
 - NIP-46 bridge decision tests covering permitted signer routing, denied signer
   routing, local `ping`, denied `ping`, and `connect` review intent output. The
   CLI fixture verifier also rejects drift in shared bridge decision vectors.
-- CLI NIP-46 decision tests covering `nseal nip46 decide` against shared
-  permitted, denied, and `connect` bridge-decision vectors without opening relay
-  or signer transports.
+- CLI NIP-46 decision and review tests covering `nseal nip46 decide` against
+  shared permitted, denied, and `connect` bridge-decision vectors plus
+  `nseal nip46 review-connect` against the shared `connect` review-page vector
+  without opening relay or signer transports.
 - CLI NIP-46 policy-file tests covering read-only
   `nseal-nip46-policy-v0` permission input and rejection of ambiguous
   `--permissions` plus `--policy-file` usage. The positive case consumes the

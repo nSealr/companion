@@ -154,6 +154,22 @@ export type SpecsFixtureSet = {
         event_kind?: number;
       }>;
     };
+    connect_review?: {
+      format: "nseal-nip46-connect-review-v0";
+      id: string;
+      remote_signer_pubkey: string;
+      secret_present: boolean;
+      requested_permissions: Array<{
+        method: string;
+        parameter?: string;
+        event_kind?: number;
+      }>;
+      pages: Array<{
+        title: string;
+        page_indicator: string;
+        body_lines: string[];
+      }>;
+    };
   }>;
   nip46PolicyFiles: Array<{
     name: string;

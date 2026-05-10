@@ -25,6 +25,41 @@
       }
     ]
   },
+  "connect_review": {
+    "format": "nseal-nip46-connect-review-v0",
+    "id": "nip46-connect-1",
+    "remote_signer_pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+    "secret_present": true,
+    "requested_permissions": [
+      {
+        "method": "sign_event",
+        "parameter": "1",
+        "event_kind": 1
+      },
+      {
+        "method": "nip44_encrypt"
+      }
+    ],
+    "pages": [
+      {
+        "title": "Connect",
+        "page_indicator": "Page 1/2",
+        "body_lines": [
+          "Remote signer",
+          "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+          "Secret: provided"
+        ]
+      },
+      {
+        "title": "Permissions",
+        "page_indicator": "Page 2/2",
+        "body_lines": [
+          "sign_event:1",
+          "nip44_encrypt"
+        ]
+      }
+    ]
+  },
   "bridge_decisions": [
     {
       "granted_permissions": [],

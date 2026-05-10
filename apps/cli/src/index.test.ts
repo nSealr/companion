@@ -236,6 +236,7 @@ describe("nseal CLI", () => {
     };
     const connectVector = loadJson(resolve(specsRoot, "vectors/nip46/connect-policy-review.json")) as {
       request_message: unknown;
+      connect_review: unknown;
       bridge_decisions: Array<{
         decision: unknown;
       }>;
@@ -245,6 +246,7 @@ describe("nseal CLI", () => {
     const permittedDecisionPath = join(tempRoot, "permitted-decision.json");
     const deniedDecisionPath = join(tempRoot, "denied-decision.json");
     const connectDecisionPath = join(tempRoot, "connect-decision.json");
+    const connectReviewPath = join(tempRoot, "connect-review.json");
 
     writeFileSync(signEventMessagePath, `${JSON.stringify(signEventVector.request_message, null, 2)}\n`, "utf8");
     writeFileSync(connectMessagePath, `${JSON.stringify(connectVector.request_message, null, 2)}\n`, "utf8");
@@ -270,10 +272,13 @@ describe("nseal CLI", () => {
       deniedDecisionPath
     ]);
     await runCli(["nip46", "decide", "--message", connectMessagePath, "--out", connectDecisionPath]);
+    await runCli(["nip46", "review-connect", "--message", connectMessagePath, "--out", connectReviewPath]);
 
     expect(loadJson(permittedDecisionPath)).toEqual(signEventVector.bridge_decisions[0].decision);
     expect(loadJson(deniedDecisionPath)).toEqual(signEventVector.bridge_decisions[1].decision);
     expect(loadJson(connectDecisionPath)).toEqual(connectVector.bridge_decisions[0].decision);
+    expect(loadJson(connectReviewPath)).toEqual(connectVector.connect_review);
+    expect(JSON.stringify(loadJson(connectReviewPath))).not.toContain("secret-1");
   });
 
   it("can read NIP-46 approved permissions from an explicit policy file", async () => {

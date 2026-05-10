@@ -48,8 +48,8 @@ only adapt file/argument I/O around package-owned validation logic.
 - `packages/nip46`: decrypted NIP-46 payload bridge for `get_public_key`,
   `sign_event`, local `ping`, and conversion from NostrSeal responses back to
   NIP-46 result/error strings. It also validates requested permission strings
-  and policy files, and parses `connect` messages into review intents for later
-  policy work.
+  and policy files, and parses `connect` messages into review intents and
+  deterministic review pages for later policy work.
   Permission matching is present as a pure boundary and is pinned by shared
   permission policy fixture checks. Bridge decision output is also present: a
   permitted request can become a signer request, `ping` can produce a local
@@ -249,12 +249,18 @@ a read-only `nseal-nip46-policy-v0` policy file pinned by shared specs
 vectors. It does not create or update policy files, open relay sessions,
 decrypt NIP-44 payloads, persist grants, or contact signer transports.
 
+`nseal nip46 review-connect` exposes only the review projection for an
+already-decrypted `connect` request. It writes deterministic pages with the
+remote signer pubkey, secret presence, and requested permission labels. It does
+not echo the secret value, return `ack`, persist a grant, or authorize the
+client.
+
 `connect` parsing is also intentionally non-committal. The bridge can extract
 the remote-signer pubkey, optional secret, and requested permissions into a
-review intent, but it does not return `ack`, echo secrets, persist grants, or
-authorize a client. A later policy layer must review and explicitly approve
-that intent. The same boundary is now covered by a shared `NostrSeal/specs`
-NIP-46 vector and `nseal fixture verify`.
+review intent and deterministic review pages, but it does not return `ack`,
+echo secrets, persist grants, or authorize a client. A later policy layer must
+review and explicitly approve that intent. The same boundary is now covered by
+a shared `NostrSeal/specs` NIP-46 vector and `nseal fixture verify`.
 
 ## QR Envelope
 

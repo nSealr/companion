@@ -14,6 +14,7 @@ import {
   parseNip46ConnectIntent,
   parseNip46PolicyFile,
   parseNip46Permissions,
+  reviewNip46ConnectMessage,
   type Nip46Permission,
   respondToLocalNip46Request
 } from "../../../packages/nip46/src/nip46.js";
@@ -357,6 +358,11 @@ function validateNip46PayloadFixture(name: string, fixture: unknown): void {
       parseNip46ConnectIntent(fixture.request_message),
       fixture.connect_intent,
       `invalid NIP-46 fixture ${name}: connect intent mismatch`
+    );
+    assertJsonEqual(
+      reviewNip46ConnectMessage(fixture.request_message),
+      fixture.connect_review,
+      `invalid NIP-46 fixture ${name}: connect review mismatch`
     );
     return;
   }
@@ -745,6 +751,15 @@ export function buildCli(): Command {
     });
 
   const nip46 = program.command("nip46").description("Inspect already-decrypted NIP-46 payloads");
+
+  nip46
+    .command("review-connect")
+    .description("Write deterministic review pages for an already-decrypted NIP-46 connect request")
+    .requiredOption("--message <path>", "Read a decrypted NIP-46 connect message JSON file")
+    .requiredOption("--out <path>", "Write the connect review JSON")
+    .action((options: { message: string; out: string }) => {
+      writeJson(options.out, reviewNip46ConnectMessage(readJson(options.message)));
+    });
 
   nip46
     .command("decide")

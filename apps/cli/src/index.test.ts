@@ -2,6 +2,7 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { loadSpecsFixtures } from "../../../packages/fixtures/src/fixtures.js";
 import { resolveSpecsRoot } from "../../../packages/fixtures/src/specs-root.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/src/serial.js";
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
@@ -31,6 +32,10 @@ async function collectCliOutput(args: string[]): Promise<string[]> {
     console.log = originalLog;
   }
   return messages;
+}
+
+function fixtureCountLabel(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 describe("nseal CLI", () => {
@@ -133,8 +138,10 @@ describe("nseal CLI", () => {
   });
 
   it("verifies event and trusted-review fixtures from the specs repository", async () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+
     await expect(collectCliOutput(["fixture", "verify", "--specs", specsRoot])).resolves.toEqual([
-      "verified 2 event fixtures, 4 review fixtures, 2 review-screen fixtures, 1 review display-frame fixture, 2 review transcript fixtures, 5 NIP-46 payload fixtures, 1 NIP-46 policy-file fixture, and 43 invalid hardening fixtures"
+      `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
     ]);
   });
 

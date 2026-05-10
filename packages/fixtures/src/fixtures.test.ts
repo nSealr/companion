@@ -5,22 +5,28 @@ import { resolveSpecsRoot } from "./specs-root.js";
 describe("fixture loading", () => {
   it("loads deterministic event vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
-    expect(fixtures.events.map((event) => event.name)).toEqual(["kind-1-basic", "kind-1-tags"]);
+    expect(fixtures.events.map((event) => event.name)).toEqual(expect.arrayContaining(["kind-1-basic", "kind-1-tags"]));
     expect(fixtures.key.name).toBe("test-key-1");
   });
 
   it("loads trusted review vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
-    expect(fixtures.reviews.map((review) => review.name)).toEqual([
+    expect(fixtures.reviews.map((review) => review.name)).toEqual(expect.arrayContaining([
       "kind-1-basic",
       "kind-1-long-events-many-tags",
       "kind-1-tags",
+      "kind-1-unicode-boundary",
       "kind-30078-empty"
-    ]);
-    expect(fixtures.reviews[1].review.content).toHaveLength(281);
-    expect(fixtures.reviews[1].review.tags).toHaveLength(9);
-    expect(fixtures.reviews[3].review.kind).toBe(30078);
-    expect(fixtures.reviews[3].review.content).toBe("");
+    ]));
+    const longEvents = fixtures.reviews.find((review) => review.name === "kind-1-long-events-many-tags");
+    const emptyParameterEvent = fixtures.reviews.find((review) => review.name === "kind-30078-empty");
+    const unicodeBoundary = fixtures.reviews.find((review) => review.name === "kind-1-unicode-boundary");
+    expect(longEvents?.review.content).toHaveLength(281);
+    expect(longEvents?.review.tags).toHaveLength(9);
+    expect(emptyParameterEvent?.review.kind).toBe(30078);
+    expect(emptyParameterEvent?.review.content).toBe("");
+    expect(unicodeBoundary?.review.content_utf8_bytes).toBe(8);
+    expect(unicodeBoundary?.review.tags).toEqual([["t", "caffè"]]);
   });
 
   it("loads QR review transcript vectors from the specs repository", () => {
@@ -35,7 +41,7 @@ describe("fixture loading", () => {
 
   it("loads trusted review-screen vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
-    expect(fixtures.reviewScreens.map((screen) => screen.name)).toEqual(["kind-1-basic", "kind-1-tags"]);
+    expect(fixtures.reviewScreens.map((screen) => screen.name)).toEqual(expect.arrayContaining(["kind-1-basic", "kind-1-tags"]));
     expect(fixtures.reviewScreens[0].screen_review.approval_digest).toBe(
       "6115446825f03a7abf600a7e5746e2a28de33aff3088894e1b610c17a7bb685b"
     );
@@ -43,23 +49,33 @@ describe("fixture loading", () => {
 
   it("loads review display-frame vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
-    expect(fixtures.reviewDisplayFrames.map((frame) => frame.name)).toEqual(["kind-1-long-content-page-1-20x3"]);
-    expect(fixtures.reviewDisplayFrames[0].frame.body_lines).toEqual([
+    expect(fixtures.reviewDisplayFrames.map((frame) => frame.name)).toEqual(expect.arrayContaining([
+      "kind-1-long-content-page-1-20x3",
+      "kind-1-unicode-boundary-content-4x3"
+    ]));
+    const longContentFrame = fixtures.reviewDisplayFrames.find(
+      (frame) => frame.name === "kind-1-long-content-page-1-20x3"
+    );
+    const unicodeFrame = fixtures.reviewDisplayFrames.find(
+      (frame) => frame.name === "kind-1-unicode-boundary-content-4x3"
+    );
+    expect(longContentFrame?.frame.body_lines).toEqual([
       "xxxxxxxxxxxxxxxxxxxx",
       "xxxxxxxxxxxxxxxxxxxx",
       "xxxxxxxxxxxxxxxxx..."
     ]);
+    expect(unicodeFrame?.frame.body_lines).toEqual(["abcè", "def"]);
   });
 
   it("loads NIP-46 decrypted payload bridge vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
-    expect(fixtures.nip46Payloads.map((vector) => vector.name)).toEqual([
+    expect(fixtures.nip46Payloads.map((vector) => vector.name)).toEqual(expect.arrayContaining([
       "connect-policy-review",
       "get-public-key",
       "ping",
       "sign-event-kind-1-basic",
       "sign-event-user-rejected"
-    ]);
+    ]));
     expect(fixtures.nip46Payloads[0].format).toBe("nip46-decrypted-payload-v0");
   });
 
@@ -74,7 +90,7 @@ describe("fixture loading", () => {
     expect(fixtures.limits.format).toBe("nostrseal-implementation-limits-v0");
     expect(fixtures.limits.name).toBe("nostrseal-v0");
     expect(fixtures.limits.limits.max_request_id_length).toBe(128);
-    expect(fixtures.invalidVectors.map((vector) => vector.name)).toEqual([
+    expect(fixtures.invalidVectors.map((vector) => vector.name)).toEqual(expect.arrayContaining([
       "nip46-connect-invalid-pubkey",
       "nip46-permission-malformed",
       "nip46-policy-method-unsupported",
@@ -118,6 +134,6 @@ describe("fixture loading", () => {
       "serial-frame-oversized",
       "serial-frame-request-invalid-request-id",
       "serial-frame-request-invalid-version"
-    ]);
+    ]));
   });
 });

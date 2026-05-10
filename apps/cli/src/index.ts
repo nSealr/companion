@@ -330,6 +330,10 @@ function writeValue(path: string, value: unknown, format: DataFormat): void {
   writeJson(path, value);
 }
 
+function fixtureCountLabel(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 export function buildCli(): Command {
   const program = new Command();
   program.name("nseal").description("NostrSeal companion CLI").version("0.1.0");
@@ -383,11 +387,9 @@ export function buildCli(): Command {
         validateInvalidHardeningFixture(invalidVector);
       }
       const policyFileFixtureLabel =
-        fixtures.nip46PolicyFiles.length === 1
-          ? "1 NIP-46 policy-file fixture"
-          : `${fixtures.nip46PolicyFiles.length} NIP-46 policy-file fixtures`;
+        fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture");
       console.log(
-        `verified ${fixtures.events.length} event fixtures, ${fixtures.reviews.length} review fixtures, ${fixtures.reviewScreens.length} review-screen fixtures, ${fixtures.reviewDisplayFrames.length} review display-frame fixture, ${fixtures.reviewTranscripts.length} review transcript fixtures, ${fixtures.nip46Payloads.length} NIP-46 payload fixtures, ${policyFileFixtureLabel}, and ${fixtures.invalidVectors.length} invalid hardening fixtures`
+        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );
     });
 

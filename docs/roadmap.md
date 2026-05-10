@@ -135,6 +135,8 @@ grants, and production signer I/O.
 ## Smartcard Line
 
 - APDU codec and deterministic simulator: implemented.
+- Shared APDU rejection status vectors: implemented for wrong `SIGN_EVENT_ID`
+  length, unsupported CLA, and unsupported INS.
 - `SmartcardSigner` companion boundary: implemented for `GET_PUBLIC_KEY` plus
   `SIGN_EVENT_ID`, with shared request validation and external-review-only
   acknowledgement before APDU exchange. External `approvalDigest` binding is

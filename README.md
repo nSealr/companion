@@ -72,9 +72,10 @@ clients to hardware-backed signing.
   vault, ESP32 firmware, and smartcard conformance tests.
 - `packages/smartcard` implements the first APDU codec, simulator adapter,
   provider-based PC/SC APDU transport boundary, and `SmartcardSigner` boundary
-  against shared smartcard vectors. The PC/SC boundary validates transmit-result
-  shape, response status bytes, response data shape, and response data bytes
-  before constructing response APDUs, and rejects malformed reader-provider
+  against shared smartcard vectors, including APDU rejection status words. The
+  PC/SC boundary validates transmit-result shape, response status bytes,
+  response data shape, and response data bytes before constructing response
+  APDUs, and rejects malformed reader-provider
   output before reader connection.
 - `packages/nip46` implements the first decrypted NIP-46 payload bridge for
   `get_public_key`, `sign_event`, local `ping`, and NostrSeal response mapping.

@@ -87,7 +87,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - Shared `NostrSeal/specs` capability response conformance tests.
 - Shared `NostrSeal/specs` ESP32-S3 signing-disabled response conformance
   tests.
-- Shared `NostrSeal/specs` smartcard APDU vector conformance tests.
+- Shared `NostrSeal/specs` smartcard APDU vector conformance tests, including
+  deterministic APDU rejection status vectors.
 - Smartcard signer tests covering mandatory review acknowledgement, APDU-backed
   public-key retrieval, event-id signing, Schnorr verification, and standard
   signed-event response verification.

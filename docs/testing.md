@@ -72,6 +72,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - Fixture verification rejects valid serial frames whose decoded request
   metadata violates the shared specs profile.
 - QR envelope round-trip and rejection tests.
+- QR envelope encode-side limit tests proving static v0 QR writers reject
+  payloads that would exceed `max_static_qr_decoded_json_bytes` before emitting
+  an envelope.
 - Serial frame round-trip, unsupported type, checksum mismatch, and encode-side
   `max_serial_frame_bytes` rejection tests.
 - Shared `NostrSeal/specs` QR and serial transport vector conformance tests.

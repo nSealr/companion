@@ -60,7 +60,9 @@ clients to hardware-backed signing.
   echoing the secret value or approving the client.
 - `packages/qr` implements the v0 `nseal1:` QR envelope from
   `NostrSeal/specs`, including malformed/padded/invalid-UTF-8/oversized
-  rejection.
+  rejection. Encoding applies the same static decoded-JSON byte limit as
+  decoding, so the companion does not emit QR payloads that v0 receivers would
+  immediately reject.
 - `packages/framing` implements the first checksum-protected serial line frame
   draft for USB CDC and UART experiments, including shared frame-size limits on
   both decode and encode.

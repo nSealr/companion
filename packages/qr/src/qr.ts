@@ -13,7 +13,11 @@ function assertBase64Url(value: string): void {
 }
 
 export function encodeQrEnvelope(value: unknown): string {
-  const payload = Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
+  const decodedJson = Buffer.from(JSON.stringify(value), "utf8");
+  if (decodedJson.byteLength > NOSTRSEAL_V0_LIMITS.max_static_qr_decoded_json_bytes) {
+    throw new Error("QR decoded JSON exceeds max_static_qr_decoded_json_bytes");
+  }
+  const payload = decodedJson.toString("base64url");
   return `${QR_ENVELOPE_PREFIX}${payload}`;
 }
 

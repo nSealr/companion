@@ -48,6 +48,14 @@ function assertFormat(format: string): asserts format is DataFormat {
   }
 }
 
+function optionalAuthorPubkey(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  if (!/^[0-9a-f]{64}$/u.test(value)) {
+    throw new Error("author pubkey must be 32-byte lowercase hex");
+  }
+  return value;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -448,10 +456,12 @@ export function buildCli(): Command {
     .requiredOption("--request <path>")
     .option("--request-format <format>", "Request format: json or qr", "json")
     .option("--screen-review", "Render deterministic screen-review pages with approval digest")
+    .option("--author-pubkey <hex>", "Signer author pubkey to bind into review output")
     .requiredOption("--out <path>")
     .description("Render an untrusted local review preview for a signing request")
-    .action((options: { request: string; requestFormat: string; screenReview?: boolean; out: string }) => {
+    .action((options: { request: string; requestFormat: string; screenReview?: boolean; authorPubkey?: string; out: string }) => {
       assertFormat(options.requestFormat);
+      const authorPubkey = optionalAuthorPubkey(options.authorPubkey);
       const request = readValue(options.request, options.requestFormat);
       const validation = validateRequest(request);
       if (!validation.ok) throw new Error(validation.error);
@@ -459,11 +469,11 @@ export function buildCli(): Command {
         throw new Error("review-request supports sign_event requests only");
       }
       if (options.screenReview === true) {
-        writeJson(options.out, screenReviewForRequest(request));
+        writeJson(options.out, screenReviewForRequest(request, authorPubkey));
         return;
       }
       const eventTemplate = (request as { params?: { event_template?: unknown } }).params?.event_template;
-      writeJson(options.out, reviewEventTemplate(eventTemplate));
+      writeJson(options.out, reviewEventTemplate(eventTemplate, authorPubkey));
     });
 
   program

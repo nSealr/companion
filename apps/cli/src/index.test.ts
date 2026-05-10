@@ -423,6 +423,45 @@ describe("nseal CLI", () => {
     expect(loadJson(reviewPath)).toEqual(vector.review);
   });
 
+  it("renders review previews bound to a caller-provided signer author pubkey", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-review-author-"));
+    const vector = loadJson(resolve(specsRoot, "vectors/review/kind-1-basic.json")) as { request: unknown };
+    const authorPubkey = "17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917";
+    const requestPath = join(tempRoot, "request.qr");
+    const reviewPath = join(tempRoot, "review.json");
+    const screenReviewPath = join(tempRoot, "screen-review.json");
+
+    writeFileSync(requestPath, `${encodeQrEnvelope(vector.request)}\n`, "utf8");
+
+    await runCli([
+      "review-request",
+      "--request",
+      requestPath,
+      "--request-format",
+      "qr",
+      "--author-pubkey",
+      authorPubkey,
+      "--out",
+      reviewPath
+    ]);
+    await runCli([
+      "review-request",
+      "--request",
+      requestPath,
+      "--request-format",
+      "qr",
+      "--screen-review",
+      "--author-pubkey",
+      authorPubkey,
+      "--out",
+      screenReviewPath
+    ]);
+
+    const screenReview = loadJson(screenReviewPath) as { pages: Array<{ lines: string[] }> };
+    expect(loadJson(reviewPath)).toMatchObject({ author_pubkey: authorPubkey });
+    expect(screenReview.pages[0].lines).toEqual(["Kind 1", "Created 1710000000", "Author", authorPubkey]);
+  });
+
   it("renders screen-review pages with approval digest from a QR signing request", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-screen-review-"));
     const vector = loadJson(resolve(specsRoot, "vectors/review-screens/kind-1-tags.json")) as {

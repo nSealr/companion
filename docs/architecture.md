@@ -145,7 +145,9 @@ The current adapters cover three development paths:
   buffer and captured stderr before returning or reporting process output, and
   terminates silent signer processes after a bounded response timeout.
 - `SerialFrameTransport`: one-shot `nseal1f:` request/response exchange for
-  USB-serial, UART, and firmware smoke-test adapters.
+  USB-serial, UART, and firmware smoke-test adapters. It treats
+  `nseal1f:error` as a transport diagnostic and includes the device error code
+  in the thrown error instead of returning it as a signer response.
 - `SerialLineTransport`: newline-oriented serial transport boundary with an
   injected port. It writes a validated `nseal1f:` request frame, skips
   non-protocol device log lines, normalizes `LF`/`CRLF` line endings, rejects

@@ -61,7 +61,9 @@ preparing physical USB serial integration without adding a native dependency to
 CI. A stream-backed line-port adapter is also in place so future native
 USB/WebSerial bindings can be tested through Node streams before opening real
 hardware, and that adapter now bounds buffered lines with the shared v0
-serial-frame byte limit. M3 remains open for larger-payload strategy and a
+serial-frame byte limit. Serial-frame transport also surfaces device
+`nseal1f:error` payloads as deterministic transport diagnostics instead of
+discarding the error code. M3 remains open for larger-payload strategy and a
 production-grade native USB/WebSerial binding.
 
 ## M4: NIP-46 Payload Bridge

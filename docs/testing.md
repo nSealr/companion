@@ -62,7 +62,8 @@ single-repository CI. Cross-repository drift remains guarded by
   response payloads to pass standard NostrSeal protocol validation for
   development signer, JSON file, JSON-lines stdio, and serial-frame adapters.
   Exchange tests also reject validly shaped responses with mismatched
-  `request_id` values.
+  `request_id` values and surface `nseal1f:error` payloads as deterministic
+  transport diagnostics.
 - CLI serial-frame tests covering validated request wrapping and response-frame
   unwrapping.
 - Fixture verification rejects valid serial frames whose decoded request

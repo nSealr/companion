@@ -174,6 +174,19 @@ function assertResponseVerifiedAgainstRequest(request: unknown, response: unknow
   }
 }
 
+function serialErrorPayloadMessage(payload: unknown): string {
+  if (typeof payload === "string") return payload;
+  if (
+    typeof payload === "object" &&
+    payload !== null &&
+    !Array.isArray(payload) &&
+    typeof (payload as { error?: unknown }).error === "string"
+  ) {
+    return (payload as { error: string }).error;
+  }
+  return JSON.stringify(payload);
+}
+
 function truncateUtf8(value: string, maxBytes: number): string {
   let result = "";
   for (const char of value) {
@@ -342,6 +355,9 @@ export class SerialFrameTransport implements SignerTransport {
     const requestLine = encodeSerialFrame({ type: "request", payload: request });
     const responseLine = await this.exchangeFrame(requestLine);
     const responseFrame = decodeSerialFrame(responseLine);
+    if (responseFrame.type === "error") {
+      throw new Error(`serial frame transport error: ${serialErrorPayloadMessage(responseFrame.payload)}`);
+    }
     if (responseFrame.type !== "response") {
       throw new Error(`serial frame transport expected response frame, got ${responseFrame.type}`);
     }

@@ -301,6 +301,16 @@ describe("transport adapters", () => {
     expect(validateResponse(response).ok).toBe(true);
   });
 
+  it("surfaces serial error frames with deterministic diagnostic text", async () => {
+    const transport = new SerialFrameTransport({
+      exchangeFrame: async () => encodeSerialFrame({ type: "error", payload: { error: "unsupported_request" } })
+    });
+
+    await expect(transport.exchange(capabilitiesRequest)).rejects.toThrow(
+      "serial frame transport error: unsupported_request"
+    );
+  });
+
   it("rejects successful sign_event serial responses with invalid signatures before returning from transport", async () => {
     const invalidSignedResponse = {
       ...basicEventVector.response,

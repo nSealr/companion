@@ -447,6 +447,37 @@ describe("nseal CLI", () => {
     expect(loadJson(responsePath)).toEqual(response);
   });
 
+  it("rejects serial-frame responses for a different request before writing output", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-serial-frame-mismatch-"));
+    const request = loadJson(resolve(specsRoot, "examples/request-get-capabilities.json"));
+    const response = {
+      ...(loadJson(resolve(specsRoot, "examples/response-get-capabilities-esp32-s3-scaffold.json")) as {
+        request_id: string;
+      }),
+      request_id: "different-request"
+    };
+    const requestPath = join(tempRoot, "request.json");
+    const responseFramePath = join(tempRoot, "response.frame");
+    const responsePath = join(tempRoot, "response.json");
+
+    writeFileSync(requestPath, `${JSON.stringify(request, null, 2)}\n`, "utf8");
+    writeFileSync(responseFramePath, `${encodeSerialFrame({ type: "response", payload: response })}\n`, "utf8");
+
+    await expect(
+      runCli([
+        "serial-frame",
+        "unwrap-response",
+        "--request",
+        requestPath,
+        "--response-frame",
+        responseFramePath,
+        "--out",
+        responsePath
+      ])
+    ).rejects.toThrow("serial frame response request_id does not match request");
+    expect(existsSync(responsePath)).toBe(false);
+  });
+
   it("renders an untrusted review preview from a QR signing request", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-review-"));
     const vector = loadJson(resolve(specsRoot, "vectors/review/kind-1-tags.json")) as {

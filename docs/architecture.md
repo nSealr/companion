@@ -161,8 +161,10 @@ The current adapters cover three development paths:
   close its underlying streams after failed exchanges.
 - `nseal serial-frame wrap-request` and `nseal serial-frame unwrap-response`:
   offline CLI helpers for producing validated serial request frames and
-  decoding validated serial response frames during ESP32 bring-up. They do not
-  open a physical USB, CDC, HID, WebUSB, or WebSerial connection.
+  decoding validated serial response frames during ESP32 bring-up. With
+  `--request`, response unwrapping also verifies the original request id and
+  signed-output binding before writing output. These commands do not open a
+  physical USB, CDC, HID, WebUSB, or WebSerial connection.
 - `nseal request get-capabilities`, `nseal request get-public-key`, and
   `nseal request get-signing-status`: host-side generators for non-sensitive
   parameterless device requests. They validate caller-supplied request ids

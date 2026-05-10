@@ -47,7 +47,9 @@ clients to hardware-backed signing.
   newline-oriented port interface for dependency-free serial integration tests,
   while enforcing the shared v0 serial-frame byte limit on buffered lines.
 - `nseal serial-frame` exposes offline serial-frame request wrapping and
-  response unwrapping helpers for ESP32 bring-up and lab captures.
+  response unwrapping helpers for ESP32 bring-up and lab captures. Response
+  unwrapping can verify the original request before writing output, so
+  captured frames cannot silently drift across request ids.
 - `nseal nip46 decide` writes the bridge decision for an already-decrypted
   NIP-46 payload using explicit permission inputs or a read-only policy file.
   It does not open relays, decrypt NIP-44 payloads, persist grants, or contact

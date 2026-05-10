@@ -463,6 +463,22 @@ function writeValue(path: string, value: unknown, format: DataFormat): void {
   writeJson(path, value);
 }
 
+function assertResponseForRequest(request: unknown, response: unknown, label: string): void {
+  const requestShape = validateRequest(request);
+  if (!requestShape.ok) throw new Error(requestShape.error);
+  const responseShape = validateResponse(response);
+  if (!responseShape.ok) throw new Error(responseShape.error);
+  if ((response as { request_id?: unknown }).request_id !== (request as { request_id?: unknown }).request_id) {
+    throw new Error(`${label} request_id does not match request`);
+  }
+  if ((response as { ok?: boolean }).ok === true && (request as { method?: string }).method === "sign_event") {
+    const result = verifySignedEventResponse(request, response);
+    if (!result.ok) {
+      throw new Error(label === "response" ? result.error : `${label} ${result.error}`);
+    }
+  }
+}
+
 function fixtureCountLabel(count: number, singular: string, plural = `${singular}s`): string {
   return `${count} ${count === 1 ? singular : plural}`;
 }
@@ -705,18 +721,26 @@ export function buildCli(): Command {
 
   serialFrame
     .command("unwrap-response")
+    .option("--request <path>", "Original request to verify the serial response against")
+    .option("--request-format <format>", "Request format: json or qr", "json")
     .requiredOption("--response-frame <path>")
     .requiredOption("--out <path>")
     .option("--output-format <format>", "Output format: json or qr", "json")
     .description("Decode and validate a serial response frame")
-    .action((options: { responseFrame: string; out: string; outputFormat: string }) => {
+    .action((options: { request?: string; requestFormat: string; responseFrame: string; out: string; outputFormat: string }) => {
+      assertFormat(options.requestFormat);
       assertFormat(options.outputFormat);
       const frame = decodeSerialFrame(readFileSync(options.responseFrame, "utf8").trim());
       if (frame.type !== "response") {
         throw new Error(`serial-frame unwrap-response expected response frame, got ${frame.type}`);
       }
-      const validation = validateResponse(frame.payload);
-      if (!validation.ok) throw new Error(validation.error);
+      if (options.request !== undefined) {
+        const request = readValue(options.request, options.requestFormat);
+        assertResponseForRequest(request, frame.payload, "serial frame response");
+      } else {
+        const validation = validateResponse(frame.payload);
+        if (!validation.ok) throw new Error(validation.error);
+      }
       writeValue(options.out, frame.payload, options.outputFormat);
     });
 
@@ -751,18 +775,8 @@ export function buildCli(): Command {
       assertFormat(options.requestFormat);
       assertFormat(options.responseFormat);
       const request = readValue(options.request, options.requestFormat);
-      const requestShape = validateRequest(request);
-      if (!requestShape.ok) throw new Error(requestShape.error);
       const response = readValue(options.response, options.responseFormat);
-      const responseShape = validateResponse(response);
-      if (!responseShape.ok) throw new Error(responseShape.error);
-      if ((response as { request_id?: unknown }).request_id !== (request as { request_id?: unknown }).request_id) {
-        throw new Error("response request_id does not match request");
-      }
-      if ((response as { ok?: boolean }).ok === true && (request as { method?: string }).method === "sign_event") {
-        const result = verifySignedEventResponse(request, response);
-        if (!result.ok) throw new Error(result.error);
-      }
+      assertResponseForRequest(request, response, "response");
       console.log("response verified");
     });
 

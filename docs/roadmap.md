@@ -67,8 +67,10 @@ serial-frame byte limit. Serial-frame encoding now also rejects frames that
 would exceed the shared v0 serial-frame byte limit before a CLI or transport
 can write an over-limit line. Serial-frame transport surfaces device
 `nseal1f:error` payloads as deterministic transport diagnostics instead of
-discarding the error code. M3 remains open for larger-payload strategy beyond
-v0 frame refusal and a production-grade native USB/WebSerial binding.
+discarding the error code. The offline serial-frame unwrap helper can now take
+the original request and reject mismatched captured responses before writing
+output. M3 remains open for larger-payload strategy beyond v0 frame refusal and
+a production-grade native USB/WebSerial binding.
 
 ## M4: NIP-46 Payload Bridge
 

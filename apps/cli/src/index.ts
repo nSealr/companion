@@ -19,11 +19,24 @@ import {
 } from "../../../packages/nip46/src/nip46.js";
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
 import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
-import { reviewEventTemplate, screenReviewForRequest } from "../../../packages/review/src/review.js";
+import {
+  renderReviewDetailPages,
+  reviewEventTemplate,
+  screenReviewForRequest,
+  type ReviewDetailPageLimits
+} from "../../../packages/review/src/review.js";
 import { SmartcardSimulator } from "../../../packages/smartcard/src/apdu.js";
 import { SmartcardSigner } from "../../../packages/smartcard/src/signer.js";
 
 type DataFormat = "json" | "qr";
+
+const DEFAULT_REVIEW_DETAIL_PAGE_LIMITS: ReviewDetailPageLimits = {
+  max_title_chars: 18,
+  max_body_lines: 5,
+  max_line_chars: 26,
+  max_compact_body_lines: 9,
+  max_compact_line_chars: 48
+};
 
 const PARAMETERLESS_REQUEST_METHODS: Record<string, { protocolMethod: string; defaultRequestId: string }> = {
   capabilities: { protocolMethod: "get_capabilities", defaultRequestId: "req-capabilities-1" },
@@ -531,11 +544,22 @@ export function buildCli(): Command {
     .requiredOption("--request <path>")
     .option("--request-format <format>", "Request format: json or qr", "json")
     .option("--screen-review", "Render deterministic screen-review pages with approval digest")
+    .option("--detail-pages", "Render complete constrained-display review detail pages")
     .option("--author-pubkey <hex>", "Signer author pubkey to bind into review output")
     .requiredOption("--out <path>")
     .description("Render an untrusted local review preview for a signing request")
-    .action((options: { request: string; requestFormat: string; screenReview?: boolean; authorPubkey?: string; out: string }) => {
+    .action((options: {
+      request: string;
+      requestFormat: string;
+      screenReview?: boolean;
+      detailPages?: boolean;
+      authorPubkey?: string;
+      out: string;
+    }) => {
       assertFormat(options.requestFormat);
+      if (options.screenReview === true && options.detailPages === true) {
+        throw new Error("review-request accepts only one review output mode");
+      }
       const authorPubkey = optionalAuthorPubkey(options.authorPubkey);
       const request = readValue(options.request, options.requestFormat);
       const validation = validateRequest(request);
@@ -548,6 +572,13 @@ export function buildCli(): Command {
         return;
       }
       const eventTemplate = (request as { params?: { event_template?: unknown } }).params?.event_template;
+      if (options.detailPages === true) {
+        writeJson(
+          options.out,
+          renderReviewDetailPages(reviewEventTemplate(eventTemplate, authorPubkey), DEFAULT_REVIEW_DETAIL_PAGE_LIMITS)
+        );
+        return;
+      }
       writeJson(options.out, reviewEventTemplate(eventTemplate, authorPubkey));
     });
 

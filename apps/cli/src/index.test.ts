@@ -485,6 +485,32 @@ describe("nseal CLI", () => {
     expect(loadJson(reviewPath)).toEqual(vector.screen_review);
   });
 
+  it("renders review detail pages from a QR signing request", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-detail-pages-"));
+    const fixtures = loadSpecsFixtures(specsRoot);
+    const vector = fixtures.reviewDetailPages.find((item) => item.name === "kind-1-tags-t-display-s3");
+    expect(vector).toBeDefined();
+    const reviewVector = fixtures.reviews.find((item) => item.name === vector!.source_review_vector);
+    expect(reviewVector).toBeDefined();
+    const requestPath = join(tempRoot, "request.qr");
+    const reviewPath = join(tempRoot, "review-detail-pages.json");
+
+    writeFileSync(requestPath, `${encodeQrEnvelope(reviewVector!.request)}\n`, "utf8");
+
+    await runCli([
+      "review-request",
+      "--request",
+      requestPath,
+      "--request-format",
+      "qr",
+      "--detail-pages",
+      "--out",
+      reviewPath
+    ]);
+
+    expect(loadJson(reviewPath)).toEqual(vector!.pages);
+  });
+
   it("runs request -> smartcard-sim-sign -> verify-response after explicit review acknowledgement", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-smartcard-"));
     const key = loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as { secret_key: string };

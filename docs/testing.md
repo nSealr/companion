@@ -25,8 +25,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - BIP-340 verification tests in `packages/core`.
 - Request and response shape validation tests in `packages/protocol`.
 - Shared fixture loading tests in `packages/fixtures`.
-- Trusted-review model tests in `packages/review` against every shared review
-  and review-screen `approval_digest` vector from `NostrSeal/specs`.
+- Trusted-review model tests in `packages/review` against every shared review,
+  review-screen `approval_digest`, and review detail-page vector from
+  `NostrSeal/specs`.
 - Development signer verification tests in `packages/dev-signer`.
 - Negative response verification tests for request id mismatch, template
   mismatch, event id mismatch, and invalid signatures.
@@ -43,7 +44,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - End-to-end CLI tests for QR envelope `request -> dev-sign -> verify-response`.
 - CLI failure-mode tests for malformed event-template JSON and unsupported
   request methods.
-- CLI review-request test for rendering review JSON from a QR signing request.
+- CLI review-request tests for rendering review JSON, digest-bound screen-review
+  pages, and constrained-display detail pages from QR signing requests.
 - CLI fixture verification tests against `NostrSeal/specs`, covering both
   signed-event fixtures, trusted-review fixtures, review-display-frame
   fixtures, review-detail-page fixtures, QR review-transcript fixtures, NIP-46
@@ -88,7 +90,8 @@ single-repository CI. Cross-repository drift remains guarded by
   `trusted-display` acknowledgement plus missing or mismatched
   `approvalDigest` for display-less cards.
 - CLI tests covering `review-request --screen-review` output against shared
-  screen-review vectors and `smartcard-sim-sign --approval-digest` rejection.
+  screen-review vectors, `review-request --detail-pages` output against shared
+  detail-page vectors, and `smartcard-sim-sign --approval-digest` rejection.
 - Smartcard PC/SC boundary tests covering fake reader exchange, malformed
   reader-list rejection, malformed transmit-result rejection, malformed response
   data-shape rejection, malformed response data-byte rejection, and clear

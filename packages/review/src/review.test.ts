@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { loadSpecsFixtures } from "../../fixtures/src/fixtures.js";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
-import { approvalDigestForRequest, reviewEventTemplate, screenReviewForRequest } from "./review.js";
+import {
+  approvalDigestForRequest,
+  renderReviewDetailPages,
+  reviewEventTemplate,
+  screenReviewForRequest
+} from "./review.js";
 
 describe("trusted review model", () => {
   it("matches every shared trusted-review vector", () => {
@@ -22,6 +27,17 @@ describe("trusted review model", () => {
     for (const vector of fixtures.reviewScreens) {
       expect(screenReviewForRequest(vector.request)).toEqual(vector.screen_review);
       expect(approvalDigestForRequest(vector.request)).toBe(vector.screen_review.approval_digest);
+    }
+  });
+
+  it("matches every shared review detail-page vector", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+
+    for (const vector of fixtures.reviewDetailPages) {
+      const reviewVector = fixtures.reviews.find((review) => review.name === vector.source_review_vector);
+      expect(reviewVector).toBeDefined();
+      expect(renderReviewDetailPages(reviewVector!.review, vector.limits)).toEqual(vector.pages);
+      expect(approvalDigestForRequest(reviewVector!.request)).toBe(vector.approval_digest);
     }
   });
 });

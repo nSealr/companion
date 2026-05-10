@@ -16,6 +16,22 @@ export type ReviewPage = {
   action: "next" | "approve_or_reject";
 };
 
+export type ReviewBodyLineStyle = "normal" | "meta" | "label" | "value";
+
+export type ReviewDetailPageLimits = {
+  max_title_chars: number;
+  max_body_lines: number;
+  max_line_chars: number;
+  max_compact_body_lines: number;
+  max_compact_line_chars: number;
+};
+
+export type ReviewDetailPage = ReviewPage & {
+  page_indicator: string;
+  body_line_styles: ReviewBodyLineStyle[];
+  logical_page_id: string;
+};
+
 export type ScreenReview = {
   format: "screen-pages";
   request_id: string;
@@ -25,6 +41,10 @@ export type ScreenReview = {
 
 export const DEVELOPMENT_REVIEW_AUTHOR_PUBKEY =
   "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
+
+const DISPLAY_SAFE_ASCII = new Set(
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 !\"#$%&'()*+,-./:;<=>?@[\\]_{|}~".split("")
+);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -88,6 +108,146 @@ function tagPageLines(review: EventReview): string[] {
   });
 }
 
+function displaySafeText(text: string): string {
+  const output: string[] = [];
+  for (const char of text) {
+    const codepoint = char.codePointAt(0);
+    if (codepoint === undefined) throw new Error("invalid codepoint");
+    if (codepoint <= 0x7f && DISPLAY_SAFE_ASCII.has(char)) {
+      output.push(char);
+    } else {
+      output.push(`U+${codepoint.toString(16).toUpperCase().padStart(4, "0")}`);
+    }
+  }
+  return output.join("");
+}
+
+function splitExactDisplayLines(text: string, width: number): string[] {
+  if (text === "") return [""];
+  const lines: string[] = [];
+  for (let index = 0; index < text.length; index += width) {
+    lines.push(text.slice(index, index + width));
+  }
+  return lines;
+}
+
+function appendDetailValueLines(lines: string[], styles: ReviewBodyLineStyle[], value: string, width: number): void {
+  for (const line of splitExactDisplayLines(value, width)) {
+    lines.push(line);
+    styles.push("value");
+  }
+}
+
+function appendDetailTagItemLines(lines: string[], styles: ReviewBodyLineStyle[], value: string, width: number): void {
+  if (value === "") return;
+  const safeValue = displaySafeText(value);
+  const continuationIndent = "  ";
+  const continuationWidth = width > continuationIndent.length ? width - continuationIndent.length : width;
+  let position = 0;
+  let firstLine = true;
+  while (position < safeValue.length) {
+    const lineWidth = firstLine ? width : continuationWidth;
+    let line = safeValue.slice(position, position + lineWidth);
+    if (!firstLine && width > continuationIndent.length) line = continuationIndent + line;
+    lines.push(line);
+    styles.push("value");
+    position += lineWidth;
+    firstLine = false;
+  }
+}
+
+function detailEventLines(review: EventReview, limits: ReviewDetailPageLimits): [string[], ReviewBodyLineStyle[]] {
+  const lines = [`Kind ${review.kind}`, `Created ${review.created_at}`, "Author"];
+  const styles: ReviewBodyLineStyle[] = ["meta", "meta", "meta"];
+  appendDetailTagItemLines(lines, styles, String(review.author_pubkey), limits.max_compact_line_chars);
+  return [lines, styles];
+}
+
+function detailContentLines(review: EventReview, limits: ReviewDetailPageLimits): [string[], ReviewBodyLineStyle[]] {
+  if (review.content === "") return [["empty content"], ["meta"]];
+  const safeContent = displaySafeText(review.content);
+  if (safeContent.length <= limits.max_compact_line_chars) return [[safeContent], ["normal"]];
+  const lines = [`bytes: ${utf8ByteLength(review.content)}`];
+  const styles: ReviewBodyLineStyle[] = ["meta"];
+  appendDetailValueLines(lines, styles, safeContent, limits.max_compact_line_chars);
+  return [lines, styles];
+}
+
+function detailTagLines(review: EventReview, limits: ReviewDetailPageLimits): [string[], ReviewBodyLineStyle[]] {
+  if (review.tags.length === 0) return [["No tags"], ["normal"]];
+  const lines: string[] = [];
+  const styles: ReviewBodyLineStyle[] = [];
+  for (const [index, tag] of review.tags.entries()) {
+    lines.push(`Tag ${index + 1}/${review.tags.length}`);
+    styles.push("meta");
+    if (tag.length === 0) {
+      lines.push("empty tag");
+      styles.push("value");
+      continue;
+    }
+    for (const item of tag) appendDetailTagItemLines(lines, styles, String(item), limits.max_compact_line_chars);
+  }
+  return [lines, styles];
+}
+
+function detailPageIndicator(
+  pageIndex: number,
+  pageCount: number,
+  firstLine: number,
+  lastLine: number,
+  lineCount: number
+): string {
+  const base = `Page ${pageIndex}/${pageCount}`;
+  if (lineCount === 0 || (firstLine === 1 && lastLine >= lineCount)) return base;
+  return `${base} Lines ${firstLine}-${lastLine}/${lineCount}`;
+}
+
+function appendDetailPages(
+  pages: ReviewDetailPage[],
+  title: string,
+  lines: string[],
+  styles: ReviewBodyLineStyle[],
+  limits: ReviewDetailPageLimits,
+  logicalPageIndex: number,
+  logicalPageCount: number
+): void {
+  const linesPerScreen = styles.length > 0 ? limits.max_compact_body_lines : limits.max_body_lines;
+  const total = lines.length > 0 ? lines.length : 1;
+  let position = 0;
+  while (position < total) {
+    const firstPosition = position;
+    const bodyLines: string[] = [];
+    const bodyStyles: ReviewBodyLineStyle[] = [];
+    for (let line = 0; line < linesPerScreen && position < lines.length; line += 1) {
+      bodyLines.push(lines[position]);
+      bodyStyles.push(styles[position] ?? "normal");
+      position += 1;
+    }
+    if (bodyLines.length === 0) {
+      bodyLines.push("");
+      bodyStyles.push("normal");
+      position = total;
+    }
+    pages.push({
+      title,
+      lines: bodyLines,
+      action: "next",
+      page_indicator: detailPageIndicator(logicalPageIndex, logicalPageCount, firstPosition + 1, position, total),
+      body_line_styles: bodyStyles,
+      logical_page_id: title
+    });
+    if (position >= total) break;
+  }
+}
+
+function validateDetailLimits(limits: ReviewDetailPageLimits): void {
+  for (const [key, value] of Object.entries(limits)) {
+    if (!Number.isInteger(value) || value <= 0) {
+      throw new Error(`review detail-page limit ${key} must be a positive integer`);
+    }
+  }
+}
+
 export function renderReviewPages(review: EventReview): ReviewPage[] {
   const pages: ReviewPage[] = [
     {
@@ -111,6 +271,23 @@ export function renderReviewPages(review: EventReview): ReviewPage[] {
       action: "approve_or_reject"
     }
   ];
+  return pages;
+}
+
+export function renderReviewDetailPages(review: EventReview, limits: ReviewDetailPageLimits): ReviewDetailPage[] {
+  validateDetailLimits(limits);
+  const pages: ReviewDetailPage[] = [];
+  appendDetailPages(pages, "Event", ...detailEventLines(review, limits), limits, 1, 4);
+  appendDetailPages(pages, "Content", ...detailContentLines(review, limits), limits, 2, 4);
+  appendDetailPages(pages, "Tags", ...detailTagLines(review, limits), limits, 3, 4);
+  pages.push({
+    title: "Decision",
+    lines: ["Approve signing only if all pages match."],
+    action: "approve_or_reject",
+    page_indicator: "Page 4/4",
+    body_line_styles: [],
+    logical_page_id: "Decision"
+  });
   return pages;
 }
 

@@ -21,7 +21,9 @@ accepting any response, so malformed request files cannot be certified by
 pairing them with a validly shaped response. The request CLI now also emits
 validated parameterless device requests for capability discovery, public-key
 lookup, and signing-readiness diagnostics, including caller-supplied
-`request_id` values for hardware traces.
+`request_id` values for hardware traces. The review CLI can now render
+constrained-display detail pages from shared review vectors for untrusted
+preview and cross-repo conformance checks.
 
 ## M3: Transport Layer
 

@@ -18,8 +18,9 @@ clients to hardware-backed signing.
   `get_signing_status`, with caller-supplied `--request-id` support for
   hardware traces.
 - `nseal dev-sign` signs requests with an explicit test-only software key.
-- `nseal review-request` renders deterministic review JSON from a signing
-  request for untrusted host-side previews and test harnesses.
+- `nseal review-request` renders deterministic review JSON, digest-bound
+  screen-review pages, or complete constrained-display detail pages from a
+  signing request for untrusted host-side previews and test harnesses.
 - `nseal smartcard-sim-sign` exercises the smartcard APDU signing boundary with
   a test-only simulator and requires `--review-acknowledged` before sending the
   event id to the display-less signer.
@@ -121,6 +122,7 @@ pnpm nseal fixture verify --specs ../specs
 pnpm nseal request get-signing-status --request-id req-status-1 --out status-request.json
 pnpm nseal request sign-event --event-template template.json --out request.qr --output-format qr
 pnpm nseal review-request --request request.qr --request-format qr --out review.json
+pnpm nseal review-request --request request.qr --request-format qr --detail-pages --out review-detail-pages.json
 pnpm nseal nip46 decide --message nip46-message.json --permissions sign_event:1 --out decision.json
 pnpm nseal nip46 decide --message nip46-message.json --policy-file policy.json --out decision.json
 pnpm nseal smartcard-sim-sign --secret-key <test-only-hex> --request request.qr --request-format qr --review-acknowledged --approval-digest <approval-digest-hex> --out response.qr --output-format qr

@@ -70,10 +70,13 @@ desktop companion can drive the Raspberry QR vault flow before camera/display
 hardware is integrated.
 
 `nseal review-request` can render the same deterministic review JSON from a
-JSON or QR `sign_event` request. This is deliberately labeled as an untrusted
-preview: it helps users and automated tests see what a conforming signer should
-display, but approval authority still belongs to the vault, firmware, or card
-line holding the key.
+JSON or QR `sign_event` request. With `--screen-review` it emits the
+digest-bound screen-page model; with `--detail-pages` it emits the complete
+constrained-display detail-page model used by Raspberry and ESP32 review UI
+tests. These modes are deliberately labeled as untrusted previews: they help
+users and automated tests see what a conforming signer should display, but
+approval authority still belongs to the vault, firmware, or card line holding
+the key.
 
 The development signer exists only for local testing. Production signer lines
 must replace it with a hardware, vault, or smartcard transport while preserving
@@ -106,8 +109,9 @@ Review-detail-page vectors are also loaded and shape-checked as complete
 physical review-page contracts for constrained signer displays. They preserve
 the shared `approval_digest` but pin scroll windows, line styles, continuation
 indentation, and explicit codepoint fallback separately from the digest-bound
-`screen-pages` model. The companion still treats them as conformance data, not
-as a trusted approval surface.
+`screen-pages` model. The companion can render these pages for previews and
+cross-repo comparison, but still treats them as conformance data, not as a
+trusted approval surface.
 
 QR review-transcript vectors are also loaded and shape-checked by
 `nseal fixture verify`. They bind raw QR input to frame/button/decision

@@ -59,6 +59,29 @@ export type SpecsFixtureSet = {
       action_hint: string;
     };
   }>;
+  reviewDetailPages: Array<{
+    name: string;
+    format: string;
+    display_profile: string;
+    source_review_vector: string;
+    source_screen_review_vector?: string;
+    approval_digest: string;
+    limits: {
+      max_title_chars: number;
+      max_body_lines: number;
+      max_line_chars: number;
+      max_compact_body_lines: number;
+      max_compact_line_chars: number;
+    };
+    pages: Array<{
+      title: string;
+      lines: string[];
+      action: "next" | "approve_or_reject";
+      page_indicator: string;
+      body_line_styles: string[];
+      logical_page_id: string;
+    }>;
+  }>;
   reviewTranscripts: Array<{
     name: string;
     format: string;
@@ -174,6 +197,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const reviewsRoot = resolve(specsRoot, "vectors/review");
   const reviewScreensRoot = resolve(specsRoot, "vectors/review-screens");
   const reviewDisplayFramesRoot = resolve(specsRoot, "vectors/review-display-frames");
+  const reviewDetailPagesRoot = resolve(specsRoot, "vectors/review-detail-pages");
   const reviewTranscriptsRoot = resolve(specsRoot, "vectors/review-transcripts");
   const nip46Root = resolve(specsRoot, "vectors/nip46");
   const nip46PolicyFilesRoot = resolve(specsRoot, "vectors/nip46-policy-files");
@@ -188,6 +212,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const reviewDisplayFrameFiles = readdirSync(reviewDisplayFramesRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const reviewDetailPageFiles = readdirSync(reviewDetailPagesRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const reviewTranscriptFiles = readdirSync(reviewTranscriptsRoot)
@@ -212,6 +239,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     ),
     reviewDisplayFrames: reviewDisplayFrameFiles.map(
       (file) => loadJson(resolve(reviewDisplayFramesRoot, file)) as SpecsFixtureSet["reviewDisplayFrames"][number]
+    ),
+    reviewDetailPages: reviewDetailPageFiles.map(
+      (file) => loadJson(resolve(reviewDetailPagesRoot, file)) as SpecsFixtureSet["reviewDetailPages"][number]
     ),
     reviewTranscripts: reviewTranscriptFiles.map(
       (file) => loadJson(resolve(reviewTranscriptsRoot, file)) as SpecsFixtureSet["reviewTranscripts"][number]

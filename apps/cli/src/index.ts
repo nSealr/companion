@@ -156,6 +156,76 @@ function validateReviewDisplayFrameFixture(name: string, fixture: unknown): void
   }
 }
 
+function validateReviewDetailPageFixture(name: string, fixture: unknown): void {
+  if (!isRecord(fixture)) throw new Error(`invalid review detail-page fixture ${name}: fixture must be an object`);
+  if (fixture.format !== "review-detail-pages-v0") {
+    throw new Error(`invalid review detail-page fixture ${name}: unsupported format`);
+  }
+  if (fixture.display_profile !== "ascii-safe-codepoint-fallback-v0") {
+    throw new Error(`invalid review detail-page fixture ${name}: unsupported display_profile`);
+  }
+  if (typeof fixture.source_review_vector !== "string" || fixture.source_review_vector.length === 0) {
+    throw new Error(`invalid review detail-page fixture ${name}: source_review_vector must be a string`);
+  }
+  if (
+    typeof fixture.approval_digest !== "string" ||
+    !/^[0-9a-f]{64}$/.test(fixture.approval_digest)
+  ) {
+    throw new Error(`invalid review detail-page fixture ${name}: approval_digest must be 32-byte lowercase hex`);
+  }
+  if (!isRecord(fixture.limits)) {
+    throw new Error(`invalid review detail-page fixture ${name}: limits must be an object`);
+  }
+  const limits = fixture.limits;
+  const maxTitleChars = requirePositiveIntegerField(limits, name, "max_title_chars");
+  const maxBodyLines = requirePositiveIntegerField(limits, name, "max_body_lines");
+  requirePositiveIntegerField(limits, name, "max_line_chars");
+  const maxCompactBodyLines = requirePositiveIntegerField(limits, name, "max_compact_body_lines");
+  const maxCompactLineChars = requirePositiveIntegerField(limits, name, "max_compact_line_chars");
+  if (!Array.isArray(fixture.pages) || fixture.pages.length === 0) {
+    throw new Error(`invalid review detail-page fixture ${name}: pages must be a non-empty array`);
+  }
+  for (const [index, page] of fixture.pages.entries()) {
+    if (!isRecord(page)) {
+      throw new Error(`invalid review detail-page fixture ${name}: page ${index} must be an object`);
+    }
+    if (typeof page.title !== "string" || page.title.length > maxTitleChars) {
+      throw new Error(`invalid review detail-page fixture ${name}: page ${index} title is invalid`);
+    }
+    if (typeof page.page_indicator !== "string" || page.page_indicator.length === 0) {
+      throw new Error(`invalid review detail-page fixture ${name}: page ${index} page_indicator is invalid`);
+    }
+    if (page.action !== "next" && page.action !== "approve_or_reject") {
+      throw new Error(`invalid review detail-page fixture ${name}: page ${index} action is invalid`);
+    }
+    if (!Array.isArray(page.lines) || !page.lines.every((line) => typeof line === "string")) {
+      throw new Error(`invalid review detail-page fixture ${name}: page ${index} lines must be strings`);
+    }
+    if (
+      !Array.isArray(page.body_line_styles) ||
+      (page.body_line_styles.length !== 0 && page.body_line_styles.length !== page.lines.length)
+    ) {
+      throw new Error(`invalid review detail-page fixture ${name}: page ${index} body_line_styles mismatch`);
+    }
+    for (const style of page.body_line_styles) {
+      if (!["normal", "meta", "label", "value"].includes(String(style))) {
+        throw new Error(`invalid review detail-page fixture ${name}: page ${index} body_line_styles contains invalid style`);
+      }
+    }
+    const usesCompactBody = page.body_line_styles.length > 0;
+    const maxLines = usesCompactBody ? maxCompactBodyLines : maxBodyLines;
+    if (page.lines.length > maxLines) {
+      throw new Error(`invalid review detail-page fixture ${name}: page ${index} lines exceed display limit`);
+    }
+    if (usesCompactBody && page.lines.some((line) => line.length > maxCompactLineChars)) {
+      throw new Error(`invalid review detail-page fixture ${name}: page ${index} line exceeds display limit`);
+    }
+    if (typeof page.logical_page_id !== "string" || page.logical_page_id.length === 0) {
+      throw new Error(`invalid review detail-page fixture ${name}: page ${index} logical_page_id is invalid`);
+    }
+  }
+}
+
 function assertJsonEqual(actual: unknown, expected: unknown, error: string): void {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) {
     throw new Error(error);
@@ -377,6 +447,9 @@ export function buildCli(): Command {
       for (const displayFrame of fixtures.reviewDisplayFrames) {
         validateReviewDisplayFrameFixture(displayFrame.name, displayFrame);
       }
+      for (const detailPages of fixtures.reviewDetailPages) {
+        validateReviewDetailPageFixture(detailPages.name, detailPages);
+      }
       for (const nip46Payload of fixtures.nip46Payloads) {
         validateNip46PayloadFixture(nip46Payload.name, nip46Payload);
       }
@@ -389,7 +462,7 @@ export function buildCli(): Command {
       const policyFileFixtureLabel =
         fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture");
       console.log(
-        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );
     });
 

@@ -10,8 +10,9 @@
 
 Status: implemented as the first companion foundation with JSON and QR envelope
 CLI paths. Fixture verification now includes shared review-display-frame,
-QR review-transcript, NIP-46 payload, NIP-46 policy-file, limit-profile, and
-invalid hardening vectors in addition to event and trusted-review vectors. The
+review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
+limit-profile, and invalid hardening vectors in addition to event and
+trusted-review vectors. The
 shared invalid-vector set now includes strict response-shape rejection for
 ambiguous result payloads, error/result mixing, and unknown top-level response
 fields. Malformed JSON and unsupported request-method CLI rejection tests are

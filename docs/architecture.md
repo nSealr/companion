@@ -31,8 +31,9 @@ only adapt file/argument I/O around package-owned validation logic.
   the central NostrSeal v0 implementation limit profile used by companion
   parsers.
 - `packages/fixtures`: shared event, key, trusted-review,
-  review-display-frame, QR review-transcript, NIP-46 payload, NIP-46
-  policy-file, limit-profile, and invalid hardening fixture loading.
+  review-display-frame, review-detail-page, QR review-transcript, NIP-46
+  payload, NIP-46 policy-file, limit-profile, and invalid hardening fixture
+  loading.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: test-only signing implementation.
@@ -100,6 +101,13 @@ not make the companion trusted; they are conformance data for signer UIs.
 Review-display-frame vectors are loaded and shape-checked as bounded rendering
 contracts for small trusted screens. The companion treats them as conformance
 data for Raspberry and ESP32 adapters, not as host-side approval authority.
+
+Review-detail-page vectors are also loaded and shape-checked as complete
+physical review-page contracts for constrained signer displays. They preserve
+the shared `approval_digest` but pin scroll windows, line styles, continuation
+indentation, and explicit codepoint fallback separately from the digest-bound
+`screen-pages` model. The companion still treats them as conformance data, not
+as a trusted approval surface.
 
 QR review-transcript vectors are also loaded and shape-checked by
 `nseal fixture verify`. They bind raw QR input to frame/button/decision

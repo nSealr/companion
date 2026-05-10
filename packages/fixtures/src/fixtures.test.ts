@@ -67,6 +67,26 @@ describe("fixture loading", () => {
     expect(unicodeFrame?.frame.body_lines).toEqual(["abcè", "def"]);
   });
 
+  it("loads complete review detail-page vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    expect(fixtures.reviewDetailPages.map((pageSet) => pageSet.name)).toEqual(expect.arrayContaining([
+      "kind-1-long-events-many-tags-t-display-s3",
+      "kind-1-tags-t-display-s3",
+      "kind-1-unicode-boundary-t-display-s3"
+    ]));
+    const tagged = fixtures.reviewDetailPages.find((pageSet) => pageSet.name === "kind-1-tags-t-display-s3");
+    const longTags = fixtures.reviewDetailPages.find(
+      (pageSet) => pageSet.name === "kind-1-long-events-many-tags-t-display-s3"
+    );
+    const unicodeBoundary = fixtures.reviewDetailPages.find(
+      (pageSet) => pageSet.name === "kind-1-unicode-boundary-t-display-s3"
+    );
+    expect(tagged?.display_profile).toBe("ascii-safe-codepoint-fallback-v0");
+    expect(tagged?.pages.find((page) => page.title === "Tags")?.lines).toContain("nostrseal");
+    expect(longTags?.pages.map((page) => page.page_indicator)).toContain("Page 3/4 Lines 28-29/29");
+    expect(unicodeBoundary?.pages.find((page) => page.title === "Content")?.lines).toEqual(["abcU+00E8def"]);
+  });
+
   it("loads NIP-46 decrypted payload bridge vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
     expect(fixtures.nip46Payloads.map((vector) => vector.name)).toEqual(expect.arrayContaining([

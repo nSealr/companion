@@ -46,9 +46,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI review-request test for rendering review JSON from a QR signing request.
 - CLI fixture verification tests against `NostrSeal/specs`, covering both
   signed-event fixtures, trusted-review fixtures, review-display-frame
-  fixtures, QR review-transcript fixtures, NIP-46 payload fixtures, and NIP-46
-  policy-file fixtures, plus the shared implementation-limit profile and
-  invalid hardening vectors.
+  fixtures, review-detail-page fixtures, QR review-transcript fixtures, NIP-46
+  payload fixtures, and NIP-46 policy-file fixtures, plus the shared
+  implementation-limit profile and invalid hardening vectors.
 - Transport contract tests for in-memory development signing, JSON file
   handoff, one-shot JSON-lines stdio exchange, and serial-frame exchange.
 - JSON-lines stdio transport tests proving unterminated oversized stdout is

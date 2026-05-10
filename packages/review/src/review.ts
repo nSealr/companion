@@ -2,13 +2,12 @@ import { createHash } from "node:crypto";
 
 export type EventReview = {
   kind: number;
-  kind_name: string;
   created_at: number;
-  content_preview: string;
-  content_length: number;
+  author_pubkey: string;
+  content: string;
+  content_utf8_bytes: number;
   tag_count: number;
-  tag_summary: string[];
-  warnings: string[];
+  tags: string[][];
 };
 
 export type ReviewPage = {
@@ -24,14 +23,8 @@ export type ScreenReview = {
   pages: ReviewPage[];
 };
 
-const KIND_NAMES = new Map<number, string>([
-  [0, "Metadata"],
-  [1, "Short Text Note"],
-  [3, "Contacts"],
-  [6, "Repost"],
-  [7, "Reaction"],
-  [9735, "Zap Receipt"]
-]);
+export const DEVELOPMENT_REVIEW_AUTHOR_PUBKEY =
+  "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -65,91 +58,59 @@ function requireTemplate(value: unknown): {
   };
 }
 
-function textLength(value: string): number {
-  return Array.from(value).length;
+function utf8ByteLength(value: string): number {
+  return Buffer.byteLength(value, "utf8");
 }
 
-function textPrefix(value: string, length: number): string {
-  return Array.from(value).slice(0, length).join("");
-}
-
-function contentPreview(content: string): string {
-  return textLength(content) <= 120 ? content : `${textPrefix(content, 120)}...`;
-}
-
-function tagSummary(tags: string[][]): string[] {
-  return tags.flatMap((tag) => {
-    if (tag.length === 0) return [];
-    const name = tag[0] ?? "";
-    let value = tag[1] ?? "";
-    if ((name === "p" || name === "e") && textLength(value) > 8) {
-      value = `${textPrefix(value, 8)}...`;
-    }
-    return [value.length > 0 ? `${name}: ${value}` : name];
-  });
-}
-
-export function reviewEventTemplate(value: unknown): EventReview {
+export function reviewEventTemplate(
+  value: unknown,
+  authorPubkey = DEVELOPMENT_REVIEW_AUTHOR_PUBKEY
+): EventReview {
   const template = requireTemplate(value);
-  const warnings: string[] = [];
-
-  if (!KIND_NAMES.has(template.kind)) warnings.push("Unknown event kind.");
-  if (textLength(template.content) > 280) warnings.push("Long content.");
-  if (template.content.length === 0) warnings.push("Empty content.");
-  if (template.tags.some((tag) => tag[0] === "p")) warnings.push("Event includes pubkey mentions.");
-  if (template.tags.some((tag) => tag[0] === "e")) warnings.push("Event references other events.");
-  if (template.tags.length > 8) warnings.push("Many tags.");
 
   return {
     kind: template.kind,
-    kind_name: KIND_NAMES.get(template.kind) ?? "Unknown",
     created_at: template.created_at,
-    content_preview: contentPreview(template.content),
-    content_length: textLength(template.content),
+    author_pubkey: authorPubkey,
+    content: template.content,
+    content_utf8_bytes: utf8ByteLength(template.content),
     tag_count: template.tags.length,
-    tag_summary: tagSummary(template.tags),
-    warnings
+    tags: template.tags
   };
 }
 
 function tagPageLines(review: EventReview): string[] {
   if (review.tag_count === 0) return ["No tags"];
-  const label = review.tag_count === 1 ? "1 tag" : `${review.tag_count} tags`;
-  return [label, ...review.tag_summary.map((item) => String(item))];
+  return review.tags.flatMap((tag, index) => {
+    const lines = [`Tag ${index + 1}/${review.tag_count}`];
+    if (tag.length === 0) return [...lines, "empty tag"];
+    return [...lines, ...tag.map((item) => String(item))];
+  });
 }
 
 export function renderReviewPages(review: EventReview): ReviewPage[] {
   const pages: ReviewPage[] = [
     {
       title: "Event",
-      lines: [`Kind ${review.kind}`, String(review.kind_name), `Created ${review.created_at}`],
+      lines: [`Kind ${review.kind}`, `Created ${review.created_at}`, "Author", String(review.author_pubkey)],
       action: "next"
     },
     {
       title: "Content",
-      lines: [String(review.content_preview)],
+      lines: [String(review.content)],
       action: "next"
     },
     {
       title: "Tags",
       lines: tagPageLines(review),
       action: "next"
-    }
-  ];
-
-  if (review.warnings.length > 0) {
-    pages.push({
-      title: "Warnings",
-      lines: review.warnings.map((warning) => String(warning)),
-      action: "approve_or_reject"
-    });
-  } else {
-    pages.push({
+    },
+    {
       title: "Decision",
       lines: ["Approve signing only if all pages match."],
       action: "approve_or_reject"
-    });
-  }
+    }
+  ];
   return pages;
 }
 
@@ -206,9 +167,12 @@ function approvalDigestForScreenReview(
   return createHash("sha256").update(canonicalJson(payload), "utf8").digest("hex");
 }
 
-export function screenReviewForRequest(value: unknown): ScreenReview {
+export function screenReviewForRequest(
+  value: unknown,
+  authorPubkey = DEVELOPMENT_REVIEW_AUTHOR_PUBKEY
+): ScreenReview {
   const request = requireSignEventRequest(value);
-  const review = reviewEventTemplate(request.params.event_template);
+  const review = reviewEventTemplate(request.params.event_template, authorPubkey);
   const pages = renderReviewPages(review);
   return {
     format: "screen-pages",
@@ -218,6 +182,6 @@ export function screenReviewForRequest(value: unknown): ScreenReview {
   };
 }
 
-export function approvalDigestForRequest(value: unknown): string {
-  return screenReviewForRequest(value).approval_digest;
+export function approvalDigestForRequest(value: unknown, authorPubkey = DEVELOPMENT_REVIEW_AUTHOR_PUBKEY): string {
+  return screenReviewForRequest(value, authorPubkey).approval_digest;
 }

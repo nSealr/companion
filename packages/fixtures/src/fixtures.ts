@@ -19,13 +19,12 @@ export type SpecsFixtureSet = {
     request: unknown;
     review: {
       kind: number;
-      kind_name: string;
       created_at: number;
-      content_preview: string;
-      content_length: number;
+      author_pubkey: string;
+      content: string;
+      content_utf8_bytes: number;
       tag_count: number;
-      tag_summary: string[];
-      warnings: string[];
+      tags: string[][];
     };
   }>;
   reviewScreens: Array<{

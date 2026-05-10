@@ -7,6 +7,7 @@ import { resolveSpecsRoot } from "../../../packages/fixtures/src/specs-root.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/src/serial.js";
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
 import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
+import { renderReviewDetailPages, reviewEventTemplate } from "../../../packages/review/src/review.js";
 import { buildCli } from "./index.js";
 
 const specsRoot = resolveSpecsRoot();
@@ -509,6 +510,48 @@ describe("nseal CLI", () => {
     ]);
 
     expect(loadJson(reviewPath)).toEqual(vector!.pages);
+  });
+
+  it("renders review detail pages with caller supplied display limits", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-detail-page-limits-"));
+    const fixtures = loadSpecsFixtures(specsRoot);
+    const reviewVector = fixtures.reviews.find((item) => item.name === "kind-1-long-events-many-tags");
+    expect(reviewVector).toBeDefined();
+    const request = reviewVector!.request as { params: { event_template: unknown } };
+    const requestPath = join(tempRoot, "request.qr");
+    const reviewPath = join(tempRoot, "review-detail-pages.json");
+    const limits = {
+      max_title_chars: 18,
+      max_body_lines: 4,
+      max_line_chars: 20,
+      max_compact_body_lines: 3,
+      max_compact_line_chars: 16
+    };
+
+    writeFileSync(requestPath, `${encodeQrEnvelope(reviewVector!.request)}\n`, "utf8");
+
+    await runCli([
+      "review-request",
+      "--request",
+      requestPath,
+      "--request-format",
+      "qr",
+      "--detail-pages",
+      "--max-title-chars",
+      String(limits.max_title_chars),
+      "--max-body-lines",
+      String(limits.max_body_lines),
+      "--max-line-chars",
+      String(limits.max_line_chars),
+      "--max-compact-body-lines",
+      String(limits.max_compact_body_lines),
+      "--max-compact-line-chars",
+      String(limits.max_compact_line_chars),
+      "--out",
+      reviewPath
+    ]);
+
+    expect(loadJson(reviewPath)).toEqual(renderReviewDetailPages(reviewEventTemplate(request.params.event_template), limits));
   });
 
   it("runs request -> smartcard-sim-sign -> verify-response after explicit review acknowledgement", async () => {

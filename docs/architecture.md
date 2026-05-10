@@ -73,10 +73,12 @@ hardware is integrated.
 JSON or QR `sign_event` request. With `--screen-review` it emits the
 digest-bound screen-page model; with `--detail-pages` it emits the complete
 constrained-display detail-page model used by Raspberry and ESP32 review UI
-tests. These modes are deliberately labeled as untrusted previews: they help
-users and automated tests see what a conforming signer should display, but
-approval authority still belongs to the vault, firmware, or card line holding
-the key.
+tests. Detail-page rendering defaults to the T-Display S3 sized profile and
+accepts explicit title/body/compact line limits so lab and device adapters can
+compare the same display envelope. These modes are deliberately labeled as
+untrusted previews: they help users and automated tests see what a conforming
+signer should display, but approval authority still belongs to the vault,
+firmware, or card line holding the key.
 
 The development signer exists only for local testing. Production signer lines
 must replace it with a hardware, vault, or smartcard transport while preserving

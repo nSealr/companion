@@ -122,7 +122,7 @@ pnpm nseal fixture verify --specs ../specs
 pnpm nseal request get-signing-status --request-id req-status-1 --out status-request.json
 pnpm nseal request sign-event --event-template template.json --out request.qr --output-format qr
 pnpm nseal review-request --request request.qr --request-format qr --out review.json
-pnpm nseal review-request --request request.qr --request-format qr --detail-pages --out review-detail-pages.json
+pnpm nseal review-request --request request.qr --request-format qr --detail-pages --max-compact-line-chars 48 --out review-detail-pages.json
 pnpm nseal nip46 decide --message nip46-message.json --permissions sign_event:1 --out decision.json
 pnpm nseal nip46 decide --message nip46-message.json --policy-file policy.json --out decision.json
 pnpm nseal smartcard-sim-sign --secret-key <test-only-hex> --request request.qr --request-format qr --review-acknowledged --approval-digest <approval-digest-hex> --out response.qr --output-format qr

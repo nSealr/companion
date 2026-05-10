@@ -69,6 +69,51 @@ function optionalAuthorPubkey(value: string | undefined): string | undefined {
   return value;
 }
 
+function positiveIntegerOption(value: string | undefined, fallback: number, optionName: string): number {
+  if (value === undefined) return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${optionName} must be a positive integer`);
+  }
+  return parsed;
+}
+
+function reviewDetailPageLimitsFromOptions(options: {
+  maxTitleChars?: string;
+  maxBodyLines?: string;
+  maxLineChars?: string;
+  maxCompactBodyLines?: string;
+  maxCompactLineChars?: string;
+}): ReviewDetailPageLimits {
+  return {
+    max_title_chars: positiveIntegerOption(
+      options.maxTitleChars,
+      DEFAULT_REVIEW_DETAIL_PAGE_LIMITS.max_title_chars,
+      "--max-title-chars"
+    ),
+    max_body_lines: positiveIntegerOption(
+      options.maxBodyLines,
+      DEFAULT_REVIEW_DETAIL_PAGE_LIMITS.max_body_lines,
+      "--max-body-lines"
+    ),
+    max_line_chars: positiveIntegerOption(
+      options.maxLineChars,
+      DEFAULT_REVIEW_DETAIL_PAGE_LIMITS.max_line_chars,
+      "--max-line-chars"
+    ),
+    max_compact_body_lines: positiveIntegerOption(
+      options.maxCompactBodyLines,
+      DEFAULT_REVIEW_DETAIL_PAGE_LIMITS.max_compact_body_lines,
+      "--max-compact-body-lines"
+    ),
+    max_compact_line_chars: positiveIntegerOption(
+      options.maxCompactLineChars,
+      DEFAULT_REVIEW_DETAIL_PAGE_LIMITS.max_compact_line_chars,
+      "--max-compact-line-chars"
+    )
+  };
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -545,6 +590,11 @@ export function buildCli(): Command {
     .option("--request-format <format>", "Request format: json or qr", "json")
     .option("--screen-review", "Render deterministic screen-review pages with approval digest")
     .option("--detail-pages", "Render complete constrained-display review detail pages")
+    .option("--max-title-chars <n>", "Detail-page title width for --detail-pages")
+    .option("--max-body-lines <n>", "Detail-page body lines for --detail-pages")
+    .option("--max-line-chars <n>", "Detail-page body width for --detail-pages")
+    .option("--max-compact-body-lines <n>", "Compact detail-page body lines for --detail-pages")
+    .option("--max-compact-line-chars <n>", "Compact detail-page body width for --detail-pages")
     .option("--author-pubkey <hex>", "Signer author pubkey to bind into review output")
     .requiredOption("--out <path>")
     .description("Render an untrusted local review preview for a signing request")
@@ -553,6 +603,11 @@ export function buildCli(): Command {
       requestFormat: string;
       screenReview?: boolean;
       detailPages?: boolean;
+      maxTitleChars?: string;
+      maxBodyLines?: string;
+      maxLineChars?: string;
+      maxCompactBodyLines?: string;
+      maxCompactLineChars?: string;
       authorPubkey?: string;
       out: string;
     }) => {
@@ -575,7 +630,7 @@ export function buildCli(): Command {
       if (options.detailPages === true) {
         writeJson(
           options.out,
-          renderReviewDetailPages(reviewEventTemplate(eventTemplate, authorPubkey), DEFAULT_REVIEW_DETAIL_PAGE_LIMITS)
+          renderReviewDetailPages(reviewEventTemplate(eventTemplate, authorPubkey), reviewDetailPageLimitsFromOptions(options))
         );
         return;
       }

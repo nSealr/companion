@@ -23,7 +23,8 @@ validated parameterless device requests for capability discovery, public-key
 lookup, and signing-readiness diagnostics, including caller-supplied
 `request_id` values for hardware traces. The review CLI can now render
 constrained-display detail pages from shared review vectors for untrusted
-preview and cross-repo conformance checks.
+preview and cross-repo conformance checks, with explicit display-limit
+overrides for alternate constrained-screen profiles.
 
 ## M3: Transport Layer
 

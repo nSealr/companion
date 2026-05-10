@@ -45,7 +45,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI failure-mode tests for malformed event-template JSON and unsupported
   request methods.
 - CLI review-request tests for rendering review JSON, digest-bound screen-review
-  pages, and constrained-display detail pages from QR signing requests.
+  pages, constrained-display detail pages, and caller-supplied detail-page
+  display limits from QR signing requests.
 - CLI fixture verification tests against `NostrSeal/specs`, covering both
   signed-event fixtures, trusted-review fixtures, review-display-frame
   fixtures, review-detail-page fixtures, QR review-transcript fixtures, NIP-46

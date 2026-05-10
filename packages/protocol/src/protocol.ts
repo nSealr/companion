@@ -169,16 +169,22 @@ function validateCapabilities(value: unknown): ValidationResult {
 
 function validateSigningStatus(value: unknown): ValidationResult {
   if (!isRecord(value)) return { ok: false, error: "signing_status must be an object" };
-  const extra = unknownFields(value, ["signing_enabled", "missing_gates"]);
+  const extra = unknownFields(value, ["signing_enabled", "missing_gates", "development_accepted_gates"]);
   if (extra.length > 0) return { ok: false, error: `signing_status contains unknown fields: ${extra.join(", ")}` };
   if (typeof value.signing_enabled !== "boolean") return { ok: false, error: "signing_status signing_enabled must be boolean" };
-  if (!Array.isArray(value.missing_gates)) return { ok: false, error: "signing_status missing_gates must be an array" };
+  const missingGates = validateSigningStatusGateList(value.missing_gates, "missing");
+  if (!missingGates.ok) return missingGates;
+  return validateSigningStatusGateList(value.development_accepted_gates, "development_accepted");
+}
+
+function validateSigningStatusGateList(value: unknown, label: string): ValidationResult {
+  if (!Array.isArray(value)) return { ok: false, error: `signing_status ${label}_gates must be an array` };
   const seen = new Set<string>();
-  for (const gate of value.missing_gates) {
+  for (const gate of value) {
     if (typeof gate !== "string" || !(SIGNING_STATUS_GATES as readonly string[]).includes(gate)) {
-      return { ok: false, error: `unsupported signing_status missing gate: ${String(gate)}` };
+      return { ok: false, error: `unsupported signing_status ${label} gate: ${String(gate)}` };
     }
-    if (seen.has(gate)) return { ok: false, error: `duplicate signing_status missing gate: ${gate}` };
+    if (seen.has(gate)) return { ok: false, error: `duplicate signing_status ${label} gate: ${gate}` };
     seen.add(gate);
   }
   return { ok: true };

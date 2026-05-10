@@ -52,6 +52,9 @@ single-repository CI. Cross-repository drift remains guarded by
   fixtures, review-detail-page fixtures, QR review-transcript fixtures, NIP-46
   payload fixtures, and NIP-46 policy-file fixtures, plus the shared
   implementation-limit profile and invalid hardening vectors.
+- CLI fixture verification rejects review detail-page style drift, including
+  unknown body-line style names and continuation lines that are not styled as
+  `value`.
 - Transport contract tests for in-memory development signing, JSON file
   handoff, one-shot JSON-lines stdio exchange, and serial-frame exchange.
 - JSON-lines stdio transport tests proving unterminated oversized stdout is

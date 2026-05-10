@@ -37,6 +37,7 @@ const DEFAULT_REVIEW_DETAIL_PAGE_LIMITS: ReviewDetailPageLimits = {
   max_compact_body_lines: 9,
   max_compact_line_chars: 48
 };
+const REVIEW_DETAIL_BODY_LINE_STYLES = new Set(["meta", "normal", "value"]);
 
 const PARAMETERLESS_REQUEST_METHODS: Record<string, { protocolMethod: string; defaultRequestId: string }> = {
   capabilities: { protocolMethod: "get_capabilities", defaultRequestId: "req-capabilities-1" },
@@ -265,9 +266,12 @@ function validateReviewDetailPageFixture(name: string, fixture: unknown): void {
     ) {
       throw new Error(`invalid review detail-page fixture ${name}: page ${index} body_line_styles mismatch`);
     }
-    for (const style of page.body_line_styles) {
-      if (!["normal", "meta", "label", "value"].includes(String(style))) {
+    for (const [styleIndex, style] of page.body_line_styles.entries()) {
+      if (!REVIEW_DETAIL_BODY_LINE_STYLES.has(String(style))) {
         throw new Error(`invalid review detail-page fixture ${name}: page ${index} body_line_styles contains invalid style`);
+      }
+      if (String(page.lines[styleIndex]).startsWith("  ") && style !== "value") {
+        throw new Error(`invalid review detail-page fixture ${name}: page ${index} continuation lines must use value style`);
       }
     }
     const usesCompactBody = page.body_line_styles.length > 0;

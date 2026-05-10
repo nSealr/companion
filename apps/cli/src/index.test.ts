@@ -178,6 +178,38 @@ describe("nseal CLI", () => {
     );
   });
 
+  it("rejects review detail-page body style drift", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-review-detail-style-"));
+    const tempSpecsRoot = join(tempRoot, "specs");
+    cpSync(specsRoot, tempSpecsRoot, { recursive: true });
+    const vectorPath = resolve(tempSpecsRoot, "vectors/review-detail-pages/kind-1-tags-t-display-s3.json");
+    const vector = loadJson(vectorPath) as {
+      pages: Array<{ body_line_styles: string[] }>;
+    };
+    vector.pages[2].body_line_styles[0] = "label";
+    writeFileSync(vectorPath, `${JSON.stringify(vector, null, 2)}\n`, "utf8");
+
+    await expect(runCli(["fixture", "verify", "--specs", tempSpecsRoot])).rejects.toThrow(
+      /body_line_styles contains invalid style/u
+    );
+  });
+
+  it("rejects review detail-page continuation style drift", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-review-detail-continuation-"));
+    const tempSpecsRoot = join(tempRoot, "specs");
+    cpSync(specsRoot, tempSpecsRoot, { recursive: true });
+    const vectorPath = resolve(tempSpecsRoot, "vectors/review-detail-pages/kind-1-tags-t-display-s3.json");
+    const vector = loadJson(vectorPath) as {
+      pages: Array<{ body_line_styles: string[] }>;
+    };
+    vector.pages[2].body_line_styles[3] = "normal";
+    writeFileSync(vectorPath, `${JSON.stringify(vector, null, 2)}\n`, "utf8");
+
+    await expect(runCli(["fixture", "verify", "--specs", tempSpecsRoot])).rejects.toThrow(
+      /continuation lines must use value style/u
+    );
+  });
+
   it("rejects NIP-46 policy-file fixture drift", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-nip46-policy-file-"));
     const tempSpecsRoot = join(tempRoot, "specs");

@@ -24,7 +24,9 @@ lookup, and signing-readiness diagnostics, including caller-supplied
 `request_id` values for hardware traces. The review CLI can now render
 constrained-display detail pages from shared review vectors for untrusted
 preview and cross-repo conformance checks, with explicit display-limit
-overrides for alternate constrained-screen profiles.
+overrides for alternate constrained-screen profiles. Fixture verification also
+checks the review detail-page style contract so wrapped tag/author continuation
+lines remain distinguishable from new items.
 
 ## M3: Transport Layer
 

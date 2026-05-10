@@ -146,8 +146,6 @@ single-repository CI. Cross-repository drift remains guarded by
 
 - Large QR payload strategy tests once chunking or compression is designed.
 - Hardware serial smoke tests before adding WebUSB, HID, or CDC adapters.
-- M4.5 hardening-vector coverage before full NIP-46 sessions, browser
-  extension work, persistent grants, or production signer I/O.
 
 ## Rule
 

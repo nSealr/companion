@@ -6,7 +6,7 @@ import { loadSpecsFixtures } from "../../../packages/fixtures/src/fixtures.js";
 import { resolveSpecsRoot } from "../../../packages/fixtures/src/specs-root.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/src/serial.js";
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
-import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
+import { decodeAnimatedQrEnvelopeFrames, decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
 import { renderReviewDetailPages, reviewEventTemplate } from "../../../packages/review/src/review.js";
 import { buildCli } from "./index.js";
 
@@ -132,6 +132,49 @@ describe("nseal CLI", () => {
     ]);
 
     expect(validateResponse(decodeQrEnvelope(readFileSync(responsePath, "utf8").trim())).ok).toBe(true);
+  });
+
+  it("runs request -> dev-sign -> verify-response through animated QR frame files", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-animated-qr-"));
+    const key = loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as { secret_key: string };
+    const fixtureRequest = loadJson(resolve(specsRoot, "examples/request-kind-1-basic.json")) as {
+      params: { event_template: unknown };
+    };
+    const templatePath = join(tempRoot, "template.json");
+    const requestPath = join(tempRoot, "request.qra");
+    const responsePath = join(tempRoot, "response.qra");
+
+    writeFileSync(templatePath, `${JSON.stringify(fixtureRequest.params.event_template, null, 2)}\n`, "utf8");
+
+    await runCli(["request", "sign-event", "--event-template", templatePath, "--out", requestPath, "--output-format", "qr-animated"]);
+    await runCli([
+      "dev-sign",
+      "--secret-key",
+      key.secret_key,
+      "--request",
+      requestPath,
+      "--request-format",
+      "qr-animated",
+      "--out",
+      responsePath,
+      "--output-format",
+      "qr-animated"
+    ]);
+    await runCli([
+      "verify-response",
+      "--request",
+      requestPath,
+      "--request-format",
+      "qr-animated",
+      "--response",
+      responsePath,
+      "--response-format",
+      "qr-animated"
+    ]);
+
+    const responseFrames = readFileSync(responsePath, "utf8").trim().split(/\n/u);
+    expect(responseFrames.length).toBeGreaterThan(1);
+    expect(validateResponse(decodeAnimatedQrEnvelopeFrames(responseFrames)).ok).toBe(true);
   });
 
   it("verifies all event fixtures from the specs repository", async () => {

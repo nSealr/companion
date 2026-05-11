@@ -268,15 +268,21 @@ The companion follows the shared `NostrSeal/specs` QR v0 format:
 
 ```text
 nseal1:<base64url-json>
+nseal1a:<payload-sha256-hex>:<index>/<total>:<base64url-json-chunk>:<frame-checksum-hex16>
 ```
 
-The v0 envelope is deliberately uncompressed and single-part. Animated QR,
-compression, fountain codes, and large payload chunking remain out of scope
-until a Raspberry or ESP32 QR vault flow proves where those features are
-necessary.
+The static v0 envelope is deliberately uncompressed and single-part. The
+animated v0 frame set keeps the same uncompressed JSON payload but splits the
+base64url text across bounded `nseal1a:` frames. Each frame carries the full
+decoded JSON SHA-256 digest, a one-based index/total pair, and a short frame
+checksum so receivers can reject missing, duplicated, reordered, or tampered
+frames before parsing JSON. Compression and fountain codes remain out of scope.
 The decoder enforces the shared static QR decoded JSON byte limit and rejects
 padded base64url, invalid UTF-8, malformed JSON, and malformed prefixes before
 any review or signing flow can consume the payload.
+Animated decoding enforces separate decoded-JSON, frame-payload, and frame-count
+limits from `NostrSeal/specs`, then still relies on request/response validation
+to decide whether the reassembled payload is acceptable for the caller.
 
 ## Serial Frame Draft
 

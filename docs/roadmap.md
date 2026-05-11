@@ -130,6 +130,12 @@ behavior after Raspberry and ESP32 consumed the applicable vectors. The gate
 still blocks full NIP-46 relay sessions, browser extension work, persistent
 grants, and production signer I/O.
 
+Status note, 2026-05-10: companion QR tooling now supports `qr-animated`
+frame files for larger valid payloads. The implementation consumes the shared
+`qr-animated-envelope-v0` vector, rejects missing or tampered frames
+deterministically, and lets CLI request/response commands use one frame per
+line without adding compression, fountain codes, relay sessions, or signer I/O.
+
 ## Later
 
 - Browser bridge.

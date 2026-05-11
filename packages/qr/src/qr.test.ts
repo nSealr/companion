@@ -3,11 +3,19 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { NOSTRSEAL_V0_LIMITS } from "../../protocol/src/limits.js";
-import { decodeQrEnvelope, encodeQrEnvelope, QR_ENVELOPE_PREFIX } from "./qr.js";
+import {
+  ANIMATED_QR_ENVELOPE_PREFIX,
+  decodeAnimatedQrEnvelopeFrames,
+  decodeQrEnvelope,
+  encodeAnimatedQrEnvelopeFrames,
+  encodeQrEnvelope,
+  QR_ENVELOPE_PREFIX
+} from "./qr.js";
 
 const specsRoot = resolveSpecsRoot();
 const signEventRequest = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
 const qrVector = JSON.parse(readFileSync(resolve(specsRoot, "vectors/transports/qr-envelope-kind-1-basic.json"), "utf8"));
+const animatedQrVector = JSON.parse(readFileSync(resolve(specsRoot, "vectors/transports/qr-animated-response-kind-1-basic.json"), "utf8"));
 
 describe("QR envelope v0", () => {
   it("encodes and decodes an uncompressed base64url JSON envelope", () => {
@@ -32,6 +40,27 @@ describe("QR envelope v0", () => {
     expect(() =>
       encodeQrEnvelope({ payload: "x".repeat(NOSTRSEAL_V0_LIMITS.max_static_qr_decoded_json_bytes + 1) })
     ).toThrow("QR decoded JSON exceeds max_static_qr_decoded_json_bytes");
+  });
+
+  it("encodes and decodes animated QR frame sets from the shared vector", () => {
+    const frames = encodeAnimatedQrEnvelopeFrames(animatedQrVector.decoded, {
+      chunkSizeChars: animatedQrVector.chunk_size_chars
+    });
+
+    expect(frames).toEqual(animatedQrVector.frames);
+    expect(frames.every((frame) => frame.startsWith(ANIMATED_QR_ENVELOPE_PREFIX))).toBe(true);
+    expect(decodeAnimatedQrEnvelopeFrames(frames)).toEqual(animatedQrVector.decoded);
+    expect(decodeAnimatedQrEnvelopeFrames([...frames].reverse())).toEqual(animatedQrVector.decoded);
+  });
+
+  it("rejects malformed animated QR frame sets deterministically", () => {
+    expect(() => decodeAnimatedQrEnvelopeFrames([])).toThrow("animated QR requires at least one frame");
+    expect(() => decodeAnimatedQrEnvelopeFrames(animatedQrVector.frames.slice(1))).toThrow(
+      "animated QR frames must be unique and contiguous"
+    );
+    expect(() =>
+      decodeAnimatedQrEnvelopeFrames([animatedQrVector.frames[0].replace(/.$/u, "0"), ...animatedQrVector.frames.slice(1)])
+    ).toThrow("animated QR frame checksum mismatch");
   });
 
   it("rejects shared invalid QR hardening vectors deterministically", () => {

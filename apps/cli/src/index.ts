@@ -19,7 +19,12 @@ import {
   respondToLocalNip46Request
 } from "../../../packages/nip46/src/nip46.js";
 import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
-import { decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
+import {
+  decodeAnimatedQrEnvelopeFrames,
+  decodeQrEnvelope,
+  encodeAnimatedQrEnvelopeFrames,
+  encodeQrEnvelope
+} from "../../../packages/qr/src/qr.js";
 import {
   REVIEW_DETAIL_BODY_LINE_STYLES as REVIEW_DETAIL_BODY_LINE_STYLE_VALUES,
   renderReviewDetailPages,
@@ -30,7 +35,7 @@ import {
 import { SmartcardSimulator } from "../../../packages/smartcard/src/apdu.js";
 import { SmartcardSigner } from "../../../packages/smartcard/src/signer.js";
 
-type DataFormat = "json" | "qr";
+type DataFormat = "json" | "qr" | "qr-animated";
 
 const DEFAULT_REVIEW_DETAIL_PAGE_LIMITS: ReviewDetailPageLimits = {
   max_title_chars: 18,
@@ -59,7 +64,7 @@ function writeJson(path: string, value: unknown): void {
 }
 
 function assertFormat(format: string): asserts format is DataFormat {
-  if (format !== "json" && format !== "qr") {
+  if (format !== "json" && format !== "qr" && format !== "qr-animated") {
     throw new Error(`unsupported format: ${format}`);
   }
 }
@@ -458,12 +463,23 @@ function validateInvalidHardeningFixture(fixture: {
 
 function readValue(path: string, format: DataFormat): unknown {
   if (format === "qr") return decodeQrEnvelope(readFileSync(path, "utf8").trim());
+  if (format === "qr-animated") {
+    const frames = readFileSync(path, "utf8")
+      .trim()
+      .split(/\n/u)
+      .filter((line) => line.length > 0);
+    return decodeAnimatedQrEnvelopeFrames(frames);
+  }
   return readJson(path);
 }
 
 function writeValue(path: string, value: unknown, format: DataFormat): void {
   if (format === "qr") {
     writeFileSync(path, `${encodeQrEnvelope(value)}\n`, "utf8");
+    return;
+  }
+  if (format === "qr-animated") {
+    writeFileSync(path, `${encodeAnimatedQrEnvelopeFrames(value).join("\n")}\n`, "utf8");
     return;
   }
   writeJson(path, value);
@@ -557,7 +573,7 @@ export function buildCli(): Command {
     .requiredOption("--out <path>")
     .option("--event-template <path>")
     .option("--request-id <id>")
-    .option("--output-format <format>", "Output format: json or qr", "json")
+    .option("--output-format <format>", "Output format: json, qr, or qr-animated", "json")
     .description("Create a NostrSeal request")
     .action((method: string, options: { out: string; eventTemplate?: string; requestId?: string; outputFormat: string }) => {
       assertFormat(options.outputFormat);
@@ -595,9 +611,9 @@ export function buildCli(): Command {
     .command("dev-sign")
     .requiredOption("--secret-key <hex>")
     .requiredOption("--request <path>")
-    .option("--request-format <format>", "Request format: json or qr", "json")
+    .option("--request-format <format>", "Request format: json, qr, or qr-animated", "json")
     .requiredOption("--out <path>")
-    .option("--output-format <format>", "Output format: json or qr", "json")
+    .option("--output-format <format>", "Output format: json, qr, or qr-animated", "json")
     .description("Sign a request with a test-only software signer")
     .action((options: { secretKey: string; request: string; requestFormat: string; out: string; outputFormat: string }) => {
       assertFormat(options.requestFormat);
@@ -614,7 +630,7 @@ export function buildCli(): Command {
   program
     .command("review-request")
     .requiredOption("--request <path>")
-    .option("--request-format <format>", "Request format: json or qr", "json")
+    .option("--request-format <format>", "Request format: json, qr, or qr-animated", "json")
     .option("--screen-review", "Render deterministic screen-review pages with approval digest")
     .option("--detail-pages", "Render complete constrained-display review detail pages")
     .option("--max-title-chars <n>", "Detail-page title width for --detail-pages")
@@ -668,11 +684,11 @@ export function buildCli(): Command {
     .command("smartcard-sim-sign")
     .requiredOption("--secret-key <hex>")
     .requiredOption("--request <path>")
-    .option("--request-format <format>", "Request format: json or qr", "json")
+    .option("--request-format <format>", "Request format: json, qr, or qr-animated", "json")
     .option("--review-acknowledged", "Confirm external review before sending an event id to a display-less smartcard")
     .option("--approval-digest <hex>", "Required with --review-acknowledged; binds acknowledgement to a reviewed request digest")
     .requiredOption("--out <path>")
-    .option("--output-format <format>", "Output format: json or qr", "json")
+    .option("--output-format <format>", "Output format: json, qr, or qr-animated", "json")
     .description("Sign a request through the test-only smartcard APDU simulator")
     .action(
       async (options: {
@@ -714,7 +730,7 @@ export function buildCli(): Command {
   serialFrame
     .command("wrap-request")
     .requiredOption("--request <path>")
-    .option("--request-format <format>", "Request format: json or qr", "json")
+    .option("--request-format <format>", "Request format: json, qr, or qr-animated", "json")
     .requiredOption("--out <path>")
     .description("Wrap a validated request as a serial request frame")
     .action((options: { request: string; requestFormat: string; out: string }) => {
@@ -728,10 +744,10 @@ export function buildCli(): Command {
   serialFrame
     .command("unwrap-response")
     .option("--request <path>", "Original request to verify the serial response against")
-    .option("--request-format <format>", "Request format: json or qr", "json")
+    .option("--request-format <format>", "Request format: json, qr, or qr-animated", "json")
     .requiredOption("--response-frame <path>")
     .requiredOption("--out <path>")
-    .option("--output-format <format>", "Output format: json or qr", "json")
+    .option("--output-format <format>", "Output format: json, qr, or qr-animated", "json")
     .description("Decode and validate a serial response frame")
     .action((options: { request?: string; requestFormat: string; responseFrame: string; out: string; outputFormat: string }) => {
       assertFormat(options.requestFormat);
@@ -782,9 +798,9 @@ export function buildCli(): Command {
   program
     .command("verify-response")
     .requiredOption("--request <path>")
-    .option("--request-format <format>", "Request format: json or qr", "json")
+    .option("--request-format <format>", "Request format: json, qr, or qr-animated", "json")
     .requiredOption("--response <path>")
-    .option("--response-format <format>", "Response format: json or qr", "json")
+    .option("--response-format <format>", "Response format: json, qr, or qr-animated", "json")
     .description("Verify a signer response against the original request")
     .action((options: { request: string; requestFormat: string; response: string; responseFormat: string }) => {
       assertFormat(options.requestFormat);

@@ -62,7 +62,9 @@ clients to hardware-backed signing.
   `NostrSeal/specs`, including malformed/padded/invalid-UTF-8/oversized
   rejection. Encoding applies the same static decoded-JSON byte limit as
   decoding, so the companion does not emit QR payloads that v0 receivers would
-  immediately reject.
+  immediately reject. It also implements the v0 `nseal1a:` animated QR frame
+  set for larger valid payloads, with digest, frame checksum, ordering, and
+  frame-count checks before JSON parsing.
 - `packages/framing` implements the first checksum-protected serial line frame
   draft for USB CDC and UART experiments, including shared frame-size limits on
   both decode and encode.

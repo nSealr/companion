@@ -75,6 +75,10 @@ single-repository CI. Cross-repository drift remains guarded by
 - QR envelope encode-side limit tests proving static v0 QR writers reject
   payloads that would exceed `max_static_qr_decoded_json_bytes` before emitting
   an envelope.
+- Animated QR frame-set tests against the shared specs vector, including
+  reversed input order, missing-frame rejection, and frame-checksum rejection.
+- CLI tests proving `qr-animated` request and response files round-trip through
+  `request sign-event`, `dev-sign`, and `verify-response`.
 - Serial frame round-trip, unsupported type, checksum mismatch, and encode-side
   `max_serial_frame_bytes` rejection tests.
 - Shared `NostrSeal/specs` QR and serial transport vector conformance tests.

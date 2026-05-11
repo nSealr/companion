@@ -26,7 +26,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - Request and response shape validation tests in `packages/protocol`, including
   signing-status consistency checks that reject `signing_enabled: true` while
   any `missing_gates` remain and `signing_enabled: false` without at least one
-  missing-gate reason.
+  missing-gate reason, plus signed-event response content and tag limit
+  rejection.
 - Shared fixture loading tests in `packages/fixtures`.
 - Trusted-review model tests in `packages/review` against every shared review,
   review-screen `approval_digest`, and review detail-page vector from
@@ -156,8 +157,9 @@ single-repository CI. Cross-repository drift remains guarded by
   reaches companion-owned parsing: unsafe event-template fields, unsafe integer
   values, resource-limit violations, malformed or ambiguous responses,
   contradictory or reason-less signing-status readiness, malformed QR/serial
-  envelopes, malformed NIP-46 payloads, invalid policy files, and duplicate
-  signing-status gate entries.
+  envelopes, malformed NIP-46 payloads, invalid policy files, duplicate
+  signing-status gate entries, and oversized signed-event response content or
+  tags.
 - Nostr conformance oracle tests must compare companion event id/signature
   behavior with `nostr-tools` in tests, while keeping production code free of
   unnecessary oracle coupling.

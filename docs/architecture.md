@@ -32,7 +32,9 @@ only adapt file/argument I/O around package-owned validation logic.
   and signing-status consistency checks so a signer cannot claim
   `signing_enabled: true` while still reporting missing gates or
   `signing_enabled: false` without reporting at least one blocker. Gate lists
-  are also checked for duplicates.
+  are also checked for duplicates. Signed-event responses are checked against
+  the same content and tag resource limits before transport or CLI callers can
+  treat them as accepted output.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, limit-profile, and invalid hardening fixture
@@ -137,7 +139,9 @@ files, not a grant store.
 Pre-signing hardening vectors are the companion's rejection oracle for unsafe
 input. They must be evaluated before signer transport, dev signing,
 smartcard-sim signing, or NIP-46 routing can proceed, and failures must not
-write output artifacts.
+write output artifacts. The same invalid-vector suite also covers unsafe
+signed-event response payloads so a real device output cannot bypass the v0
+content and tag limits after signing.
 
 The current adapters cover three development paths:
 

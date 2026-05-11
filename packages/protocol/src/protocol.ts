@@ -53,6 +53,36 @@ function validateSafeIntegerField(field: "created_at" | "kind", value: unknown):
   return { ok: true };
 }
 
+function validateTags(value: unknown, label: "event_template" | "signed event"): ValidationResult {
+  if (!Array.isArray(value)) {
+    return { ok: false, error: `${label} tags must be an array` };
+  }
+  if (value.length > NOSTRSEAL_V0_LIMITS.max_tag_count) {
+    return { ok: false, error: `${label} tags exceeds max_tag_count` };
+  }
+  let totalTagBytes = 0;
+  for (const [tagIndex, tag] of value.entries()) {
+    if (!Array.isArray(tag)) return { ok: false, error: `${label} tags[${tagIndex}] must be an array` };
+    if (tag.length > NOSTRSEAL_V0_LIMITS.max_tag_fields_per_tag) {
+      return { ok: false, error: `${label} tags[${tagIndex}] exceeds max_tag_fields_per_tag` };
+    }
+    for (const [fieldIndex, item] of tag.entries()) {
+      if (typeof item !== "string") {
+        return { ok: false, error: `${label} tags[${tagIndex}][${fieldIndex}] must be a string` };
+      }
+      const itemBytes = utf8ByteLength(item);
+      totalTagBytes += itemBytes;
+      if (itemBytes > NOSTRSEAL_V0_LIMITS.max_tag_field_utf8_bytes) {
+        return { ok: false, error: `${label} tag field exceeds max_tag_field_utf8_bytes` };
+      }
+    }
+  }
+  if (totalTagBytes > NOSTRSEAL_V0_LIMITS.max_total_tag_utf8_bytes) {
+    return { ok: false, error: `${label} tags exceed max_total_tag_utf8_bytes` };
+  }
+  return { ok: true };
+}
+
 function validateEventTemplate(value: unknown): ValidationResult {
   if (!isRecord(value)) return { ok: false, error: "event_template must be an object" };
   const forbidden = ["id", "pubkey", "sig"].filter((field) => field in value);
@@ -67,32 +97,8 @@ function validateEventTemplate(value: unknown): ValidationResult {
   const kind = validateSafeIntegerField("kind", value.kind);
   if (!kind.ok) return kind;
 
-  if (!Array.isArray(value.tags)) {
-    return { ok: false, error: "event_template tags must be an array" };
-  }
-  if (value.tags.length > NOSTRSEAL_V0_LIMITS.max_tag_count) {
-    return { ok: false, error: "event_template tags exceeds max_tag_count" };
-  }
-  let totalTagBytes = 0;
-  for (const [tagIndex, tag] of value.tags.entries()) {
-    if (!Array.isArray(tag)) return { ok: false, error: `event_template tags[${tagIndex}] must be an array` };
-    if (tag.length > NOSTRSEAL_V0_LIMITS.max_tag_fields_per_tag) {
-      return { ok: false, error: `event_template tags[${tagIndex}] exceeds max_tag_fields_per_tag` };
-    }
-    for (const [fieldIndex, item] of tag.entries()) {
-      if (typeof item !== "string") {
-        return { ok: false, error: `event_template tags[${tagIndex}][${fieldIndex}] must be a string` };
-      }
-      const itemBytes = utf8ByteLength(item);
-      totalTagBytes += itemBytes;
-      if (itemBytes > NOSTRSEAL_V0_LIMITS.max_tag_field_utf8_bytes) {
-        return { ok: false, error: "event_template tag field exceeds max_tag_field_utf8_bytes" };
-      }
-    }
-  }
-  if (totalTagBytes > NOSTRSEAL_V0_LIMITS.max_total_tag_utf8_bytes) {
-    return { ok: false, error: "event_template tags exceed max_total_tag_utf8_bytes" };
-  }
+  const tags = validateTags(value.tags, "event_template");
+  if (!tags.ok) return tags;
   if (typeof value.content !== "string") return { ok: false, error: "content must be a string" };
   if (utf8ByteLength(value.content) > NOSTRSEAL_V0_LIMITS.max_content_utf8_bytes) {
     return { ok: false, error: "event_template content exceeds max_content_utf8_bytes" };
@@ -134,10 +140,12 @@ function validateSignedEvent(value: unknown): ValidationResult {
   if (!isLowerHex(value.pubkey, 64)) return { ok: false, error: "event pubkey must be 32-byte lowercase hex" };
   if (!isSafeNonNegativeInteger(value.created_at)) return { ok: false, error: "created_at must be a non-negative integer" };
   if (!isSafeNonNegativeInteger(value.kind)) return { ok: false, error: "kind must be a non-negative integer" };
-  if (!Array.isArray(value.tags) || !value.tags.every((tag) => Array.isArray(tag) && tag.every((item) => typeof item === "string"))) {
-    return { ok: false, error: "tags must be an array of string arrays" };
-  }
+  const tags = validateTags(value.tags, "signed event");
+  if (!tags.ok) return tags;
   if (typeof value.content !== "string") return { ok: false, error: "content must be a string" };
+  if (utf8ByteLength(value.content) > NOSTRSEAL_V0_LIMITS.max_content_utf8_bytes) {
+    return { ok: false, error: "signed event content exceeds max_content_utf8_bytes" };
+  }
   if (!isLowerHex(value.sig, 128)) return { ok: false, error: "event sig must be 64-byte lowercase hex" };
   return { ok: true };
 }

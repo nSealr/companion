@@ -156,7 +156,8 @@ single-repository CI. Cross-repository drift remains guarded by
   reaches companion-owned parsing: unsafe event-template fields, unsafe integer
   values, resource-limit violations, malformed or ambiguous responses,
   contradictory or reason-less signing-status readiness, malformed QR/serial
-  envelopes, malformed NIP-46 payloads, and invalid policy files.
+  envelopes, malformed NIP-46 payloads, invalid policy files, and duplicate
+  signing-status gate entries.
 - Nostr conformance oracle tests must compare companion event id/signature
   behavior with `nostr-tools` in tests, while keeping production code free of
   unnecessary oracle coupling.

@@ -1,7 +1,7 @@
 import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { loadSpecsFixtures } from "./fixtures.js";
+import { loadSpecsFixtures, validateReviewTranscriptFixture } from "./fixtures.js";
 import { resolveSpecsRoot } from "./specs-root.js";
 
 describe("fixture loading", () => {
@@ -45,6 +45,26 @@ describe("fixture loading", () => {
     );
     expect(detailScroll?.buttons).toContain("scroll");
     expect(detailScroll?.transcript[0].frame.body_line_styles).toEqual(["meta", "meta", "meta", "value", "value"]);
+  });
+
+  it("validates QR review transcript fixtures in package code", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    const detailScroll = structuredClone(
+      fixtures.reviewTranscripts.find(
+        (transcript) => transcript.name === "kind-1-long-events-many-tags-detail-scroll-approve"
+      )
+    );
+    if (detailScroll === undefined) throw new Error("missing detail scroll transcript fixture");
+
+    expect(() => validateReviewTranscriptFixture(detailScroll.name, detailScroll)).not.toThrow();
+
+    const invalidButton = structuredClone(detailScroll);
+    invalidButton.buttons[2] = "sideways";
+    expect(() => validateReviewTranscriptFixture(invalidButton.name, invalidButton)).toThrow(/unsupported button/u);
+
+    const invalidStyles = structuredClone(detailScroll);
+    invalidStyles.transcript[0].frame.body_line_styles = ["meta"];
+    expect(() => validateReviewTranscriptFixture(invalidStyles.name, invalidStyles)).toThrow(/body_line_styles mismatch/u);
   });
 
   it("loads trusted review-screen vectors from the specs repository", () => {

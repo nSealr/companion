@@ -4,7 +4,7 @@ import { Command } from "commander";
 import { SerialPort } from "serialport";
 import { verifySignedEventResponse, type SignEventRequest } from "../../../packages/core/src/nostr.js";
 import { devSignRequest } from "../../../packages/dev-signer/src/dev-signer.js";
-import { loadSpecsFixtures } from "../../../packages/fixtures/src/fixtures.js";
+import { loadSpecsFixtures, validateReviewTranscriptFixture } from "../../../packages/fixtures/src/fixtures.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/src/serial.js";
 import {
   decideNip46BridgeAction,
@@ -56,7 +56,6 @@ const DEFAULT_REVIEW_DETAIL_PAGE_LIMITS: ReviewDetailPageLimits = {
   max_compact_line_chars: 48
 };
 const REVIEW_DETAIL_BODY_LINE_STYLES = new Set<string>(REVIEW_DETAIL_BODY_LINE_STYLE_VALUES);
-const REVIEW_TRANSCRIPT_BUTTONS = new Set(["next", "scroll", "approve", "reject"]);
 
 const PARAMETERLESS_REQUEST_METHODS: Record<string, { protocolMethod: string; defaultRequestId: string }> = {
   capabilities: { protocolMethod: "get_capabilities", defaultRequestId: "req-capabilities-1" },
@@ -140,57 +139,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function readNip46PolicyPermissions(path: string): Nip46Permission[] {
   return parseNip46PolicyFile(readJson(path));
-}
-
-function validateReviewTranscriptFixture(name: string, fixture: unknown): void {
-  if (!isRecord(fixture)) throw new Error(`invalid review transcript fixture ${name}: fixture must be an object`);
-  if (fixture.format !== "qr-review-transcript-v0") {
-    throw new Error(`invalid review transcript fixture ${name}: unsupported format`);
-  }
-  if (typeof fixture.qr_envelope !== "string" || !fixture.qr_envelope.startsWith("nseal1:")) {
-    throw new Error(`invalid review transcript fixture ${name}: qr_envelope must be a nseal1 envelope`);
-  }
-  if (typeof fixture.approval_digest !== "string" || !/^[0-9a-f]{64}$/.test(fixture.approval_digest)) {
-    throw new Error(`invalid review transcript fixture ${name}: approval_digest must be 32-byte lowercase hex`);
-  }
-  if (!Array.isArray(fixture.buttons) || fixture.buttons.length === 0) {
-    throw new Error(`invalid review transcript fixture ${name}: buttons must be a non-empty array`);
-  }
-  if (!Array.isArray(fixture.transcript) || fixture.transcript.length !== fixture.buttons.length) {
-    throw new Error(`invalid review transcript fixture ${name}: transcript length must match buttons`);
-  }
-  for (const [index, step] of fixture.transcript.entries()) {
-    if (!isRecord(step)) throw new Error(`invalid review transcript fixture ${name}: step ${index} must be an object`);
-    const button = fixture.buttons[index];
-    if (!REVIEW_TRANSCRIPT_BUTTONS.has(String(button))) {
-      throw new Error(`invalid review transcript fixture ${name}: unsupported button at step ${index}`);
-    }
-    if (step.button !== button) {
-      throw new Error(`invalid review transcript fixture ${name}: button mismatch at step ${index}`);
-    }
-    if (step.decision !== null && typeof step.decision !== "boolean") {
-      throw new Error(`invalid review transcript fixture ${name}: decision must be boolean or null at step ${index}`);
-    }
-    if (typeof step.approved_for_signing !== "boolean") {
-      throw new Error(`invalid review transcript fixture ${name}: approval state must be boolean at step ${index}`);
-    }
-    if (!isRecord(step.frame) || typeof step.frame.title !== "string") {
-      throw new Error(`invalid review transcript fixture ${name}: frame must include title at step ${index}`);
-    }
-    if (!Array.isArray(step.frame.body_lines) || !step.frame.body_lines.every((line) => typeof line === "string")) {
-      throw new Error(`invalid review transcript fixture ${name}: frame body_lines must be strings at step ${index}`);
-    }
-    const bodyLineStyles = step.frame.body_line_styles;
-    if (bodyLineStyles !== undefined) {
-      if (
-        !Array.isArray(bodyLineStyles) ||
-        bodyLineStyles.length !== step.frame.body_lines.length ||
-        !bodyLineStyles.every((style) => REVIEW_DETAIL_BODY_LINE_STYLES.has(String(style)))
-      ) {
-        throw new Error(`invalid review transcript fixture ${name}: frame body_line_styles mismatch at step ${index}`);
-      }
-    }
-  }
 }
 
 function requirePositiveIntegerField(record: Record<string, unknown>, fixtureName: string, field: string): number {

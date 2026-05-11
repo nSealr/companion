@@ -32,6 +32,9 @@ single-repository CI. Cross-repository drift remains guarded by
   Invalid hardening fixture loading is directory-driven so new shared invalid
   vectors are discovered from the sibling specs checkout or local snapshot
   instead of being maintained in a hand-written name list.
+  QR review-transcript fixture validation also lives in this package and covers
+  `scroll` buttons plus rendered-frame `body_line_styles` mismatch rejection,
+  keeping `apps/cli` as a thin fixture-verification wrapper.
 - Trusted-review model tests in `packages/review` against every shared review,
   review-screen `approval_digest`, and review detail-page vector from
   `NostrSeal/specs`.

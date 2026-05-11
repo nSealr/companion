@@ -39,7 +39,9 @@ only adapt file/argument I/O around package-owned validation logic.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, limit-profile, and invalid hardening fixture
-  loading.
+  loading. Package code also owns QR review-transcript fixture validation,
+  including `scroll` buttons and rendered-frame `body_line_styles`, so the CLI
+  does not duplicate that contract.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: test-only signing implementation.
@@ -124,7 +126,9 @@ trusted approval surface.
 QR review-transcript vectors are also loaded and shape-checked by
 `nseal fixture verify`. They bind raw QR input to frame/button/decision
 sequences for Raspberry and ESP32 adapter tests; the companion treats them as
-conformance data, not as trusted approval authority.
+conformance data, not as trusted approval authority. The transcript validator
+lives in `packages/fixtures`, and `apps/cli` only calls it while iterating the
+loaded fixture set.
 
 NIP-46 payload vectors are loaded and verified by `nseal fixture verify` so the
 host bridge and shared specs agree on decrypted `get_public_key`, `sign_event`,

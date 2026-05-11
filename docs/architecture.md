@@ -23,6 +23,13 @@ conversion, QR/serial decoding, and policy-file parsing must share explicit
 NostrSeal v0 limits and deterministic rejection behavior. CLI commands should
 only adapt file/argument I/O around package-owned validation logic.
 
+The companion is infrastructure, not a first-class signer family. Per-solution
+feature status lives in `NostrSeal/specs`
+`vectors/features/signer-feature-matrix-v0.json`. When companion exposes a
+feature used by multiple signer families, such as request validation, review
+projection, policy decisions, transport framing, or response verification, it
+must follow the shared `contract_id` instead of creating a host-only variant.
+
 ## Implemented Modules
 
 - `apps/cli`: command-line entrypoint.

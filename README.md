@@ -6,6 +6,13 @@ The companion is not trusted with private keys. It constructs requests, moves
 them over the selected transport, verifies device responses, and bridges Nostr
 clients to hardware-backed signing.
 
+Feature availability per signer family is tracked in `NostrSeal/specs` at
+`vectors/features/signer-feature-matrix-v0.json`. Companion packages should
+consume those shared contracts instead of inventing solution-specific behavior:
+when a feature is present on multiple signer implementations, the request,
+review, approval, policy, transport, or response-verification behavior must
+match the shared `contract_id`.
+
 ## Current Capabilities
 
 - `nseal fixture verify` validates shared signing, trusted-review,

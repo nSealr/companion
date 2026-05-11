@@ -159,18 +159,22 @@ The current adapters cover three development paths:
   lines, rejects any buffered line that exceeds the shared v0 serial-frame byte
   limit, writes newline-terminated request frames to a writable stream, and can
   close its underlying streams after failed exchanges.
+- `exchangeSerialLineRequest`: package-owned one-shot serial-line exchange
+  helper. It validates the request before opening a port, delegates exchange to
+  `SerialLineTransport`, and closes the opened port in a `finally` block. CLI
+  and future native bindings should use this boundary instead of duplicating
+  validation/open/close sequencing.
 - `nseal serial-frame wrap-request` and `nseal serial-frame unwrap-response`:
   offline CLI helpers for producing validated serial request frames and
   decoding validated serial response frames during ESP32 bring-up. With
   `--request`, response unwrapping also verifies the original request id and
   signed-output binding before writing output. These commands do not open a
   physical USB, CDC, HID, WebUSB, or WebSerial connection.
-- `nseal serial-line exchange`: one-shot local USB-serial helper for opening a
-  newline-oriented device path, sending a validated `nseal1f:` request frame,
-  skipping firmware log lines, verifying the response shape/request id/signed
-  output, writing the chosen output format, and closing the stream-backed port.
-  It is not a browser transport, relay session, persistent signer connection,
-  or permission grant mechanism.
+- `nseal serial-line exchange`: one-shot local USB-serial CLI helper over
+  `exchangeSerialLineRequest`. It opens a newline-oriented device path only
+  after request validation, writes the chosen output format only after response
+  verification, and is not a browser transport, relay session, persistent
+  signer connection, or permission grant mechanism.
 - `nseal request get-capabilities`, `nseal request get-public-key`, and
   `nseal request get-signing-status`: host-side generators for non-sensitive
   parameterless device requests. They validate caller-supplied request ids

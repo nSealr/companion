@@ -69,9 +69,11 @@ can write an over-limit line. Serial-frame transport surfaces device
 `nseal1f:error` payloads as deterministic transport diagnostics instead of
 discarding the error code. The offline serial-frame unwrap helper can now take
 the original request and reject mismatched captured responses before writing
-output. `nseal serial-line exchange` now opens a local newline serial device
-path for one validated request/response exchange, skips firmware log lines,
-verifies the response before writing output, and closes the stream-backed port.
+output. The one-shot serial-line exchange boundary is now package-owned in
+`packages/transport`: it validates the request before opening a local newline
+serial device path, skips firmware log lines, verifies the response before
+returning it, and closes the opened port. `nseal serial-line exchange` is a
+thin CLI adapter over that boundary.
 M3 remains open for larger-payload strategy beyond v0 frame refusal and a
 production-grade browser/native USB/WebSerial binding.
 

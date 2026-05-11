@@ -86,14 +86,17 @@ single-repository CI. Cross-repository drift remains guarded by
   write a request frame, ignore device log lines, normalize common serial line
   endings, reject stalled writes and silent ports with deterministic timeouts,
   close stream-backed ports, and reuse the verified serial-frame response path
-  through an injected line port.
+  through an injected line port. The package-owned one-shot exchange helper is
+  also tested to validate requests before opening a port and to close an opened
+  port after the exchange.
 - Stream-backed serial-line port tests proving chunked readable-stream output
   and writable-stream request frames behave like the injected port contract
   without a native serial dependency. They also prove unterminated oversized
   input is rejected without rejecting batched short complete lines.
-- CLI serial-line tests proving `nseal serial-line exchange` validates requests
-  before opening a port, skips non-protocol device log lines, verifies the
-  response, writes output only after verification, and closes the injected port.
+- CLI serial-line tests proving `nseal serial-line exchange` remains a thin
+  file/argument wrapper around the package-owned one-shot serial-line exchange,
+  writes output only after verification, and still rejects invalid requests
+  before any port is opened.
 - Shared `NostrSeal/specs` capability response conformance tests.
 - Shared `NostrSeal/specs` ESP32-S3 signing-disabled response conformance
   tests.

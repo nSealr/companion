@@ -18,6 +18,8 @@ export type SerialLinePort = {
   close?(): Promise<void> | void;
 };
 
+export type SerialLinePortOpener = (path: string) => Promise<SerialLinePort> | SerialLinePort;
+
 export class SerialLineStreamPort implements SerialLinePort {
   private readonly input: Readable;
   private readonly output: Writable;
@@ -428,5 +430,26 @@ export class SerialLineTransport implements SignerTransport {
         clearTimeout(timeout);
       }
     }
+  }
+}
+
+export async function exchangeSerialLineRequest(options: {
+  path: string;
+  request: unknown;
+  openPort: SerialLinePortOpener;
+  maxIgnoredLines?: number;
+  responseTimeoutMs?: number;
+}): Promise<unknown> {
+  assertValidRequest(options.request, "serial line request");
+  const port = await options.openPort(options.path);
+  try {
+    const transport = new SerialLineTransport({
+      port,
+      maxIgnoredLines: options.maxIgnoredLines,
+      responseTimeoutMs: options.responseTimeoutMs
+    });
+    return await transport.exchange(options.request);
+  } finally {
+    await port.close?.();
   }
 }

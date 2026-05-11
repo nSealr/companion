@@ -15,6 +15,7 @@ import {
   SerialFrameTransport,
   SerialLineStreamPort,
   SerialLineTransport,
+  exchangeSerialLineRequest,
   readJsonFile,
   writeJsonFile
 } from "./transport.js";
@@ -498,5 +499,55 @@ describe("transport adapters", () => {
 
     expect(input.destroyed).toBe(true);
     expect(output.destroyed).toBe(true);
+  });
+
+  it("runs a one-shot serial line exchange through a package-owned opener boundary", async () => {
+    const openedPaths: string[] = [];
+    const closedPaths: string[] = [];
+    const writtenLines: string[] = [];
+    const incomingLines = [
+      "I (123) boot: ignored device log\n",
+      encodeSerialFrame({ type: "response", payload: capabilitiesResponse })
+    ];
+
+    await expect(
+      exchangeSerialLineRequest({
+        path: "/dev/cu.usbmodem-test",
+        request: capabilitiesRequest,
+        openPort: async (path) => {
+          openedPaths.push(path);
+          return {
+            writeLine: async (line) => {
+              writtenLines.push(line);
+            },
+            readLine: async () => incomingLines.shift() ?? null,
+            close: () => {
+              closedPaths.push(path);
+            }
+          };
+        }
+      })
+    ).resolves.toEqual(capabilitiesResponse);
+
+    expect(openedPaths).toEqual(["/dev/cu.usbmodem-test"]);
+    expect(closedPaths).toEqual(["/dev/cu.usbmodem-test"]);
+    expect(decodeSerialFrame(writtenLines[0])).toEqual({ type: "request", payload: capabilitiesRequest });
+  });
+
+  it("rejects invalid one-shot serial line requests before opening a port", async () => {
+    let opened = false;
+
+    await expect(
+      exchangeSerialLineRequest({
+        path: "/dev/cu.usbmodem-test",
+        request: { version: 1, request_id: "invalid request id", method: "get_capabilities" },
+        openPort: async () => {
+          opened = true;
+          throw new Error("port should not open");
+        }
+      })
+    ).rejects.toThrow("serial line request invalid: request_id is invalid");
+
+    expect(opened).toBe(false);
   });
 });

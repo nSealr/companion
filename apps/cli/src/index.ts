@@ -37,14 +37,15 @@ import { SmartcardSimulator } from "../../../packages/smartcard/src/apdu.js";
 import { SmartcardSigner } from "../../../packages/smartcard/src/signer.js";
 import {
   SerialLineStreamPort,
-  SerialLineTransport,
-  type SerialLinePort
+  exchangeSerialLineRequest,
+  type SerialLinePort,
+  type SerialLinePortOpener
 } from "../../../packages/transport/src/transport.js";
 
 type DataFormat = "json" | "qr" | "qr-animated";
 
 type BuildCliOptions = {
-  openSerialLinePort?: (path: string) => Promise<SerialLinePort> | SerialLinePort;
+  openSerialLinePort?: SerialLinePortOpener;
 };
 
 const DEFAULT_REVIEW_DETAIL_PAGE_LIMITS: ReviewDetailPageLimits = {
@@ -820,14 +821,14 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         if (!validation.ok) throw new Error(validation.error);
         const responseTimeoutMs = positiveIntegerOption(actionOptions.timeoutMs, 30_000, "--timeout-ms");
         const maxIgnoredLines = positiveIntegerOption(actionOptions.maxIgnoredLines, 32, "--max-ignored-lines");
-        const port = await openSerialLinePort(actionOptions.port);
-        try {
-          const transport = new SerialLineTransport({ port, responseTimeoutMs, maxIgnoredLines });
-          const response = await transport.exchange(request);
-          writeValue(actionOptions.out, response, actionOptions.outputFormat);
-        } finally {
-          await port.close?.();
-        }
+        const response = await exchangeSerialLineRequest({
+          path: actionOptions.port,
+          request,
+          openPort: openSerialLinePort,
+          responseTimeoutMs,
+          maxIgnoredLines
+        });
+        writeValue(actionOptions.out, response, actionOptions.outputFormat);
       }
     );
 

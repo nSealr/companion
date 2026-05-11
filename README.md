@@ -46,15 +46,19 @@ clients to hardware-backed signing.
 - `SerialLineStreamPort` adapts Node readable/writable streams into that
   newline-oriented port interface for dependency-free serial integration tests,
   while enforcing the shared v0 serial-frame byte limit on buffered lines.
+- `exchangeSerialLineRequest` owns one-shot serial-line validation/open/close
+  sequencing inside `packages/transport`, so CLI and future native bindings do
+  not duplicate the safety boundary.
 - `nseal serial-frame` exposes offline serial-frame request wrapping and
   response unwrapping helpers for ESP32 bring-up and lab captures. Response
   unwrapping can verify the original request before writing output, so
   captured frames cannot silently drift across request ids.
-- `nseal serial-line exchange` opens a newline serial device path for one
-  validated request/response exchange, verifies the response before writing
-  output, skips firmware log lines, and closes the stream-backed port after the
-  exchange. It is a local USB-serial bring-up helper, not a browser/WebUSB or
-  persistent signer session.
+- `nseal serial-line exchange` is the CLI wrapper for that package-owned
+  one-shot exchange. It opens a newline serial device path only after request
+  validation, verifies the response before writing output, skips firmware log
+  lines, and closes the stream-backed port after the exchange. It is a local
+  USB-serial bring-up helper, not a browser/WebUSB or persistent signer
+  session.
 - `nseal nip46 decide` writes the bridge decision for an already-decrypted
   NIP-46 payload using explicit permission inputs or a read-only policy file.
   It does not open relays, decrypt NIP-44 payloads, persist grants, or contact

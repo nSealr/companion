@@ -144,6 +144,10 @@ limits, and rejects response request ids outside the shared v0 profile. This
 keeps the accepted-output side of companion verification aligned with the
 pre-signing request boundary.
 
+Status note, 2026-05-11: invalid hardening fixture loading tests now derive the
+expected vector names from `vectors/invalid/*.json` instead of a hand-maintained
+list, reducing snapshot drift as the shared contract grows.
+
 Status note, 2026-05-10: companion QR tooling now supports `qr-animated`
 frame files for larger valid payloads. The implementation consumes the shared
 `qr-animated-envelope-v0` vector, rejects missing or tampered frames

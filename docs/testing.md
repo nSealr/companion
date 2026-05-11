@@ -29,6 +29,9 @@ single-repository CI. Cross-repository drift remains guarded by
   missing-gate reason, response request-id profile checks, plus signed-event
   response integer-safety, content, and tag limit rejection.
 - Shared fixture loading tests in `packages/fixtures`.
+  Invalid hardening fixture loading is directory-driven so new shared invalid
+  vectors are discovered from the sibling specs checkout or local snapshot
+  instead of being maintained in a hand-written name list.
 - Trusted-review model tests in `packages/review` against every shared review,
   review-screen `approval_digest`, and review detail-page vector from
   `NostrSeal/specs`.

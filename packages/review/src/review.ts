@@ -114,7 +114,17 @@ function displaySafeText(text: string): string {
   for (const char of text) {
     const codepoint = char.codePointAt(0);
     if (codepoint === undefined) throw new Error("invalid codepoint");
-    if (codepoint <= 0x7f && DISPLAY_SAFE_ASCII.has(char)) {
+    if (char === "\n") {
+      output.push("\\n");
+    } else if (char === "\t") {
+      output.push("\\t");
+    } else if (char === "\r") {
+      output.push("\\r");
+    } else if (char === "\b") {
+      output.push("\\b");
+    } else if (char === "\f") {
+      output.push("\\f");
+    } else if (codepoint <= 0x7f && DISPLAY_SAFE_ASCII.has(char)) {
       output.push(char);
     } else {
       output.push(`U+${codepoint.toString(16).toUpperCase().padStart(4, "0")}`);

@@ -124,10 +124,11 @@ data for Raspberry and ESP32 adapters, not as host-side approval authority.
 Review-detail-page vectors are also loaded and shape-checked as complete
 physical review-page contracts for constrained signer displays. They preserve
 the shared `approval_digest` but pin scroll windows, line styles, continuation
-indentation, and explicit codepoint fallback separately from the digest-bound
-`screen-pages` model. The companion can render these pages for previews and
-cross-repo comparison, but still treats them as conformance data, not as a
-trusted approval surface.
+indentation, visible JSON-style escapes for decoded control characters, and
+explicit codepoint fallback separately from the digest-bound `screen-pages`
+model. The companion can render these pages for previews and cross-repo
+comparison, but still treats them as conformance data, not as a trusted
+approval surface.
 
 QR review-transcript vectors are also loaded and shape-checked by
 `nseal fixture verify`. They bind raw QR input to frame/button/decision

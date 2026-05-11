@@ -39,7 +39,8 @@ single-repository CI. Cross-repository drift remains guarded by
   keeping `apps/cli` as a thin fixture-verification wrapper.
 - Trusted-review model tests in `packages/review` against every shared review,
   review-screen `approval_digest`, and review detail-page vector from
-  `NostrSeal/specs`.
+  `NostrSeal/specs`, including visible JSON-style control escapes in event
+  content and tags.
 - Development signer verification tests in `packages/dev-signer`.
 - Negative response verification tests for request id mismatch, template
   mismatch, event id mismatch, and invalid signatures.

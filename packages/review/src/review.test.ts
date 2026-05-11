@@ -45,4 +45,33 @@ describe("trusted review model", () => {
       expect(approvalDigestForRequest(reviewVector!.request)).toBe(vector.approval_digest);
     }
   });
+
+  it("renders decoded JSON control characters as visible escapes", () => {
+    const pages = renderReviewDetailPages(
+      {
+        kind: 1,
+        created_at: 1710000480,
+        author_pubkey: "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        content: "line 1\nline 2\tTabbed\rCarriage\bBackspace\fFormfeed",
+        content_utf8_bytes: 48,
+        tag_count: 2,
+        tags: [
+          ["t", "line\nbreak"],
+          ["subject", "tab\tvalue", "carriage\rreturn"]
+        ]
+      },
+      {
+        max_title_chars: 18,
+        max_body_lines: 5,
+        max_line_chars: 26,
+        max_compact_body_lines: 9,
+        max_compact_line_chars: 48
+      }
+    );
+
+    expect(pages[1].lines).toContain("line 1\\nline 2\\tTabbed\\rCarriage\\bBackspace\\fFor");
+    expect(pages[2].lines).toContain("line\\nbreak");
+    expect(pages[2].lines).toContain("tab\\tvalue");
+    expect(pages[2].lines).toContain("carriage\\rreturn");
+  });
 });

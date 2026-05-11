@@ -1,6 +1,5 @@
 import {
   compactJsonUtf8ByteLength,
-  isSafeNonNegativeInteger,
   NOSTRSEAL_V0_LIMITS,
   utf8ByteLength
 } from "./limits.js";
@@ -49,6 +48,16 @@ function validateSafeIntegerField(field: "created_at" | "kind", value: unknown):
   }
   if (!Number.isSafeInteger(value) || value > NOSTRSEAL_V0_LIMITS.max_safe_integer) {
     return { ok: false, error: `event_template ${field} exceeds max_safe_integer` };
+  }
+  return { ok: true };
+}
+
+function validateSignedEventIntegerField(field: "created_at" | "kind", value: unknown): ValidationResult {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    return { ok: false, error: `signed event ${field} must be a non-negative safe integer` };
+  }
+  if (!Number.isSafeInteger(value) || value > NOSTRSEAL_V0_LIMITS.max_safe_integer) {
+    return { ok: false, error: `signed event ${field} exceeds max_safe_integer` };
   }
   return { ok: true };
 }
@@ -138,8 +147,10 @@ function validateSignedEvent(value: unknown): ValidationResult {
   if (extra.length > 0) return { ok: false, error: `event contains unknown fields: ${extra.join(", ")}` };
   if (!isLowerHex(value.id, 64)) return { ok: false, error: "event id must be 32-byte lowercase hex" };
   if (!isLowerHex(value.pubkey, 64)) return { ok: false, error: "event pubkey must be 32-byte lowercase hex" };
-  if (!isSafeNonNegativeInteger(value.created_at)) return { ok: false, error: "created_at must be a non-negative integer" };
-  if (!isSafeNonNegativeInteger(value.kind)) return { ok: false, error: "kind must be a non-negative integer" };
+  const createdAt = validateSignedEventIntegerField("created_at", value.created_at);
+  if (!createdAt.ok) return createdAt;
+  const kind = validateSignedEventIntegerField("kind", value.kind);
+  if (!kind.ok) return kind;
   const tags = validateTags(value.tags, "signed event");
   if (!tags.ok) return tags;
   if (typeof value.content !== "string") return { ok: false, error: "content must be a string" };

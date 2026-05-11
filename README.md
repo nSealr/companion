@@ -82,8 +82,9 @@ clients to hardware-backed signing.
   capability discovery and signing-status responses, including rejection of
   contradictory `signing_enabled: true` diagnostics that still report missing
   gates, disabled diagnostics that omit missing-gate reasons, and duplicated
-  gate entries. Successful signed-event responses are also kept inside the
-  shared content and tag resource limits before they can be accepted.
+  gate entries. Successful signed-event responses are also checked for shared
+  integer-safety, content, and tag resource limits before they can be
+  accepted.
 - `packages/review` mirrors the shared trusted-review vector semantics for
   companion previews. It is not a trusted approval surface.
 - Serial transport tests cover both capability discovery and explicit

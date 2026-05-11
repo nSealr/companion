@@ -33,8 +33,8 @@ only adapt file/argument I/O around package-owned validation logic.
   `signing_enabled: true` while still reporting missing gates or
   `signing_enabled: false` without reporting at least one blocker. Gate lists
   are also checked for duplicates. Signed-event responses are checked against
-  the same content and tag resource limits before transport or CLI callers can
-  treat them as accepted output.
+  the same integer-safety, content, and tag resource limits before transport or
+  CLI callers can treat them as accepted output.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, limit-profile, and invalid hardening fixture
@@ -141,7 +141,7 @@ input. They must be evaluated before signer transport, dev signing,
 smartcard-sim signing, or NIP-46 routing can proceed, and failures must not
 write output artifacts. The same invalid-vector suite also covers unsafe
 signed-event response payloads so a real device output cannot bypass the v0
-content and tag limits after signing.
+integer-safety, content, and tag limits after signing.
 
 The current adapters cover three development paths:
 

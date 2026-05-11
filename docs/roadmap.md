@@ -139,9 +139,9 @@ still blocks full NIP-46 relay sessions, browser extension work, persistent
 grants, and production signer I/O.
 
 Status note, 2026-05-11: response validation now rejects signed-event outputs
-whose content or tags exceed the shared v0 implementation limits. This keeps
-the accepted-output side of companion verification aligned with the
-pre-signing request boundary.
+whose integer fields, content, or tags exceed the shared v0 implementation
+limits. This keeps the accepted-output side of companion verification aligned
+with the pre-signing request boundary.
 
 Status note, 2026-05-10: companion QR tooling now supports `qr-animated`
 frame files for larger valid payloads. The implementation consumes the shared

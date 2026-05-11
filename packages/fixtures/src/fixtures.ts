@@ -1,5 +1,13 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
+import {
+  parseAccountDescriptor,
+  parseGrantDescriptor,
+  parsePolicyProfile,
+  type AccountDescriptor,
+  type GrantDescriptor,
+  type PolicyProfile
+} from "../../policy/src/policy.js";
 import { REVIEW_DETAIL_BODY_LINE_STYLES } from "../../review/src/review.js";
 
 export type SpecsFixtureSet = {
@@ -182,6 +190,9 @@ export type SpecsFixtureSet = {
       event_kind?: number;
     }>;
   }>;
+  accounts: AccountDescriptor[];
+  policyProfiles: PolicyProfile[];
+  grants: GrantDescriptor[];
   limits: {
     format: string;
     name: string;
@@ -277,6 +288,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const reviewTranscriptsRoot = resolve(specsRoot, "vectors/review-transcripts");
   const nip46Root = resolve(specsRoot, "vectors/nip46");
   const nip46PolicyFilesRoot = resolve(specsRoot, "vectors/nip46-policy-files");
+  const accountsRoot = resolve(specsRoot, "vectors/accounts");
+  const policyProfilesRoot = resolve(specsRoot, "vectors/policies");
+  const grantsRoot = resolve(specsRoot, "vectors/grants");
   const invalidVectorsRoot = resolve(specsRoot, "vectors/invalid");
   const eventFiles = readdirSync(eventsRoot)
     .filter((file) => file.endsWith(".json"))
@@ -300,6 +314,15 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const nip46PolicyFiles = readdirSync(nip46PolicyFilesRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const accountFiles = readdirSync(accountsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const policyProfileFiles = readdirSync(policyProfilesRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const grantFiles = readdirSync(grantsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const invalidVectorFiles = readdirSync(invalidVectorsRoot)
@@ -332,6 +355,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
           name: fileStem(file)
         }) as SpecsFixtureSet["nip46PolicyFiles"][number]
     ),
+    accounts: accountFiles.map((file) => parseAccountDescriptor(loadJson(resolve(accountsRoot, file)))),
+    policyProfiles: policyProfileFiles.map((file) => parsePolicyProfile(loadJson(resolve(policyProfilesRoot, file)))),
+    grants: grantFiles.map((file) => parseGrantDescriptor(loadJson(resolve(grantsRoot, file)))),
     invalidVectors: invalidVectorFiles.map(
       (file) => loadJson(resolve(invalidVectorsRoot, file)) as SpecsFixtureSet["invalidVectors"][number]
     )

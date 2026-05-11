@@ -133,6 +133,21 @@ describe("fixture loading", () => {
     expect(fixtures.nip46PolicyFiles[0].format).toBe("nseal-nip46-policy-v0");
   });
 
+  it("loads identity, policy, and grant descriptors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+
+    expect(fixtures.accounts.map((account) => account.account_id)).toEqual(expect.arrayContaining([
+      "acct-raspberry-qr-nip06-account-0",
+      "acct-esp32-usb-slot-0",
+      "acct-external-nip46-bunker"
+    ]));
+    expect(fixtures.policyProfiles.map((policy) => policy.policy_id)).toEqual(expect.arrayContaining([
+      "policy-manual-only-qr-vault",
+      "policy-scoped-automation-daily-use"
+    ]));
+    expect(fixtures.grants.map((grant) => grant.grant_id)).toEqual(["grant-esp32-usb-kind-1-session"]);
+  });
+
   it("loads implementation limits and invalid hardening vectors from the specs repository", () => {
     const specsRoot = resolveSpecsRoot();
     const fixtures = loadSpecsFixtures(specsRoot);

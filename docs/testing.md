@@ -32,6 +32,8 @@ single-repository CI. Cross-repository drift remains guarded by
   Invalid hardening fixture loading is directory-driven so new shared invalid
   vectors are discovered from the sibling specs checkout or local snapshot
   instead of being maintained in a hand-written name list.
+  Account-descriptor, policy-profile, and grant-descriptor loading is also
+  directory-driven through `packages/policy`.
   QR review-transcript fixture validation also lives in this package and covers
   `scroll` buttons plus rendered-frame `body_line_styles` mismatch rejection,
   keeping `apps/cli` as a thin fixture-verification wrapper.
@@ -60,8 +62,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI fixture verification tests against `NostrSeal/specs`, covering both
   signed-event fixtures, trusted-review fixtures, review-display-frame
   fixtures, review-detail-page fixtures, QR review-transcript fixtures, NIP-46
-  payload fixtures, and NIP-46 policy-file fixtures, plus the shared
-  implementation-limit profile and invalid hardening vectors.
+  payload fixtures, NIP-46 policy-file fixtures, account descriptors, policy
+  profiles, and grant descriptors, plus the shared implementation-limit profile
+  and invalid hardening vectors.
 - CLI fixture verification rejects review detail-page style drift, including
   unknown body-line style names and continuation lines that are not styled as
   `value`.
@@ -159,6 +162,9 @@ single-repository CI. Cross-repository drift remains guarded by
   `--permissions` plus `--policy-file` usage. The positive case consumes the
   shared `NostrSeal/specs` policy-file vector instead of an inline local copy.
   The CLI fixture verifier also rejects drift in shared policy-file vectors.
+- Policy package tests cover secretless account descriptors, manual-only QR
+  vault policy, scoped grants for persistent routes, wildcard rejection, and
+  rejection of stateless QR-vault grant targets.
 - Pre-signing hardening tests must reject every shared invalid vector that
   reaches companion-owned parsing: unsafe event-template fields, unsafe integer
   values, resource-limit violations, malformed or ambiguous responses,

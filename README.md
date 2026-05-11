@@ -10,9 +10,10 @@ clients to hardware-backed signing.
 
 - `nseal fixture verify` validates shared signing, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
-  payload, and NIP-46 policy-file fixtures from `NostrSeal/specs`, including
-  NIP-46 permission policy checks, bridge decisions, implementation limits, and
-  invalid hardening vectors.
+  payload, NIP-46 policy-file, account descriptor, policy profile, and grant
+  descriptor fixtures from `NostrSeal/specs`, including NIP-46 permission
+  policy checks, bridge decisions, implementation limits, and invalid
+  hardening vectors.
 - `nseal request` creates signing requests from event templates and
   parameterless device requests for `get_capabilities`, `get_public_key`, and
   `get_signing_status`, with caller-supplied `--request-id` support for
@@ -91,8 +92,13 @@ clients to hardware-backed signing.
   signing-disabled scaffold responses.
 - `packages/fixtures` loads shared event, trusted-review, review-display-frame,
   review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
-  and smartcard vectors from `NostrSeal/specs` for companion, Raspberry QR
-  vault, ESP32 firmware, and smartcard conformance tests.
+  account-descriptor, policy-profile, grant-descriptor, and smartcard vectors
+  from `NostrSeal/specs` for companion, Raspberry QR vault, ESP32 firmware, and
+  smartcard conformance tests.
+- `packages/policy` parses secretless account descriptors, policy profiles, and
+  grant descriptors. It rejects embedded private-key material, QR-vault
+  automation, wildcard grants, and stateless QR-vault grant targets before CLI
+  or fixture-verification code can treat those records as valid.
 - `packages/smartcard` implements the first APDU codec, simulator adapter,
   provider-based PC/SC APDU transport boundary, and `SmartcardSigner` boundary
   against shared smartcard vectors, including APDU rejection status words. The

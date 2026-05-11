@@ -11,8 +11,8 @@
 Status: implemented as the first companion foundation with JSON and QR envelope
 CLI paths. Fixture verification now includes shared review-display-frame,
 review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
-limit-profile, and invalid hardening vectors in addition to event and
-trusted-review vectors. The
+account-descriptor, policy-profile, grant-descriptor, limit-profile, and
+invalid hardening vectors in addition to event and trusted-review vectors. The
 shared invalid-vector set now includes strict response-shape rejection for
 ambiguous result payloads, error/result mixing, and unknown top-level response
 fields, plus contradictory signing-status readiness where a device claims
@@ -147,6 +147,12 @@ pre-signing request boundary.
 Status note, 2026-05-11: invalid hardening fixture loading tests now derive the
 expected vector names from `vectors/invalid/*.json` instead of a hand-maintained
 list, reducing snapshot drift as the shared contract grows.
+
+Status note, 2026-05-11: companion fixture verification now consumes the shared
+account-descriptor, policy-profile, and grant-descriptor vectors. The package
+parser rejects embedded secret fields, QR-vault automation, wildcard grants,
+and stateless QR-vault grant targets. This is metadata validation only; it does
+not add a persistent grant store or browser/relay session.
 
 Status note, 2026-05-10: companion QR tooling now supports `qr-animated`
 frame files for larger valid payloads. The implementation consumes the shared

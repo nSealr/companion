@@ -545,13 +545,28 @@ export function buildCli(options: BuildCliOptions = {}): Command {
       for (const nip46PolicyFile of fixtures.nip46PolicyFiles) {
         validateNip46PolicyFileFixture(nip46PolicyFile.name, nip46PolicyFile);
       }
+      for (const account of fixtures.accounts) {
+        if (account.signer_route.type.endsWith("_qr_vault") && account.capabilities.persistent_grants !== false) {
+          throw new Error(`invalid account descriptor ${account.account_id}: QR vaults must not support persistent grants`);
+        }
+      }
+      for (const policy of fixtures.policyProfiles) {
+        if (policy.route_types.some((route) => route.endsWith("_qr_vault")) && policy.grants_allowed) {
+          throw new Error(`invalid policy profile ${policy.policy_id}: QR vault policies must not allow grants`);
+        }
+      }
+      for (const grant of fixtures.grants) {
+        if (grant.route_type.endsWith("_qr_vault")) {
+          throw new Error(`invalid grant descriptor ${grant.grant_id}: QR vaults must not receive grants`);
+        }
+      }
       for (const invalidVector of fixtures.invalidVectors) {
         validateInvalidHardeningFixture(invalidVector);
       }
       const policyFileFixtureLabel =
         fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture");
       console.log(
-        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );
     });
 

@@ -38,10 +38,14 @@ only adapt file/argument I/O around package-owned validation logic.
   callers can treat them as accepted output.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
-  payload, NIP-46 policy-file, limit-profile, and invalid hardening fixture
-  loading. Package code also owns QR review-transcript fixture validation,
-  including `scroll` buttons and rendered-frame `body_line_styles`, so the CLI
-  does not duplicate that contract.
+  payload, NIP-46 policy-file, account-descriptor, policy-profile,
+  grant-descriptor, limit-profile, and invalid hardening fixture loading.
+  Package code also owns QR review-transcript fixture validation, including
+  `scroll` buttons and rendered-frame `body_line_styles`, so the CLI does not
+  duplicate that contract.
+- `packages/policy`: secretless account, route, recovery, policy, and grant
+  descriptor parsing. This package owns anti-secret and anti-QR-automation
+  checks so CLI code does not grow a parallel policy parser.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: test-only signing implementation.
@@ -140,6 +144,13 @@ explicit approved-permission inputs stay normalized across specs, companion,
 and lab integration. Package code owns the parser; the CLI only reads files and
 passes parsed policies into bridge decisions. They are read-only conformance
 files, not a grant store.
+
+Account, policy, and grant descriptors are loaded through `packages/policy`.
+The companion may keep labels, public keys, signer routes, recovery
+descriptors, capabilities, policy ids, and scoped grant metadata. It must not
+store production `nsec`, mnemonic, seed, passphrase, NIP-49 ciphertext, or raw
+private key material. Stateless QR vault routes remain manual-only and cannot
+receive persistent grants.
 
 Pre-signing hardening vectors are the companion's rejection oracle for unsafe
 input. They must be evaluated before signer transport, dev signing,

@@ -592,6 +592,34 @@ describe("nseal CLI", () => {
     expect(existsSync(responsePath)).toBe(false);
   });
 
+  it("does not write serial line output when the device returns an error frame", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-serial-line-error-"));
+    const request = loadJson(resolve(specsRoot, "examples/request-get-capabilities.json"));
+    const requestPath = join(tempRoot, "request.json");
+    const responsePath = join(tempRoot, "response.json");
+    const closedPorts: string[] = [];
+    const incomingLines = [encodeSerialFrame({ type: "error", payload: { error: "unsupported_request" } })];
+    const cli = buildCli({
+      openSerialLinePort: (path) => ({
+        writeLine: async () => {},
+        readLine: async () => incomingLines.shift() ?? null,
+        close: () => {
+          closedPorts.push(path);
+        }
+      })
+    }).exitOverride();
+
+    writeFileSync(requestPath, `${JSON.stringify(request, null, 2)}\n`, "utf8");
+
+    await expect(
+      cli.parseAsync(["serial-line", "exchange", "--port", "/dev/cu.usbmodem-test", "--request", requestPath, "--out", responsePath], {
+        from: "user"
+      })
+    ).rejects.toThrow("serial frame transport error: unsupported_request");
+    expect(closedPorts).toEqual(["/dev/cu.usbmodem-test"]);
+    expect(existsSync(responsePath)).toBe(false);
+  });
+
   it("renders an untrusted review preview from a QR signing request", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-review-"));
     const vector = loadJson(resolve(specsRoot, "vectors/review/kind-1-tags.json")) as {

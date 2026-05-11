@@ -96,7 +96,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI serial-line tests proving `nseal serial-line exchange` remains a thin
   file/argument wrapper around the package-owned one-shot serial-line exchange,
   writes output only after verification, and still rejects invalid requests
-  before any port is opened.
+  before any port is opened. They also prove device `nseal1f:error` frames are
+  surfaced as deterministic transport errors without writing output.
 - Shared `NostrSeal/specs` capability response conformance tests.
 - Shared `NostrSeal/specs` ESP32-S3 signing-disabled response conformance
   tests.

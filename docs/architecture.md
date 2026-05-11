@@ -165,6 +165,12 @@ The current adapters cover three development paths:
   `--request`, response unwrapping also verifies the original request id and
   signed-output binding before writing output. These commands do not open a
   physical USB, CDC, HID, WebUSB, or WebSerial connection.
+- `nseal serial-line exchange`: one-shot local USB-serial helper for opening a
+  newline-oriented device path, sending a validated `nseal1f:` request frame,
+  skipping firmware log lines, verifying the response shape/request id/signed
+  output, writing the chosen output format, and closing the stream-backed port.
+  It is not a browser transport, relay session, persistent signer connection,
+  or permission grant mechanism.
 - `nseal request get-capabilities`, `nseal request get-public-key`, and
   `nseal request get-signing-status`: host-side generators for non-sensitive
   parameterless device requests. They validate caller-supplied request ids

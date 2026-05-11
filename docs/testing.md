@@ -91,6 +91,9 @@ single-repository CI. Cross-repository drift remains guarded by
   and writable-stream request frames behave like the injected port contract
   without a native serial dependency. They also prove unterminated oversized
   input is rejected without rejecting batched short complete lines.
+- CLI serial-line tests proving `nseal serial-line exchange` validates requests
+  before opening a port, skips non-protocol device log lines, verifies the
+  response, writes output only after verification, and closes the injected port.
 - Shared `NostrSeal/specs` capability response conformance tests.
 - Shared `NostrSeal/specs` ESP32-S3 signing-disabled response conformance
   tests.
@@ -154,7 +157,8 @@ single-repository CI. Cross-repository drift remains guarded by
 ## Next Test Additions
 
 - Large QR payload strategy tests once chunking or compression is designed.
-- Hardware serial smoke tests before adding WebUSB, HID, or CDC adapters.
+- Hardware serial smoke tests before adding WebUSB, HID, CDC, or persistent
+  session adapters.
 
 ## Rule
 

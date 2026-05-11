@@ -69,8 +69,11 @@ can write an over-limit line. Serial-frame transport surfaces device
 `nseal1f:error` payloads as deterministic transport diagnostics instead of
 discarding the error code. The offline serial-frame unwrap helper can now take
 the original request and reject mismatched captured responses before writing
-output. M3 remains open for larger-payload strategy beyond v0 frame refusal and
-a production-grade native USB/WebSerial binding.
+output. `nseal serial-line exchange` now opens a local newline serial device
+path for one validated request/response exchange, skips firmware log lines,
+verifies the response before writing output, and closes the stream-backed port.
+M3 remains open for larger-payload strategy beyond v0 frame refusal and a
+production-grade browser/native USB/WebSerial binding.
 
 ## M4: NIP-46 Payload Bridge
 
@@ -140,7 +143,7 @@ line without adding compression, fountain codes, relay sessions, or signer I/O.
 
 - Browser bridge.
 - Full NIP-46/Nostr Connect relay session integration.
-- USB/WebUSB/HID/CDC transports.
+- WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and
   `SmartcardSigner` boundary.
 

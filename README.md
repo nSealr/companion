@@ -50,6 +50,11 @@ clients to hardware-backed signing.
   response unwrapping helpers for ESP32 bring-up and lab captures. Response
   unwrapping can verify the original request before writing output, so
   captured frames cannot silently drift across request ids.
+- `nseal serial-line exchange` opens a newline serial device path for one
+  validated request/response exchange, verifies the response before writing
+  output, skips firmware log lines, and closes the stream-backed port after the
+  exchange. It is a local USB-serial bring-up helper, not a browser/WebUSB or
+  persistent signer session.
 - `nseal nip46 decide` writes the bridge decision for an already-decrypted
   NIP-46 payload using explicit permission inputs or a read-only policy file.
   It does not open relays, decrypt NIP-44 payloads, persist grants, or contact
@@ -104,7 +109,7 @@ clients to hardware-backed signing.
 - Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,
   permissions, and auth challenges.
 - QR encoder and decoder for vault flows.
-- Physical USB, WebUSB, HID, CDC, and WebSerial transport experiments.
+- WebUSB, HID, CDC, WebSerial, and persistent transport experiments.
 - PC/SC and NFC smartcard adapter.
 - TROPIC01 USB DevKit research adapter for the custom persistent-secret
   hardware-wallet family.

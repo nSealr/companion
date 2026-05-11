@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync, writeFileSync } from "node:fs";
 import { Command } from "commander";
+import { SerialPort } from "serialport";
 import { verifySignedEventResponse, type SignEventRequest } from "../../../packages/core/src/nostr.js";
 import { devSignRequest } from "../../../packages/dev-signer/src/dev-signer.js";
 import { loadSpecsFixtures } from "../../../packages/fixtures/src/fixtures.js";
@@ -34,8 +35,17 @@ import {
 } from "../../../packages/review/src/review.js";
 import { SmartcardSimulator } from "../../../packages/smartcard/src/apdu.js";
 import { SmartcardSigner } from "../../../packages/smartcard/src/signer.js";
+import {
+  SerialLineStreamPort,
+  SerialLineTransport,
+  type SerialLinePort
+} from "../../../packages/transport/src/transport.js";
 
 type DataFormat = "json" | "qr" | "qr-animated";
+
+type BuildCliOptions = {
+  openSerialLinePort?: (path: string) => Promise<SerialLinePort> | SerialLinePort;
+};
 
 const DEFAULT_REVIEW_DETAIL_PAGE_LIMITS: ReviewDetailPageLimits = {
   max_title_chars: 18,
@@ -505,7 +515,22 @@ function fixtureCountLabel(count: number, singular: string, plural = `${singular
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
-export function buildCli(): Command {
+async function openNodeSerialLinePort(path: string): Promise<SerialLinePort> {
+  const serialPort = new SerialPort({ path, baudRate: 115_200, autoOpen: false });
+  await new Promise<void>((resolve, reject) => {
+    serialPort.open((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+  return new SerialLineStreamPort({ input: serialPort, output: serialPort });
+}
+
+export function buildCli(options: BuildCliOptions = {}): Command {
+  const openSerialLinePort = options.openSerialLinePort ?? openNodeSerialLinePort;
   const program = new Command();
   program.name("nseal").description("NostrSeal companion CLI").version("0.1.0");
 
@@ -765,6 +790,46 @@ export function buildCli(): Command {
       }
       writeValue(options.out, frame.payload, options.outputFormat);
     });
+
+  const serialLine = program.command("serial-line").description("Exchange validated requests over a newline serial port");
+
+  serialLine
+    .command("exchange")
+    .requiredOption("--port <path>", "Serial device path, for example /dev/cu.usbmodem1101")
+    .requiredOption("--request <path>")
+    .option("--request-format <format>", "Request format: json, qr, or qr-animated", "json")
+    .requiredOption("--out <path>")
+    .option("--output-format <format>", "Output format: json, qr, or qr-animated", "json")
+    .option("--timeout-ms <value>", "Read/write timeout in milliseconds", "30000")
+    .option("--max-ignored-lines <value>", "Maximum non-protocol lines to skip before failing", "32")
+    .description("Send one validated request frame and write the verified response")
+    .action(
+      async (actionOptions: {
+        port: string;
+        request: string;
+        requestFormat: string;
+        out: string;
+        outputFormat: string;
+        timeoutMs: string;
+        maxIgnoredLines: string;
+      }) => {
+        assertFormat(actionOptions.requestFormat);
+        assertFormat(actionOptions.outputFormat);
+        const request = readValue(actionOptions.request, actionOptions.requestFormat);
+        const validation = validateRequest(request);
+        if (!validation.ok) throw new Error(validation.error);
+        const responseTimeoutMs = positiveIntegerOption(actionOptions.timeoutMs, 30_000, "--timeout-ms");
+        const maxIgnoredLines = positiveIntegerOption(actionOptions.maxIgnoredLines, 32, "--max-ignored-lines");
+        const port = await openSerialLinePort(actionOptions.port);
+        try {
+          const transport = new SerialLineTransport({ port, responseTimeoutMs, maxIgnoredLines });
+          const response = await transport.exchange(request);
+          writeValue(actionOptions.out, response, actionOptions.outputFormat);
+        } finally {
+          await port.close?.();
+        }
+      }
+    );
 
   const nip46 = program.command("nip46").description("Inspect already-decrypted NIP-46 payloads");
 

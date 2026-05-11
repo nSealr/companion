@@ -23,7 +23,9 @@ single-repository CI. Cross-repository drift remains guarded by
 
 - NIP-01 canonicalization tests in `packages/core`.
 - BIP-340 verification tests in `packages/core`.
-- Request and response shape validation tests in `packages/protocol`.
+- Request and response shape validation tests in `packages/protocol`, including
+  signing-status consistency checks that reject `signing_enabled: true` while
+  any `missing_gates` remain.
 - Shared fixture loading tests in `packages/fixtures`.
 - Trusted-review model tests in `packages/review` against every shared review,
   review-screen `approval_digest`, and review detail-page vector from
@@ -152,8 +154,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - Pre-signing hardening tests must reject every shared invalid vector that
   reaches companion-owned parsing: unsafe event-template fields, unsafe integer
   values, resource-limit violations, malformed or ambiguous responses,
-  malformed QR/serial envelopes, malformed NIP-46 payloads, and invalid policy
-  files.
+  contradictory signing-status readiness, malformed QR/serial envelopes,
+  malformed NIP-46 payloads, and invalid policy files.
 - Nostr conformance oracle tests must compare companion event id/signature
   behavior with `nostr-tools` in tests, while keeping production code free of
   unnecessary oracle coupling.

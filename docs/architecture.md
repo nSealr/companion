@@ -27,9 +27,10 @@ only adapt file/argument I/O around package-owned validation logic.
 
 - `apps/cli`: command-line entrypoint.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
-- `packages/protocol`: schema validation, typed request/response models, and
-  the central NostrSeal v0 implementation limit profile used by companion
-  parsers.
+- `packages/protocol`: schema validation, typed request/response models, the
+  central NostrSeal v0 implementation limit profile used by companion parsers,
+  and signing-status consistency checks so a signer cannot claim
+  `signing_enabled: true` while still reporting missing gates.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, limit-profile, and invalid hardening fixture

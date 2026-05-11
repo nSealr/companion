@@ -175,6 +175,9 @@ function validateSigningStatus(value: unknown): ValidationResult {
   if (typeof value.signing_enabled !== "boolean") return { ok: false, error: "signing_status signing_enabled must be boolean" };
   const missingGates = validateSigningStatusGateList(value.missing_gates, "missing");
   if (!missingGates.ok) return missingGates;
+  if (value.signing_enabled === true && Array.isArray(value.missing_gates) && value.missing_gates.length > 0) {
+    return { ok: false, error: "signing_status signing_enabled true requires empty missing_gates" };
+  }
   return validateSigningStatusGateList(value.development_accepted_gates, "development_accepted");
 }
 

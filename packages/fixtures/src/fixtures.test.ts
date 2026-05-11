@@ -147,6 +147,7 @@ describe("fixture loading", () => {
       "request-too-many-tags",
       "request-unknown-top-level-field",
       "response-error-with-result",
+      "response-signing-status-disabled-without-missing-gates",
       "response-signing-status-enabled-with-missing-gates",
       "response-success-ambiguous-result",
       "response-unknown-top-level-field",

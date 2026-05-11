@@ -178,6 +178,9 @@ function validateSigningStatus(value: unknown): ValidationResult {
   if (value.signing_enabled === true && Array.isArray(value.missing_gates) && value.missing_gates.length > 0) {
     return { ok: false, error: "signing_status signing_enabled true requires empty missing_gates" };
   }
+  if (value.signing_enabled === false && Array.isArray(value.missing_gates) && value.missing_gates.length === 0) {
+    return { ok: false, error: "signing_status signing_enabled false requires at least one missing gate" };
+  }
   return validateSigningStatusGateList(value.development_accepted_gates, "development_accepted");
 }
 

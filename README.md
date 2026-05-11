@@ -81,7 +81,7 @@ clients to hardware-backed signing.
   companion copy of the shared v0 implementation limits, and validates
   capability discovery and signing-status responses, including rejection of
   contradictory `signing_enabled: true` diagnostics that still report missing
-  gates.
+  gates and disabled diagnostics that omit missing-gate reasons.
 - `packages/review` mirrors the shared trusted-review vector semantics for
   companion previews. It is not a trusted approval surface.
 - Serial transport tests cover both capability discovery and explicit

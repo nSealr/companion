@@ -16,9 +16,10 @@ trusted-review vectors. The
 shared invalid-vector set now includes strict response-shape rejection for
 ambiguous result payloads, error/result mixing, and unknown top-level response
 fields, plus contradictory signing-status readiness where a device claims
-`signing_enabled: true` while still listing missing gates. Malformed JSON and
-unsupported request-method CLI rejection tests are now covered.
-`verify-response` now validates the original request before
+`signing_enabled: true` while still listing missing gates, and reason-less
+disabled status where `signing_enabled: false` omits all missing gates.
+Malformed JSON and unsupported request-method CLI rejection tests are now
+covered. `verify-response` now validates the original request before
 accepting any response, so malformed request files cannot be certified by
 pairing them with a validly shaped response. The request CLI now also emits
 validated parameterless device requests for capability discovery, public-key

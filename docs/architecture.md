@@ -30,7 +30,8 @@ only adapt file/argument I/O around package-owned validation logic.
 - `packages/protocol`: schema validation, typed request/response models, the
   central NostrSeal v0 implementation limit profile used by companion parsers,
   and signing-status consistency checks so a signer cannot claim
-  `signing_enabled: true` while still reporting missing gates.
+  `signing_enabled: true` while still reporting missing gates or
+  `signing_enabled: false` without reporting at least one blocker.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, limit-profile, and invalid hardening fixture

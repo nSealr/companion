@@ -152,6 +152,7 @@ describe("fixture loading", () => {
       "response-event-kind-unsafe-integer",
       "response-event-tag-field-too-long",
       "response-event-too-many-tags",
+      "response-request-id-invalid",
       "response-signing-status-duplicate-development-accepted-gate",
       "response-signing-status-duplicate-missing-gate",
       "response-signing-status-disabled-without-missing-gates",

@@ -140,8 +140,9 @@ grants, and production signer I/O.
 
 Status note, 2026-05-11: response validation now rejects signed-event outputs
 whose integer fields, content, or tags exceed the shared v0 implementation
-limits. This keeps the accepted-output side of companion verification aligned
-with the pre-signing request boundary.
+limits, and rejects response request ids outside the shared v0 profile. This
+keeps the accepted-output side of companion verification aligned with the
+pre-signing request boundary.
 
 Status note, 2026-05-10: companion QR tooling now supports `qr-animated`
 frame files for larger valid payloads. The implementation consumes the shared

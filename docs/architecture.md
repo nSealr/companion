@@ -32,9 +32,10 @@ only adapt file/argument I/O around package-owned validation logic.
   and signing-status consistency checks so a signer cannot claim
   `signing_enabled: true` while still reporting missing gates or
   `signing_enabled: false` without reporting at least one blocker. Gate lists
-  are also checked for duplicates. Signed-event responses are checked against
-  the same integer-safety, content, and tag resource limits before transport or
-  CLI callers can treat them as accepted output.
+  are also checked for duplicates. Response request ids must follow the same
+  v0 profile as requests, and signed-event responses are checked against the
+  same integer-safety, content, and tag resource limits before transport or CLI
+  callers can treat them as accepted output.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, limit-profile, and invalid hardening fixture

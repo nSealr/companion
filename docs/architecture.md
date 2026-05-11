@@ -39,12 +39,14 @@ only adapt file/argument I/O around package-owned validation logic.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, account-descriptor, policy-profile,
-  grant-descriptor, limit-profile, and invalid hardening fixture loading.
+  grant-descriptor, policy-decision, limit-profile, and invalid hardening
+  fixture loading.
   Package code also owns QR review-transcript fixture validation, including
   `scroll` buttons and rendered-frame `body_line_styles`, so the CLI does not
   duplicate that contract.
-- `packages/policy`: secretless account, route, recovery, policy, and grant
-  descriptor parsing. This package owns anti-secret and anti-QR-automation
+- `packages/policy`: secretless account, route, recovery, policy, grant
+  descriptor parsing, and pure policy-decision evaluation. This package owns
+  anti-secret, anti-QR-automation, anti-decrypt-grant, and audit-event decision
   checks so CLI code does not grow a parallel policy parser.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
@@ -151,6 +153,14 @@ descriptors, capabilities, policy ids, and scoped grant metadata. It must not
 store production `nsec`, mnemonic, seed, passphrase, NIP-49 ciphertext, or raw
 private key material. Stateless QR vault routes remain manual-only and cannot
 receive persistent grants.
+
+Policy-decision vectors are also consumed through `packages/policy`. The
+current evaluator is pure and stateless: it accepts an explicit policy profile,
+explicit grant descriptors, and an explicit request snapshot, then returns a
+deterministic allow, deny, or manual-review decision plus a
+`nseal-grant-audit-event-v0` object. It deliberately does not create a grant
+store, persist approvals, acknowledge NIP-46 `connect`, open relay sessions, or
+contact signer transports.
 
 Pre-signing hardening vectors are the companion's rejection oracle for unsafe
 input. They must be evaluated before signer transport, dev signing,

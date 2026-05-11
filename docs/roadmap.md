@@ -11,8 +11,9 @@
 Status: implemented as the first companion foundation with JSON and QR envelope
 CLI paths. Fixture verification now includes shared review-display-frame,
 review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
-account-descriptor, policy-profile, grant-descriptor, limit-profile, and
-invalid hardening vectors in addition to event and trusted-review vectors. The
+account-descriptor, policy-profile, grant-descriptor, policy-decision,
+limit-profile, and invalid hardening vectors in addition to event and
+trusted-review vectors. The
 shared invalid-vector set now includes strict response-shape rejection for
 ambiguous result payloads, error/result mixing, and unknown top-level response
 fields, plus contradictory signing-status readiness where a device claims
@@ -153,6 +154,13 @@ account-descriptor, policy-profile, and grant-descriptor vectors. The package
 parser rejects embedded secret fields, QR-vault automation, wildcard grants,
 and stateless QR-vault grant targets. This is metadata validation only; it does
 not add a persistent grant store or browser/relay session.
+
+Status note, 2026-05-11: companion policy code now consumes shared
+policy-decision transcript vectors. The pure evaluator allows only an explicit
+matching unexpired/unrevoked grant, denies expired, revoked, and secret-export
+requests, routes decrypt and unknown methods to manual review, and emits the
+expected audit-event object. This still does not add a grant store, relay
+session, signer I/O, or production key custody.
 
 Status note, 2026-05-10: companion QR tooling now supports `qr-animated`
 frame files for larger valid payloads. The implementation consumes the shared

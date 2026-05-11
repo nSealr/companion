@@ -148,6 +148,20 @@ describe("fixture loading", () => {
     expect(fixtures.grants.map((grant) => grant.grant_id)).toEqual(["grant-esp32-usb-kind-1-session"]);
   });
 
+  it("loads policy decision vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+
+    expect(fixtures.policyDecisions.map((decision) => decision.name)).toEqual([
+      "export-secret-denied",
+      "grant-sign-event-kind-1-allowed",
+      "grant-sign-event-kind-1-expired",
+      "grant-sign-event-kind-1-revoked",
+      "nip44-decrypt-manual-review",
+      "unknown-method-manual-review"
+    ]);
+    expect(fixtures.policyDecisions[0].format).toBe("nseal-policy-decision-vector-v0");
+  });
+
   it("loads implementation limits and invalid hardening vectors from the specs repository", () => {
     const specsRoot = resolveSpecsRoot();
     const fixtures = loadSpecsFixtures(specsRoot);

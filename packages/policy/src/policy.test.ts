@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import {
+  decidePolicyRequest,
   parseAccountDescriptor,
   parseGrantDescriptor,
   parsePolicyProfile
@@ -57,5 +58,40 @@ describe("identity, recovery, and policy contracts", () => {
 
     expect(() => parseGrantDescriptor(grant)).toThrow(/stateless QR vault/u);
     expect(() => parseGrantDescriptor({ ...grant, route_type: "esp32_usb_nip46" })).toThrow(/wildcard/u);
+  });
+
+  it("rejects decrypt grants because decrypt operations require manual review", () => {
+    const grant = loadJson(resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json")) as {
+      permission: Record<string, unknown>;
+    };
+    grant.permission = { method: "nip44_decrypt" };
+
+    expect(() => parseGrantDescriptor(grant)).toThrow(/decrypt grant permissions require manual review/u);
+  });
+
+  it("matches shared policy decision vectors without a persistent grant store", () => {
+    const policy = parsePolicyProfile(loadJson(resolve(specsRoot, "vectors/policies/scoped-automation-daily-use.json")));
+    const grant = parseGrantDescriptor(loadJson(resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json")));
+    const vectorNames = [
+      "export-secret-denied",
+      "grant-sign-event-kind-1-allowed",
+      "grant-sign-event-kind-1-expired",
+      "grant-sign-event-kind-1-revoked",
+      "nip44-decrypt-manual-review",
+      "unknown-method-manual-review"
+    ];
+
+    for (const name of vectorNames) {
+      const vector = loadJson(resolve(specsRoot, `vectors/policy-decisions/${name}.json`)) as {
+        request: Parameters<typeof decidePolicyRequest>[0]["request"];
+        decision: ReturnType<typeof decidePolicyRequest>;
+      };
+
+      expect(decidePolicyRequest({
+        policy,
+        grants: [grant],
+        request: vector.request
+      })).toEqual(vector.decision);
+    }
   });
 });

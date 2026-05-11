@@ -32,8 +32,8 @@ single-repository CI. Cross-repository drift remains guarded by
   Invalid hardening fixture loading is directory-driven so new shared invalid
   vectors are discovered from the sibling specs checkout or local snapshot
   instead of being maintained in a hand-written name list.
-  Account-descriptor, policy-profile, and grant-descriptor loading is also
-  directory-driven through `packages/policy`.
+  Account-descriptor, policy-profile, grant-descriptor, and policy-decision
+  loading is also directory-driven through `packages/policy`.
   QR review-transcript fixture validation also lives in this package and covers
   `scroll` buttons plus rendered-frame `body_line_styles` mismatch rejection,
   keeping `apps/cli` as a thin fixture-verification wrapper.
@@ -63,8 +63,8 @@ single-repository CI. Cross-repository drift remains guarded by
   signed-event fixtures, trusted-review fixtures, review-display-frame
   fixtures, review-detail-page fixtures, QR review-transcript fixtures, NIP-46
   payload fixtures, NIP-46 policy-file fixtures, account descriptors, policy
-  profiles, and grant descriptors, plus the shared implementation-limit profile
-  and invalid hardening vectors.
+  profiles, grant descriptors, and policy-decision vectors, plus the shared
+  implementation-limit profile and invalid hardening vectors.
 - CLI fixture verification rejects review detail-page style drift, including
   unknown body-line style names and continuation lines that are not styled as
   `value`.
@@ -163,8 +163,10 @@ single-repository CI. Cross-repository drift remains guarded by
   shared `NostrSeal/specs` policy-file vector instead of an inline local copy.
   The CLI fixture verifier also rejects drift in shared policy-file vectors.
 - Policy package tests cover secretless account descriptors, manual-only QR
-  vault policy, scoped grants for persistent routes, wildcard rejection, and
-  rejection of stateless QR-vault grant targets.
+  vault policy, scoped grants for persistent routes, wildcard/decrypt/export
+  rejection, rejection of stateless QR-vault grant targets, and deterministic
+  policy-decision transcripts for allowed, expired, revoked, decrypt,
+  export-secret, and unknown-method requests.
 - Pre-signing hardening tests must reject every shared invalid vector that
   reaches companion-owned parsing: unsafe event-template fields, unsafe integer
   values, resource-limit violations, malformed or ambiguous responses,

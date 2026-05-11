@@ -78,6 +78,42 @@ export type GrantDescriptor = {
   audit_event_format: "nseal-grant-audit-event-v0";
 };
 
+export type PolicyDecisionRequest = {
+  account_id: string;
+  route_type: RouteType;
+  client_pubkey: string;
+  permission: GrantPermission;
+  now: number;
+  grant_ids: string[];
+  revoked_grant_ids: string[];
+};
+
+export type PolicyDecision = {
+  format: "nseal-policy-decision-v0";
+  decision: "allow" | "deny" | "manual_review";
+  reason:
+    | "decrypt_requires_manual_review"
+    | "forbidden_permission"
+    | "grant_expired"
+    | "grant_revoked"
+    | "grant_valid"
+    | "no_matching_grant"
+    | "policy_manual_only"
+    | "unknown_method_requires_manual_review";
+  grant_id?: string;
+  audit_event: {
+    format: "nseal-grant-audit-event-v0";
+    occurred_at: number;
+    account_id: string;
+    route_type: RouteType;
+    client_pubkey: string;
+    permission: GrantPermission;
+    decision: PolicyDecision["decision"];
+    reason: PolicyDecision["reason"];
+    grant_id?: string;
+  };
+};
+
 const ROUTE_TYPES = new Set<RouteType>([
   "raspberry_qr_vault",
   "esp32_qr_vault",
@@ -105,6 +141,7 @@ const CUSTODY_MODES = new Set([
 const REVIEW_MODES = new Set(["device_display", "external_review", "external_policy", "display_less"]);
 const POLICY_SUPPORT_MODES = new Set(["manual_only", "scoped_automation", "external"]);
 const DEVICE_METHODS = new Set(["get_capabilities", "get_signing_status", "get_public_key", "sign_event"]);
+const DECRYPT_METHODS = new Set(["nip04_decrypt", "nip44_decrypt"]);
 const SECRET_FIELD_NAMES = new Set([
   "secret_key",
   "private_key",
@@ -336,6 +373,7 @@ function parseGrantPermission(value: unknown): GrantPermission {
   if (value.method === "*" || value.parameter === "*") throw new Error("grant permission must not use wildcard values");
   const method = requireString(value.method, "permission.method");
   if (method === "export_secret") throw new Error("grant permission must not request secret export");
+  if (DECRYPT_METHODS.has(method)) throw new Error("decrypt grant permissions require manual review");
   if (method === "sign_event") {
     if (typeof value.parameter !== "string" || !/^[0-9]+$/u.test(value.parameter)) {
       throw new Error("sign_event permission.parameter must be a decimal event kind");
@@ -389,4 +427,77 @@ export function parseGrantDescriptor(value: unknown): GrantDescriptor {
     revocable: true,
     audit_event_format: "nseal-grant-audit-event-v0"
   };
+}
+
+function permissionsMatch(grantPermission: GrantPermission, requestPermission: GrantPermission): boolean {
+  if (grantPermission.method !== requestPermission.method) return false;
+  if (grantPermission.method === "sign_event") {
+    return grantPermission.parameter === requestPermission.parameter && grantPermission.event_kind === requestPermission.event_kind;
+  }
+  return grantPermission.parameter === undefined && grantPermission.event_kind === undefined;
+}
+
+function buildPolicyDecision(
+  request: PolicyDecisionRequest,
+  decision: PolicyDecision["decision"],
+  reason: PolicyDecision["reason"],
+  grantId?: string
+): PolicyDecision {
+  return {
+    format: "nseal-policy-decision-v0",
+    decision,
+    reason,
+    ...(grantId !== undefined ? { grant_id: grantId } : {}),
+    audit_event: {
+      format: "nseal-grant-audit-event-v0",
+      occurred_at: request.now,
+      account_id: request.account_id,
+      route_type: request.route_type,
+      client_pubkey: request.client_pubkey,
+      permission: request.permission,
+      decision,
+      reason,
+      ...(grantId !== undefined ? { grant_id: grantId } : {})
+    }
+  };
+}
+
+export function decidePolicyRequest(input: {
+  policy: PolicyProfile;
+  grants: GrantDescriptor[];
+  request: PolicyDecisionRequest;
+}): PolicyDecision {
+  const { policy, grants, request } = input;
+  const method = request.permission.method;
+  if (policy.forbidden_permissions.includes(method) || method === "export_secret") {
+    return buildPolicyDecision(request, "deny", "forbidden_permission");
+  }
+  if (DECRYPT_METHODS.has(method)) {
+    return buildPolicyDecision(request, "manual_review", "decrypt_requires_manual_review");
+  }
+  if (method === "unknown_method") {
+    return buildPolicyDecision(request, "manual_review", "unknown_method_requires_manual_review");
+  }
+  if (!policy.grants_allowed) {
+    return buildPolicyDecision(request, "manual_review", "policy_manual_only");
+  }
+
+  const revokedGrantIds = new Set(request.revoked_grant_ids);
+  for (const grantId of request.grant_ids) {
+    const grant = grants.find((candidate) => candidate.grant_id === grantId);
+    if (grant === undefined) continue;
+    if (grant.account_id !== request.account_id) continue;
+    if (grant.route_type !== request.route_type) continue;
+    if (grant.client.pubkey !== request.client_pubkey) continue;
+    if (!permissionsMatch(grant.permission, request.permission)) continue;
+    if (revokedGrantIds.has(grant.grant_id)) {
+      return buildPolicyDecision(request, "deny", "grant_revoked", grant.grant_id);
+    }
+    if (request.now >= grant.expires_at) {
+      return buildPolicyDecision(request, "deny", "grant_expired", grant.grant_id);
+    }
+    return buildPolicyDecision(request, "allow", "grant_valid", grant.grant_id);
+  }
+
+  return buildPolicyDecision(request, "manual_review", "no_matching_grant");
 }

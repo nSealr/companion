@@ -185,8 +185,24 @@ describe("nseal CLI", () => {
     const fixtures = loadSpecsFixtures(specsRoot);
 
     await expect(collectCliOutput(["fixture", "verify", "--specs", specsRoot])).resolves.toEqual([
-      `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture")}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+      `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture")}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
     ]);
+  });
+
+  it("rejects policy decision fixture drift", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-policy-decision-"));
+    const tempSpecsRoot = join(tempRoot, "specs");
+    cpSync(specsRoot, tempSpecsRoot, { recursive: true });
+    const vectorPath = resolve(tempSpecsRoot, "vectors/policy-decisions/grant-sign-event-kind-1-allowed.json");
+    const vector = loadJson(vectorPath) as {
+      decision: { reason: string };
+    };
+    vector.decision.reason = "no_matching_grant";
+    writeFileSync(vectorPath, `${JSON.stringify(vector, null, 2)}\n`, "utf8");
+
+    await expect(runCli(["fixture", "verify", "--specs", tempSpecsRoot])).rejects.toThrow(
+      /policy decision mismatch/u
+    );
   });
 
   it("rejects NIP-46 permission policy fixture drift", async () => {

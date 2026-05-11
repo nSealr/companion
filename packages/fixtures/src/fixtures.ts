@@ -6,6 +6,8 @@ import {
   parsePolicyProfile,
   type AccountDescriptor,
   type GrantDescriptor,
+  type PolicyDecision,
+  type PolicyDecisionRequest,
   type PolicyProfile
 } from "../../policy/src/policy.js";
 import { REVIEW_DETAIL_BODY_LINE_STYLES } from "../../review/src/review.js";
@@ -193,6 +195,13 @@ export type SpecsFixtureSet = {
   accounts: AccountDescriptor[];
   policyProfiles: PolicyProfile[];
   grants: GrantDescriptor[];
+  policyDecisions: Array<{
+    name: string;
+    format: "nseal-policy-decision-vector-v0";
+    policy_profile_id: string;
+    request: PolicyDecisionRequest;
+    decision: PolicyDecision;
+  }>;
   limits: {
     format: string;
     name: string;
@@ -291,6 +300,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const accountsRoot = resolve(specsRoot, "vectors/accounts");
   const policyProfilesRoot = resolve(specsRoot, "vectors/policies");
   const grantsRoot = resolve(specsRoot, "vectors/grants");
+  const policyDecisionsRoot = resolve(specsRoot, "vectors/policy-decisions");
   const invalidVectorsRoot = resolve(specsRoot, "vectors/invalid");
   const eventFiles = readdirSync(eventsRoot)
     .filter((file) => file.endsWith(".json"))
@@ -323,6 +333,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const grantFiles = readdirSync(grantsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const policyDecisionFiles = readdirSync(policyDecisionsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const invalidVectorFiles = readdirSync(invalidVectorsRoot)
@@ -358,6 +371,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     accounts: accountFiles.map((file) => parseAccountDescriptor(loadJson(resolve(accountsRoot, file)))),
     policyProfiles: policyProfileFiles.map((file) => parsePolicyProfile(loadJson(resolve(policyProfilesRoot, file)))),
     grants: grantFiles.map((file) => parseGrantDescriptor(loadJson(resolve(grantsRoot, file)))),
+    policyDecisions: policyDecisionFiles.map(
+      (file) => loadJson(resolve(policyDecisionsRoot, file)) as SpecsFixtureSet["policyDecisions"][number]
+    ),
     invalidVectors: invalidVectorFiles.map(
       (file) => loadJson(resolve(invalidVectorsRoot, file)) as SpecsFixtureSet["invalidVectors"][number]
     )

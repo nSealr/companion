@@ -18,6 +18,7 @@ const SIGNING_STATUS_GATES = [
   "trusted_review_display",
   "physical_approval_controls",
   "approval_digest_binding",
+  "unicode_review_rendering",
   "key_provisioning",
   "secure_boot",
   "flash_encryption",

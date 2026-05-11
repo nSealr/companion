@@ -1,0 +1,743 @@
+{
+  "format": "nseal-signer-feature-matrix-v0",
+  "name": "signer-feature-matrix-v0",
+  "policy": {
+    "same_behavior_when_present": true,
+    "defined_by": "NostrSeal specs contracts and vectors, not shared source code.",
+    "implementation_rule": "A feature may be absent, forbidden, or hardware-blocked on a solution. When the same feature is active on more than one solution, each implementation must use the same contract_id and pass the same conformance vectors unless an approved equivalent is documented in specs.",
+    "parity_groups": [
+      {
+        "id": "stateless_qr_vault",
+        "solutions": [
+          "raspberry_qr_vault",
+          "esp32_qr_vault"
+        ],
+        "required_same_target_features": [
+          "request_validation_v0",
+          "nostr_event_review_universal",
+          "review_detail_pages",
+          "approval_digest_binding",
+          "physical_approval",
+          "sign_event_bip340",
+          "qr_static_request",
+          "qr_animated_request",
+          "qr_response",
+          "stateless_session_custody",
+          "manual_only_policy",
+          "device_display_review",
+          "response_verification"
+        ]
+      }
+    ]
+  },
+  "features": [
+    {
+      "id": "request_validation_v0",
+      "contract_id": "signing-request-v0+implementation-limits-v0+invalid-vectors",
+      "behavior": "The implementation rejects malformed, unsafe, oversized, or unsupported signing requests before review, approval, signing, or transport output."
+    },
+    {
+      "id": "nostr_event_review_universal",
+      "contract_id": "trusted-review-v0+review-detail-pages-v0",
+      "behavior": "Every event kind uses the same structured review of kind, created_at, signer author, complete content, complete tags, request id, and approval_digest. Kind-specific summaries may add context but may not replace the universal structure."
+    },
+    {
+      "id": "review_detail_pages",
+      "contract_id": "review-detail-pages-v0",
+      "behavior": "Long content and tags are exposed through deterministic detail pages or an equivalent scroll model without truncation, hidden fields, or ambiguous wrapped items."
+    },
+    {
+      "id": "approval_digest_binding",
+      "contract_id": "approval-digest-v0",
+      "behavior": "The local approval action is bound to the exact canonical review material through a deterministic approval_digest."
+    },
+    {
+      "id": "physical_approval",
+      "contract_id": "physical-approval-v0",
+      "behavior": "A real signing decision requires an intentional local approval gesture distinct from navigation, paging, connection, or request receipt."
+    },
+    {
+      "id": "sign_event_bip340",
+      "contract_id": "nostr-sign-event-bip340-v0",
+      "behavior": "Nostr sign_event produces a NIP-01 event id and BIP-340 Schnorr signature over secp256k1 using the approved event template and signer public key."
+    },
+    {
+      "id": "qr_static_request",
+      "contract_id": "qr-envelope-static-v0",
+      "behavior": "Static QR requests decode to the same validated signing request object as every other transport."
+    },
+    {
+      "id": "qr_animated_request",
+      "contract_id": "qr-envelope-animated-v0",
+      "behavior": "Animated QR requests are reassembled with explicit bounds and integrity checks before the decoded request reaches validation."
+    },
+    {
+      "id": "qr_response",
+      "contract_id": "qr-response-v0",
+      "behavior": "Airgapped responses encode signed events or deterministic errors for host-side verification without exposing secret material."
+    },
+    {
+      "id": "stateless_session_custody",
+      "contract_id": "stateless-session-custody-v0",
+      "behavior": "Secret material exists only in RAM for the current signing session and is not persisted by the device."
+    },
+    {
+      "id": "manual_only_policy",
+      "contract_id": "manual-only-approval-policy-v0",
+      "behavior": "The implementation never signs automatically; every sign_event decision requires local review and physical approval."
+    },
+    {
+      "id": "device_display_review",
+      "contract_id": "device-display-review-v0",
+      "behavior": "The trusted device displays the material that controls the signing decision instead of relying on host-rendered approval text."
+    },
+    {
+      "id": "serial_usb_transport",
+      "contract_id": "serial-usb-transport-v0",
+      "behavior": "USB or serial frames use explicit size bounds, checksums, and deterministic parse errors before request validation."
+    },
+    {
+      "id": "nip46_decrypted_bridge",
+      "contract_id": "nip46-decrypted-bridge-v0",
+      "behavior": "Already-decrypted NIP-46 requests are converted into standard NostrSeal signing requests or deterministic local decisions without implementing relay sessions or encryption."
+    },
+    {
+      "id": "scoped_policy_automation",
+      "contract_id": "scoped-policy-automation-v0",
+      "behavior": "Automation is limited to explicit account, route, method, kind, client, time, and revocation policy; denied or unknown cases return deterministic non-signing decisions."
+    },
+    {
+      "id": "persistent_secret_custody",
+      "contract_id": "persistent-secret-custody-v0",
+      "behavior": "The solution stores or unlocks long-lived secret material only inside the defined custody boundary and never exports it through normal signing flows."
+    },
+    {
+      "id": "smartcard_apdu",
+      "contract_id": "smartcard-apdu-v0",
+      "behavior": "Smartcard communication uses versioned APDUs with deterministic status words and no trusted-review claim from the card alone."
+    },
+    {
+      "id": "external_review_acknowledgement",
+      "contract_id": "external-review-acknowledgement-v0",
+      "behavior": "Display-less custody devices require an explicit external review acknowledgement before signing is requested from the custody device."
+    },
+    {
+      "id": "secure_boot_hardening",
+      "contract_id": "firmware-boot-hardening-v0",
+      "behavior": "Firmware hardening defines boot, flash, debug, provisioning, and recovery gates before production signing claims."
+    },
+    {
+      "id": "response_verification",
+      "contract_id": "signed-response-verification-v0",
+      "behavior": "The host verifies signed event id, public key, signature, and approved template equivalence before accepting device output."
+    }
+  ],
+  "solutions": {
+    "raspberry_qr_vault": {
+      "label": "Raspberry/Pi Stateless QR Vault",
+      "repository": "raspberry",
+      "product_goal": "A SeedSigner-like airgapped Nostr signer for Raspberry/Pi hardware with RAM-only key custody and QR request/response workflows.",
+      "features": {
+        "request_validation_v0": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "signing-request-v0+implementation-limits-v0+invalid-vectors",
+          "notes": "The Python flow consumes shared signing-request and invalid-vector contracts."
+        },
+        "nostr_event_review_universal": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "trusted-review-v0+review-detail-pages-v0",
+          "notes": "Review is hardware-agnostic today and must remain behaviorally aligned with the ESP32 QR vault."
+        },
+        "review_detail_pages": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "review-detail-pages-v0",
+          "notes": "Detail-page vectors cover long content and tags without truncation."
+        },
+        "approval_digest_binding": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "approval-digest-v0",
+          "notes": "Approval transcripts bind the reviewed material to the approval digest."
+        },
+        "physical_approval": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "physical-approval-v0",
+          "notes": "The approval transcript exists; real GPIO button adapters remain pending."
+        },
+        "sign_event_bip340": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "nostr-sign-event-bip340-v0",
+          "notes": "Desktop tests sign fixture events; Raspberry hardware acceptance remains pending."
+        },
+        "qr_static_request": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "qr-envelope-static-v0",
+          "notes": "Static QR envelope behavior is covered by shared transport vectors."
+        },
+        "qr_animated_request": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "qr-envelope-animated-v0",
+          "notes": "Animated QR flow uses the shared chunking and integrity contract."
+        },
+        "qr_response": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "qr-response-v0",
+          "notes": "Signed responses and errors are encoded for host verification."
+        },
+        "stateless_session_custody": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "stateless-session-custody-v0",
+          "notes": "The product goal is RAM-only custody; real hardware wipe and lifecycle tests remain pending."
+        },
+        "manual_only_policy": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "manual-only-approval-policy-v0",
+          "notes": "The vault line has no automated signing grants."
+        },
+        "device_display_review": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "device-display-review-v0",
+          "notes": "The review model exists; real display adapters remain pending."
+        },
+        "serial_usb_transport": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The Raspberry QR vault is an airgapped QR signer, not a USB signer."
+        },
+        "nip46_decrypted_bridge": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "NIP-46 is handled by companion infrastructure, not by the airgapped QR vault."
+        },
+        "scoped_policy_automation": {
+          "target": "forbidden",
+          "current": "forbidden",
+          "notes": "Automatic signing would violate the manual-only stateless vault model."
+        },
+        "persistent_secret_custody": {
+          "target": "forbidden",
+          "current": "forbidden",
+          "notes": "The vault must not persist long-lived secret material."
+        },
+        "smartcard_apdu": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The Raspberry QR vault does not use smartcard APDUs."
+        },
+        "external_review_acknowledgement": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The device itself provides local review and approval."
+        },
+        "secure_boot_hardening": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "firmware-boot-hardening-v0",
+          "notes": "Host OS and image hardening can improve deployment, but it is not protection for persisted vault secrets."
+        },
+        "response_verification": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "signed-response-verification-v0",
+          "notes": "The companion verifies QR vault outputs against shared signed-event fixtures."
+        }
+      }
+    },
+    "esp32_qr_vault": {
+      "label": "ESP32 Stateless QR Vault",
+      "repository": "esp32",
+      "product_goal": "An airgapped ESP32-S3 QR signer with camera, display, local controls, RAM-only key custody, and behavior matching the Raspberry QR vault where features overlap.",
+      "features": {
+        "request_validation_v0": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "signing-request-v0+implementation-limits-v0+invalid-vectors",
+          "notes": "Host-core tests enforce bounded parsing and unsafe event-template rejection before signing can be enabled."
+        },
+        "nostr_event_review_universal": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "trusted-review-v0+review-detail-pages-v0",
+          "notes": "Display-frame behavior uses the same universal event review contract as Raspberry."
+        },
+        "review_detail_pages": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "review-detail-pages-v0",
+          "notes": "The display UI supports top-level pages and detail scrolling for complete content and tags."
+        },
+        "approval_digest_binding": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "approval-digest-v0",
+          "notes": "The ESP32 host-core binds review frames to approval_digest before disabled signing response."
+        },
+        "physical_approval": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "physical-approval-v0",
+          "notes": "The host-core approval state exists; production button/touch drivers remain pending."
+        },
+        "sign_event_bip340": {
+          "target": "required",
+          "current": "disabled_until_gates_pass",
+          "contract_id": "nostr-sign-event-bip340-v0",
+          "notes": "Real signing remains blocked until camera, display, buttons, provisioning, and hardening gates pass."
+        },
+        "qr_static_request": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "qr-envelope-static-v0",
+          "notes": "Decoded static QR behavior is modeled; real camera ingestion on the final QR board remains pending."
+        },
+        "qr_animated_request": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "qr-envelope-animated-v0",
+          "notes": "Chunk reassembly behavior is modeled; camera-frame acceptance remains pending."
+        },
+        "qr_response": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "qr-response-v0",
+          "notes": "QR output for signed responses is planned after signing gates and QR-board hardware acceptance."
+        },
+        "stateless_session_custody": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "stateless-session-custody-v0",
+          "notes": "The QR vault target must keep the signing secret in RAM for the session only."
+        },
+        "manual_only_policy": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "manual-only-approval-policy-v0",
+          "notes": "The QR vault target must not use automated signing grants."
+        },
+        "device_display_review": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "device-display-review-v0",
+          "notes": "Display rendering is validated on T-Display S3; final QR-board display acceptance remains pending."
+        },
+        "serial_usb_transport": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The ESP32 QR vault product uses QR transport, not connected USB signing."
+        },
+        "nip46_decrypted_bridge": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "NIP-46 bridge behavior is handled by the companion and USB signer line."
+        },
+        "scoped_policy_automation": {
+          "target": "forbidden",
+          "current": "forbidden",
+          "notes": "Automatic signing would violate the manual-only stateless vault model."
+        },
+        "persistent_secret_custody": {
+          "target": "forbidden",
+          "current": "forbidden",
+          "notes": "The QR vault must not persist long-lived secret material."
+        },
+        "smartcard_apdu": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The ESP32 QR vault does not use smartcard APDUs."
+        },
+        "external_review_acknowledgement": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The ESP32 QR vault provides local review and approval on the device."
+        },
+        "secure_boot_hardening": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "firmware-boot-hardening-v0",
+          "notes": "Secure boot, flash encryption, and debug lock are hardening gates, not protection for persistent QR-vault secrets."
+        },
+        "response_verification": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "signed-response-verification-v0",
+          "notes": "Host verification for ESP32 QR outputs must match the Raspberry QR vault contract."
+        }
+      }
+    },
+    "esp32_usb_nip46": {
+      "label": "ESP32 USB/NIP-46 Signer",
+      "repository": "esp32",
+      "product_goal": "A daily-use connected ESP32-S3 signer with USB/display review, optional scoped policy automation through the companion, and real signing disabled until hardening gates pass.",
+      "features": {
+        "request_validation_v0": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "signing-request-v0+implementation-limits-v0+invalid-vectors",
+          "notes": "USB and NIP-46 converted requests must pass the same standard request validator."
+        },
+        "nostr_event_review_universal": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "trusted-review-v0+review-detail-pages-v0",
+          "notes": "Connected signing still uses the universal event review model before local approval."
+        },
+        "review_detail_pages": {
+          "target": "optional",
+          "current": "implemented",
+          "contract_id": "review-detail-pages-v0",
+          "notes": "The same detail-page model is used where the display has enough navigation capacity."
+        },
+        "approval_digest_binding": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "approval-digest-v0",
+          "notes": "The disabled signing flow already binds approval_digest in host-core tests."
+        },
+        "physical_approval": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "physical-approval-v0",
+          "notes": "Physical approval semantics exist; production hardware controls remain pending."
+        },
+        "sign_event_bip340": {
+          "target": "required",
+          "current": "disabled_until_gates_pass",
+          "contract_id": "nostr-sign-event-bip340-v0",
+          "notes": "Real ESP32 sign_event remains intentionally disabled until acceptance gates pass."
+        },
+        "qr_static_request": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The USB/NIP-46 signer is a connected transport line, not a QR vault."
+        },
+        "qr_animated_request": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "Animated QR belongs to stateless QR vault lines."
+        },
+        "qr_response": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "Connected responses return over USB or companion channels."
+        },
+        "stateless_session_custody": {
+          "target": "forbidden",
+          "current": "forbidden",
+          "notes": "The USB signer is a persistent-secret device family, not a stateless QR vault."
+        },
+        "manual_only_policy": {
+          "target": "optional",
+          "current": "partial",
+          "contract_id": "manual-only-approval-policy-v0",
+          "notes": "Manual review remains the default fallback when no explicit scoped policy permits automation."
+        },
+        "device_display_review": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "device-display-review-v0",
+          "notes": "Display review is implemented on the current development board and must pass production acceptance."
+        },
+        "serial_usb_transport": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "serial-usb-transport-v0",
+          "notes": "The transport parser uses bounded frames and deterministic errors."
+        },
+        "nip46_decrypted_bridge": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "nip46-decrypted-bridge-v0",
+          "notes": "The companion supports already-decrypted payload conversion; full relay sessions are out of scope for the current gate."
+        },
+        "scoped_policy_automation": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "scoped-policy-automation-v0",
+          "notes": "Scoped automation is planned only after the pre-signing hardening contract is complete."
+        },
+        "persistent_secret_custody": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "persistent-secret-custody-v0",
+          "notes": "Provisioning and storage design remain acceptance gates before production signing."
+        },
+        "smartcard_apdu": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The ESP32 USB signer does not expose the JavaCard APDU protocol."
+        },
+        "external_review_acknowledgement": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The signer has its own display and physical approval controls."
+        },
+        "secure_boot_hardening": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "firmware-boot-hardening-v0",
+          "notes": "Secure boot, flash encryption, debug lock, provisioning, and recovery policy gate production signing."
+        },
+        "response_verification": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "signed-response-verification-v0",
+          "notes": "The companion verifies signed outputs and disabled-signing errors before accepting them."
+        }
+      }
+    },
+    "smartcard": {
+      "label": "JavaCard/NFC Smartcard Signer",
+      "repository": "smartcard",
+      "product_goal": "A display-less card custody line that can sign through APDUs only after external review acknowledgement and deterministic policy checks.",
+      "features": {
+        "request_validation_v0": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "signing-request-v0+implementation-limits-v0+invalid-vectors",
+          "notes": "Host-side validation must happen before APDU signing requests reach the card."
+        },
+        "nostr_event_review_universal": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "trusted-review-v0+review-detail-pages-v0",
+          "notes": "The card cannot provide trusted display review; an external reviewer can use the same universal contract."
+        },
+        "review_detail_pages": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "review-detail-pages-v0",
+          "notes": "External review tools should use the same content and tag detail-page semantics."
+        },
+        "approval_digest_binding": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "approval-digest-v0",
+          "notes": "The external review acknowledgement should bind the reviewed request to the APDU signing operation."
+        },
+        "physical_approval": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "A standard display-less smartcard has no local screen/button approval model."
+        },
+        "sign_event_bip340": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "nostr-sign-event-bip340-v0",
+          "notes": "Simulator signing exists; card profile and hardware behavior remain under development."
+        },
+        "qr_static_request": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The smartcard line does not use QR request transport."
+        },
+        "qr_animated_request": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "Animated QR belongs to stateless QR vault lines."
+        },
+        "qr_response": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "Smartcard responses use APDUs."
+        },
+        "stateless_session_custody": {
+          "target": "forbidden",
+          "current": "forbidden",
+          "notes": "The smartcard line is persistent custody, not a RAM-only vault."
+        },
+        "manual_only_policy": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "manual-only-approval-policy-v0",
+          "notes": "Manual external acknowledgement can be required for every signing operation."
+        },
+        "device_display_review": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The card is display-less and must not claim trusted event review by itself."
+        },
+        "serial_usb_transport": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The smartcard line uses card transports rather than NostrSeal serial USB frames."
+        },
+        "nip46_decrypted_bridge": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "nip46-decrypted-bridge-v0",
+          "notes": "The companion can route approved, already-decrypted NIP-46 requests to a card-backed signer."
+        },
+        "scoped_policy_automation": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "scoped-policy-automation-v0",
+          "notes": "Automation is only acceptable when explicit external policy and acknowledgement requirements are satisfied."
+        },
+        "persistent_secret_custody": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "persistent-secret-custody-v0",
+          "notes": "The card is the intended persistent-secret boundary."
+        },
+        "smartcard_apdu": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "smartcard-apdu-v0",
+          "notes": "Shared simulator and APDU vectors define deterministic card responses."
+        },
+        "external_review_acknowledgement": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "external-review-acknowledgement-v0",
+          "notes": "Display-less signing requires explicit external review acknowledgement before card signing."
+        },
+        "secure_boot_hardening": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "Smartcard platform assurance is tracked through card profile and APDU behavior, not ESP32 firmware hardening."
+        },
+        "response_verification": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "signed-response-verification-v0",
+          "notes": "Host tools must verify card-produced signed events before returning them."
+        }
+      }
+    },
+    "custom_hardware_wallet": {
+      "label": "Custom Nostr Hardware Wallet With Persistent Secret",
+      "repository": "hardware",
+      "product_goal": "A research family for a purpose-built persistent-secret Nostr hardware wallet, including custom ESP32-S3 boards, secure-element-assisted prototypes, and firmware hardening.",
+      "features": {
+        "request_validation_v0": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "signing-request-v0+implementation-limits-v0+invalid-vectors",
+          "notes": "The custom wallet must inherit the same request validation contract before any production claim."
+        },
+        "nostr_event_review_universal": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "trusted-review-v0+review-detail-pages-v0",
+          "notes": "A final hardware wallet must show the same universal review material on trusted hardware."
+        },
+        "review_detail_pages": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "review-detail-pages-v0",
+          "notes": "Display and navigation design must cover complete content and tags."
+        },
+        "approval_digest_binding": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "approval-digest-v0",
+          "notes": "The wallet must bind approval to the exact reviewed request."
+        },
+        "physical_approval": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "physical-approval-v0",
+          "notes": "Final hardware must provide deliberate local approve/reject controls."
+        },
+        "sign_event_bip340": {
+          "target": "required",
+          "current": "research",
+          "contract_id": "nostr-sign-event-bip340-v0",
+          "notes": "Host MCU signing is the default research path unless secure-element direct BIP-340 is proven."
+        },
+        "qr_static_request": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "qr-envelope-static-v0",
+          "notes": "A custom wallet may support QR transport in addition to connected transport."
+        },
+        "qr_animated_request": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "qr-envelope-animated-v0",
+          "notes": "Animated QR support is optional and must use the shared transport contract if present."
+        },
+        "qr_response": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "qr-response-v0",
+          "notes": "QR response support is optional and must use the same verification contract if present."
+        },
+        "stateless_session_custody": {
+          "target": "forbidden",
+          "current": "forbidden",
+          "notes": "This family is explicitly persistent-secret hardware, not a stateless vault."
+        },
+        "manual_only_policy": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "manual-only-approval-policy-v0",
+          "notes": "Manual-only mode should remain available even if scoped automation is later supported."
+        },
+        "device_display_review": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "device-display-review-v0",
+          "notes": "Trusted device review is mandatory for production hardware-wallet claims."
+        },
+        "serial_usb_transport": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "serial-usb-transport-v0",
+          "notes": "Connected transport may use the same bounded serial frame contract."
+        },
+        "nip46_decrypted_bridge": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "nip46-decrypted-bridge-v0",
+          "notes": "The companion may route already-decrypted NIP-46 requests to this family after policy gates exist."
+        },
+        "scoped_policy_automation": {
+          "target": "optional",
+          "current": "planned",
+          "contract_id": "scoped-policy-automation-v0",
+          "notes": "Automation must remain explicit, scoped, revocable, and off by default."
+        },
+        "persistent_secret_custody": {
+          "target": "required",
+          "current": "research",
+          "contract_id": "persistent-secret-custody-v0",
+          "notes": "Research includes secure-element-assisted wrapping, PIN policy, anti-bruteforce, and device authenticity."
+        },
+        "smartcard_apdu": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "The custom wallet family does not use the JavaCard APDU contract unless it embeds a distinct card module."
+        },
+        "external_review_acknowledgement": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "A production hardware wallet is expected to provide its own trusted review screen."
+        },
+        "secure_boot_hardening": {
+          "target": "required",
+          "current": "research",
+          "contract_id": "firmware-boot-hardening-v0",
+          "notes": "Boot, flash, debug, provisioning, update, and recovery policy are core research gates."
+        },
+        "response_verification": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "signed-response-verification-v0",
+          "notes": "Host-side verification must be part of every custom wallet transport."
+        }
+      }
+    }
+  }
+}

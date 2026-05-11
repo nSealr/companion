@@ -46,11 +46,14 @@ must follow the shared `contract_id` instead of creating a host-only variant.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, account-descriptor, policy-profile,
-  grant-descriptor, policy-decision, limit-profile, and invalid hardening
-  fixture loading.
+  grant-descriptor, policy-decision, feature-matrix, limit-profile, and
+  invalid hardening fixture loading.
   Package code also owns QR review-transcript fixture validation, including
   `scroll` buttons and rendered-frame `body_line_styles`, so the CLI does not
   duplicate that contract.
+  Package code also validates feature matrices so shared feature `contract_id`
+  drift and Raspberry/ESP32 stateless QR vault target drift fail in companion
+  conformance checks.
 - `packages/policy`: secretless account, route, recovery, policy, grant
   descriptor parsing, and pure policy-decision evaluation. This package owns
   anti-secret, anti-QR-automation, anti-decrypt-grant, and audit-event decision

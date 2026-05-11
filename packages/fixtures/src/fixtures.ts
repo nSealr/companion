@@ -202,6 +202,32 @@ export type SpecsFixtureSet = {
     request: PolicyDecisionRequest;
     decision: PolicyDecision;
   }>;
+  featureMatrices: Array<{
+    name: string;
+    format: "nseal-signer-feature-matrix-v0";
+    features: Array<{
+      id: string;
+      contract_id: string;
+      behavior: string;
+    }>;
+    solutions: Record<
+      string,
+      {
+        label: string;
+        repository: string;
+        product_goal: string;
+        features: Record<
+          string,
+          {
+            target: string;
+            current: string;
+            contract_id?: string;
+            notes: string;
+          }
+        >;
+      }
+    >;
+  }>;
   limits: {
     format: string;
     name: string;
@@ -224,6 +250,39 @@ export type SpecsFixtureSet = {
 
 const REVIEW_TRANSCRIPT_BUTTONS = new Set(["next", "scroll", "approve", "reject"]);
 const REVIEW_TRANSCRIPT_BODY_LINE_STYLES = new Set<string>(REVIEW_DETAIL_BODY_LINE_STYLES);
+const FEATURE_TARGETS = new Set(["required", "optional", "not_applicable", "forbidden", "research"]);
+const FEATURE_CURRENT_STATUSES = new Set([
+  "implemented",
+  "partial",
+  "planned",
+  "hardware_blocked",
+  "research",
+  "not_applicable",
+  "forbidden",
+  "disabled_until_gates_pass"
+]);
+const FEATURE_SOLUTION_IDS = new Set([
+  "raspberry_qr_vault",
+  "esp32_qr_vault",
+  "esp32_usb_nip46",
+  "smartcard",
+  "custom_hardware_wallet"
+]);
+const STATELESS_QR_PARITY_FEATURES = [
+  "request_validation_v0",
+  "nostr_event_review_universal",
+  "review_detail_pages",
+  "approval_digest_binding",
+  "physical_approval",
+  "sign_event_bip340",
+  "qr_static_request",
+  "qr_animated_request",
+  "qr_response",
+  "stateless_session_custody",
+  "manual_only_policy",
+  "device_display_review",
+  "response_verification"
+];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -280,6 +339,106 @@ export function validateReviewTranscriptFixture(name: string, fixture: unknown):
   }
 }
 
+export function validateFeatureMatrixFixture(name: string, fixture: unknown): void {
+  if (!isRecord(fixture)) throw new Error(`invalid feature matrix ${name}: fixture must be an object`);
+  if (fixture.format !== "nseal-signer-feature-matrix-v0") {
+    throw new Error(`invalid feature matrix ${name}: unsupported format`);
+  }
+  if (fixture.name !== name) throw new Error(`invalid feature matrix ${name}: name mismatch`);
+  if (!Array.isArray(fixture.features)) throw new Error(`invalid feature matrix ${name}: features must be an array`);
+
+  const canonicalContracts = new Map<string, string>();
+  for (const [index, feature] of fixture.features.entries()) {
+    if (!isRecord(feature)) throw new Error(`invalid feature matrix ${name}: feature ${index} must be an object`);
+    if (typeof feature.id !== "string" || feature.id.length === 0) {
+      throw new Error(`invalid feature matrix ${name}: feature ${index} id must be a string`);
+    }
+    if (typeof feature.contract_id !== "string" || feature.contract_id.length === 0) {
+      throw new Error(`invalid feature matrix ${name}: feature ${feature.id} contract_id must be a string`);
+    }
+    if (typeof feature.behavior !== "string" || feature.behavior.length === 0) {
+      throw new Error(`invalid feature matrix ${name}: feature ${feature.id} behavior must be a string`);
+    }
+    canonicalContracts.set(feature.id, feature.contract_id);
+  }
+
+  if (!isRecord(fixture.solutions)) throw new Error(`invalid feature matrix ${name}: solutions must be an object`);
+  const solutionIds = Object.keys(fixture.solutions).sort();
+  const expectedSolutionIds = [...FEATURE_SOLUTION_IDS].sort();
+  if (JSON.stringify(solutionIds) !== JSON.stringify(expectedSolutionIds)) {
+    throw new Error(`invalid feature matrix ${name}: signer family drift`);
+  }
+
+  const activeContracts = new Map<string, string>();
+  const statelessQrTargetsBySolution = new Map<string, Record<string, string | undefined>>();
+  for (const solutionId of solutionIds) {
+    const solution = fixture.solutions[solutionId];
+    if (!isRecord(solution)) throw new Error(`invalid feature matrix ${name}: solution ${solutionId} must be an object`);
+    if (typeof solution.label !== "string" || solution.label.length === 0) {
+      throw new Error(`invalid feature matrix ${name}: solution ${solutionId} label must be a string`);
+    }
+    if (typeof solution.repository !== "string" || solution.repository.length === 0) {
+      throw new Error(`invalid feature matrix ${name}: solution ${solutionId} repository must be a string`);
+    }
+    if (typeof solution.product_goal !== "string" || solution.product_goal.length === 0) {
+      throw new Error(`invalid feature matrix ${name}: solution ${solutionId} product_goal must be a string`);
+    }
+    if (!isRecord(solution.features)) {
+      throw new Error(`invalid feature matrix ${name}: solution ${solutionId} features must be an object`);
+    }
+    const featureIds = Object.keys(solution.features).sort();
+    const expectedFeatureIds = [...canonicalContracts.keys()].sort();
+    if (JSON.stringify(featureIds) !== JSON.stringify(expectedFeatureIds)) {
+      throw new Error(`invalid feature matrix ${name}: solution ${solutionId} feature set drift`);
+    }
+    const currentQrTargets: Record<string, string | undefined> = {};
+    for (const featureId of featureIds) {
+      const feature = solution.features[featureId];
+      if (!isRecord(feature)) {
+        throw new Error(`invalid feature matrix ${name}: solution ${solutionId} feature ${featureId} must be an object`);
+      }
+      if (!FEATURE_TARGETS.has(String(feature.target))) {
+        throw new Error(`invalid feature matrix ${name}: solution ${solutionId} feature ${featureId} target is unknown`);
+      }
+      if (!FEATURE_CURRENT_STATUSES.has(String(feature.current))) {
+        throw new Error(`invalid feature matrix ${name}: solution ${solutionId} feature ${featureId} current status is unknown`);
+      }
+      if (typeof feature.notes !== "string" || feature.notes.length === 0) {
+        throw new Error(`invalid feature matrix ${name}: solution ${solutionId} feature ${featureId} notes must be a string`);
+      }
+
+      const activeTarget = feature.target === "required" || feature.target === "optional" || feature.target === "research";
+      if (activeTarget) {
+        if (typeof feature.contract_id !== "string" || feature.contract_id.length === 0) {
+          throw new Error(`invalid feature matrix ${name}: solution ${solutionId} feature ${featureId} missing contract_id`);
+        }
+        if (feature.contract_id !== canonicalContracts.get(featureId)) {
+          throw new Error(`invalid feature matrix ${name}: shared feature contract drift for ${featureId}`);
+        }
+        const previous = activeContracts.get(featureId);
+        if (previous !== undefined && previous !== feature.contract_id) {
+          throw new Error(`invalid feature matrix ${name}: shared feature contract drift for ${featureId}`);
+        }
+        activeContracts.set(featureId, feature.contract_id);
+      } else if ("contract_id" in feature) {
+        throw new Error(`invalid feature matrix ${name}: inactive feature ${featureId} must not set contract_id`);
+      }
+
+      if (STATELESS_QR_PARITY_FEATURES.includes(featureId)) {
+        currentQrTargets[featureId] = String(feature.target);
+      }
+    }
+    if (solutionId === "raspberry_qr_vault" || solutionId === "esp32_qr_vault") {
+      statelessQrTargetsBySolution.set(solutionId, currentQrTargets);
+    }
+  }
+  const raspberryQrTargets = statelessQrTargetsBySolution.get("raspberry_qr_vault");
+  const esp32QrTargets = statelessQrTargetsBySolution.get("esp32_qr_vault");
+  if (JSON.stringify(raspberryQrTargets) !== JSON.stringify(esp32QrTargets)) {
+    throw new Error(`invalid feature matrix ${name}: stateless QR vault target drift`);
+  }
+}
+
 function loadJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));
 }
@@ -301,6 +460,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const policyProfilesRoot = resolve(specsRoot, "vectors/policies");
   const grantsRoot = resolve(specsRoot, "vectors/grants");
   const policyDecisionsRoot = resolve(specsRoot, "vectors/policy-decisions");
+  const featureMatricesRoot = resolve(specsRoot, "vectors/features");
   const invalidVectorsRoot = resolve(specsRoot, "vectors/invalid");
   const eventFiles = readdirSync(eventsRoot)
     .filter((file) => file.endsWith(".json"))
@@ -338,6 +498,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const policyDecisionFiles = readdirSync(policyDecisionsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
+  const featureMatrixFiles = readdirSync(featureMatricesRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
   const invalidVectorFiles = readdirSync(invalidVectorsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
@@ -373,6 +536,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     grants: grantFiles.map((file) => parseGrantDescriptor(loadJson(resolve(grantsRoot, file)))),
     policyDecisions: policyDecisionFiles.map(
       (file) => loadJson(resolve(policyDecisionsRoot, file)) as SpecsFixtureSet["policyDecisions"][number]
+    ),
+    featureMatrices: featureMatrixFiles.map(
+      (file) => loadJson(resolve(featureMatricesRoot, file)) as SpecsFixtureSet["featureMatrices"][number]
     ),
     invalidVectors: invalidVectorFiles.map(
       (file) => loadJson(resolve(invalidVectorsRoot, file)) as SpecsFixtureSet["invalidVectors"][number]

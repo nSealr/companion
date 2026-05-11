@@ -4,7 +4,11 @@ import { Command } from "commander";
 import { SerialPort } from "serialport";
 import { verifySignedEventResponse, type SignEventRequest } from "../../../packages/core/src/nostr.js";
 import { devSignRequest } from "../../../packages/dev-signer/src/dev-signer.js";
-import { loadSpecsFixtures, validateReviewTranscriptFixture } from "../../../packages/fixtures/src/fixtures.js";
+import {
+  loadSpecsFixtures,
+  validateFeatureMatrixFixture,
+  validateReviewTranscriptFixture
+} from "../../../packages/fixtures/src/fixtures.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/src/serial.js";
 import {
   decideNip46BridgeAction,
@@ -575,13 +579,16 @@ export function buildCli(options: BuildCliOptions = {}): Command {
           throw new Error(`invalid policy decision fixture ${policyDecision.name}: policy decision mismatch`);
         }
       }
+      for (const featureMatrix of fixtures.featureMatrices) {
+        validateFeatureMatrixFixture(featureMatrix.name, featureMatrix);
+      }
       for (const invalidVector of fixtures.invalidVectors) {
         validateInvalidHardeningFixture(invalidVector);
       }
       const policyFileFixtureLabel =
         fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture");
       console.log(
-        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );
     });
 

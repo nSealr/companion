@@ -1,7 +1,7 @@
 import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { loadSpecsFixtures, validateReviewTranscriptFixture } from "./fixtures.js";
+import { loadSpecsFixtures, validateFeatureMatrixFixture, validateReviewTranscriptFixture } from "./fixtures.js";
 import { resolveSpecsRoot } from "./specs-root.js";
 
 describe("fixture loading", () => {
@@ -165,6 +165,36 @@ describe("fixture loading", () => {
       "unknown-method-manual-review"
     ]);
     expect(fixtures.policyDecisions[0].format).toBe("nseal-policy-decision-vector-v0");
+  });
+
+  it("loads and validates signer feature matrix vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    const matrix = fixtures.featureMatrices.find((candidate) => candidate.name === "signer-feature-matrix-v0");
+
+    expect(matrix?.format).toBe("nseal-signer-feature-matrix-v0");
+    expect(Object.keys(matrix?.solutions ?? {}).sort()).toEqual([
+      "custom_hardware_wallet",
+      "esp32_qr_vault",
+      "esp32_usb_nip46",
+      "raspberry_qr_vault",
+      "smartcard"
+    ]);
+    expect(matrix?.solutions.raspberry_qr_vault.features.qr_response.target).toBe(
+      matrix?.solutions.esp32_qr_vault.features.qr_response.target
+    );
+    expect(() => validateFeatureMatrixFixture(matrix?.name ?? "missing", matrix)).not.toThrow();
+  });
+
+  it("rejects feature matrix shared contract drift in package code", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    const matrix = structuredClone(
+      fixtures.featureMatrices.find((candidate) => candidate.name === "signer-feature-matrix-v0")
+    );
+    if (matrix === undefined) throw new Error("missing feature matrix fixture");
+
+    matrix.solutions.esp32_qr_vault.features.nostr_event_review_universal.contract_id = "esp32-special-review";
+
+    expect(() => validateFeatureMatrixFixture(matrix.name, matrix)).toThrow(/shared feature contract drift/u);
   });
 
   it("loads implementation limits and invalid hardening vectors from the specs repository", () => {

@@ -33,12 +33,18 @@ describe("fixture loading", () => {
 
   it("loads QR review transcript vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
-    expect(fixtures.reviewTranscripts.map((transcript) => transcript.name)).toEqual([
+    expect(fixtures.reviewTranscripts.map((transcript) => transcript.name)).toEqual(expect.arrayContaining([
       "kind-1-basic-approve",
-      "kind-1-basic-reject"
-    ]);
+      "kind-1-basic-reject",
+      "kind-1-long-events-many-tags-detail-scroll-approve"
+    ]));
     expect(fixtures.reviewTranscripts[0].buttons).toEqual(["next", "next", "next", "approve"]);
     expect(fixtures.reviewTranscripts[1].transcript[0].decision).toBe(false);
+    const detailScroll = fixtures.reviewTranscripts.find(
+      (transcript) => transcript.name === "kind-1-long-events-many-tags-detail-scroll-approve"
+    );
+    expect(detailScroll?.buttons).toContain("scroll");
+    expect(detailScroll?.transcript[0].frame.body_line_styles).toEqual(["meta", "meta", "meta", "value", "value"]);
   });
 
   it("loads trusted review-screen vectors from the specs repository", () => {

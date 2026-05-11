@@ -56,6 +56,7 @@ const DEFAULT_REVIEW_DETAIL_PAGE_LIMITS: ReviewDetailPageLimits = {
   max_compact_line_chars: 48
 };
 const REVIEW_DETAIL_BODY_LINE_STYLES = new Set<string>(REVIEW_DETAIL_BODY_LINE_STYLE_VALUES);
+const REVIEW_TRANSCRIPT_BUTTONS = new Set(["next", "scroll", "approve", "reject"]);
 
 const PARAMETERLESS_REQUEST_METHODS: Record<string, { protocolMethod: string; defaultRequestId: string }> = {
   capabilities: { protocolMethod: "get_capabilities", defaultRequestId: "req-capabilities-1" },
@@ -161,7 +162,7 @@ function validateReviewTranscriptFixture(name: string, fixture: unknown): void {
   for (const [index, step] of fixture.transcript.entries()) {
     if (!isRecord(step)) throw new Error(`invalid review transcript fixture ${name}: step ${index} must be an object`);
     const button = fixture.buttons[index];
-    if (!["next", "approve", "reject"].includes(String(button))) {
+    if (!REVIEW_TRANSCRIPT_BUTTONS.has(String(button))) {
       throw new Error(`invalid review transcript fixture ${name}: unsupported button at step ${index}`);
     }
     if (step.button !== button) {
@@ -175,6 +176,19 @@ function validateReviewTranscriptFixture(name: string, fixture: unknown): void {
     }
     if (!isRecord(step.frame) || typeof step.frame.title !== "string") {
       throw new Error(`invalid review transcript fixture ${name}: frame must include title at step ${index}`);
+    }
+    if (!Array.isArray(step.frame.body_lines) || !step.frame.body_lines.every((line) => typeof line === "string")) {
+      throw new Error(`invalid review transcript fixture ${name}: frame body_lines must be strings at step ${index}`);
+    }
+    const bodyLineStyles = step.frame.body_line_styles;
+    if (bodyLineStyles !== undefined) {
+      if (
+        !Array.isArray(bodyLineStyles) ||
+        bodyLineStyles.length !== step.frame.body_lines.length ||
+        !bodyLineStyles.every((style) => REVIEW_DETAIL_BODY_LINE_STYLES.has(String(style)))
+      ) {
+        throw new Error(`invalid review transcript fixture ${name}: frame body_line_styles mismatch at step ${index}`);
+      }
     }
   }
 }

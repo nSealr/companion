@@ -97,6 +97,7 @@ export type SpecsFixtureSet = {
         page_indicator: string;
         body_lines: string[];
         action_hint: string;
+        body_line_styles?: string[];
       };
       button: string;
       decision: boolean | null;

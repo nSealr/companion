@@ -53,7 +53,12 @@ describe("serial framing draft", () => {
 
   it("rejects shared invalid serial hardening vectors deterministically", () => {
     const invalidRoot = resolve(specsRoot, "vectors/invalid");
-    for (const name of ["serial-frame-checksum-mismatch", "serial-frame-malformed-payload", "serial-frame-oversized"]) {
+    for (const name of [
+      "serial-frame-checksum-mismatch",
+      "serial-frame-malformed-payload",
+      "serial-frame-oversized",
+      "serial-frame-unsupported-type"
+    ]) {
       const vector = JSON.parse(readFileSync(resolve(invalidRoot, `${name}.json`), "utf8"));
       expect(() => decodeSerialFrame(vector.frame), name).toThrow(vector.expected_error);
     }

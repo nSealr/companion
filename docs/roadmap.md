@@ -162,6 +162,16 @@ requests, routes decrypt and unknown methods to manual review, and emits the
 expected audit-event object. This still does not add a grant store, relay
 session, signer I/O, or production key custody.
 
+Status note, 2026-05-11: the companion identity/policy boundary now follows
+the official account model. Account metadata is per resulting public key and
+route; key sources such as mnemonics, passphrase namespaces, standalone
+`nsec`, device slots, card slots, and external signers are not stored as
+production secrets by companion. Policy records are internal NostrSeal records,
+not Nostr events. Companion may transport policy proposals, but persistent
+devices must accept authoritative policy changes locally. The final
+per-account policy menu remains open; current scoped-automation vectors are
+minimal conformance scaffolds.
+
 Status note, 2026-05-10: companion QR tooling now supports `qr-animated`
 frame files for larger valid payloads. The implementation consumes the shared
 `qr-animated-envelope-v0` vector, rejects missing or tampered frames

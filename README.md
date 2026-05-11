@@ -6,6 +6,13 @@ The companion is not trusted with private keys. It constructs requests, moves
 them over the selected transport, verifies device responses, and bridges Nostr
 clients to hardware-backed signing.
 
+The product goal is a universal secretless CLI/app for all NostrSeal routes:
+account labels, route selection, request construction, QR/USB/smartcard/
+external transport helpers, policy proposal transport, signed-output
+verification, and audit export. The companion is not the authoritative policy
+store for persistent NostrSeal devices and must not store production signing
+material.
+
 Feature availability per signer family is tracked in `NostrSeal/specs` at
 `vectors/features/signer-feature-matrix-v0.json`. Companion packages should
 consume those shared contracts instead of inventing solution-specific behavior:
@@ -109,6 +116,12 @@ match the shared `contract_id`.
   automation, wildcard/decrypt/export grants, and stateless QR-vault grant
   targets before CLI or fixture-verification code can treat those records as
   valid.
+  These records describe resulting signing public keys and routes. Mnemonics,
+  BIP-39 passphrase namespaces, standalone `nsec` keys, device slots, card
+  slots, and external signers are key sources or routes, not production secrets
+  kept by companion. Policy records are internal NostrSeal records, not Nostr
+  events, and the current scoped-automation vectors are conformance fixtures,
+  not the final policy UX.
 - `packages/smartcard` implements the first APDU codec, simulator adapter,
   provider-based PC/SC APDU transport boundary, and `SmartcardSigner` boundary
   against shared smartcard vectors, including APDU rejection status words. The

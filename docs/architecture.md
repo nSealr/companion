@@ -165,6 +165,13 @@ store production `nsec`, mnemonic, seed, passphrase, NIP-49 ciphertext, or raw
 private key material. Stateless QR vault routes remain manual-only and cannot
 receive persistent grants.
 
+Those descriptors model the resulting signing public key and route. The
+mnemonic, BIP-39 passphrase namespace, standalone `nsec`, device slot,
+smartcard slot, or external bunker is a key source or route; policy attaches to
+the resulting public key. Companion can prepare a policy proposal and transport
+it, but a persistent NostrSeal device must review and accept authoritative
+policy changes locally before they affect signing.
+
 Policy-decision vectors are also consumed through `packages/policy`. The
 current evaluator is pure and stateless: it accepts an explicit policy profile,
 explicit grant descriptors, and an explicit request snapshot, then returns a
@@ -172,6 +179,12 @@ deterministic allow, deny, or manual-review decision plus a
 `nseal-grant-audit-event-v0` object. It deliberately does not create a grant
 store, persist approvals, acknowledge NIP-46 `connect`, open relay sessions, or
 contact signer transports.
+
+The current scoped-automation fixtures are deliberately minimal conformance
+data. They prove bounded decisions, denial, manual-review routing, revocation,
+expiry, and audit-event shape before grant storage exists; they are not the
+final product policy menu and should not grow into companion-owned rule-engine
+state.
 
 Pre-signing hardening vectors are the companion's rejection oracle for unsafe
 input. They must be evaluated before signer transport, dev signing,

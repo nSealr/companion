@@ -26,7 +26,7 @@
     ]
   },
   "connect_review": {
-    "format": "nseal-nip46-connect-review-v0",
+    "format": "nsealr-nip46-connect-review-v0",
     "id": "nip46-connect-1",
     "remote_signer_pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
     "secret_present": true,

@@ -11,13 +11,13 @@
       "public_key": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
       "capabilities": {
         "device": {
-          "name": "NostrSeal ESP32-S3 USB Signer Scaffold",
-          "firmware": "nostrseal-esp32-s3-usb-signer",
+          "name": "nSealr ESP32-S3 USB Signer Scaffold",
+          "firmware": "nsealr-esp32-s3-usb-signer",
           "hardware": "esp32-s3-devkitc-1"
         },
         "protocols": [
-          "nseal.signing.v0",
-          "nseal.serial-frame.v0"
+          "nsealr.signing.v0",
+          "nsealr.serial-frame.v0"
         ],
         "methods": [
           "get_capabilities",

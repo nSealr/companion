@@ -13,11 +13,11 @@ falls back to `npm exec` on development machines that only have Node/npm.
 
 ## Single-Repository CI
 
-Tests prefer the sibling `NostrSeal/specs` repository when the full local
-workspace is present. GitHub Actions checks out `NostrSeal/companion` by itself,
+Tests prefer the sibling `nSealr/specs` repository when the full local
+workspace is present. GitHub Actions checks out `nSealr/companion` by itself,
 so tests fall back to fixture snapshots under `tests/fixtures/specs` in
 single-repository CI. Cross-repository drift remains guarded by
-`NostrSeal/lab` integration, which runs against the live sibling repositories.
+`nSealr/lab` integration, which runs against the live sibling repositories.
 
 ## M2 Tests
 
@@ -39,7 +39,7 @@ single-repository CI. Cross-repository drift remains guarded by
   keeping `apps/cli` as a thin fixture-verification wrapper.
 - Trusted-review model tests in `packages/review` against every shared review,
   review-screen `approval_digest`, and review detail-page vector from
-  `NostrSeal/specs`, including visible JSON-style control escapes in event
+  `nSealr/specs`, including visible JSON-style control escapes in event
   content and tags.
 - Development signer verification tests in `packages/dev-signer`.
 - Negative response verification tests for request id mismatch, template
@@ -60,7 +60,7 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI review-request tests for rendering review JSON, digest-bound screen-review
   pages, constrained-display detail pages, and caller-supplied detail-page
   display limits from QR signing requests.
-- CLI fixture verification tests against `NostrSeal/specs`, covering both
+- CLI fixture verification tests against `nSealr/specs`, covering both
   signed-event fixtures, trusted-review fixtures, review-display-frame
   fixtures, review-detail-page fixtures, QR review-transcript fixtures, NIP-46
   payload fixtures, NIP-46 policy-file fixtures, account descriptors, policy
@@ -76,10 +76,10 @@ single-repository CI. Cross-repository drift remains guarded by
   capped before being included in exit failures. They also prove silent signer
   processes are rejected by a deterministic response timeout.
 - Transport boundary tests require outbound request payloads and inbound device
-  response payloads to pass standard NostrSeal protocol validation for
+  response payloads to pass standard nSealr protocol validation for
   development signer, JSON file, JSON-lines stdio, and serial-frame adapters.
   Exchange tests also reject validly shaped responses with mismatched
-  `request_id` values and surface `nseal1f:error` payloads as deterministic
+  `request_id` values and surface `nsealr1f:error` payloads as deterministic
   transport diagnostics.
 - CLI serial-frame tests covering validated request wrapping, response-frame
   unwrapping, and optional request-bound rejection before output is written.
@@ -95,7 +95,7 @@ single-repository CI. Cross-repository drift remains guarded by
   `request sign-event`, `dev-sign`, and `verify-response`.
 - Serial frame round-trip, unsupported type, checksum mismatch, and encode-side
   `max_serial_frame_bytes` rejection tests.
-- Shared `NostrSeal/specs` QR and serial transport vector conformance tests.
+- Shared `nSealr/specs` QR and serial transport vector conformance tests.
 - Serial-line transport tests proving a future native USB/WebSerial adapter can
   write a request frame, ignore device log lines, normalize common serial line
   endings, reject stalled writes and silent ports with deterministic timeouts,
@@ -107,15 +107,15 @@ single-repository CI. Cross-repository drift remains guarded by
   and writable-stream request frames behave like the injected port contract
   without a native serial dependency. They also prove unterminated oversized
   input is rejected without rejecting batched short complete lines.
-- CLI serial-line tests proving `nseal serial-line exchange` remains a thin
+- CLI serial-line tests proving `nsealr serial-line exchange` remains a thin
   file/argument wrapper around the package-owned one-shot serial-line exchange,
   writes output only after verification, and still rejects invalid requests
-  before any port is opened. They also prove device `nseal1f:error` frames are
+  before any port is opened. They also prove device `nsealr1f:error` frames are
   surfaced as deterministic transport errors without writing output.
-- Shared `NostrSeal/specs` capability response conformance tests.
-- Shared `NostrSeal/specs` ESP32-S3 signing-disabled response conformance
+- Shared `nSealr/specs` capability response conformance tests.
+- Shared `nSealr/specs` ESP32-S3 signing-disabled response conformance
   tests.
-- Shared `NostrSeal/specs` smartcard APDU vector conformance tests, including
+- Shared `nSealr/specs` smartcard APDU vector conformance tests, including
   deterministic APDU rejection status vectors.
 - Smartcard signer tests covering mandatory review acknowledgement, APDU-backed
   public-key retrieval, event-id signing, Schnorr verification, and standard
@@ -136,9 +136,9 @@ single-repository CI. Cross-repository drift remains guarded by
   `--review-acknowledged` and `request -> smartcard-sim-sign ->
   verify-response`.
 - NIP-46 payload bridge tests covering already-decrypted `sign_event` and
-  `get_public_key` messages, local `ping`, NostrSeal response mapping, and
+  `get_public_key` messages, local `ping`, nSealr response mapping, and
   rejection of unsafe or unsupported payloads. The same tests consume shared
-  `NostrSeal/specs` NIP-46 payload vectors.
+  `nSealr/specs` NIP-46 payload vectors.
 - NIP-46 requested-permission parser tests covering method-only permissions,
   `sign_event:<kind>` selectors, empty permission strings, and rejection of
   malformed or unsupported entries.
@@ -154,14 +154,14 @@ single-repository CI. Cross-repository drift remains guarded by
 - NIP-46 bridge decision tests covering permitted signer routing, denied signer
   routing, local `ping`, denied `ping`, and `connect` review intent output. The
   CLI fixture verifier also rejects drift in shared bridge decision vectors.
-- CLI NIP-46 decision and review tests covering `nseal nip46 decide` against
+- CLI NIP-46 decision and review tests covering `nsealr nip46 decide` against
   shared permitted, denied, and `connect` bridge-decision vectors plus
-  `nseal nip46 review-connect` against the shared `connect` review-page vector
+  `nsealr nip46 review-connect` against the shared `connect` review-page vector
   without opening relay or signer transports.
 - CLI NIP-46 policy-file tests covering read-only
-  `nseal-nip46-policy-v0` permission input and rejection of ambiguous
+  `nsealr-nip46-policy-v0` permission input and rejection of ambiguous
   `--permissions` plus `--policy-file` usage. The positive case consumes the
-  shared `NostrSeal/specs` policy-file vector instead of an inline local copy.
+  shared `nSealr/specs` policy-file vector instead of an inline local copy.
   The CLI fixture verifier also rejects drift in shared policy-file vectors.
 - Policy package tests cover secretless account descriptors, manual-only QR
   vault policy, scoped grants for persistent routes, wildcard/decrypt/export

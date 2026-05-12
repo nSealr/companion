@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import { loadSpecsFixtures } from "../../fixtures/src/fixtures.js";
-import { NOSTRSEAL_V0_LIMITS } from "./limits.js";
+import { NSEALR_V0_LIMITS } from "./limits.js";
 import { validateRequest, validateResponse } from "./protocol.js";
 
 const specsRoot = resolveSpecsRoot();
@@ -50,10 +50,10 @@ describe("protocol validation", () => {
     expect(validateRequest(load("examples/invalid/request-unknown-method.json")).ok).toBe(false);
   });
 
-  it("mirrors the shared NostrSeal v0 implementation limits", () => {
+  it("mirrors the shared nSealr v0 implementation limits", () => {
     const fixtures = loadSpecsFixtures(specsRoot);
 
-    expect(NOSTRSEAL_V0_LIMITS).toEqual(fixtures.limits.limits);
+    expect(NSEALR_V0_LIMITS).toEqual(fixtures.limits.limits);
   });
 
   it("rejects shared invalid signing-request vectors deterministically", () => {

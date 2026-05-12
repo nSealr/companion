@@ -1,11 +1,11 @@
 {
-  "name": "@nostrseal/companion-workspace",
+  "name": "@nsealr/companion-workspace",
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.33.4",
   "type": "module",
   "scripts": {
-    "nseal": "tsx apps/cli/src/index.ts",
+    "nsealr": "tsx apps/cli/src/index.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",

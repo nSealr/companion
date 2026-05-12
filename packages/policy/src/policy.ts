@@ -23,7 +23,7 @@ export type SignerRoute = {
 };
 
 export type AccountDescriptor = {
-  format: "nseal-account-descriptor-v0";
+  format: "nsealr-account-descriptor-v0";
   account_id: string;
   label: string;
   public_key: string;
@@ -39,7 +39,7 @@ export type AccountDescriptor = {
 };
 
 export type PolicyProfile = {
-  format: "nseal-policy-profile-v0";
+  format: "nsealr-policy-profile-v0";
   policy_id: string;
   label: string;
   route_types: RouteType[];
@@ -58,7 +58,7 @@ export type GrantPermission = {
 };
 
 export type GrantDescriptor = {
-  format: "nseal-grant-descriptor-v0";
+  format: "nsealr-grant-descriptor-v0";
   grant_id: string;
   account_id: string;
   route_type: RouteType;
@@ -75,7 +75,7 @@ export type GrantDescriptor = {
   };
   requires_device_policy_confirmation: true;
   revocable: true;
-  audit_event_format: "nseal-grant-audit-event-v0";
+  audit_event_format: "nsealr-grant-audit-event-v0";
 };
 
 export type PolicyDecisionRequest = {
@@ -89,7 +89,7 @@ export type PolicyDecisionRequest = {
 };
 
 export type PolicyDecision = {
-  format: "nseal-policy-decision-v0";
+  format: "nsealr-policy-decision-v0";
   decision: "allow" | "deny" | "manual_review";
   reason:
     | "decrypt_requires_manual_review"
@@ -102,7 +102,7 @@ export type PolicyDecision = {
     | "unknown_method_requires_manual_review";
   grant_id?: string;
   audit_event: {
-    format: "nseal-grant-audit-event-v0";
+    format: "nsealr-grant-audit-event-v0";
     occurred_at: number;
     account_id: string;
     route_type: RouteType;
@@ -230,7 +230,7 @@ function parseSignerRoute(value: unknown): SignerRoute {
     throw new Error(`signer_route.repository must be ${expectedRepository}`);
   }
   if (expectedRepository === undefined && "repository" in value) {
-    throw new Error("external signer routes must not claim a NostrSeal repository");
+    throw new Error("external signer routes must not claim a nSealr repository");
   }
   const transport = requireString(value.transport, "signer_route.transport");
   if (!ROUTE_TRANSPORTS.has(transport)) throw new Error("signer_route.transport is unknown");
@@ -277,14 +277,14 @@ function validateRecovery(recovery: unknown): Record<string, unknown> {
 export function parseAccountDescriptor(value: unknown): AccountDescriptor {
   rejectSecretFields(value);
   assertRecord(value, "account descriptor");
-  if (value.format !== "nseal-account-descriptor-v0") throw new Error("account descriptor format mismatch");
+  if (value.format !== "nsealr-account-descriptor-v0") throw new Error("account descriptor format mismatch");
   const route = parseSignerRoute(value.signer_route);
   assertRecord(value.capabilities, "capabilities");
   const methods = requireStringArray(value.capabilities.methods, "capabilities.methods");
   const unknownMethod = methods.find((method) => !DEVICE_METHODS.has(method));
   if (unknownMethod !== undefined) throw new Error(`capabilities.methods contains unknown method ${unknownMethod}`);
   const descriptor: AccountDescriptor = {
-    format: "nseal-account-descriptor-v0",
+    format: "nsealr-account-descriptor-v0",
     account_id: requireStringId(value.account_id, "account_id"),
     label: requireString(value.label, "label"),
     public_key: requireXOnlyPubkey(value.public_key, "public_key"),
@@ -322,7 +322,7 @@ export function parseAccountDescriptor(value: unknown): AccountDescriptor {
 export function parsePolicyProfile(value: unknown): PolicyProfile {
   rejectSecretFields(value);
   assertRecord(value, "policy profile");
-  if (value.format !== "nseal-policy-profile-v0") throw new Error("policy profile format mismatch");
+  if (value.format !== "nsealr-policy-profile-v0") throw new Error("policy profile format mismatch");
   const routeTypes = requireStringArray(value.route_types, "route_types").map((route) => requireRouteType(route));
   const mode = requireString(value.mode, "mode");
   if (mode !== "manual_only" && mode !== "scoped_automation") throw new Error("mode is unknown");
@@ -355,7 +355,7 @@ export function parsePolicyProfile(value: unknown): PolicyProfile {
   const policyId = requireString(value.policy_id, "policy_id");
   if (!policyId.startsWith("policy-")) throw new Error("policy_id must start with policy-");
   return {
-    format: "nseal-policy-profile-v0",
+    format: "nsealr-policy-profile-v0",
     policy_id: policyId,
     label: requireString(value.label, "label"),
     route_types: routeTypes,
@@ -395,7 +395,7 @@ function parseGrantPermission(value: unknown): GrantPermission {
 export function parseGrantDescriptor(value: unknown): GrantDescriptor {
   rejectSecretFields(value);
   assertRecord(value, "grant descriptor");
-  if (value.format !== "nseal-grant-descriptor-v0") throw new Error("grant descriptor format mismatch");
+  if (value.format !== "nsealr-grant-descriptor-v0") throw new Error("grant descriptor format mismatch");
   const routeType = requireRouteType(value.route_type);
   if (QR_ROUTE_TYPES.has(routeType)) throw new Error("grant route_type must not be a stateless QR vault");
   assertRecord(value.client, "client");
@@ -404,11 +404,11 @@ export function parseGrantDescriptor(value: unknown): GrantDescriptor {
     throw new Error("requires_device_policy_confirmation must be true");
   }
   if (value.revocable !== true) throw new Error("revocable must be true");
-  if (value.audit_event_format !== "nseal-grant-audit-event-v0") throw new Error("audit_event_format mismatch");
+  if (value.audit_event_format !== "nsealr-grant-audit-event-v0") throw new Error("audit_event_format mismatch");
   const decision = requireString(value.decision, "decision");
   if (decision !== "allow_once" && decision !== "allow_until_expiry") throw new Error("decision is unknown");
   return {
-    format: "nseal-grant-descriptor-v0",
+    format: "nsealr-grant-descriptor-v0",
     grant_id: requireStringId(value.grant_id, "grant_id"),
     account_id: requireStringId(value.account_id, "account_id"),
     route_type: routeType,
@@ -425,7 +425,7 @@ export function parseGrantDescriptor(value: unknown): GrantDescriptor {
     },
     requires_device_policy_confirmation: true,
     revocable: true,
-    audit_event_format: "nseal-grant-audit-event-v0"
+    audit_event_format: "nsealr-grant-audit-event-v0"
   };
 }
 
@@ -444,12 +444,12 @@ function buildPolicyDecision(
   grantId?: string
 ): PolicyDecision {
   return {
-    format: "nseal-policy-decision-v0",
+    format: "nsealr-policy-decision-v0",
     decision,
     reason,
     ...(grantId !== undefined ? { grant_id: grantId } : {}),
     audit_event: {
-      format: "nseal-grant-audit-event-v0",
+      format: "nsealr-grant-audit-event-v0",
       occurred_at: request.now,
       account_id: request.account_id,
       route_type: request.route_type,

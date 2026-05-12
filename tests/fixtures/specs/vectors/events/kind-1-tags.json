@@ -17,10 +17,10 @@
           ],
           [
             "t",
-            "nostrseal"
+            "nsealr"
           ]
         ],
-        "content": "NostrSeal fixture: tagged kind 1 event."
+        "content": "nSealr fixture: tagged kind 1 event."
       }
     }
   },
@@ -30,7 +30,7 @@
     "ok": true,
     "result": {
       "event": {
-        "id": "26817b9ddd117af48bf8486831916474517a866f6d7b3aff563696152bfa56a6",
+        "id": "0bef8491d04976053cdde3cff1903224b94fdee708712adffb00fe754a634543",
         "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
         "created_at": 1710000060,
         "kind": 1,
@@ -43,11 +43,11 @@
           ],
           [
             "t",
-            "nostrseal"
+            "nsealr"
           ]
         ],
-        "content": "NostrSeal fixture: tagged kind 1 event.",
-        "sig": "c8035263d7e6ade2c409a3d098cbf91b086c72830a0e6cb88295a29787f8a564f462c4ade499bdb6b43a3a5688de3f75a810c8c850d88b6dca1fe3c163737a2a"
+        "content": "nSealr fixture: tagged kind 1 event.",
+        "sig": "3538c2bf84dd2008a7a0c0011be7d45e3f4f754a3fd67c87fa8815483299060c26b929330e261e6c69947bd16561b6f7ed64dbc80d0f79852167f165f0c703e0"
       }
     }
   },
@@ -63,13 +63,13 @@
       ],
       [
         "t",
-        "nostrseal"
+        "nsealr"
       ]
     ],
-    "content": "NostrSeal fixture: tagged kind 1 event."
+    "content": "nSealr fixture: tagged kind 1 event."
   },
   "signed_event": {
-    "id": "26817b9ddd117af48bf8486831916474517a866f6d7b3aff563696152bfa56a6",
+    "id": "0bef8491d04976053cdde3cff1903224b94fdee708712adffb00fe754a634543",
     "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
     "created_at": 1710000060,
     "kind": 1,
@@ -82,13 +82,13 @@
       ],
       [
         "t",
-        "nostrseal"
+        "nsealr"
       ]
     ],
-    "content": "NostrSeal fixture: tagged kind 1 event.",
-    "sig": "c8035263d7e6ade2c409a3d098cbf91b086c72830a0e6cb88295a29787f8a564f462c4ade499bdb6b43a3a5688de3f75a810c8c850d88b6dca1fe3c163737a2a"
+    "content": "nSealr fixture: tagged kind 1 event.",
+    "sig": "3538c2bf84dd2008a7a0c0011be7d45e3f4f754a3fd67c87fa8815483299060c26b929330e261e6c69947bd16561b6f7ed64dbc80d0f79852167f165f0c703e0"
   },
-  "canonical_serialization": "[0,\"4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa\",1710000060,1,[[\"p\",\"4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa\",\"\",\"mention\"],[\"t\",\"nostrseal\"]],\"NostrSeal fixture: tagged kind 1 event.\"]",
-  "event_id": "26817b9ddd117af48bf8486831916474517a866f6d7b3aff563696152bfa56a6",
-  "signature": "c8035263d7e6ade2c409a3d098cbf91b086c72830a0e6cb88295a29787f8a564f462c4ade499bdb6b43a3a5688de3f75a810c8c850d88b6dca1fe3c163737a2a"
+  "canonical_serialization": "[0,\"4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa\",1710000060,1,[[\"p\",\"4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa\",\"\",\"mention\"],[\"t\",\"nsealr\"]],\"nSealr fixture: tagged kind 1 event.\"]",
+  "event_id": "0bef8491d04976053cdde3cff1903224b94fdee708712adffb00fe754a634543",
+  "signature": "3538c2bf84dd2008a7a0c0011be7d45e3f4f754a3fd67c87fa8815483299060c26b929330e261e6c69947bd16561b6f7ed64dbc80d0f79852167f165f0c703e0"
 }

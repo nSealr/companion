@@ -1,6 +1,6 @@
 import {
   compactJsonUtf8ByteLength,
-  NOSTRSEAL_V0_LIMITS,
+  NSEALR_V0_LIMITS,
   utf8ByteLength
 } from "./limits.js";
 
@@ -30,7 +30,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isRequestId(value: unknown): value is string {
-  return typeof value === "string" && /^[A-Za-z0-9._:-]+$/u.test(value) && value.length <= NOSTRSEAL_V0_LIMITS.max_request_id_length;
+  return typeof value === "string" && /^[A-Za-z0-9._:-]+$/u.test(value) && value.length <= NSEALR_V0_LIMITS.max_request_id_length;
 }
 
 function isLowerHex(value: unknown, length: number): value is string {
@@ -46,7 +46,7 @@ function validateSafeIntegerField(field: "created_at" | "kind", value: unknown):
   if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
     return { ok: false, error: `event_template ${field} must be a non-negative safe integer` };
   }
-  if (!Number.isSafeInteger(value) || value > NOSTRSEAL_V0_LIMITS.max_safe_integer) {
+  if (!Number.isSafeInteger(value) || value > NSEALR_V0_LIMITS.max_safe_integer) {
     return { ok: false, error: `event_template ${field} exceeds max_safe_integer` };
   }
   return { ok: true };
@@ -56,7 +56,7 @@ function validateSignedEventIntegerField(field: "created_at" | "kind", value: un
   if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
     return { ok: false, error: `signed event ${field} must be a non-negative safe integer` };
   }
-  if (!Number.isSafeInteger(value) || value > NOSTRSEAL_V0_LIMITS.max_safe_integer) {
+  if (!Number.isSafeInteger(value) || value > NSEALR_V0_LIMITS.max_safe_integer) {
     return { ok: false, error: `signed event ${field} exceeds max_safe_integer` };
   }
   return { ok: true };
@@ -66,13 +66,13 @@ function validateTags(value: unknown, label: "event_template" | "signed event"):
   if (!Array.isArray(value)) {
     return { ok: false, error: `${label} tags must be an array` };
   }
-  if (value.length > NOSTRSEAL_V0_LIMITS.max_tag_count) {
+  if (value.length > NSEALR_V0_LIMITS.max_tag_count) {
     return { ok: false, error: `${label} tags exceeds max_tag_count` };
   }
   let totalTagBytes = 0;
   for (const [tagIndex, tag] of value.entries()) {
     if (!Array.isArray(tag)) return { ok: false, error: `${label} tags[${tagIndex}] must be an array` };
-    if (tag.length > NOSTRSEAL_V0_LIMITS.max_tag_fields_per_tag) {
+    if (tag.length > NSEALR_V0_LIMITS.max_tag_fields_per_tag) {
       return { ok: false, error: `${label} tags[${tagIndex}] exceeds max_tag_fields_per_tag` };
     }
     for (const [fieldIndex, item] of tag.entries()) {
@@ -81,12 +81,12 @@ function validateTags(value: unknown, label: "event_template" | "signed event"):
       }
       const itemBytes = utf8ByteLength(item);
       totalTagBytes += itemBytes;
-      if (itemBytes > NOSTRSEAL_V0_LIMITS.max_tag_field_utf8_bytes) {
+      if (itemBytes > NSEALR_V0_LIMITS.max_tag_field_utf8_bytes) {
         return { ok: false, error: `${label} tag field exceeds max_tag_field_utf8_bytes` };
       }
     }
   }
-  if (totalTagBytes > NOSTRSEAL_V0_LIMITS.max_total_tag_utf8_bytes) {
+  if (totalTagBytes > NSEALR_V0_LIMITS.max_total_tag_utf8_bytes) {
     return { ok: false, error: `${label} tags exceed max_total_tag_utf8_bytes` };
   }
   return { ok: true };
@@ -109,7 +109,7 @@ function validateEventTemplate(value: unknown): ValidationResult {
   const tags = validateTags(value.tags, "event_template");
   if (!tags.ok) return tags;
   if (typeof value.content !== "string") return { ok: false, error: "content must be a string" };
-  if (utf8ByteLength(value.content) > NOSTRSEAL_V0_LIMITS.max_content_utf8_bytes) {
+  if (utf8ByteLength(value.content) > NSEALR_V0_LIMITS.max_content_utf8_bytes) {
     return { ok: false, error: "event_template content exceeds max_content_utf8_bytes" };
   }
   return { ok: true };
@@ -117,7 +117,7 @@ function validateEventTemplate(value: unknown): ValidationResult {
 
 export function validateRequest(value: unknown): ValidationResult {
   if (!isRecord(value)) return { ok: false, error: "request must be an object" };
-  if (compactJsonUtf8ByteLength(value) > NOSTRSEAL_V0_LIMITS.max_decoded_request_json_bytes) {
+  if (compactJsonUtf8ByteLength(value) > NSEALR_V0_LIMITS.max_decoded_request_json_bytes) {
     return { ok: false, error: "decoded request JSON exceeds max_decoded_request_json_bytes" };
   }
   if (value.version !== 1) return { ok: false, error: "version must be 1" };
@@ -154,7 +154,7 @@ function validateSignedEvent(value: unknown): ValidationResult {
   const tags = validateTags(value.tags, "signed event");
   if (!tags.ok) return tags;
   if (typeof value.content !== "string") return { ok: false, error: "content must be a string" };
-  if (utf8ByteLength(value.content) > NOSTRSEAL_V0_LIMITS.max_content_utf8_bytes) {
+  if (utf8ByteLength(value.content) > NSEALR_V0_LIMITS.max_content_utf8_bytes) {
     return { ok: false, error: "signed event content exceeds max_content_utf8_bytes" };
   }
   if (!isLowerHex(value.sig, 128)) return { ok: false, error: "event sig must be 64-byte lowercase hex" };

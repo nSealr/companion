@@ -1,5 +1,5 @@
 import { validateRequest, validateResponse } from "../../protocol/src/protocol.js";
-import { compactJsonUtf8ByteLength, NOSTRSEAL_V0_LIMITS } from "../../protocol/src/limits.js";
+import { compactJsonUtf8ByteLength, NSEALR_V0_LIMITS } from "../../protocol/src/limits.js";
 
 export type Nip46RequestMessage = {
   id: string;
@@ -29,7 +29,7 @@ export type Nip46ConnectIntent = {
 };
 
 export type Nip46ConnectReview = {
-  format: "nseal-nip46-connect-review-v0";
+  format: "nsealr-nip46-connect-review-v0";
   id: string;
   remote_signer_pubkey: string;
   secret_present: boolean;
@@ -54,7 +54,7 @@ export type Nip46BridgeDecision =
   | {
       type: "signer_request";
       permission_requirement: Nip46PermissionRequirement;
-      nostrseal_request: NostrSealBridgeRequest;
+      nsealr_request: NSealrBridgeRequest;
     }
   | {
       type: "permission_denied";
@@ -73,7 +73,7 @@ const NIP46_PERMISSION_METHODS = new Set([
   "switch_relays"
 ]);
 
-type NostrSealBridgeRequest =
+type NSealrBridgeRequest =
   | {
       version: 1;
       request_id: string;
@@ -108,7 +108,7 @@ function requireXOnlyPubkey(value: unknown, label: string): string {
 
 function requireMessage(value: unknown): Nip46RequestMessage {
   if (!isRecord(value)) throw new Error("NIP-46 message must be an object");
-  if (compactJsonUtf8ByteLength(value) > NOSTRSEAL_V0_LIMITS.max_nip46_decrypted_message_json_bytes) {
+  if (compactJsonUtf8ByteLength(value) > NSEALR_V0_LIMITS.max_nip46_decrypted_message_json_bytes) {
     throw new Error("NIP-46 decrypted message JSON exceeds max_nip46_decrypted_message_json_bytes");
   }
   const id = requireNip46Id(value.id);
@@ -133,9 +133,9 @@ function parseJsonParam(param: string, label: string): unknown {
   }
 }
 
-function assertValidNostrSealRequest(request: NostrSealBridgeRequest): void {
+function assertValidNSealrRequest(request: NSealrBridgeRequest): void {
   const result = validateRequest(request);
-  if (!result.ok) throw new Error(result.error ?? "invalid NostrSeal request");
+  if (!result.ok) throw new Error(result.error ?? "invalid nSealr request");
 }
 
 export function parseNip46Permissions(value: string): Nip46Permission[] {
@@ -201,8 +201,8 @@ function parseNip46PolicyPermission(permission: unknown, context: string): Nip46
 }
 
 export function parseNip46PolicyFile(policy: unknown, context = "NIP-46 policy file"): Nip46Permission[] {
-  if (!isRecord(policy) || policy.format !== "nseal-nip46-policy-v0") {
-    throw new Error(`${context}: must use format nseal-nip46-policy-v0`);
+  if (!isRecord(policy) || policy.format !== "nsealr-nip46-policy-v0") {
+    throw new Error(`${context}: must use format nsealr-nip46-policy-v0`);
   }
   if (!Array.isArray(policy.approved_permissions)) {
     throw new Error(`${context}: approved_permissions must be a list`);
@@ -234,7 +234,7 @@ export function nip46PermissionLabel(permission: Nip46PermissionRequirement): st
 export function reviewNip46ConnectIntent(intent: Nip46ConnectIntent): Nip46ConnectReview {
   const permissionLines = intent.requested_permissions.map((permission) => nip46PermissionLabel(permission));
   return {
-    format: "nseal-nip46-connect-review-v0",
+    format: "nsealr-nip46-connect-review-v0",
     id: intent.id,
     remote_signer_pubkey: intent.remote_signer_pubkey,
     secret_present: intent.secret !== undefined,
@@ -274,7 +274,7 @@ export function nip46PermissionRequirementFromRequest(value: unknown): Nip46Perm
     return { method: "get_public_key" };
   }
   if (message.method === "sign_event") {
-    const request = nostrSealRequestFromNip46(message);
+    const request = nsealrRequestFromNip46(message);
     if (request.method !== "sign_event") throw new Error("NIP-46 sign_event permission request mismatch");
     const eventTemplate = request.params.event_template;
     if (!isRecord(eventTemplate) || typeof eventTemplate.kind !== "number") {
@@ -345,7 +345,7 @@ export function decideNip46BridgeAction(
   return {
     type: "signer_request",
     permission_requirement: requirement,
-    nostrseal_request: nostrSealRequestFromNip46(message)
+    nsealr_request: nsealrRequestFromNip46(message)
   };
 }
 
@@ -359,7 +359,7 @@ export function respondToLocalNip46Request(value: unknown): Nip46ResponseMessage
   };
 }
 
-export function nostrSealRequestFromNip46(value: unknown): NostrSealBridgeRequest {
+export function nsealrRequestFromNip46(value: unknown): NSealrBridgeRequest {
   const message = requireMessage(value);
   if (message.method === "ping") {
     throw new Error("NIP-46 ping is handled locally");
@@ -369,17 +369,17 @@ export function nostrSealRequestFromNip46(value: unknown): NostrSealBridgeReques
   }
   if (message.method === "get_public_key") {
     if (message.params.length !== 0) throw new Error("NIP-46 get_public_key params must be empty");
-    const request: NostrSealBridgeRequest = {
+    const request: NSealrBridgeRequest = {
       version: 1,
       request_id: message.id,
       method: "get_public_key"
     };
-    assertValidNostrSealRequest(request);
+    assertValidNSealrRequest(request);
     return request;
   }
   if (message.method === "sign_event") {
     if (message.params.length !== 1) throw new Error("NIP-46 sign_event requires one JSON event-template param");
-    const request: NostrSealBridgeRequest = {
+    const request: NSealrBridgeRequest = {
       version: 1,
       request_id: message.id,
       method: "sign_event",
@@ -387,27 +387,27 @@ export function nostrSealRequestFromNip46(value: unknown): NostrSealBridgeReques
         event_template: parseJsonParam(message.params[0], "sign_event")
       }
     };
-    assertValidNostrSealRequest(request);
+    assertValidNSealrRequest(request);
     return request;
   }
   throw new Error(`unsupported NIP-46 method: ${message.method}`);
 }
 
-export function nip46ResponseFromNostrSeal(nip46RequestId: string, response: unknown): Nip46ResponseMessage {
+export function nip46ResponseFromNSealr(nip46RequestId: string, response: unknown): Nip46ResponseMessage {
   const id = requireNip46Id(nip46RequestId);
   const shape = validateResponse(response);
-  if (!shape.ok) throw new Error(shape.error ?? "invalid NostrSeal response");
-  if (!isRecord(response)) throw new Error("NostrSeal response must be an object");
+  if (!shape.ok) throw new Error(shape.error ?? "invalid nSealr response");
+  if (!isRecord(response)) throw new Error("nSealr response must be an object");
 
   if (response.ok === false) {
-    if (!isRecord(response.error)) throw new Error("NostrSeal error response must include error");
+    if (!isRecord(response.error)) throw new Error("nSealr error response must include error");
     return {
       id,
       error: `${response.error.code}: ${response.error.message}`
     };
   }
 
-  if (!isRecord(response.result)) throw new Error("NostrSeal success response must include result");
+  if (!isRecord(response.result)) throw new Error("nSealr success response must include result");
   if ("event" in response.result) {
     return {
       id,
@@ -420,5 +420,5 @@ export function nip46ResponseFromNostrSeal(nip46RequestId: string, response: unk
       result: response.result.public_key
     };
   }
-  throw new Error("unsupported NostrSeal response result for NIP-46");
+  throw new Error("unsupported nSealr response result for NIP-46");
 }

@@ -2,7 +2,7 @@ import { schnorr } from "@noble/curves/secp256k1.js";
 import { bytesToHex, hexToBytes, verifySchnorrSignature, type VerificationResult } from "../../core/src/nostr.js";
 import { publicKeyFromSecret } from "../../dev-signer/src/dev-signer.js";
 
-export const NOSTRSEAL_CLA = 0x80;
+export const NSEALR_CLA = 0x80;
 export const GET_PUBLIC_KEY_INS = 0x10;
 export const SIGN_EVENT_ID_INS = 0x20;
 export const SW_NO_ERROR = 0x9000;
@@ -98,7 +98,7 @@ export class SmartcardSimulator {
   constructor(private readonly secretKeyHex: string) {}
 
   async exchange(command: CommandApdu): Promise<ResponseApdu> {
-    if (command.cla !== NOSTRSEAL_CLA) return new ResponseApdu(new Uint8Array(), SW_CLA_NOT_SUPPORTED);
+    if (command.cla !== NSEALR_CLA) return new ResponseApdu(new Uint8Array(), SW_CLA_NOT_SUPPORTED);
     if (command.ins === GET_PUBLIC_KEY_INS) {
       if (command.data.length !== 0) return new ResponseApdu(new Uint8Array(), SW_WRONG_LENGTH);
       return new ResponseApdu(Uint8Array.from(hexToBytes(publicKeyFromSecret(this.secretKeyHex))), SW_NO_ERROR);

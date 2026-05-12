@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { TextDecoder } from "node:util";
-import { NOSTRSEAL_V0_LIMITS, utf8ByteLength } from "../../protocol/src/limits.js";
+import { NSEALR_V0_LIMITS, utf8ByteLength } from "../../protocol/src/limits.js";
 
-export const SERIAL_FRAME_PREFIX = "nseal1f:";
+export const SERIAL_FRAME_PREFIX = "nsealr1f:";
 
 export type SerialFrameType = "request" | "response" | "error";
 
@@ -42,14 +42,14 @@ export function encodeSerialFrame(frame: SerialFrame): string {
   const payload = Buffer.from(JSON.stringify(frame.payload), "utf8").toString("base64url");
   const frameChecksum = checksum(frame.type, payload);
   const line = `${SERIAL_FRAME_PREFIX}${frame.type}:${payload}:${frameChecksum}\n`;
-  if (utf8ByteLength(line) > NOSTRSEAL_V0_LIMITS.max_serial_frame_bytes) {
+  if (utf8ByteLength(line) > NSEALR_V0_LIMITS.max_serial_frame_bytes) {
     throw new Error("serial frame exceeds max_serial_frame_bytes");
   }
   return line;
 }
 
 export function decodeSerialFrame(line: string): SerialFrame {
-  if (utf8ByteLength(line) > NOSTRSEAL_V0_LIMITS.max_serial_frame_bytes) {
+  if (utf8ByteLength(line) > NSEALR_V0_LIMITS.max_serial_frame_bytes) {
     throw new Error("serial frame exceeds max_serial_frame_bytes");
   }
   const normalized = stripLineEnding(line);

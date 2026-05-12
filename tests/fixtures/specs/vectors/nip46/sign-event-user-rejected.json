@@ -5,10 +5,10 @@
     "id": "nip46-reject-1",
     "method": "sign_event",
     "params": [
-      "{\"created_at\":1710000000,\"kind\":1,\"tags\":[],\"content\":\"NostrSeal fixture: basic kind 1 event.\"}"
+      "{\"created_at\":1710000000,\"kind\":1,\"tags\":[],\"content\":\"nSealr fixture: basic kind 1 event.\"}"
     ]
   },
-  "nostrseal_request": {
+  "nsealr_request": {
     "version": 1,
     "request_id": "nip46-reject-1",
     "method": "sign_event",
@@ -17,7 +17,7 @@
         "created_at": 1710000000,
         "kind": 1,
         "tags": [],
-        "content": "NostrSeal fixture: basic kind 1 event."
+        "content": "nSealr fixture: basic kind 1 event."
       }
     }
   },
@@ -72,7 +72,7 @@
           "parameter": "1",
           "event_kind": 1
         },
-        "nostrseal_request": {
+        "nsealr_request": {
           "version": 1,
           "request_id": "nip46-reject-1",
           "method": "sign_event",
@@ -81,7 +81,7 @@
               "created_at": 1710000000,
               "kind": 1,
               "tags": [],
-              "content": "NostrSeal fixture: basic kind 1 event."
+              "content": "nSealr fixture: basic kind 1 event."
             }
           }
         }
@@ -107,7 +107,7 @@
       }
     }
   ],
-  "nostrseal_response": {
+  "nsealr_response": {
     "version": 1,
     "request_id": "nip46-reject-1",
     "ok": false,

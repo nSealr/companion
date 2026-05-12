@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
-import { NOSTRSEAL_V0_LIMITS } from "../../protocol/src/limits.js";
+import { NSEALR_V0_LIMITS } from "../../protocol/src/limits.js";
 import {
   ANIMATED_QR_ENVELOPE_PREFIX,
   decodeAnimatedQrEnvelopeFrames,
@@ -28,8 +28,8 @@ describe("QR envelope v0", () => {
     expect(decodeQrEnvelope(qrVector.envelope)).toEqual(qrVector.decoded);
   });
 
-  it("rejects envelopes without the nseal1 prefix", () => {
-    expect(() => decodeQrEnvelope("nostr:abc")).toThrow("QR envelope requires nseal1 prefix");
+  it("rejects envelopes without the nsealr1 prefix", () => {
+    expect(() => decodeQrEnvelope("nostr:abc")).toThrow("QR envelope requires nsealr1 prefix");
   });
 
   it("rejects envelopes whose payload is not JSON", () => {
@@ -38,7 +38,7 @@ describe("QR envelope v0", () => {
 
   it("rejects encode-side static payloads that exceed the v0 decoded JSON limit", () => {
     expect(() =>
-      encodeQrEnvelope({ payload: "x".repeat(NOSTRSEAL_V0_LIMITS.max_static_qr_decoded_json_bytes + 1) })
+      encodeQrEnvelope({ payload: "x".repeat(NSEALR_V0_LIMITS.max_static_qr_decoded_json_bytes + 1) })
     ).toThrow("QR decoded JSON exceeds max_static_qr_decoded_json_bytes");
   });
 
@@ -64,8 +64,8 @@ describe("QR envelope v0", () => {
   });
 
   it("rejects shared invalid QR hardening vectors deterministically", () => {
-    const fixtures = JSON.parse(readFileSync(resolve(specsRoot, "vectors/limits/nseal-v0.json"), "utf8"));
-    expect(fixtures.name).toBe("nostrseal-v0");
+    const fixtures = JSON.parse(readFileSync(resolve(specsRoot, "vectors/limits/nsealr-v0.json"), "utf8"));
+    expect(fixtures.name).toBe("nsealr-v0");
     const invalidRoot = resolve(specsRoot, "vectors/invalid");
     for (const name of ["qr-envelope-invalid-utf8", "qr-envelope-malformed", "qr-envelope-oversized", "qr-envelope-padded"]) {
       const vector = JSON.parse(readFileSync(resolve(invalidRoot, `${name}.json`), "utf8"));

@@ -4,7 +4,7 @@ import { type Readable, type Writable } from "node:stream";
 import { devSignRequest } from "../../dev-signer/src/dev-signer.js";
 import { type SignEventRequest, verifySignedEventResponse } from "../../core/src/nostr.js";
 import { decodeSerialFrame, encodeSerialFrame } from "../../framing/src/serial.js";
-import { NOSTRSEAL_V0_LIMITS, utf8ByteLength } from "../../protocol/src/limits.js";
+import { NSEALR_V0_LIMITS, utf8ByteLength } from "../../protocol/src/limits.js";
 import { validateRequest, validateResponse } from "../../protocol/src/protocol.js";
 
 export type SignerTransport = {
@@ -33,7 +33,7 @@ export class SerialLineStreamPort implements SerialLinePort {
     const encoding = options.encoding ?? "utf8";
     this.input = options.input;
     this.output = options.output;
-    this.maxBufferedBytes = options.maxBufferedBytes ?? NOSTRSEAL_V0_LIMITS.max_serial_frame_bytes;
+    this.maxBufferedBytes = options.maxBufferedBytes ?? NSEALR_V0_LIMITS.max_serial_frame_bytes;
     this.input.setEncoding(encoding);
     this.input.on("data", (chunk: string | Buffer) => {
       this.buffer += typeof chunk === "string" ? chunk : chunk.toString(encoding);
@@ -266,8 +266,8 @@ export class JsonLineStdioTransport implements SignerTransport {
     this.args = options.args ?? [];
     this.cwd = options.cwd;
     this.env = options.env;
-    this.maxOutputLineBytes = options.maxOutputLineBytes ?? NOSTRSEAL_V0_LIMITS.max_serial_frame_bytes;
-    this.maxStderrBytes = options.maxStderrBytes ?? NOSTRSEAL_V0_LIMITS.max_serial_frame_bytes;
+    this.maxOutputLineBytes = options.maxOutputLineBytes ?? NSEALR_V0_LIMITS.max_serial_frame_bytes;
+    this.maxStderrBytes = options.maxStderrBytes ?? NSEALR_V0_LIMITS.max_serial_frame_bytes;
     this.responseTimeoutMs = options.responseTimeoutMs ?? 30_000;
   }
 
@@ -390,7 +390,7 @@ export class SerialLineTransport implements SignerTransport {
           if (responseLine === null) {
             throw new Error("serial line transport reached end of input before response");
           }
-          if (responseLine.startsWith("nseal1f:")) {
+          if (responseLine.startsWith("nsealr1f:")) {
             return responseLine;
           }
         }

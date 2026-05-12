@@ -1,13 +1,13 @@
 # Architecture
 
-`NostrSeal/companion` is the untrusted host-side software shared by all signer
+`nSealr/companion` is the untrusted host-side software shared by all signer
 lines.
 
 ## Responsibilities
 
 - Construct signing requests from Nostr event templates.
 - Move requests over selected transports.
-- Verify signer responses against `NostrSeal/specs`.
+- Verify signer responses against `nSealr/specs`.
 - Provide CLI and automated harnesses before browser or GUI workflows.
 - Reject mismatched event ids, pubkeys, signatures, and request ids.
 
@@ -20,11 +20,11 @@ Before any production signer I/O, browser extension, full NIP-46 relay session,
 or persistent grant layer is added, companion code must pass the M4.5
 pre-signing hardening gate. Signing-request validation, NIP-46 bridge
 conversion, QR/serial decoding, and policy-file parsing must share explicit
-NostrSeal v0 limits and deterministic rejection behavior. CLI commands should
+nSealr v0 limits and deterministic rejection behavior. CLI commands should
 only adapt file/argument I/O around package-owned validation logic.
 
 The companion is infrastructure, not a first-class signer family. Per-solution
-feature status lives in `NostrSeal/specs`
+feature status lives in `nSealr/specs`
 `vectors/features/signer-feature-matrix-v0.json`. When companion exposes a
 feature used by multiple signer families, such as request validation, review
 projection, policy decisions, transport framing, or response verification, it
@@ -35,7 +35,7 @@ must follow the shared `contract_id` instead of creating a host-only variant.
 - `apps/cli`: command-line entrypoint.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
-  central NostrSeal v0 implementation limit profile used by companion parsers,
+  central nSealr v0 implementation limit profile used by companion parsers,
   and signing-status consistency checks so a signer cannot claim
   `signing_enabled: true` while still reporting missing gates or
   `signing_enabled: false` without reporting at least one blocker. Gate lists
@@ -63,14 +63,14 @@ must follow the shared `contract_id` instead of creating a host-only variant.
 - `packages/dev-signer`: test-only signing implementation.
 - `packages/transport`: signer transport interface plus in-memory development,
   JSON file, and JSON-lines stdio adapters.
-- `packages/qr`: v0 `nseal1:` QR envelope encoding and decoding.
+- `packages/qr`: v0 `nsealr1:` QR envelope encoding and decoding.
 - `packages/framing`: checksum-protected serial line framing draft with the
   shared v0 serial-frame byte limit.
 - `packages/smartcard`: APDU codec, simulator adapter, provider-based PC/SC
   APDU transport boundary, `SmartcardSigner` boundary, and response
   verification for the display-less smartcard line.
 - `packages/nip46`: decrypted NIP-46 payload bridge for `get_public_key`,
-  `sign_event`, local `ping`, and conversion from NostrSeal responses back to
+  `sign_event`, local `ping`, and conversion from nSealr responses back to
   NIP-46 result/error strings. It also validates requested permission strings
   and policy files, and parses `connect` messages into review intents and
   deterministic review pages for later policy work.
@@ -89,11 +89,11 @@ The M2 CLI flow is:
 2. Produce a development response with an explicit software test key.
 3. Verify the response against the original request before any downstream use.
 
-The same commands support JSON files and v0 `nseal1:` QR envelope files so the
+The same commands support JSON files and v0 `nsealr1:` QR envelope files so the
 desktop companion can drive the Raspberry QR vault flow before camera/display
 hardware is integrated.
 
-`nseal review-request` can render the same deterministic review JSON from a
+`nsealr review-request` can render the same deterministic review JSON from a
 JSON or QR `sign_event` request. With `--screen-review` it emits the
 digest-bound screen-page model; with `--detail-pages` it emits the complete
 constrained-display detail-page model used by Raspberry and ESP32 review UI
@@ -123,7 +123,7 @@ must pass NIP-01 event-id and BIP-340 signature verification against the
 original request. Error responses such as `signing_disabled` can still return
 as valid refusals.
 
-Trusted-review vectors are loaded from `NostrSeal/specs` so host tools and
+Trusted-review vectors are loaded from `nSealr/specs` so host tools and
 device implementations can agree on what must be shown before approval. They do
 not make the companion trusted; they are conformance data for signer UIs.
 
@@ -141,18 +141,18 @@ comparison, but still treats them as conformance data, not as a trusted
 approval surface.
 
 QR review-transcript vectors are also loaded and shape-checked by
-`nseal fixture verify`. They bind raw QR input to frame/button/decision
+`nsealr fixture verify`. They bind raw QR input to frame/button/decision
 sequences for Raspberry and ESP32 adapter tests; the companion treats them as
 conformance data, not as trusted approval authority. The transcript validator
 lives in `packages/fixtures`, and `apps/cli` only calls it while iterating the
 loaded fixture set.
 
-NIP-46 payload vectors are loaded and verified by `nseal fixture verify` so the
+NIP-46 payload vectors are loaded and verified by `nsealr fixture verify` so the
 host bridge and shared specs agree on decrypted `get_public_key`, `sign_event`,
 local `ping`, response mapping, and permission policy behavior before relay and
 encryption work begins.
 
-NIP-46 policy-file vectors are loaded and verified by `nseal fixture verify` so
+NIP-46 policy-file vectors are loaded and verified by `nsealr fixture verify` so
 explicit approved-permission inputs stay normalized across specs, companion,
 and lab integration. Package code owns the parser; the CLI only reads files and
 passes parsed policies into bridge decisions. They are read-only conformance
@@ -169,14 +169,14 @@ Those descriptors model the resulting signing public key and route. The
 mnemonic, BIP-39 passphrase namespace, standalone `nsec`, device slot,
 smartcard slot, or external bunker is a key source or route; policy attaches to
 the resulting public key. Companion can prepare a policy proposal and transport
-it, but a persistent NostrSeal device must review and accept authoritative
+it, but a persistent nSealr device must review and accept authoritative
 policy changes locally before they affect signing.
 
 Policy-decision vectors are also consumed through `packages/policy`. The
 current evaluator is pure and stateless: it accepts an explicit policy profile,
 explicit grant descriptors, and an explicit request snapshot, then returns a
 deterministic allow, deny, or manual-review decision plus a
-`nseal-grant-audit-event-v0` object. It deliberately does not create a grant
+`nsealr-grant-audit-event-v0` object. It deliberately does not create a grant
 store, persist approvals, acknowledge NIP-46 `connect`, open relay sessions, or
 contact signer transports.
 
@@ -201,12 +201,12 @@ The current adapters cover three development paths:
   adapters and future hardware simulators. It bounds the pre-newline response
   buffer and captured stderr before returning or reporting process output, and
   terminates silent signer processes after a bounded response timeout.
-- `SerialFrameTransport`: one-shot `nseal1f:` request/response exchange for
+- `SerialFrameTransport`: one-shot `nsealr1f:` request/response exchange for
   USB-serial, UART, and firmware smoke-test adapters. It treats
-  `nseal1f:error` as a transport diagnostic and includes the device error code
+  `nsealr1f:error` as a transport diagnostic and includes the device error code
   in the thrown error instead of returning it as a signer response.
 - `SerialLineTransport`: newline-oriented serial transport boundary with an
-  injected port. It writes a validated `nseal1f:` request frame, skips
+  injected port. It writes a validated `nsealr1f:` request frame, skips
   non-protocol device log lines, normalizes `LF`/`CRLF` line endings, rejects
   stalled writes and silent ports with deterministic timeouts, then returns
   through the same response shape, request-id, and signed-output verification
@@ -221,19 +221,19 @@ The current adapters cover three development paths:
   `SerialLineTransport`, and closes the opened port in a `finally` block. CLI
   and future native bindings should use this boundary instead of duplicating
   validation/open/close sequencing.
-- `nseal serial-frame wrap-request` and `nseal serial-frame unwrap-response`:
+- `nsealr serial-frame wrap-request` and `nsealr serial-frame unwrap-response`:
   offline CLI helpers for producing validated serial request frames and
   decoding validated serial response frames during ESP32 bring-up. With
   `--request`, response unwrapping also verifies the original request id and
   signed-output binding before writing output. These commands do not open a
   physical USB, CDC, HID, WebUSB, or WebSerial connection.
-- `nseal serial-line exchange`: one-shot local USB-serial CLI helper over
+- `nsealr serial-line exchange`: one-shot local USB-serial CLI helper over
   `exchangeSerialLineRequest`. It opens a newline-oriented device path only
   after request validation, writes the chosen output format only after response
   verification, and is not a browser transport, relay session, persistent
   signer connection, or permission grant mechanism.
-- `nseal request get-capabilities`, `nseal request get-public-key`, and
-  `nseal request get-signing-status`: host-side generators for non-sensitive
+- `nsealr request get-capabilities`, `nsealr request get-public-key`, and
+  `nsealr request get-signing-status`: host-side generators for non-sensitive
   parameterless device requests. They validate caller-supplied request ids
   before writing output and are useful for serial-frame hardware captures
   without involving signing.
@@ -241,7 +241,7 @@ The current adapters cover three development paths:
 ## Smartcard Boundary
 
 The first smartcard package covers the display-less APDU contract from
-`NostrSeal/specs`: `GET_PUBLIC_KEY` and `SIGN_EVENT_ID`. It can protect key
+`nSealr/specs`: `GET_PUBLIC_KEY` and `SIGN_EVENT_ID`. It can protect key
 material in a card-like boundary, but trusted event review must still happen
 before the companion sends a 32-byte event id to a card.
 
@@ -260,8 +260,8 @@ exchange. It also reuses the shared request validator before APDU exchange, so
 package callers cannot bypass CLI validation with host-supplied `id`, `pubkey`,
 `sig`, malformed tags, oversized content, or other unsafe `sign_event` shapes.
 
-`nseal review-request --screen-review` renders the same deterministic screen
-pages and `approval_digest` used by the shared vectors. `nseal
+`nsealr review-request --screen-review` renders the same deterministic screen
+pages and `approval_digest` used by the shared vectors. `nsealr
 smartcard-sim-sign` exposes the APDU flow through a test-only simulator and
 requires `--approval-digest` whenever `--review-acknowledged` is used. Real
 PC/SC and NFC transports must implement the same APDU exchange interface
@@ -286,11 +286,11 @@ NIP-44 encryption/decryption, connection tokens, permission persistence, or auth
 challenge UX.
 
 The bridge maps `get_public_key` and `sign_event` messages into standard
-NostrSeal v1 requests so any signer transport can handle them behind the same
+nSealr v1 requests so any signer transport can handle them behind the same
 verification boundary. `ping` is answered locally with `pong` because it does
 not require a key-holding device. Signed-event responses are returned as
 NIP-46 result strings containing JSON-stringified Nostr events; public-key
-responses return the hex key string; NostrSeal error responses become NIP-46
+responses return the hex key string; nSealr error responses become NIP-46
 error strings.
 
 This keeps NIP-46 as a host transport/bridge layer. Trusted event review and
@@ -309,14 +309,14 @@ uses the same matching result to produce signer routing, local `ping`, `connect`
 review, or permission-denied responses. Actual grant storage, revocation, auth
 challenges, and user approval UX remain future policy layers.
 
-`nseal nip46 decide` exposes that boundary as a file-backed test harness for
+`nsealr nip46 decide` exposes that boundary as a file-backed test harness for
 already-decrypted payloads. It writes the same deterministic decision JSON used
 by shared vectors. The command accepts either an explicit permission string or
-a read-only `nseal-nip46-policy-v0` policy file pinned by shared specs
+a read-only `nsealr-nip46-policy-v0` policy file pinned by shared specs
 vectors. It does not create or update policy files, open relay sessions,
 decrypt NIP-44 payloads, persist grants, or contact signer transports.
 
-`nseal nip46 review-connect` exposes only the review projection for an
+`nsealr nip46 review-connect` exposes only the review projection for an
 already-decrypted `connect` request. It writes deterministic pages with the
 remote signer pubkey, secret presence, and requested permission labels. It does
 not echo the secret value, return `ack`, persist a grant, or authorize the
@@ -327,20 +327,20 @@ the remote-signer pubkey, optional secret, and requested permissions into a
 review intent and deterministic review pages, but it does not return `ack`,
 echo secrets, persist grants, or authorize a client. A later policy layer must
 review and explicitly approve that intent. The same boundary is now covered by
-a shared `NostrSeal/specs` NIP-46 vector and `nseal fixture verify`.
+a shared `nSealr/specs` NIP-46 vector and `nsealr fixture verify`.
 
 ## QR Envelope
 
-The companion follows the shared `NostrSeal/specs` QR v0 format:
+The companion follows the shared `nSealr/specs` QR v0 format:
 
 ```text
-nseal1:<base64url-json>
-nseal1a:<payload-sha256-hex>:<index>/<total>:<base64url-json-chunk>:<frame-checksum-hex16>
+nsealr1:<base64url-json>
+nsealr1a:<payload-sha256-hex>:<index>/<total>:<base64url-json-chunk>:<frame-checksum-hex16>
 ```
 
 The static v0 envelope is deliberately uncompressed and single-part. The
 animated v0 frame set keeps the same uncompressed JSON payload but splits the
-base64url text across bounded `nseal1a:` frames. Each frame carries the full
+base64url text across bounded `nsealr1a:` frames. Each frame carries the full
 decoded JSON SHA-256 digest, a one-based index/total pair, and a short frame
 checksum so receivers can reject missing, duplicated, reordered, or tampered
 frames before parsing JSON. Compression and fountain codes remain out of scope.
@@ -348,7 +348,7 @@ The decoder enforces the shared static QR decoded JSON byte limit and rejects
 padded base64url, invalid UTF-8, malformed JSON, and malformed prefixes before
 any review or signing flow can consume the payload.
 Animated decoding enforces separate decoded-JSON, frame-payload, and frame-count
-limits from `NostrSeal/specs`, then still relies on request/response validation
+limits from `nSealr/specs`, then still relies on request/response validation
 to decide whether the reassembled payload is acceptable for the caller.
 
 ## Serial Frame Draft
@@ -356,7 +356,7 @@ to decide whether the reassembled payload is acceptable for the caller.
 The initial serial frame is one newline-terminated ASCII line:
 
 ```text
-nseal1f:<type>:<base64url-json>:<checksum>\n
+nsealr1f:<type>:<base64url-json>:<checksum>\n
 ```
 
 Supported frame types are `request`, `response`, and `error`. The checksum is

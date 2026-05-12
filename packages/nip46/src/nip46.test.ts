@@ -7,11 +7,11 @@ import { validateRequest } from "../../protocol/src/protocol.js";
 import {
   decideNip46BridgeAction,
   isNip46RequestPermitted,
-  nip46ResponseFromNostrSeal,
+  nip46ResponseFromNSealr,
   nip46PermissionRequirementFromRequest,
   parseNip46ConnectIntent,
   parseNip46PolicyFile,
-  nostrSealRequestFromNip46,
+  nsealrRequestFromNip46,
   parseNip46Permissions,
   reviewNip46ConnectMessage,
   respondToLocalNip46Request
@@ -24,7 +24,7 @@ function load(rel: string): unknown {
 }
 
 describe("NIP-46 bridge payloads", () => {
-  it("maps a decrypted sign_event request to a NostrSeal signing request", () => {
+  it("maps a decrypted sign_event request to a nSealr signing request", () => {
     const signEventRequest = load("examples/request-kind-1-basic.json") as {
       params: { event_template: unknown };
     };
@@ -34,7 +34,7 @@ describe("NIP-46 bridge payloads", () => {
       params: [JSON.stringify(signEventRequest.params.event_template)]
     };
 
-    const request = nostrSealRequestFromNip46(message);
+    const request = nsealrRequestFromNip46(message);
 
     expect(request).toEqual({
       version: 1,
@@ -47,9 +47,9 @@ describe("NIP-46 bridge payloads", () => {
     expect(validateRequest(request).ok).toBe(true);
   });
 
-  it("maps a decrypted get_public_key request to a NostrSeal public-key request", () => {
+  it("maps a decrypted get_public_key request to a nSealr public-key request", () => {
     expect(
-      nostrSealRequestFromNip46({
+      nsealrRequestFromNip46({
         id: "nip46-key-1",
         method: "get_public_key",
         params: []
@@ -61,12 +61,12 @@ describe("NIP-46 bridge payloads", () => {
     });
   });
 
-  it("maps NostrSeal signed-event and public-key responses back to NIP-46 result strings", () => {
+  it("maps nSealr signed-event and public-key responses back to NIP-46 result strings", () => {
     const eventResponse = load("examples/response-kind-1-basic.json");
     const publicKeyResponse = load("examples/response-get-public-key.json");
 
-    const eventMessage = nip46ResponseFromNostrSeal("nip46-req-1", eventResponse);
-    const publicKeyMessage = nip46ResponseFromNostrSeal("nip46-key-1", publicKeyResponse);
+    const eventMessage = nip46ResponseFromNSealr("nip46-req-1", eventResponse);
+    const publicKeyMessage = nip46ResponseFromNSealr("nip46-key-1", publicKeyResponse);
 
     expect(eventMessage.id).toBe("nip46-req-1");
     expect(JSON.parse(eventMessage.result ?? "{}")).toEqual((eventResponse as { result: { event: unknown } }).result.event);
@@ -76,8 +76,8 @@ describe("NIP-46 bridge payloads", () => {
     });
   });
 
-  it("maps NostrSeal errors to NIP-46 error strings", () => {
-    expect(nip46ResponseFromNostrSeal("nip46-req-1", load("examples/response-error-rejected.json"))).toEqual({
+  it("maps nSealr errors to NIP-46 error strings", () => {
+    expect(nip46ResponseFromNSealr("nip46-req-1", load("examples/response-error-rejected.json"))).toEqual({
       id: "nip46-req-1",
       error: "user_rejected: User rejected the signing request."
     });
@@ -102,19 +102,19 @@ describe("NIP-46 bridge payloads", () => {
     expect(reviewNip46ConnectMessage(connect?.request_message)).toEqual(
       (connect as { connect_review?: unknown } | undefined)?.connect_review
     );
-    expect(nostrSealRequestFromNip46(signEvent?.request_message)).toEqual(signEvent?.nostrseal_request);
-    expect(nip46ResponseFromNostrSeal(signEvent?.request_message.id ?? "", signEvent?.nostrseal_response)).toEqual(
+    expect(nsealrRequestFromNip46(signEvent?.request_message)).toEqual(signEvent?.nsealr_request);
+    expect(nip46ResponseFromNSealr(signEvent?.request_message.id ?? "", signEvent?.nsealr_response)).toEqual(
       signEvent?.response_message
     );
-    expect(nostrSealRequestFromNip46(rejectedSignEvent?.request_message)).toEqual(rejectedSignEvent?.nostrseal_request);
+    expect(nsealrRequestFromNip46(rejectedSignEvent?.request_message)).toEqual(rejectedSignEvent?.nsealr_request);
     expect(
-      nip46ResponseFromNostrSeal(
+      nip46ResponseFromNSealr(
         rejectedSignEvent?.request_message.id ?? "",
-        rejectedSignEvent?.nostrseal_response
+        rejectedSignEvent?.nsealr_response
       )
     ).toEqual(rejectedSignEvent?.response_message);
-    expect(nostrSealRequestFromNip46(getPublicKey?.request_message)).toEqual(getPublicKey?.nostrseal_request);
-    expect(nip46ResponseFromNostrSeal(getPublicKey?.request_message.id ?? "", getPublicKey?.nostrseal_response)).toEqual(
+    expect(nsealrRequestFromNip46(getPublicKey?.request_message)).toEqual(getPublicKey?.nsealr_request);
+    expect(nip46ResponseFromNSealr(getPublicKey?.request_message.id ?? "", getPublicKey?.nsealr_response)).toEqual(
       getPublicKey?.response_message
     );
     expect(respondToLocalNip46Request(ping?.request_message)).toEqual(ping?.local_response_message);
@@ -133,14 +133,14 @@ describe("NIP-46 bridge payloads", () => {
   });
 
   it("rejects unsupported or unsafe NIP-46 request payloads", () => {
-    expect(() => nostrSealRequestFromNip46({ id: "bad id", method: "get_public_key", params: [] })).toThrow(
+    expect(() => nsealrRequestFromNip46({ id: "bad id", method: "get_public_key", params: [] })).toThrow(
       /id is invalid/u
     );
-    expect(() => nostrSealRequestFromNip46({ id: "nip46-req-1", method: "ping", params: [] })).toThrow(
+    expect(() => nsealrRequestFromNip46({ id: "nip46-req-1", method: "ping", params: [] })).toThrow(
       /handled locally/u
     );
     expect(() =>
-      nostrSealRequestFromNip46({
+      nsealrRequestFromNip46({
         id: "nip46-req-1",
         method: "sign_event",
         params: [JSON.stringify({ created_at: 1710000000, kind: 1, tags: [], content: "", sig: "00" })]
@@ -199,7 +199,7 @@ describe("NIP-46 bridge payloads", () => {
       requested_permissions: [{ method: "sign_event", parameter: "1", event_kind: 1 }, { method: "nip44_encrypt" }]
     });
     expect(() =>
-      nostrSealRequestFromNip46({ id: "connect-1", method: "connect", params: [remoteSignerPubkey] })
+      nsealrRequestFromNip46({ id: "connect-1", method: "connect", params: [remoteSignerPubkey] })
     ).toThrow(/requires policy review/u);
     expect(() =>
       parseNip46ConnectIntent({ id: "connect-1", method: "connect", params: ["bad-pubkey"] })
@@ -216,7 +216,7 @@ describe("NIP-46 bridge payloads", () => {
     });
 
     expect(review).toEqual({
-      format: "nseal-nip46-connect-review-v0",
+      format: "nsealr-nip46-connect-review-v0",
       id: "connect-1",
       remote_signer_pubkey: remoteSignerPubkey,
       secret_present: true,
@@ -301,7 +301,7 @@ describe("NIP-46 bridge payloads", () => {
         parameter: "1",
         event_kind: 1
       },
-      nostrseal_request: {
+      nsealr_request: {
         version: 1,
         request_id: "nip46-req-1",
         method: "sign_event",

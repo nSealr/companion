@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { TextDecoder } from "node:util";
-import { NOSTRSEAL_V0_LIMITS } from "../../protocol/src/limits.js";
+import { NSEALR_V0_LIMITS } from "../../protocol/src/limits.js";
 
-export const QR_ENVELOPE_PREFIX = "nseal1:";
-export const ANIMATED_QR_ENVELOPE_PREFIX = "nseal1a:";
+export const QR_ENVELOPE_PREFIX = "nsealr1:";
+export const ANIMATED_QR_ENVELOPE_PREFIX = "nsealr1a:";
 
 export type AnimatedQrEnvelopeOptions = {
   chunkSizeChars?: number;
@@ -28,7 +28,7 @@ function animatedFrameChecksum(digest: string, index: number, total: number, chu
 
 export function encodeQrEnvelope(value: unknown): string {
   const decodedJson = Buffer.from(JSON.stringify(value), "utf8");
-  if (decodedJson.byteLength > NOSTRSEAL_V0_LIMITS.max_static_qr_decoded_json_bytes) {
+  if (decodedJson.byteLength > NSEALR_V0_LIMITS.max_static_qr_decoded_json_bytes) {
     throw new Error("QR decoded JSON exceeds max_static_qr_decoded_json_bytes");
   }
   const payload = decodedJson.toString("base64url");
@@ -36,15 +36,15 @@ export function encodeQrEnvelope(value: unknown): string {
 }
 
 export function encodeAnimatedQrEnvelopeFrames(value: unknown, options: AnimatedQrEnvelopeOptions = {}): string[] {
-  const chunkSize = options.chunkSizeChars ?? NOSTRSEAL_V0_LIMITS.max_animated_qr_frame_payload_chars;
+  const chunkSize = options.chunkSizeChars ?? NSEALR_V0_LIMITS.max_animated_qr_frame_payload_chars;
   if (!Number.isInteger(chunkSize) || chunkSize <= 0) {
     throw new Error("animated QR chunk size must be a positive integer");
   }
-  if (chunkSize > NOSTRSEAL_V0_LIMITS.max_animated_qr_frame_payload_chars) {
+  if (chunkSize > NSEALR_V0_LIMITS.max_animated_qr_frame_payload_chars) {
     throw new Error("animated QR chunk exceeds max_animated_qr_frame_payload_chars");
   }
   const decodedJson = Buffer.from(JSON.stringify(value), "utf8");
-  if (decodedJson.byteLength > NOSTRSEAL_V0_LIMITS.max_animated_qr_decoded_json_bytes) {
+  if (decodedJson.byteLength > NSEALR_V0_LIMITS.max_animated_qr_decoded_json_bytes) {
     throw new Error("animated QR decoded JSON exceeds max_animated_qr_decoded_json_bytes");
   }
   const digest = sha256Hex(decodedJson);
@@ -53,7 +53,7 @@ export function encodeAnimatedQrEnvelopeFrames(value: unknown, options: Animated
   if (chunks.length === 0) {
     throw new Error("animated QR payload is empty");
   }
-  if (chunks.length > NOSTRSEAL_V0_LIMITS.max_animated_qr_frame_count) {
+  if (chunks.length > NSEALR_V0_LIMITS.max_animated_qr_frame_count) {
     throw new Error("animated QR frame count exceeds max_animated_qr_frame_count");
   }
   return chunks.map((chunk, position) => {
@@ -65,7 +65,7 @@ export function encodeAnimatedQrEnvelopeFrames(value: unknown, options: Animated
 
 export function decodeQrEnvelope(envelope: string): unknown {
   if (!envelope.startsWith(QR_ENVELOPE_PREFIX)) {
-    throw new Error("QR envelope requires nseal1 prefix");
+    throw new Error("QR envelope requires nsealr1 prefix");
   }
   const payload = envelope.slice(QR_ENVELOPE_PREFIX.length);
   if (payload.length === 0) {
@@ -73,7 +73,7 @@ export function decodeQrEnvelope(envelope: string): unknown {
   }
   assertBase64Url(payload);
   const decoded = Buffer.from(payload, "base64url");
-  if (decoded.byteLength > NOSTRSEAL_V0_LIMITS.max_static_qr_decoded_json_bytes) {
+  if (decoded.byteLength > NSEALR_V0_LIMITS.max_static_qr_decoded_json_bytes) {
     throw new Error("QR decoded JSON exceeds max_static_qr_decoded_json_bytes");
   }
   let json: string;
@@ -98,10 +98,10 @@ type ParsedAnimatedFrame = {
 
 function parseAnimatedFrame(frame: string): ParsedAnimatedFrame {
   if (!frame.startsWith(ANIMATED_QR_ENVELOPE_PREFIX)) {
-    throw new Error("animated QR frame requires nseal1a prefix");
+    throw new Error("animated QR frame requires nsealr1a prefix");
   }
   const parts = frame.split(":");
-  if (parts.length !== 5 || parts[0] !== "nseal1a") {
+  if (parts.length !== 5 || parts[0] !== "nsealr1a") {
     throw new Error("animated QR frame is malformed");
   }
   const [, digest, indexTotal, chunk, checksum] = parts;
@@ -120,11 +120,11 @@ function parseAnimatedFrame(frame: string): ParsedAnimatedFrame {
   if (index > total) {
     throw new Error("animated QR frame index is out of range");
   }
-  if (total > NOSTRSEAL_V0_LIMITS.max_animated_qr_frame_count) {
+  if (total > NSEALR_V0_LIMITS.max_animated_qr_frame_count) {
     throw new Error("animated QR frame count exceeds max_animated_qr_frame_count");
   }
   assertBase64Url(chunk);
-  if (chunk.length > NOSTRSEAL_V0_LIMITS.max_animated_qr_frame_payload_chars) {
+  if (chunk.length > NSEALR_V0_LIMITS.max_animated_qr_frame_payload_chars) {
     throw new Error("animated QR chunk exceeds max_animated_qr_frame_payload_chars");
   }
   if (checksum !== animatedFrameChecksum(digest, index, total, chunk)) {
@@ -162,7 +162,7 @@ export function decodeAnimatedQrEnvelopeFrames(frames: string[]): unknown {
     chunks.push(frame.chunk);
   }
   const decoded = Buffer.from(chunks.join(""), "base64url");
-  if (decoded.byteLength > NOSTRSEAL_V0_LIMITS.max_animated_qr_decoded_json_bytes) {
+  if (decoded.byteLength > NSEALR_V0_LIMITS.max_animated_qr_decoded_json_bytes) {
     throw new Error("animated QR decoded JSON exceeds max_animated_qr_decoded_json_bytes");
   }
   if (sha256Hex(decoded) !== digest) {

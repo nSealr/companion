@@ -54,7 +54,7 @@ describe("transport adapters", () => {
   });
 
   it("moves request and response JSON through files", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-file-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-file-"));
     const requestPath = join(tempRoot, "request.json");
     const responsePath = join(tempRoot, "response.json");
     const transport = new JsonFileTransport({ requestPath, responsePath });
@@ -77,7 +77,7 @@ describe("transport adapters", () => {
   });
 
   it("rejects file transport exchange responses for a different request id", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-file-mismatched-response-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-file-mismatched-response-"));
     const requestPath = join(tempRoot, "request.json");
     const responsePath = join(tempRoot, "response.json");
     const transport = new JsonFileTransport({ requestPath, responsePath });
@@ -96,7 +96,7 @@ describe("transport adapters", () => {
   });
 
   it("rejects invalid file transport requests before writing them", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-file-invalid-request-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-file-invalid-request-"));
     const requestPath = join(tempRoot, "request.json");
     const responsePath = join(tempRoot, "response.json");
     const transport = new JsonFileTransport({ requestPath, responsePath });
@@ -108,7 +108,7 @@ describe("transport adapters", () => {
   });
 
   it("rejects invalid file transport responses before returning them", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-file-invalid-response-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-file-invalid-response-"));
     const requestPath = join(tempRoot, "request.json");
     const responsePath = join(tempRoot, "response.json");
     const transport = new JsonFileTransport({ requestPath, responsePath });
@@ -120,7 +120,7 @@ describe("transport adapters", () => {
   });
 
   it("exchanges one JSON request and response over stdio JSON lines", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-stdio-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-stdio-"));
     const signerPath = join(tempRoot, "stdio-signer.mjs");
     writeFileSync(
       signerPath,
@@ -158,7 +158,7 @@ describe("transport adapters", () => {
   });
 
   it("rejects stdio transport responses for a different request id", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-stdio-mismatched-response-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-stdio-mismatched-response-"));
     const signerPath = join(tempRoot, "stdio-signer.mjs");
     writeFileSync(
       signerPath,
@@ -186,7 +186,7 @@ describe("transport adapters", () => {
 
   it("rejects invalid stdio transport requests before spawning a signer", async () => {
     const transport = new JsonLineStdioTransport({
-      command: "/definitely/missing/nseal-stdio-signer"
+      command: "/definitely/missing/nsealr-stdio-signer"
     });
 
     await expect(transport.exchange({ version: 1, request_id: "bad request id", method: "get_capabilities" })).rejects.toThrow(
@@ -195,7 +195,7 @@ describe("transport adapters", () => {
   });
 
   it("rejects invalid stdio transport responses before returning them", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-stdio-invalid-response-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-stdio-invalid-response-"));
     const signerPath = join(tempRoot, "stdio-signer.mjs");
     writeFileSync(
       signerPath,
@@ -218,7 +218,7 @@ describe("transport adapters", () => {
   });
 
   it("rejects stdio signer output that exceeds the bounded response line buffer", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-stdio-oversized-output-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-stdio-oversized-output-"));
     const signerPath = join(tempRoot, "stdio-signer.mjs");
     writeFileSync(signerPath, "process.stdout.write('unterminated');\n", "utf8");
     const transport = new JsonLineStdioTransport({
@@ -231,7 +231,7 @@ describe("transport adapters", () => {
   });
 
   it("caps stdio signer stderr included in exit failures", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-stdio-oversized-stderr-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-stdio-oversized-stderr-"));
     const signerPath = join(tempRoot, "stdio-signer.mjs");
     writeFileSync(signerPath, "process.stderr.write('diagnostic output');\nprocess.exit(2);\n", "utf8");
     const transport = new JsonLineStdioTransport({
@@ -244,7 +244,7 @@ describe("transport adapters", () => {
   });
 
   it("rejects silent stdio signers that do not respond before the timeout", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-stdio-timeout-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-stdio-timeout-"));
     const signerPath = join(tempRoot, "stdio-signer.mjs");
     writeFileSync(signerPath, "setTimeout(() => process.exit(0), 200);\n", "utf8");
     const transport = new JsonLineStdioTransport({

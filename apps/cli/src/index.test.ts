@@ -39,9 +39,9 @@ function fixtureCountLabel(count: number, singular: string, plural = `${singular
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
-describe("nseal CLI", () => {
+describe("nsealr CLI", () => {
   it("creates parameterless device requests with caller supplied request ids", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-device-requests-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-device-requests-"));
     const cases = [
       ["get-capabilities", "req-cli-capabilities", "get_capabilities"],
       ["get-public-key", "req-cli-public-key", "get_public_key"],
@@ -64,7 +64,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects invalid caller supplied request ids before writing device requests", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-device-request-id-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-device-request-id-"));
     const requestPath = join(tempRoot, "request.json");
 
     await expect(
@@ -75,7 +75,7 @@ describe("nseal CLI", () => {
   });
 
   it("runs request -> dev-sign -> verify-response for a shared fixture template", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-"));
     const key = loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as { secret_key: string };
     const fixtureRequest = loadJson(resolve(specsRoot, "examples/request-kind-1-basic.json")) as {
       params: { event_template: unknown };
@@ -94,7 +94,7 @@ describe("nseal CLI", () => {
   });
 
   it("runs request -> dev-sign -> verify-response through QR envelopes", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-qr-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-qr-"));
     const key = loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as { secret_key: string };
     const fixtureRequest = loadJson(resolve(specsRoot, "examples/request-kind-1-basic.json")) as {
       params: { event_template: unknown };
@@ -135,7 +135,7 @@ describe("nseal CLI", () => {
   });
 
   it("runs request -> dev-sign -> verify-response through animated QR frame files", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-animated-qr-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-animated-qr-"));
     const key = loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as { secret_key: string };
     const fixtureRequest = loadJson(resolve(specsRoot, "examples/request-kind-1-basic.json")) as {
       params: { event_template: unknown };
@@ -190,7 +190,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects policy decision fixture drift", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-policy-decision-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-invalid-policy-decision-"));
     const tempSpecsRoot = join(tempRoot, "specs");
     cpSync(specsRoot, tempSpecsRoot, { recursive: true });
     const vectorPath = resolve(tempSpecsRoot, "vectors/policy-decisions/grant-sign-event-kind-1-allowed.json");
@@ -206,7 +206,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects NIP-46 permission policy fixture drift", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-nip46-policy-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-invalid-nip46-policy-"));
     const tempSpecsRoot = join(tempRoot, "specs");
     cpSync(specsRoot, tempSpecsRoot, { recursive: true });
     const vectorPath = resolve(tempSpecsRoot, "vectors/nip46/sign-event-kind-1-basic.json");
@@ -222,7 +222,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects NIP-46 bridge decision fixture drift", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-nip46-bridge-decision-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-invalid-nip46-bridge-decision-"));
     const tempSpecsRoot = join(tempRoot, "specs");
     cpSync(specsRoot, tempSpecsRoot, { recursive: true });
     const vectorPath = resolve(tempSpecsRoot, "vectors/nip46/ping.json");
@@ -238,7 +238,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects review detail-page body style drift", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-review-detail-style-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-invalid-review-detail-style-"));
     const tempSpecsRoot = join(tempRoot, "specs");
     cpSync(specsRoot, tempSpecsRoot, { recursive: true });
     const vectorPath = resolve(tempSpecsRoot, "vectors/review-detail-pages/kind-1-tags-t-display-s3.json");
@@ -254,7 +254,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects review detail-page continuation style drift", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-review-detail-continuation-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-invalid-review-detail-continuation-"));
     const tempSpecsRoot = join(tempRoot, "specs");
     cpSync(specsRoot, tempSpecsRoot, { recursive: true });
     const vectorPath = resolve(tempSpecsRoot, "vectors/review-detail-pages/kind-1-tags-t-display-s3.json");
@@ -270,7 +270,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects NIP-46 policy-file fixture drift", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-nip46-policy-file-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-invalid-nip46-policy-file-"));
     const tempSpecsRoot = join(tempRoot, "specs");
     cpSync(specsRoot, tempSpecsRoot, { recursive: true });
     const policyPath = resolve(tempSpecsRoot, "vectors/nip46-policy-files/sign-event-kind-1-approved.json");
@@ -286,7 +286,7 @@ describe("nseal CLI", () => {
   });
 
   it("writes NIP-46 bridge decisions without opening relay or signer transports", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-nip46-decision-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-nip46-decision-"));
     const signEventVector = loadJson(resolve(specsRoot, "vectors/nip46/sign-event-kind-1-basic.json")) as {
       request_message: unknown;
       bridge_decisions: Array<{
@@ -341,7 +341,7 @@ describe("nseal CLI", () => {
   });
 
   it("can read NIP-46 approved permissions from an explicit policy file", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-nip46-policy-file-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-nip46-policy-file-"));
     const signEventVector = loadJson(resolve(specsRoot, "vectors/nip46/sign-event-kind-1-basic.json")) as {
       request_message: unknown;
       bridge_decisions: Array<{
@@ -360,7 +360,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects ambiguous NIP-46 permission sources", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-nip46-ambiguous-policy-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-nip46-ambiguous-policy-"));
     const signEventVector = loadJson(resolve(specsRoot, "vectors/nip46/sign-event-kind-1-basic.json")) as {
       request_message: unknown;
     };
@@ -387,7 +387,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects invalid NIP-46 decisions before writing output", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-nip46-hardening-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-invalid-nip46-hardening-"));
     const vector = loadJson(resolve(specsRoot, "vectors/invalid/nip46-sign-event-param-unsafe-template.json")) as {
       request_message: unknown;
     };
@@ -403,7 +403,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects malformed event-template JSON before writing a request", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-malformed-json-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-malformed-json-"));
     const templatePath = join(tempRoot, "template.json");
     const requestPath = join(tempRoot, "request.json");
     writeFileSync(templatePath, "{not-json", "utf8");
@@ -413,7 +413,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects unsupported request methods before writing output", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-unsupported-method-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-unsupported-method-"));
     const requestPath = join(tempRoot, "request.json");
 
     await expect(runCli(["request", "nip44-encrypt", "--out", requestPath])).rejects.toThrow(
@@ -423,7 +423,7 @@ describe("nseal CLI", () => {
   });
 
   it("verifies shared get_public_key responses and rejects mismatched request ids", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-pubkey-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-pubkey-"));
     const vector = loadJson(resolve(specsRoot, "vectors/devices/esp32-s3-get-public-key-dev.json")) as {
       request: unknown;
       response: { request_id: string };
@@ -447,7 +447,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects invalid original requests before verifying responses", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-invalid-verify-request-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-invalid-verify-request-"));
     const requestPath = join(tempRoot, "request.json");
     const responsePath = join(tempRoot, "response.json");
     writeFileSync(
@@ -489,7 +489,7 @@ describe("nseal CLI", () => {
   });
 
   it("wraps requests and unwraps responses as serial frames", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-serial-frame-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-serial-frame-"));
     const request = loadJson(resolve(specsRoot, "examples/request-get-capabilities.json"));
     const response = loadJson(resolve(specsRoot, "examples/response-get-capabilities-esp32-s3-scaffold.json"));
     const requestPath = join(tempRoot, "request.json");
@@ -512,7 +512,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects serial-frame responses for a different request before writing output", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-serial-frame-mismatch-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-serial-frame-mismatch-"));
     const request = loadJson(resolve(specsRoot, "examples/request-get-capabilities.json"));
     const response = {
       ...(loadJson(resolve(specsRoot, "examples/response-get-capabilities-esp32-s3-scaffold.json")) as {
@@ -543,7 +543,7 @@ describe("nseal CLI", () => {
   });
 
   it("exchanges a request over an injected serial line port", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-serial-line-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-serial-line-"));
     const request = loadJson(resolve(specsRoot, "examples/request-get-capabilities.json"));
     const response = loadJson(resolve(specsRoot, "examples/response-get-capabilities-esp32-s3-scaffold.json"));
     const requestPath = join(tempRoot, "request.json");
@@ -582,7 +582,7 @@ describe("nseal CLI", () => {
   });
 
   it("rejects invalid serial line requests before opening a port or writing output", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-serial-line-invalid-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-serial-line-invalid-"));
     const requestPath = join(tempRoot, "request.json");
     const responsePath = join(tempRoot, "response.json");
     let opened = false;
@@ -609,7 +609,7 @@ describe("nseal CLI", () => {
   });
 
   it("does not write serial line output when the device returns an error frame", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-serial-line-error-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-serial-line-error-"));
     const request = loadJson(resolve(specsRoot, "examples/request-get-capabilities.json"));
     const requestPath = join(tempRoot, "request.json");
     const responsePath = join(tempRoot, "response.json");
@@ -637,7 +637,7 @@ describe("nseal CLI", () => {
   });
 
   it("renders an untrusted review preview from a QR signing request", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-review-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-review-"));
     const vector = loadJson(resolve(specsRoot, "vectors/review/kind-1-tags.json")) as {
       request: unknown;
       review: unknown;
@@ -653,7 +653,7 @@ describe("nseal CLI", () => {
   });
 
   it("renders review previews bound to a caller-provided signer author pubkey", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-review-author-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-review-author-"));
     const vector = loadJson(resolve(specsRoot, "vectors/review/kind-1-basic.json")) as { request: unknown };
     const authorPubkey = "17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917";
     const requestPath = join(tempRoot, "request.qr");
@@ -692,7 +692,7 @@ describe("nseal CLI", () => {
   });
 
   it("renders screen-review pages with approval digest from a QR signing request", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-screen-review-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-screen-review-"));
     const vector = loadJson(resolve(specsRoot, "vectors/review-screens/kind-1-tags.json")) as {
       request: unknown;
       screen_review: unknown;
@@ -708,7 +708,7 @@ describe("nseal CLI", () => {
   });
 
   it("renders review detail pages from a QR signing request", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-detail-pages-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-detail-pages-"));
     const fixtures = loadSpecsFixtures(specsRoot);
     const vector = fixtures.reviewDetailPages.find((item) => item.name === "kind-1-tags-t-display-s3");
     expect(vector).toBeDefined();
@@ -734,7 +734,7 @@ describe("nseal CLI", () => {
   });
 
   it("renders review detail pages with caller supplied display limits", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-detail-page-limits-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-detail-page-limits-"));
     const fixtures = loadSpecsFixtures(specsRoot);
     const reviewVector = fixtures.reviews.find((item) => item.name === "kind-1-long-events-many-tags");
     expect(reviewVector).toBeDefined();
@@ -776,7 +776,7 @@ describe("nseal CLI", () => {
   });
 
   it("runs request -> smartcard-sim-sign -> verify-response after explicit review acknowledgement", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "nseal-cli-smartcard-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-smartcard-"));
     const key = loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as { secret_key: string };
     const request = loadJson(resolve(specsRoot, "examples/request-kind-1-basic.json"));
     const screenReview = loadJson(resolve(specsRoot, "vectors/review-screens/kind-1-basic.json")) as {

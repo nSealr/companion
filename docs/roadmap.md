@@ -70,13 +70,13 @@ hardware, and that adapter now bounds buffered lines with the shared v0
 serial-frame byte limit. Serial-frame encoding now also rejects frames that
 would exceed the shared v0 serial-frame byte limit before a CLI or transport
 can write an over-limit line. Serial-frame transport surfaces device
-`nseal1f:error` payloads as deterministic transport diagnostics instead of
+`nsealr1f:error` payloads as deterministic transport diagnostics instead of
 discarding the error code. The offline serial-frame unwrap helper can now take
 the original request and reject mismatched captured responses before writing
 output. The one-shot serial-line exchange boundary is now package-owned in
 `packages/transport`: it validates the request before opening a local newline
 serial device path, skips firmware log lines, verifies the response before
-returning it, and closes the opened port. `nseal serial-line exchange` is a
+returning it, and closes the opened port. `nsealr serial-line exchange` is a
 thin CLI adapter over that boundary.
 M3 remains open for larger-payload strategy beyond v0 frame refusal and a
 production-grade browser/native USB/WebSerial binding.
@@ -84,9 +84,9 @@ production-grade browser/native USB/WebSerial binding.
 ## M4: NIP-46 Payload Bridge
 
 - Decrypted JSON-RPC-like content mapping.
-- `get_public_key` and `sign_event` request conversion to NostrSeal requests.
+- `get_public_key` and `sign_event` request conversion to nSealr requests.
 - Local `ping` handling.
-- NostrSeal response conversion back to NIP-46 result/error strings.
+- nSealr response conversion back to NIP-46 result/error strings.
 - Requested permission string parsing for future `connect` review.
 - `connect` request parsing into explicit policy-review intents.
 - Deterministic `connect` review-page rendering without echoing secrets or
@@ -98,18 +98,18 @@ production-grade browser/native USB/WebSerial binding.
 - Read-only policy-file input for the CLI decision harness.
 
 Status: the first decrypted-payload bridge is implemented in `packages/nip46`.
-It consumes shared `NostrSeal/specs` NIP-46 payload vectors through unit tests
-and `nseal fixture verify`, and it now parses NIP-46 requested permission
+It consumes shared `nSealr/specs` NIP-46 payload vectors through unit tests
+and `nsealr fixture verify`, and it now parses NIP-46 requested permission
 strings plus `connect` intents and can match later requests against explicit
 permission inputs without granting or persisting them. The `connect` intent
 path, deterministic `connect` review pages, and non-`connect` permission
 policy checks are now pinned by shared specs vectors. Bridge decisions are also
 pinned by shared specs vectors, including permission-denied NIP-46 responses
-before a request reaches signer transport. `nseal nip46 decide` exposes those
-decisions as a file-backed CLI harness for integration tests. `nseal nip46
+before a request reaches signer transport. `nsealr nip46 decide` exposes those
+decisions as a file-backed CLI harness for integration tests. `nsealr nip46
 review-connect` exposes only the deterministic review pages for a `connect`
 message. The decision command can read explicit permissions from the command
-line or from a `nseal-nip46-policy-v0` policy file pinned by shared specs
+line or from a `nsealr-nip46-policy-v0` policy file pinned by shared specs
 vectors, but neither command creates, updates, approves, or persists grants by
 itself. Policy-file parsing is now package-owned in `packages/nip46`, leaving
 the CLI as a file/argument adapter. These paths also do not add relay,
@@ -121,7 +121,7 @@ permission storage, grant review, and auth challenge UX remain future work.
 
 - Move NIP-46 policy-file parsing into package-owned logic so CLI commands stay
   thin wrappers.
-- Add a central NostrSeal v0 limit profile in protocol code and enforce it in
+- Add a central nSealr v0 limit profile in protocol code and enforce it in
   signing-request validation.
 - Make NIP-46 bridge conversion reuse standard request validation so unsafe
   already-decrypted payloads cannot bypass the signing-request validator.
@@ -134,7 +134,7 @@ Status: implemented for companion-owned boundaries. `packages/protocol`
 enforces the shared v0 limits, QR/serial decoders reject malformed or oversized
 frames, `packages/nip46` owns policy-file parsing and request conversion, CLI
 decision commands fail before writing output, and test-only Nostr conformance
-is cross-checked with `nostr-tools`. `NostrSeal/lab` now pins the cross-repo
+is cross-checked with `nostr-tools`. `nSealr/lab` now pins the cross-repo
 behavior after Raspberry and ESP32 consumed the applicable vectors. The gate
 still blocks full NIP-46 relay sessions, browser extension work, persistent
 grants, and production signer I/O.
@@ -166,7 +166,7 @@ Status note, 2026-05-11: the companion identity/policy boundary now follows
 the official account model. Account metadata is per resulting public key and
 route; key sources such as mnemonics, passphrase namespaces, standalone
 `nsec`, device slots, card slots, and external signers are not stored as
-production secrets by companion. Policy records are internal NostrSeal records,
+production secrets by companion. Policy records are internal nSealr records,
 not Nostr events. Companion may transport policy proposals, but persistent
 devices must accept authoritative policy changes locally. The final
 per-account policy menu remains open; current scoped-automation vectors are
@@ -196,7 +196,7 @@ line without adding compression, fountain codes, relay sessions, or signer I/O.
   acknowledgement before APDU exchange. External `approvalDigest` binding is
   required and checked against shared review-screen vectors before APDU
   exchange.
-- CLI simulator path: implemented as `nseal smartcard-sim-sign`, with mandatory
+- CLI simulator path: implemented as `nsealr smartcard-sim-sign`, with mandatory
   `--review-acknowledged` and `--approval-digest`.
 - PC/SC/contact transport boundary: implemented as a provider-injected APDU
   exchange adapter with setup-error normalization, malformed reader-list

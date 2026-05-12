@@ -1,4 +1,4 @@
-export const NOSTRSEAL_V0_LIMITS = {
+export const NSEALR_V0_LIMITS = {
   max_request_id_length: 128,
   max_decoded_request_json_bytes: 704,
   max_static_qr_decoded_json_bytes: 704,
@@ -15,7 +15,7 @@ export const NOSTRSEAL_V0_LIMITS = {
   max_safe_integer: 9007199254740991
 } as const;
 
-export type NostrSealV0Limits = typeof NOSTRSEAL_V0_LIMITS;
+export type nSealrV0Limits = typeof NSEALR_V0_LIMITS;
 
 export function utf8ByteLength(value: string): number {
   return Buffer.byteLength(value, "utf8");

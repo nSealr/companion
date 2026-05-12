@@ -14,8 +14,8 @@ import {
   decideNip46BridgeAction,
   isNip46RequestPermitted,
   nip46PermissionRequirementFromRequest,
-  nip46ResponseFromNostrSeal,
-  nostrSealRequestFromNip46,
+  nip46ResponseFromNSealr,
+  nsealrRequestFromNip46,
   parseNip46ConnectIntent,
   parseNip46PolicyFile,
   parseNip46Permissions,
@@ -351,12 +351,12 @@ function validateNip46PayloadFixture(name: string, fixture: unknown): void {
   }
   validateNip46PermissionPolicyFixture(name, fixture);
   assertJsonEqual(
-    nostrSealRequestFromNip46(fixture.request_message),
-    fixture.nostrseal_request,
-    `invalid NIP-46 fixture ${name}: NostrSeal request mismatch`
+    nsealrRequestFromNip46(fixture.request_message),
+    fixture.nsealr_request,
+    `invalid NIP-46 fixture ${name}: nSealr request mismatch`
   );
   assertJsonEqual(
-    nip46ResponseFromNostrSeal(String(fixture.request_message.id), fixture.nostrseal_response),
+    nip46ResponseFromNSealr(String(fixture.request_message.id), fixture.nsealr_response),
     fixture.response_message,
     `invalid NIP-46 fixture ${name}: response message mismatch`
   );
@@ -500,7 +500,7 @@ async function openNodeSerialLinePort(path: string): Promise<SerialLinePort> {
 export function buildCli(options: BuildCliOptions = {}): Command {
   const openSerialLinePort = options.openSerialLinePort ?? openNodeSerialLinePort;
   const program = new Command();
-  program.name("nseal").description("NostrSeal companion CLI").version("0.1.0");
+  program.name("nsealr").description("nSealr companion CLI").version("0.1.0");
 
   program
     .command("fixture")
@@ -599,7 +599,7 @@ export function buildCli(options: BuildCliOptions = {}): Command {
     .option("--event-template <path>")
     .option("--request-id <id>")
     .option("--output-format <format>", "Output format: json, qr, or qr-animated", "json")
-    .description("Create a NostrSeal request")
+    .description("Create a nSealr request")
     .action((method: string, options: { out: string; eventTemplate?: string; requestId?: string; outputFormat: string }) => {
       assertFormat(options.outputFormat);
       const parameterlessMethod = PARAMETERLESS_REQUEST_METHODS[method];

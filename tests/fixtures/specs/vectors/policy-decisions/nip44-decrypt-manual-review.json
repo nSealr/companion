@@ -1,6 +1,6 @@
 {
   "name": "nip44-decrypt-manual-review",
-  "format": "nseal-policy-decision-vector-v0",
+  "format": "nsealr-policy-decision-vector-v0",
   "policy_profile_id": "policy-scoped-automation-daily-use",
   "request": {
     "account_id": "acct-esp32-usb-slot-0",
@@ -14,11 +14,11 @@
     "revoked_grant_ids": []
   },
   "decision": {
-    "format": "nseal-policy-decision-v0",
+    "format": "nsealr-policy-decision-v0",
     "decision": "manual_review",
     "reason": "decrypt_requires_manual_review",
     "audit_event": {
-      "format": "nseal-grant-audit-event-v0",
+      "format": "nsealr-grant-audit-event-v0",
       "occurred_at": 1710000300,
       "account_id": "acct-esp32-usb-slot-0",
       "route_type": "esp32_usb_nip46",

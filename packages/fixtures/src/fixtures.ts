@@ -144,8 +144,8 @@ export type SpecsFixtureSet = {
       }>;
       decision: unknown;
     }>;
-    nostrseal_request?: unknown;
-    nostrseal_response?: unknown;
+    nsealr_request?: unknown;
+    nsealr_response?: unknown;
     response_message?: {
       id: string;
       result?: string;
@@ -167,7 +167,7 @@ export type SpecsFixtureSet = {
       }>;
     };
     connect_review?: {
-      format: "nseal-nip46-connect-review-v0";
+      format: "nsealr-nip46-connect-review-v0";
       id: string;
       remote_signer_pubkey: string;
       secret_present: boolean;
@@ -197,14 +197,14 @@ export type SpecsFixtureSet = {
   grants: GrantDescriptor[];
   policyDecisions: Array<{
     name: string;
-    format: "nseal-policy-decision-vector-v0";
+    format: "nsealr-policy-decision-vector-v0";
     policy_profile_id: string;
     request: PolicyDecisionRequest;
     decision: PolicyDecision;
   }>;
   featureMatrices: Array<{
     name: string;
-    format: "nseal-signer-feature-matrix-v0";
+    format: "nsealr-signer-feature-matrix-v0";
     features: Array<{
       id: string;
       contract_id: string;
@@ -293,8 +293,8 @@ export function validateReviewTranscriptFixture(name: string, fixture: unknown):
   if (fixture.format !== "qr-review-transcript-v0") {
     throw new Error(`invalid review transcript fixture ${name}: unsupported format`);
   }
-  if (typeof fixture.qr_envelope !== "string" || !fixture.qr_envelope.startsWith("nseal1:")) {
-    throw new Error(`invalid review transcript fixture ${name}: qr_envelope must be a nseal1 envelope`);
+  if (typeof fixture.qr_envelope !== "string" || !fixture.qr_envelope.startsWith("nsealr1:")) {
+    throw new Error(`invalid review transcript fixture ${name}: qr_envelope must be a nsealr1 envelope`);
   }
   if (typeof fixture.approval_digest !== "string" || !/^[0-9a-f]{64}$/u.test(fixture.approval_digest)) {
     throw new Error(`invalid review transcript fixture ${name}: approval_digest must be 32-byte lowercase hex`);
@@ -341,7 +341,7 @@ export function validateReviewTranscriptFixture(name: string, fixture: unknown):
 
 export function validateFeatureMatrixFixture(name: string, fixture: unknown): void {
   if (!isRecord(fixture)) throw new Error(`invalid feature matrix ${name}: fixture must be an object`);
-  if (fixture.format !== "nseal-signer-feature-matrix-v0") {
+  if (fixture.format !== "nsealr-signer-feature-matrix-v0") {
     throw new Error(`invalid feature matrix ${name}: unsupported format`);
   }
   if (fixture.name !== name) throw new Error(`invalid feature matrix ${name}: name mismatch`);
@@ -506,7 +506,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .sort();
   return {
     key: loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as SpecsFixtureSet["key"],
-    limits: loadJson(resolve(specsRoot, "vectors/limits/nseal-v0.json")) as SpecsFixtureSet["limits"],
+    limits: loadJson(resolve(specsRoot, "vectors/limits/nsealr-v0.json")) as SpecsFixtureSet["limits"],
     events: eventFiles.map((file) => loadJson(resolve(eventsRoot, file)) as SpecsFixtureSet["events"][number]),
     reviews: reviewFiles.map((file) => loadJson(resolve(reviewsRoot, file)) as SpecsFixtureSet["reviews"][number]),
     reviewScreens: reviewScreenFiles.map(

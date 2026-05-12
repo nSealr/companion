@@ -71,7 +71,7 @@ describe("fixture loading", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
     expect(fixtures.reviewScreens.map((screen) => screen.name)).toEqual(expect.arrayContaining(["kind-1-basic", "kind-1-tags"]));
     expect(fixtures.reviewScreens[0].screen_review.approval_digest).toBe(
-      "6115446825f03a7abf600a7e5746e2a28de33aff3088894e1b610c17a7bb685b"
+      "a09ddd564e439fdd4756da6863156eddcfc50c295af453af1c78c35986c303a5"
     );
   });
 
@@ -114,7 +114,7 @@ describe("fixture loading", () => {
       (pageSet) => pageSet.name === "kind-1-control-escapes-t-display-s3"
     );
     expect(tagged?.display_profile).toBe("ascii-safe-codepoint-fallback-v0");
-    expect(tagged?.pages.find((page) => page.title === "Tags")?.lines).toContain("nostrseal");
+    expect(tagged?.pages.find((page) => page.title === "Tags")?.lines).toContain("nsealr");
     expect(longTags?.pages.map((page) => page.page_indicator)).toContain("Page 3/4 Lines 28-29/29");
     expect(unicodeBoundary?.pages.find((page) => page.title === "Content")?.lines).toEqual(["abcU+00E8def"]);
     expect(controlEscapes?.pages.find((page) => page.title === "Tags")?.lines).toContain("line\\nbreak");
@@ -135,7 +135,7 @@ describe("fixture loading", () => {
   it("loads NIP-46 policy-file vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
     expect(fixtures.nip46PolicyFiles.map((policy) => policy.name)).toEqual(["sign-event-kind-1-approved"]);
-    expect(fixtures.nip46PolicyFiles[0].format).toBe("nseal-nip46-policy-v0");
+    expect(fixtures.nip46PolicyFiles[0].format).toBe("nsealr-nip46-policy-v0");
   });
 
   it("loads identity, policy, and grant descriptors from the specs repository", () => {
@@ -164,14 +164,14 @@ describe("fixture loading", () => {
       "nip44-decrypt-manual-review",
       "unknown-method-manual-review"
     ]);
-    expect(fixtures.policyDecisions[0].format).toBe("nseal-policy-decision-vector-v0");
+    expect(fixtures.policyDecisions[0].format).toBe("nsealr-policy-decision-vector-v0");
   });
 
   it("loads and validates signer feature matrix vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
     const matrix = fixtures.featureMatrices.find((candidate) => candidate.name === "signer-feature-matrix-v0");
 
-    expect(matrix?.format).toBe("nseal-signer-feature-matrix-v0");
+    expect(matrix?.format).toBe("nsealr-signer-feature-matrix-v0");
     expect(Object.keys(matrix?.solutions ?? {}).sort()).toEqual([
       "custom_hardware_wallet",
       "esp32_qr_vault",
@@ -200,8 +200,8 @@ describe("fixture loading", () => {
   it("loads implementation limits and invalid hardening vectors from the specs repository", () => {
     const specsRoot = resolveSpecsRoot();
     const fixtures = loadSpecsFixtures(specsRoot);
-    expect(fixtures.limits.format).toBe("nostrseal-implementation-limits-v0");
-    expect(fixtures.limits.name).toBe("nostrseal-v0");
+    expect(fixtures.limits.format).toBe("nsealr-implementation-limits-v0");
+    expect(fixtures.limits.name).toBe("nsealr-v0");
     expect(fixtures.limits.limits.max_request_id_length).toBe(128);
     const expectedInvalidNames = readdirSync(resolve(specsRoot, "vectors/invalid"))
       .filter((file) => file.endsWith(".json"))

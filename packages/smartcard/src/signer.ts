@@ -9,7 +9,7 @@ import {
 } from "../../core/src/nostr.js";
 import { validateRequest } from "../../protocol/src/protocol.js";
 import { approvalDigestForRequest } from "../../review/src/review.js";
-import { CommandApdu, GET_PUBLIC_KEY_INS, NOSTRSEAL_CLA, ResponseApdu, SIGN_EVENT_ID_INS, SW_NO_ERROR } from "./apdu.js";
+import { CommandApdu, GET_PUBLIC_KEY_INS, NSEALR_CLA, ResponseApdu, SIGN_EVENT_ID_INS, SW_NO_ERROR } from "./apdu.js";
 
 export type SmartcardApduTransport = {
   exchange(command: CommandApdu): Promise<ResponseApdu>;
@@ -63,7 +63,7 @@ export class SmartcardSigner {
   constructor(private readonly transport: SmartcardApduTransport) {}
 
   async getPublicKey(): Promise<string> {
-    const response = await this.transport.exchange(new CommandApdu(NOSTRSEAL_CLA, GET_PUBLIC_KEY_INS));
+    const response = await this.transport.exchange(new CommandApdu(NSEALR_CLA, GET_PUBLIC_KEY_INS));
     assertSuccessfulApdu(response, 32, "get_public_key");
     return bytesToHex(response.data);
   }
@@ -83,7 +83,7 @@ export class SmartcardSigner {
     };
     const id = computeEventId(eventWithoutSignature);
     const signatureResponse = await this.transport.exchange(
-      new CommandApdu(NOSTRSEAL_CLA, SIGN_EVENT_ID_INS, 0, 0, Uint8Array.from(hexToBytes(id)))
+      new CommandApdu(NSEALR_CLA, SIGN_EVENT_ID_INS, 0, 0, Uint8Array.from(hexToBytes(id)))
     );
     assertSuccessfulApdu(signatureResponse, 64, "sign_event_id");
 

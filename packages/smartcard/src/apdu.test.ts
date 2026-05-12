@@ -6,7 +6,7 @@ import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import {
   CommandApdu,
   GET_PUBLIC_KEY_INS,
-  NOSTRSEAL_CLA,
+  NSEALR_CLA,
   ResponseApdu,
   SIGN_EVENT_ID_INS,
   SmartcardSimulator
@@ -26,7 +26,7 @@ describe("smartcard APDU adapter", () => {
   it("encodes and decodes short command APDUs from shared vectors", () => {
     const command = CommandApdu.fromHex(signEventIdVector.command_hex);
 
-    expect(command.cla).toBe(NOSTRSEAL_CLA);
+    expect(command.cla).toBe(NSEALR_CLA);
     expect(command.ins).toBe(SIGN_EVENT_ID_INS);
     expect(command.data.length).toBe(32);
     expect(command.toHex()).toBe(signEventIdVector.command_hex);

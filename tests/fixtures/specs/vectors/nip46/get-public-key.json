@@ -6,7 +6,7 @@
     "method": "get_public_key",
     "params": []
   },
-  "nostrseal_request": {
+  "nsealr_request": {
     "version": 1,
     "request_id": "nip46-key-1",
     "method": "get_public_key"
@@ -48,7 +48,7 @@
         "permission_requirement": {
           "method": "get_public_key"
         },
-        "nostrseal_request": {
+        "nsealr_request": {
           "version": 1,
           "request_id": "nip46-key-1",
           "method": "get_public_key"
@@ -69,7 +69,7 @@
       }
     }
   ],
-  "nostrseal_response": {
+  "nsealr_response": {
     "version": 1,
     "request_id": "nip46-key-1",
     "ok": true,

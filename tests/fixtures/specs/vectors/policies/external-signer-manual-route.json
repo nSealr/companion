@@ -1,5 +1,5 @@
 {
-  "format": "nseal-policy-profile-v0",
+  "format": "nsealr-policy-profile-v0",
   "policy_id": "policy-external-signer-manual-route",
   "label": "External signer route policy",
   "route_types": ["external_nip46"],

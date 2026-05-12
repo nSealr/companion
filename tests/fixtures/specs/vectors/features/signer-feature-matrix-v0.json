@@ -1,9 +1,9 @@
 {
-  "format": "nseal-signer-feature-matrix-v0",
+  "format": "nsealr-signer-feature-matrix-v0",
   "name": "signer-feature-matrix-v0",
   "policy": {
     "same_behavior_when_present": true,
-    "defined_by": "NostrSeal specs contracts and vectors, not shared source code.",
+    "defined_by": "nSealr specs contracts and vectors, not shared source code.",
     "implementation_rule": "A feature may be absent, forbidden, or hardware-blocked on a solution. When the same feature is active on more than one solution, each implementation must use the same contract_id and pass the same conformance vectors unless an approved equivalent is documented in specs.",
     "parity_groups": [
       {
@@ -99,7 +99,7 @@
     {
       "id": "nip46_decrypted_bridge",
       "contract_id": "nip46-decrypted-bridge-v0",
-      "behavior": "Already-decrypted NIP-46 requests are converted into standard NostrSeal signing requests or deterministic local decisions without implementing relay sessions or encryption."
+      "behavior": "Already-decrypted NIP-46 requests are converted into standard nSealr signing requests or deterministic local decisions without implementing relay sessions or encryption."
     },
     {
       "id": "scoped_policy_automation",
@@ -570,7 +570,7 @@
         "serial_usb_transport": {
           "target": "not_applicable",
           "current": "not_applicable",
-          "notes": "The smartcard line uses card transports rather than NostrSeal serial USB frames."
+          "notes": "The smartcard line uses card transports rather than nSealr serial USB frames."
         },
         "nip46_decrypted_bridge": {
           "target": "optional",

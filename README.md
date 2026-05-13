@@ -100,6 +100,8 @@ match the shared `contract_id`.
   page-bridge envelope plus page-side requester adapter for future
   page/content-script messaging, includes a pure content-script bridge handler
   that binds page envelopes to an injected sender-aware background requester,
+  includes a pure content-window event adapter that checks page source/origin
+  before that bridge handler is reached,
   has a pure page-script provider bootstrap over that injected bridge exchange,
   and can build a minimal no-host-permission manifest. It does not package or
   install a browser extension.

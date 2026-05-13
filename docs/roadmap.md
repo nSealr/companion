@@ -329,8 +329,11 @@ and uploads checked tarball artifacts without publishing to npm.
   requests into that bridge envelope before accepting validated bridge
   responses. A pure content-script bridge handler now binds page bridge
   envelopes to an injected sender-aware background requester without adding a
-  browser listener, and a pure page-script bootstrap now composes that requester
-  with the explicit-target NIP-07 provider installer without adding an
+  browser listener. A pure content-window event adapter now gates already
+  received page messages by expected source and normalized origin before
+  forwarding nSealr page-bridge envelopes, still without registering listeners
+  or calling `postMessage`. A pure page-script bootstrap now composes that
+  requester with the explicit-target NIP-07 provider installer without adding an
   injection mechanism. It can build a minimal MV3 manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage
   permissions. Remaining work: extension packaging, actual

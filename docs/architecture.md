@@ -57,7 +57,8 @@ packages, but it must not export test-only signing as a production path.
   `getPublicKey` and `signEvent` calls to validated background requests, and
   has a pure page-bridge envelope and page-side requester adapter for future
   page/content-script messaging. It also has a pure content-script bridge
-  handler for sender-bound background forwarding and a pure page-script
+  handler for sender-bound background forwarding, a pure content-window event
+  adapter for source/origin gating before forwarding, and a pure page-script
   bootstrap that installs the provider over an injected bridge exchange.
   It can build a minimal MV3 manifest with `nativeMessaging` as the only
   permission. It does not yet ship extension packaging, content-script
@@ -290,6 +291,12 @@ forwards cancellation as a background request option, and rejects malformed or
 already-cancelled page messages before the background is contacted. It has no
 `postMessage` listener, no browser runtime dependency, no storage, no grants,
 and no key custody.
+The content-window event adapter handles one already-received window message at
+a time. It accepts only messages from the expected page source and normalized
+page origin, ignores unrelated data without responding, and forwards only
+nSealr page-bridge envelopes to the content-script bridge handler. It still
+does not register a `postMessage` listener, call `window.postMessage`, use
+browser runtime APIs, write storage, create grants, or hold key material.
 The page-script bootstrap composes that requester with the NIP-07 page
 provider and explicit-target installer. It gives the future injected page
 script a single pure entrypoint while still requiring an injected bridge

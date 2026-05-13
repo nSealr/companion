@@ -108,7 +108,11 @@ single-repository CI. Cross-repository drift remains guarded by
   Page-side requester tests also prove bridge-envelope wrapping and
   cancellation forwarding through an injected bridge exchange. Content-script
   bridge tests prove accepted page envelopes are bound to an explicit sender
-  and injected background requester without adding browser listeners. Page-script
+  and injected background requester without adding browser listeners.
+  Content-window tests prove already-received page messages are source/origin
+  gated, unrelated messages are ignored, and malformed nSealr envelopes fail
+  before background contact without registering listeners or calling
+  `postMessage`. Page-script
   bootstrap tests prove the explicit-target NIP-07 provider can be installed
   over that bridge exchange without overwriting an existing provider or adding
   browser injection.

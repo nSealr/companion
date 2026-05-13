@@ -4,6 +4,8 @@ import { utf8ByteLength } from "@nsealr/protocol";
 export const NATIVE_MESSAGE_LENGTH_BYTES = 4;
 export const MAX_NATIVE_MESSAGE_BYTES = 16 * 1024;
 
+export type NativeMessageFrameExchange = (frame: Uint8Array) => Promise<Uint8Array> | Uint8Array;
+
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const encoder = new TextEncoder();
 

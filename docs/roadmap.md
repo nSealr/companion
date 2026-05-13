@@ -199,10 +199,12 @@ artifacts.
   high-level SDK clients. First native-messaging scaffold is implemented with
   secretless service status, deterministic pairing intents, in-memory
   client-grant enforcement, signer-request validation, and signer-response
-  verification. Remaining work: persistent pairing store, user approval UX,
-  account route selection, cancellation, persistent revocation, deterministic
-  transport errors, signer dispatch, and native-host packaging. Treat localhost
-  HTTP/WebSocket as a separate threat-model decision.
+  verification. The first high-level client wrapper validates request-id
+  correlation and malformed service responses before browser, SDK, desktop, or
+  CLI code can trust them. Remaining work: persistent pairing store, user
+  approval UX, account route selection, cancellation, persistent revocation,
+  deterministic transport errors, signer dispatch, and native-host packaging.
+  Treat localhost HTTP/WebSocket as a separate threat-model decision.
 - M4.8 browser extension / NIP-07 bridge with `getPublicKey` and `signEvent`
   routed through companion. No local production signing and no extension-side
   production key storage.

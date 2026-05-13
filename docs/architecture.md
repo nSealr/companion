@@ -92,9 +92,10 @@ packages, but it must not export test-only signing as a production path.
   storage and grant UX remain separate layers.
 - `packages/client`: local companion service request/response protocol,
   native-messaging frame codec, service status, pairing intent generation,
-  in-memory grant enforcement, signer-request validation, and signer-response
-  verification. This is the shared client/service boundary for future browser
-  extension, SDK, and desktop work.
+  in-memory grant enforcement, signer-request validation, signer-response
+  verification, response validation, and a high-level client wrapper. This is
+  the shared client/service boundary for future browser extension, SDK, and
+  desktop work.
 - `apps/service`: private one-shot native-messaging host scaffold over
   `packages/client`. It is intentionally secretless and does not yet perform
   persistent grant lookup, account selection, relay work, or signer transport
@@ -142,7 +143,9 @@ supplied by the caller/test harness, and revoked, expired, missing, or
 operation-scoped grants fail before signer payload handling. This lets browser,
 SDK, and desktop code integrate against the authorization, validation, and
 verification boundary before any signer I/O or persistent session state is
-exposed.
+exposed. `@nsealr/client` now includes the caller-side wrapper for both object
+exchange and native-messaging frame exchange; it validates service responses and
+request-id correlation before returning them to higher-level callers.
 
 ## Current CLI Flow
 

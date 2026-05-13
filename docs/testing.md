@@ -49,8 +49,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - Client package tests cover native-messaging frame encoding/decoding,
   deterministic malformed-frame rejection, secretless local service status,
   deterministic pairing intents, unpaired/revoked/expired/scope-denied client
-  rejection, signer-request validation, and signer-response verification before
-  any signer I/O exists.
+  rejection, signer-request validation, signer-response verification, local
+  client request-id correlation, malformed service-response rejection, and
+  native-messaging exchange wrapping before any signer I/O exists.
 - Service app tests prove the private native-messaging host scaffold stays a
   thin wrapper around `@nsealr/client`.
 - Negative response verification tests for request id mismatch, template
@@ -197,8 +198,8 @@ single-repository CI. Cross-repository drift remains guarded by
   leakage, and no production secret storage in public helpers.
 - Local companion service tests with a fake extension/app client: pairing,
   selected account route, user approval UX, persistent grant storage,
-  cancellation, persistent revocation, deterministic transport errors, and
-  signer dispatch after explicit policy gates exist.
+  cancellation, persistent revocation, deterministic transport errors, signer
+  dispatch, and built-package consumer tests after explicit policy gates exist.
 - Browser extension provider tests for NIP-07 `getPublicKey` and `signEvent`
   over a fake companion, including origin permission, revocation, cancel,
   refusal, malformed companion response, and no key material in extension

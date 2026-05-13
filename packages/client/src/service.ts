@@ -22,6 +22,7 @@ export const LOCAL_CLIENT_SURFACES = [
 ] as const;
 
 export type LocalServiceOperation = (typeof LOCAL_SERVICE_OPERATIONS)[number];
+export type PairableLocalServiceOperation = Exclude<LocalServiceOperation, "service_status" | "request_pairing">;
 export type LocalClientSurface = (typeof LOCAL_CLIENT_SURFACES)[number];
 
 export type LocalClientIdentity = {
@@ -35,7 +36,7 @@ export type LocalClientGrant = {
   client_id: string;
   origin: string;
   surface: LocalClientSurface;
-  allowed_operations: LocalServiceOperation[];
+  allowed_operations: PairableLocalServiceOperation[];
   revoked?: boolean;
   expires_at?: number;
 };
@@ -49,7 +50,7 @@ export type PairingIntent = {
   format: "nsealr-local-pairing-intent-v0";
   client_id: string;
   client: LocalClientIdentity;
-  requested_operations: LocalServiceOperation[];
+  requested_operations: PairableLocalServiceOperation[];
   pairing_digest: string;
   requires_user_approval: true;
   stores_production_secrets: false;
@@ -67,7 +68,7 @@ export type LocalServiceRequest =
       operation: "request_pairing";
       params: {
         client: LocalClientIdentity;
-        requested_operations: LocalServiceOperation[];
+        requested_operations: PairableLocalServiceOperation[];
       };
     }
   | {
@@ -207,9 +208,9 @@ function isSupportedOrigin(origin: string): boolean {
   return false;
 }
 
-function validateRequestedOperations(value: unknown): { ok: true; operations: LocalServiceOperation[] } | { ok: false; error: string } {
+function validateRequestedOperations(value: unknown): { ok: true; operations: PairableLocalServiceOperation[] } | { ok: false; error: string } {
   if (!Array.isArray(value) || value.length === 0) return { ok: false, error: "requested_operations must be a non-empty array" };
-  const operations: LocalServiceOperation[] = [];
+  const operations: PairableLocalServiceOperation[] = [];
   for (const operation of value) {
     if (!isAllowedOperation(operation)) return { ok: false, error: "requested operation is unsupported" };
     if (operation === "service_status" || operation === "request_pairing") {
@@ -299,7 +300,7 @@ function pairingDigest(intent: Omit<PairingIntent, "pairing_digest">): string {
   return createHash("sha256").update(JSON.stringify(intent)).digest("hex");
 }
 
-function pairingIntent(client: LocalClientIdentity, requestedOperations: LocalServiceOperation[]): PairingIntent {
+function pairingIntent(client: LocalClientIdentity, requestedOperations: PairableLocalServiceOperation[]): PairingIntent {
   const intentWithoutDigest = {
     format: "nsealr-local-pairing-intent-v0" as const,
     client_id: clientIdForIdentity(client),
@@ -317,7 +318,7 @@ function pairingIntent(client: LocalClientIdentity, requestedOperations: LocalSe
 function authorizeClient(
   context: LocalServiceContext,
   client: LocalClientIdentity,
-  operation: LocalServiceOperation
+  operation: PairableLocalServiceOperation
 ): { ok: true } | { ok: false; error: string } {
   const clientId = clientIdForIdentity(client);
   const now = context.now ?? Math.floor(Date.now() / 1000);

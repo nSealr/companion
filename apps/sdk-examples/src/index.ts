@@ -24,7 +24,8 @@ import {
   decidePolicyRequest,
   parseAccountDescriptor,
   parseGrantDescriptor,
-  parsePolicyProfile
+  parsePolicyProfile,
+  selectAccountRoute
 } from "@nsealr/policy";
 import { validateRequest, validateResponse } from "@nsealr/protocol";
 import { decodeQrEnvelope, encodeQrEnvelope } from "@nsealr/qr";
@@ -111,6 +112,7 @@ async function fixturesPolicyReviewAndFramingExample(): Promise<void> {
   assert(fixtures.events.length > 0);
   assert(fixtures.reviewDetailPages.length > 0);
   assert(fixtures.policyDecisions.length > 0);
+  assert(fixtures.routeSelections.length > 0);
 
   const policyVector = fixtures.policyDecisions.find((candidate) => candidate.decision.decision === "allow");
   if (!policyVector) throw new Error("SDK example could not find an allowed policy-decision vector");
@@ -132,6 +134,11 @@ async function fixturesPolicyReviewAndFramingExample(): Promise<void> {
   assert.equal(account.policy_profile_id, policyVector.policy_profile_id);
   assert.equal(grant.account_id, account.account_id);
   assert.equal(policy.route_types.includes(policyVector.request.route_type), true);
+
+  const routeVector = fixtures.routeSelections.find((candidate) => candidate.request.account_id === account.account_id);
+  if (!routeVector) throw new Error("SDK example could not find a matching route-selection vector");
+  assert.deepEqual(selectAccountRoute(fixtures.accounts, routeVector.request), routeVector.selection);
+  assert.equal(routeVector.selection.contains_secret_material, false);
 
   const review = reviewEventTemplate(request.params.event_template, publicKey);
   const detailPages = renderReviewDetailPages(review, {

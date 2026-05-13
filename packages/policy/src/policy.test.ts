@@ -1,11 +1,12 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   decidePolicyRequest,
   parseAccountDescriptor,
   parseGrantDescriptor,
-  parsePolicyProfile
+  parsePolicyProfile,
+  selectAccountRoute
 } from "./policy.js";
 
 const specsRoot = resolveSpecsRoot();
@@ -103,5 +104,47 @@ describe("identity, recovery, and policy contracts", () => {
         request: vector.request
       })).toEqual(vector.decision);
     }
+  });
+
+  it("matches shared route-selection vectors without signer dispatch", () => {
+    const accounts = readdirSync(resolve(specsRoot, "vectors/accounts"))
+      .filter((name) => name.endsWith(".json"))
+      .map((name) => parseAccountDescriptor(loadJson(resolve(specsRoot, "vectors/accounts", name))));
+    const vectorNames = readdirSync(resolve(specsRoot, "vectors/route-selections"))
+      .filter((name) => name.endsWith(".json"))
+      .sort();
+
+    expect(vectorNames.length).toBeGreaterThan(0);
+    for (const name of vectorNames) {
+      const vector = loadJson(resolve(specsRoot, "vectors/route-selections", name)) as {
+        request: Parameters<typeof selectAccountRoute>[1];
+        selection: ReturnType<typeof selectAccountRoute>;
+      };
+
+      expect(selectAccountRoute(accounts, vector.request)).toEqual(vector.selection);
+    }
+  });
+
+  it("rejects ambiguous or unsupported route selections before signer IO", () => {
+    const account = parseAccountDescriptor(loadJson(resolve(specsRoot, "vectors/accounts/raspberry-qr-nip06-account-0.json")));
+
+    expect(() => selectAccountRoute([account], undefined as never)).toThrow(/request must be an object/u);
+    expect(() => selectAccountRoute([], {
+      account_id: account.account_id,
+      method: "sign_event"
+    })).toThrow(/account_id is unknown/u);
+    expect(() => selectAccountRoute([account, account], {
+      account_id: account.account_id,
+      method: "sign_event"
+    })).toThrow(/account_id is ambiguous/u);
+    expect(() => selectAccountRoute([account], {
+      account_id: account.account_id,
+      method: "get_public_key"
+    })).toThrow(/method is unsupported/u);
+    expect(() => selectAccountRoute([account], {
+      account_id: account.account_id,
+      method: "sign_event",
+      route_type: "esp32_usb_nip46"
+    })).toThrow(/route_type does not match/u);
   });
 });

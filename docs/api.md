@@ -153,12 +153,15 @@ Exports:
 - `PolicyDecisionRequest`
 - `PolicyProfile`
 - `RouteCustody`
+- `RouteSelection`
+- `RouteSelectionRequest`
 - `RouteType`
 - `SignerRoute`
 - `decidePolicyRequest`
 - `parseAccountDescriptor`
 - `parseGrantDescriptor`
 - `parsePolicyProfile`
+- `selectAccountRoute`
 
 ## @nsealr/protocol
 

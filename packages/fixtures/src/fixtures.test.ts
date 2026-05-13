@@ -167,6 +167,17 @@ describe("fixture loading", () => {
     expect(fixtures.policyDecisions[0].format).toBe("nsealr-policy-decision-vector-v0");
   });
 
+  it("loads route selection vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+
+    expect(fixtures.routeSelections.map((selection) => selection.name)).toEqual([
+      "esp32-usb-sign-event-slot-0",
+      "raspberry-qr-sign-event-account-0"
+    ]);
+    expect(fixtures.routeSelections[0].format).toBe("nsealr-route-selection-vector-v0");
+    expect(fixtures.routeSelections[0].selection.contains_secret_material).toBe(false);
+  });
+
   it("loads and validates signer feature matrix vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
     const matrix = fixtures.featureMatrices.find((candidate) => candidate.name === "signer-feature-matrix-v0");

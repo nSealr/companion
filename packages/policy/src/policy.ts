@@ -114,6 +114,29 @@ export type PolicyDecision = {
   };
 };
 
+export type RouteSelectionRequest = {
+  account_id: string;
+  method: string;
+  route_type?: RouteType;
+};
+
+export type RouteSelection = {
+  format: "nsealr-route-selection-v0";
+  account_id: string;
+  public_key: string;
+  route_type: RouteType;
+  repository?: SignerRoute["repository"];
+  transport: SignerRoute["transport"];
+  custody: SignerRoute["custody"];
+  trusted_review: SignerRoute["trusted_review"];
+  policy_support: SignerRoute["policy_support"];
+  policy_profile_id: string;
+  physical_review: boolean;
+  physical_approval: boolean;
+  persistent_grants: boolean;
+  contains_secret_material: false;
+};
+
 const ROUTE_TYPES = new Set<RouteType>([
   "raspberry_qr_vault",
   "esp32_qr_vault",
@@ -500,4 +523,42 @@ export function decidePolicyRequest(input: {
   }
 
   return buildPolicyDecision(request, "manual_review", "no_matching_grant");
+}
+
+function routeSelectionFromAccount(account: AccountDescriptor): RouteSelection {
+  return {
+    format: "nsealr-route-selection-v0",
+    account_id: account.account_id,
+    public_key: account.public_key,
+    route_type: account.signer_route.type,
+    ...(account.signer_route.repository !== undefined ? { repository: account.signer_route.repository } : {}),
+    transport: account.signer_route.transport,
+    custody: account.signer_route.custody,
+    trusted_review: account.signer_route.trusted_review,
+    policy_support: account.signer_route.policy_support,
+    policy_profile_id: account.policy_profile_id,
+    physical_review: account.capabilities.physical_review,
+    physical_approval: account.capabilities.physical_approval,
+    persistent_grants: account.capabilities.persistent_grants,
+    contains_secret_material: false
+  };
+}
+
+export function selectAccountRoute(accounts: AccountDescriptor[], request: RouteSelectionRequest): RouteSelection {
+  if (!Array.isArray(accounts)) throw new Error("route selection accounts must be an array");
+  assertRecord(request, "route selection request");
+  const accountId = requireStringId(request.account_id, "route selection account_id");
+  const method = requireString(request.method, "route selection method");
+  const routeType = request.route_type === undefined ? undefined : requireRouteType(request.route_type, "route selection route_type");
+  const matches = accounts.filter((account) => account.account_id === accountId);
+  if (matches.length === 0) throw new Error("route selection account_id is unknown");
+  if (matches.length > 1) throw new Error("route selection account_id is ambiguous");
+  const account = matches[0];
+  if (routeType !== undefined && account.signer_route.type !== routeType) {
+    throw new Error("route selection route_type does not match account");
+  }
+  if (!account.capabilities.methods.includes(method)) {
+    throw new Error("route selection method is unsupported by account");
+  }
+  return routeSelectionFromAccount(account);
 }

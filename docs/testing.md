@@ -33,8 +33,8 @@ single-repository CI. Cross-repository drift remains guarded by
   Invalid hardening fixture loading is directory-driven so new shared invalid
   vectors are discovered from the sibling specs checkout or local snapshot
   instead of being maintained in a hand-written name list.
-  Account-descriptor, policy-profile, grant-descriptor, and policy-decision
-  loading is also directory-driven through `packages/policy`.
+  Account-descriptor, policy-profile, grant-descriptor, policy-decision, and
+  route-selection loading is also directory-driven through `packages/policy`.
   QR review-transcript fixture validation also lives in this package and covers
   `scroll` buttons plus rendered-frame `body_line_styles` mismatch rejection,
   keeping `apps/cli` as a thin fixture-verification wrapper.

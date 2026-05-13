@@ -259,6 +259,12 @@ store production `nsec`, mnemonic, seed, passphrase, NIP-49 ciphertext, or raw
 private key material. Stateless QR vault routes remain manual-only and cannot
 receive persistent grants.
 
+Route-selection vectors are also consumed through `packages/policy`. The
+selector is pure and secretless: it accepts parsed account descriptors plus a
+requested account/method and returns selected route metadata only. It does not
+open transports, create grants, approve clients, dispatch signer I/O, or claim
+route readiness.
+
 Those descriptors model the resulting signing public key and route. The
 mnemonic, BIP-39 passphrase namespace, standalone `nsec`, device slot,
 smartcard slot, or external bunker is a key source or route; policy attaches to

@@ -8,6 +8,8 @@ Secretless account, route, grant, and policy-decision descriptors.
 - Reject embedded production private-key material.
 - Reject QR-vault automation, wildcard/decrypt/export grants, and invalid
   grant targets.
+- Select secretless account-route metadata for supported methods without
+  dispatching signer I/O.
 - Evaluate pure policy-decision vectors for conformance tests.
 
 ## Example
@@ -51,4 +53,6 @@ assert.equal(decision.decision, "manual_review");
 
 Policy records are internal nSealr records, not Nostr events. This package does
 not store persistent grants, approve device policy changes, or hold production
-mnemonics, passphrases, `nsec` values, or decrypted signing material.
+mnemonics, passphrases, `nsec` values, or decrypted signing material. Route
+selection returns metadata from account descriptors; it does not open
+transports, create grants, or sign events.

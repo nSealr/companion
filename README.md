@@ -143,14 +143,15 @@ match the shared `contract_id`.
 - `packages/fixtures` loads shared event, trusted-review, review-display-frame,
   review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
   account-descriptor, policy-profile, grant-descriptor, policy-decision,
-  feature-matrix, and smartcard vectors from `nSealr/specs` for companion,
-  Raspberry QR vault, ESP32 firmware, and smartcard conformance tests.
+  route-selection, feature-matrix, and smartcard vectors from `nSealr/specs`
+  for companion, Raspberry QR vault, ESP32 firmware, and smartcard conformance
+  tests.
 - `packages/policy` parses secretless account descriptors, policy profiles, and
-  grant descriptors, then evaluates policy-decision transcript vectors without
-  a persistent grant store. It rejects embedded private-key material, QR-vault
-  automation, wildcard/decrypt/export grants, and stateless QR-vault grant
-  targets before CLI or fixture-verification code can treat those records as
-  valid.
+  grant descriptors, selects secretless account-route metadata, then evaluates
+  policy-decision transcript vectors without a persistent grant store. It
+  rejects embedded private-key material, QR-vault automation,
+  wildcard/decrypt/export grants, and stateless QR-vault grant targets before
+  CLI or fixture-verification code can treat those records as valid.
   These records describe resulting signing public keys and routes. Mnemonics,
   BIP-39 passphrase namespaces, standalone `nsec` keys, device slots, card
   slots, and external signers are key sources or routes, not production secrets
@@ -183,10 +184,11 @@ match the shared `contract_id`.
   manifests, explicit entrypoints, deep-import audit, and test-only signer
   isolation are already in place.
 - Expand the local companion service boundary with pairing, origin/app
-  identity, route selection, cancellation, persistent revocation storage,
-  deterministic errors, and signer transport dispatch. The first SDK wrapper
-  over the native-messaging/local-service boundary is in place; localhost APIs
-  need a separate threat-model pass.
+  identity, local-service route selection endpoints, cancellation, persistent
+  revocation storage, deterministic errors, and signer transport dispatch. The
+  pure package-level route selector and first SDK wrapper over the
+  native-messaging/local-service boundary are in place; localhost APIs need a
+  separate threat-model pass.
 - Browser extension / NIP-07 bridge packaging around the provider adapter so
   `getPublicKey` and `signEvent` route through companion without storing
   production signing material.

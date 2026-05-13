@@ -37,12 +37,16 @@ Source entrypoint: `packages/client/src/index.ts`
 
 Exports:
 - `LOCAL_CLIENT_SURFACES`
+- `LOCAL_GRANT_STORE_FORMAT`
 - `LOCAL_SERVICE_NAME`
 - `LOCAL_SERVICE_OPERATIONS`
 - `LOCAL_SERVICE_PROTOCOL`
 - `LocalClientGrant`
 - `LocalClientIdentity`
 - `LocalClientSurface`
+- `LocalGrantRevocationOptions`
+- `LocalGrantStore`
+- `LocalGrantStoreOptions`
 - `LocalPairingApproval`
 - `LocalServiceClient`
 - `LocalServiceClientOptions`
@@ -51,6 +55,8 @@ Exports:
 - `LocalServiceOperation`
 - `LocalServiceRequest`
 - `LocalServiceResponse`
+- `MAX_LOCAL_GRANT_STORE_GRANTS`
+- `MAX_LOCAL_GRANT_STORE_JSON_BYTES`
 - `MAX_NATIVE_MESSAGE_BYTES`
 - `MAX_SERVICE_JSON_BYTES`
 - `NATIVE_MESSAGE_LENGTH_BYTES`
@@ -58,12 +64,18 @@ Exports:
 - `NativeMessagingLocalServiceClientOptions`
 - `PairableLocalServiceOperation`
 - `PairingIntent`
+- `appendLocalGrant`
 - `approvePairingIntent`
 - `clientIdForIdentity`
+- `createLocalGrantStore`
 - `createNativeMessagingLocalServiceClient`
 - `decodeNativeMessage`
 - `encodeNativeMessage`
 - `handleLocalServiceRequest`
+- `parseLocalGrant`
+- `parseLocalGrantStore`
+- `revokeLocalGrant`
+- `serializeLocalGrantStore`
 - `validateLocalServiceResponse`
 
 ## @nsealr/core

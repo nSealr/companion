@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:d3d3387950d067cb9934774524301b3f5fadf0d0d5e54371b07cb9f70b3af85c`
+API surface digest: `sha256:10471bfe2463cbf5a4835cb52e7c270c03ceb0472439375e41fbbf4875800909`
 
 Source: `docs/api.md`
 
@@ -42,13 +42,13 @@ NIP-44 outside this package until those contracts are reviewed separately.
 Status: reviewed for pre-alpha.
 
 The local-service surface is secretless and limited to service status, pairing
-intent creation, manual pairing approval into an in-memory grant,
-secretless route selection, signer-request validation, and signer-response
-verification. Client identity, request-id correlation, native-message framing,
-and malformed-response rejection are public helpers. Route selection returns
-metadata only; persistent grant storage, signer dispatch, cancellation, and
-native-host installation packaging remain future work and must not be implied by
-this package.
+intent creation, manual pairing approval into a grant, strict JSON grant-store
+serialization for approved/revoked local client grants, secretless route
+selection, signer-request validation, and signer-response verification. Client
+identity, request-id correlation, native-message framing, and malformed-response
+rejection are public helpers. Route selection returns metadata only; file-backed
+service loading, signer dispatch, cancellation, and native-host installation
+packaging remain future work and must not be implied by this package.
 
 ## @nsealr/core
 

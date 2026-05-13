@@ -8,8 +8,12 @@ import {
 } from "@nsealr/browser-provider";
 import {
   clientIdForIdentity,
+  createLocalGrantStore,
   handleLocalServiceRequest,
   LocalServiceClient,
+  parseLocalGrantStore,
+  revokeLocalGrant,
+  serializeLocalGrantStore,
   type LocalClientGrant,
   type LocalClientIdentity
 } from "@nsealr/client";
@@ -162,10 +166,12 @@ async function localServiceExample(): Promise<void> {
   const fixtures = loadSpecsFixtures(specsRootForExamples());
   const routeVector = fixtures.routeSelections.find((candidate) => candidate.name === "esp32-usb-sign-event-slot-0");
   if (!routeVector) throw new Error("local service example could not find a route-selection vector");
+  const grantStore = createLocalGrantStore([exampleGrant()], { updatedAt: 1_900_000_000 });
+  assert.deepEqual(parseLocalGrantStore(JSON.parse(serializeLocalGrantStore(grantStore))), grantStore);
   const service = new LocalServiceClient({
     exchange: (message) => handleLocalServiceRequest(message, {
       accounts: fixtures.accounts,
-      grants: [exampleGrant()],
+      grants: grantStore.grants,
       now: 1_900_000_000
     }),
     nextRequestId: sequence("sdk-service")
@@ -200,6 +206,20 @@ async function localServiceExample(): Promise<void> {
   if (verification.ok !== true) throw new Error(verification.error.message);
   if (!("validation" in verification.result)) throw new Error("verification example returned wrong result type");
   assert.equal(verification.result.validation.valid, true);
+
+  const revokedStore = createLocalGrantStore([
+    ...grantStore.grants,
+    revokeLocalGrant(grantStore.grants[0], { revokedAt: 1_900_000_010 })
+  ], { updatedAt: 1_900_000_010 });
+  const revokedService = new LocalServiceClient({
+    exchange: (message) => handleLocalServiceRequest(message, {
+      grants: revokedStore.grants,
+      now: 1_900_000_011
+    }),
+    nextRequestId: sequence("sdk-revoked-service")
+  });
+  const revokedValidation = await revokedService.validateSignerRequest(sdkClient, request);
+  assert.equal(revokedValidation.ok, false);
 }
 
 async function browserProviderExample(): Promise<void> {
@@ -323,6 +343,7 @@ function exampleGrant(): LocalClientGrant {
     origin: sdkClient.origin,
     surface: sdkClient.surface,
     allowed_operations: ["select_account_route", "validate_signer_request", "verify_signer_response"],
+    approved_at: 1_900_000_000,
     expires_at: 2_000_000_000
   };
 }

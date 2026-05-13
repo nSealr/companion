@@ -136,8 +136,8 @@ frames, `packages/nip46` owns policy-file parsing and request conversion, CLI
 decision commands fail before writing output, and test-only Nostr conformance
 is cross-checked with `nostr-tools`. `nSealr/lab` now pins the cross-repo
 behavior after Raspberry and ESP32 consumed the applicable vectors. The gate
-still blocks full NIP-46 relay sessions, browser extension work, persistent
-grants, and production signer I/O.
+still blocks full NIP-46 relay sessions, production browser-extension
+packaging, file-backed persistent grant use, and production signer I/O.
 
 Status note, 2026-05-11: response validation now rejects signed-event outputs
 whose integer fields, content, or tags exceed the shared v0 implementation
@@ -152,8 +152,8 @@ list, reducing snapshot drift as the shared contract grows.
 Status note, 2026-05-11: companion fixture verification now consumes the shared
 account-descriptor, policy-profile, and grant-descriptor vectors. The package
 parser rejects embedded secret fields, QR-vault automation, wildcard grants,
-and stateless QR-vault grant targets. This is metadata validation only; it does
-not add a persistent grant store or browser/relay session.
+and stateless QR-vault grant targets. This is policy metadata validation only;
+it does not add local-service grant persistence or a browser/relay session.
 
 Status note, 2026-05-11: companion policy code now consumes shared
 policy-decision transcript vectors. The pure evaluator allows only an explicit
@@ -166,7 +166,7 @@ Status note, 2026-05-13: companion policy code now consumes shared
 route-selection vectors. The pure selector maps parsed account descriptors and
 requested methods to secretless route metadata, rejecting unknown accounts,
 ambiguous account ids, unsupported methods, and route-type mismatches before
-any signer transport or persistent grant store exists.
+any signer transport or runtime grant-store loading exists.
 
 Status note, 2026-05-13: `@nsealr/client` now exposes route selection through
 the local-service boundary after explicit in-memory pairing authorization. The
@@ -227,16 +227,17 @@ tarball artifacts without publishing to npm.
   high-level SDK clients. First native-messaging scaffold is implemented with
   secretless service status, deterministic pairing intents, in-memory
   client-grant enforcement, manual approval conversion from pairing intent to
-  in-memory grant, signer-request validation, and signer-response verification.
+  a grant, signer-request validation, and signer-response verification.
   The first high-level client wrapper validates request-id
   correlation and malformed service responses before browser, SDK, desktop, or
   CLI code can trust them. Pure package-level route selection and the
   local-service route-selection operation are implemented, and the private
   service app now has a tested multi-message native-host stdio loop plus
-  validated Chromium/Firefox native-host manifest generation; remaining work is
-  persistent pairing store, user approval UX, cancellation, persistent
-  revocation, deterministic transport errors, signer dispatch, and native-host
-  installation packaging.
+  validated Chromium/Firefox native-host manifest generation. `@nsealr/client`
+  now also defines the strict secretless JSON grant-store contract for approved
+  and revoked local client grants; remaining work is file-backed service
+  loading, user approval UX, cancellation, deterministic transport errors,
+  signer dispatch, and native-host installation packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are

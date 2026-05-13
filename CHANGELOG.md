@@ -24,7 +24,9 @@ public npm release.
 - Digest-bound public API review for every publishable package before npm alpha
   work.
 - `@nsealr/client` helper for converting a digest-bound pairing intent into an
-  explicitly approved in-memory grant without persistent storage.
+  explicitly approved local client grant.
+- `@nsealr/client` secretless JSON grant-store contract for persisting approved
+  and revoked local client grants without production key material.
 - Deterministic local-service grant-history selection so the latest matching
   in-memory grant controls revocation, expiry, and operation scope.
 - Private native-messaging service scaffold now returns deterministic malformed

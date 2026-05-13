@@ -18,8 +18,9 @@ package and cover:
 - shared fixture loading, policy descriptor parsing, pure policy decisions,
   review detail-page rendering, approval-digest calculation, and serial-frame
   round-trip;
-- local companion service status, pairing-intent creation, authorized request
-  validation, and authorized response verification;
+- local companion service status, pairing-intent creation, secretless
+  grant-store serialization/revocation, authorized request validation, and
+  authorized response verification;
 - browser-provider `getPublicKey` and refused `signEvent` behavior over an
   injected backend;
 - already-decrypted NIP-46 bridge decisions for permitted and denied requests;
@@ -28,8 +29,9 @@ package and cover:
 
 The examples must stay secretless. They may use deterministic signed fixture
 values, but they must not import `@nsealr/dev-signer`, create production
-private keys, persist grants, open relays, or dispatch to real signer
-transports.
+private keys, write a grant database, open relays, or dispatch to real signer
+transports. In-memory grant-store examples may serialize the public approval
+metadata contract, but they must not create production local-service state.
 
 Package README snippets are a separate public-doc gate. Mark runnable snippets
 with `nsealr-readme-example` and verify them with:

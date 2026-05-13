@@ -54,11 +54,12 @@ match the shared `contract_id`.
   native-messaging frame codec plus the high-level local-service client used by
   future browser, SDK, desktop, and CLI callers. The implemented operations are
   intentionally secretless: service status, pairing intent generation,
-  digest-bound manual approval into an in-memory grant, secretless route
+  digest-bound manual approval into a grant, a strict secretless JSON
+  grant-store contract for local approvals/revocations, secretless route
   selection, signer-request validation, and signer-response verification. Route
-  selection, validation, and verification require an explicit in-memory client
-  grant; unpaired, revoked, expired, or operation-scoped clients are rejected
-  before signer payload handling.
+  selection, validation, and verification require an explicit client grant;
+  unpaired, revoked, expired, or operation-scoped clients are rejected before
+  signer payload handling.
 - `@nsealr/browser-provider` defines the first NIP-07 provider adapter over an
   injected companion backend and explicit client identity. It validates
   `getPublicKey` and `signEvent` boundaries, converts event templates into
@@ -189,11 +190,12 @@ match the shared `contract_id`.
   manifests, explicit entrypoints, deep-import audit, and test-only signer
   isolation are already in place.
 - Expand the local companion service boundary with pairing, origin/app
-  identity, cancellation, persistent revocation storage, deterministic errors,
-  and signer transport dispatch. The pure package-level route selector, the
-  local-service route-selection operation, the first SDK wrapper, a
-  multi-message native-messaging host loop, and validated native-host manifest
-  generation are in place; localhost APIs need a separate threat-model pass.
+  identity, cancellation, deterministic errors, and signer transport dispatch.
+  The pure package-level route selector, the local-service route-selection
+  operation, the first SDK wrapper, a strict persistent grant-store contract,
+  a multi-message native-messaging host loop, and validated native-host
+  manifest generation are in place. File-backed service loading, approval UX,
+  and localhost APIs need separate threat-model and implementation passes.
 - Browser extension / NIP-07 bridge packaging around the provider adapter so
   `getPublicKey` and `signEvent` route through companion without storing
   production signing material. The package-level provider can already read the

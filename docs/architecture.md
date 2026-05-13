@@ -16,8 +16,9 @@ lines.
 The companion must not be trusted with production private keys. A development
 signer may exist only as an explicit test harness.
 
-Before any production signer I/O, browser extension, full NIP-46 relay session,
-or persistent grant layer is added, companion code must pass the M4.5
+Before any production signer I/O, production browser-extension packaging, full
+NIP-46 relay session, or file-backed persistent grant use is added, companion
+code must pass the M4.5
 pre-signing hardening gate. Signing-request validation, NIP-46 bridge
 conversion, QR/serial decoding, and policy-file parsing must share explicit
 nSealr v0 limits and deterministic rejection behavior. CLI commands should
@@ -92,10 +93,11 @@ packages, but it must not export test-only signing as a production path.
   storage and grant UX remain separate layers.
 - `packages/client`: local companion service request/response protocol,
   native-messaging frame codec, service status, pairing intent generation,
-  in-memory grant enforcement, secretless account-route selection,
-  signer-request validation, signer-response verification, response validation,
-  and a high-level client wrapper. This is the shared client/service boundary
-  for future browser extension, SDK, and desktop work.
+  grant enforcement, a strict secretless JSON grant-store contract,
+  secretless account-route selection, signer-request validation,
+  signer-response verification, response validation, and a high-level client
+  wrapper. This is the shared client/service boundary for future browser
+  extension, SDK, and desktop work.
 - `packages/browser-provider`: NIP-07 provider adapter for browser-extension
   packaging. It accepts an injected companion backend plus explicit client
   identity, validates public keys, converts `signEvent` inputs into nSealr
@@ -169,8 +171,10 @@ The private `@nsealr/service` app now runs a tested multi-message native-host
 stdio loop, so a future browser extension can keep one native-messaging port
 open and receive one deterministic response per length-prefixed service
 request. It can also generate validated Chromium/Firefox native-host manifest
-JSON with explicit host path and extension id inputs. This still does not add
-manifest installation, persistent pairing storage, signer dispatch, relay
+JSON with explicit host path and extension id inputs. `@nsealr/client` also
+defines the persistent grant-store JSON contract used to serialize approved and
+revoked local client grants without secret material. This still does not add
+manifest installation, file-backed service loading, signer dispatch, relay
 sessions, or browser packaging.
 
 The browser-provider package is intentionally one layer above this service

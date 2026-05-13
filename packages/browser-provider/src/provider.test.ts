@@ -1,21 +1,42 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { type LocalClientIdentity } from "@nsealr/client";
+import {
+  LocalServiceClient,
+  clientIdForIdentity,
+  handleLocalServiceRequest,
+  type LocalClientGrant,
+  type LocalClientIdentity
+} from "@nsealr/client";
 import { type EventTemplate } from "@nsealr/core";
-import { resolveSpecsRoot } from "@nsealr/fixtures";
-import { createNip07Provider, type BrowserProviderBackend } from "./provider.js";
+import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
+import {
+  createLocalServiceBrowserProviderBackend,
+  createNip07Provider,
+  type BrowserProviderBackend
+} from "./provider.js";
 
 const specsRoot = resolveSpecsRoot();
+const fixtures = loadSpecsFixtures(specsRoot);
 const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
 const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
 const responseError = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-error-rejected.json"), "utf8"));
+const routeVector = fixtures.routeSelections.find((selection) => selection.name === "esp32-usb-sign-event-slot-0");
+if (!routeVector) throw new Error("route selection fixture is missing");
 const publicKey = response.result.event.pubkey as string;
 const client: LocalClientIdentity = {
   surface: "browser_extension",
   origin: "https://example.com",
   app_name: "Example Nostr Client",
   instance_id: "extension-test-1"
+};
+const localServiceGrant: LocalClientGrant = {
+  client_id: clientIdForIdentity(client),
+  origin: client.origin,
+  surface: client.surface,
+  allowed_operations: ["select_account_route", "validate_signer_request"],
+  approved_at: 1_900_000_000,
+  expires_at: 2_000_000_000
 };
 
 function backend(overrides: Partial<BrowserProviderBackend> = {}): BrowserProviderBackend {
@@ -100,5 +121,44 @@ describe("NIP-07 browser provider boundary", () => {
       nextRequestId: () => "req-kind-1-basic"
     });
     await expect(refusedProvider.signEvent(request.params.event_template)).rejects.toThrow(/rejected/u);
+  });
+
+  it("can back NIP-07 getPublicKey with authorized local-service route selection", async () => {
+    const service = new LocalServiceClient({
+      exchange: (message) => handleLocalServiceRequest(message, {
+        accounts: fixtures.accounts,
+        grants: [localServiceGrant],
+        now: 1_900_000_000
+      })
+    });
+    const provider = createNip07Provider({
+      backend: createLocalServiceBrowserProviderBackend({
+        service,
+        routeRequest: routeVector.request
+      }),
+      client,
+      nextRequestId: () => "req-kind-1-basic"
+    });
+
+    await expect(provider.getPublicKey()).resolves.toBe(routeVector.selection.public_key);
+    await expect(provider.signEvent(request.params.event_template)).rejects.toThrow(/Signer dispatch is not configured/u);
+  });
+
+  it("surfaces local-service authorization failure before browser callers trust a key", async () => {
+    const service = new LocalServiceClient({
+      exchange: (message) => handleLocalServiceRequest(message, {
+        accounts: fixtures.accounts,
+        now: 1_900_000_000
+      })
+    });
+    const provider = createNip07Provider({
+      backend: createLocalServiceBrowserProviderBackend({
+        service,
+        routeRequest: routeVector.request
+      }),
+      client
+    });
+
+    await expect(provider.getPublicKey()).rejects.toThrow(/client is not paired/u);
   });
 });

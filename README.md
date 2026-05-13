@@ -62,8 +62,9 @@ match the shared `contract_id`.
 - `@nsealr/browser-provider` defines the first NIP-07 provider adapter over an
   injected companion backend and explicit client identity. It validates
   `getPublicKey` and `signEvent` boundaries, converts event templates into
-  nSealr signer requests, verifies signed responses, and stores no browser-side
-  production keys.
+  nSealr signer requests, can use local-service route selection for the
+  selected account public key, verifies signed responses, and stores no
+  browser-side production keys.
 - `@nsealr/service` is the private native-messaging host scaffold over
   `@nsealr/client`. It can process multiple length-prefixed service messages
   on one stdio session, returns deterministic native-frame errors, and accepts
@@ -195,7 +196,9 @@ match the shared `contract_id`.
   generation are in place; localhost APIs need a separate threat-model pass.
 - Browser extension / NIP-07 bridge packaging around the provider adapter so
   `getPublicKey` and `signEvent` route through companion without storing
-  production signing material.
+  production signing material. The package-level provider can already read the
+  selected public key through local-service route selection and returns
+  deterministic signer-unavailable errors until real dispatch is gated.
 - Public npm SDK alpha after package APIs, docs, semver, provenance, and
   third-party import tests are stable. Package README coverage and a
   built-artifact consumer smoke are now part of `make ci`; packed-tarball

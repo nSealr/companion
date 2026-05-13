@@ -8,6 +8,8 @@ NIP-07 provider adapter for future nSealr browser-extension packaging.
   backend.
 - Bind every call to explicit client identity.
 - Convert event templates into nSealr signer requests.
+- Provide a local-service backend adapter for authorized account-route
+  selection and deterministic signer-unavailable responses.
 - Verify signed responses before returning them to `window.nostr` callers.
 
 ## Example
@@ -55,4 +57,5 @@ await assert.rejects(
 
 This package is not a browser extension by itself. It stores no browser-side
 production keys, implements no local signing, persists no grants, and does not
-implement NIP-04, NIP-44, relay sessions, or native-host installation.
+implement NIP-04, NIP-44, relay sessions, signer dispatch, or native-host
+installation.

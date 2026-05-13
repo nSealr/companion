@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:0d995c032e54ec095a79701d499421c4027b2cb8349a086e01fe9955f7f68a07`
+API surface digest: `sha256:d3d3387950d067cb9934774524301b3f5fadf0d0d5e54371b07cb9f70b3af85c`
 
 Source: `docs/api.md`
 
@@ -27,12 +27,15 @@ Source: `docs/api.md`
 
 Status: reviewed for pre-alpha.
 
-The surface is intentionally small: `createNip07Provider` plus provider/backend
-types. It stores no browser-side key material and delegates signer access to an
-injected backend. `signEvent` validates the generated nSealr request and
-verifies successful responses before returning a Nostr event. Keep future
-extension storage, native-host installation, origin grants, NIP-04, and NIP-44
-outside this package until those contracts are reviewed separately.
+The surface is intentionally small: `createNip07Provider`, the local-service
+backend adapter, and provider/backend types. It stores no browser-side key
+material and delegates signer access to an injected backend. The local-service
+adapter can read the selected account public key through authorized route
+selection and returns deterministic signer-unavailable responses until signer
+dispatch is explicitly implemented. `signEvent` validates the generated nSealr
+request and verifies successful responses before returning a Nostr event. Keep
+future extension storage, native-host installation, origin grants, NIP-04, and
+NIP-44 outside this package until those contracts are reviewed separately.
 
 ## @nsealr/client
 

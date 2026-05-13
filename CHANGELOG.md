@@ -38,6 +38,8 @@ public npm release.
   account-to-route metadata selection without signer dispatch.
 - `@nsealr/client` local-service route-selection operation gated by in-memory
   pairing authorization and shared route-selection validators.
+- `@nsealr/browser-provider` local-service backend adapter for authorized
+  account public-key lookup and deterministic signer-unavailable responses.
 - Secretless local companion service, client wrapper, and browser-provider
   boundaries for future SDK, browser extension, desktop, and CLI access
   surfaces.

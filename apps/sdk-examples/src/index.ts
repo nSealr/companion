@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createNip07Provider } from "@nsealr/browser-provider";
+import {
+  createLocalServiceBrowserProviderBackend,
+  createNip07Provider
+} from "@nsealr/browser-provider";
 import {
   clientIdForIdentity,
   handleLocalServiceRequest,
@@ -200,39 +203,44 @@ async function localServiceExample(): Promise<void> {
 }
 
 async function browserProviderExample(): Promise<void> {
-  let signerRequest: SignEventRequest | undefined;
+  const fixtures = loadSpecsFixtures(specsRootForExamples());
+  const routeVector = fixtures.routeSelections.find((candidate) => candidate.name === "esp32-usb-sign-event-slot-0");
+  if (!routeVector) throw new Error("browser provider example could not find a route-selection vector");
+  const browserClient: LocalClientIdentity = {
+    surface: "browser_extension",
+    origin: "https://example.com",
+    app_name: "Example Nostr Client",
+    instance_id: "sdk-provider-1"
+  };
+  const service = new LocalServiceClient({
+    exchange: (message) => handleLocalServiceRequest(message, {
+      accounts: fixtures.accounts,
+      grants: [{
+        client_id: clientIdForIdentity(browserClient),
+        origin: browserClient.origin,
+        surface: browserClient.surface,
+        allowed_operations: ["select_account_route", "validate_signer_request"],
+        expires_at: 2_000_000_000
+      }],
+      now: 1_900_000_000
+    }),
+    nextRequestId: sequence("sdk-provider-service")
+  });
   const provider = createNip07Provider({
-    client: {
-      surface: "browser_extension",
-      origin: "https://example.com",
-      app_name: "Example Nostr Client",
-      instance_id: "sdk-provider-1"
-    },
-    backend: {
-      getPublicKey: async () => publicKey,
-      signEventRequest: async (incomingRequest) => {
-        signerRequest = incomingRequest;
-        return {
-          version: 1,
-          request_id: incomingRequest.request_id,
-          ok: false,
-          error: {
-            code: "signing_disabled",
-            message: "example backend has no signer transport",
-            retryable: false
-          }
-        };
-      }
-    },
+    client: browserClient,
+    backend: createLocalServiceBrowserProviderBackend({
+      service,
+      routeRequest: routeVector.request,
+      signingUnavailableMessage: "example backend has no signer transport"
+    }),
     nextRequestId: () => "sdk-provider-sign-event"
   });
 
-  assert.equal(await provider.getPublicKey(), publicKey);
+  assert.equal(await provider.getPublicKey(), routeVector.selection.public_key);
   await assert.rejects(
     provider.signEvent(request.params.event_template as EventTemplate),
     /example backend has no signer transport/u
   );
-  assertValidSignerRequest(signerRequest);
 }
 
 async function nip46BridgeExample(): Promise<void> {

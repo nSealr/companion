@@ -100,7 +100,10 @@ packages, but it must not export test-only signing as a production path.
   packaging. It accepts an injected companion backend plus explicit client
   identity, validates public keys, converts `signEvent` inputs into nSealr
   signer requests, verifies signed responses, and stores no browser-side
-  production keys.
+  production keys. Its local-service backend adapter can read the selected
+  account public key through authorized route selection and returns
+  deterministic signer-unavailable responses until signer dispatch is
+  implemented.
 - `apps/service`: private native-messaging host scaffold over
   `packages/client`. It processes multiple length-prefixed service messages on
   one stdio session, accepts explicit in-memory authorization context in tests,
@@ -177,6 +180,10 @@ without inferring identity from unsigned browser data. It does not include an
 extension manifest, native-host install flow, permission UI, account routing,
 persistent grants, NIP-04, NIP-44, or relay sessions. It is the package-level
 contract that a future extension will expose as `window.nostr`.
+The first local-service backend adapter uses the same local-service route
+selection and signer-request validation operations, but it still returns
+deterministic signer-unavailable responses for `signEvent` because route
+dispatch is not implemented yet.
 
 Executable SDK examples live in private app `@nsealr/sdk-examples`. They are
 not another access surface and do not own production behavior. Their role is to

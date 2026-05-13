@@ -24,7 +24,9 @@ Source entrypoint: `packages/browser-provider/src/index.ts`
 Exports:
 - `BrowserProviderBackend`
 - `BrowserProviderOptions`
+- `LocalServiceBrowserProviderBackendOptions`
 - `Nip07Provider`
+- `createLocalServiceBrowserProviderBackend`
 - `createNip07Provider`
 
 ## @nsealr/client

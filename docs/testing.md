@@ -257,7 +257,10 @@ single-repository CI. Cross-repository drift remains guarded by
   validated Chromium/Firefox native-host manifest generation.
 - Browser extension provider tests over a fake companion for origin permission,
   revocation, cancel, malformed companion response, native-host disconnects,
-  and no key material in extension storage.
+  and no key material in extension storage. Current package tests cover the
+  local-service backend adapter for authorized selected-account public-key
+  lookup and deterministic signer-unavailable responses before signer dispatch
+  exists.
 - Package consumer smoke currently runs against built JS/declaration artifacts,
   packed tarballs, and executable examples importing every publishable public
   package. README snippets for every publishable package are now executed from

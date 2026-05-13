@@ -98,8 +98,10 @@ single-repository CI. Cross-repository drift remains guarded by
   provider is attached only to an explicit target and does not overwrite an
   existing provider. Page-bridge tests prove future page/content-script
   envelopes reject malformed direction, mismatched request ids, malformed
-  background responses, and already-cancelled requests before any browser
-  listener exists.
+  background responses, malformed bridge responses, invalid page-side requester
+  input, and already-cancelled requests before any browser listener exists.
+  Page-side requester tests also prove bridge-envelope wrapping and
+  cancellation forwarding through an injected bridge exchange.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids.

@@ -66,6 +66,9 @@ public npm release.
 - Private browser-extension page-bridge envelope that validates future
   page/content-script messages over an injected background requester without
   adding postMessage listeners, browser APIs, storage, grants, or key custody.
+- Private browser-extension page-side bridge requester that wraps internal
+  requests in the page/content bridge envelope, validates bridge responses,
+  and forwards cancellation without adding browser listeners or runtime APIs.
 - Private `@nsealr/browser-extension` app scaffold with strict internal
   `get_public_key` and `sign_event` message parsing plus a provider-backed
   handler that validates returned pubkeys/events before extension packaging,

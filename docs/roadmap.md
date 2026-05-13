@@ -320,7 +320,9 @@ and uploads checked tarball artifacts without publishing to npm.
   responses, forwards cancellation signals, and installs on an explicit target
   without overwriting an existing provider. A pure page-bridge envelope now
   validates future page/content-script messages over an injected background
-  requester. It can build a minimal MV3 manifest with `nativeMessaging` as the
+  requester, and the matching page-side requester adapter wraps internal
+  requests into that bridge envelope before accepting validated bridge
+  responses. It can build a minimal MV3 manifest with `nativeMessaging` as the
   only permission and no host/content-script/storage permissions. Remaining
   work: extension packaging, actual content-script/page-script injection,
   native-messaging installation, origin permission UX, cancellation UI wiring,

@@ -72,7 +72,6 @@ function runTsc(packageDir) {
     "--types",
     "node",
     "--declaration",
-    "--sourceMap",
     "--rootDir",
     relative(root, sourceDir),
     "--outDir",

@@ -63,6 +63,10 @@ single-repository CI. Cross-repository drift remains guarded by
   package through its built package entrypoint and exercises a minimal
   no-signer consumer path. This catches broken exports that relative in-package
   tests would miss.
+- `make pack-smoke` packs public `@nsealr/*` tarballs, verifies they contain
+  only `dist`, README, and package metadata, verifies `workspace:*` dependency
+  protocols were rewritten, installs the tarballs into a temporary npm consumer
+  project, and imports them by package name.
 - Service app tests prove the private native-messaging host scaffold stays a
   thin wrapper around `@nsealr/client`.
 - Negative response verification tests for request id mismatch, template
@@ -205,8 +209,8 @@ single-repository CI. Cross-repository drift remains guarded by
 ## Next Test Additions
 
 - Third-party consumer import tests for future `@nsealr/*` publication:
-  executable package README examples, packed tarball installation, no test-only
-  signer leakage, and no production secret storage in public helpers.
+  executable package README examples, no test-only signer leakage, and no
+  production secret storage in public helpers.
 - Local companion service tests with a fake extension/app client: pairing,
   selected account route, user approval UX, persistent grant storage,
   cancellation, persistent revocation, deterministic transport errors, signer
@@ -214,9 +218,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - Browser extension provider tests over a fake companion for origin permission,
   revocation, cancel, malformed companion response, native-host disconnects,
   and no key material in extension storage.
-- Package consumer smoke currently runs against built JS/declaration artifacts.
-  The remaining npm-facing gate is packed-tarball installation and package
-  README example execution before publication.
+- Package consumer smoke currently runs against built JS/declaration artifacts
+  and packed tarballs. The remaining npm-facing gate is package README example
+  execution before publication.
 - Full NIP-46 relay-session tests with local relay fixtures after NIP-44
   session lifecycle and reviewed `connect` acknowledgement are specified.
 - Large QR payload strategy tests once chunking or compression is designed.

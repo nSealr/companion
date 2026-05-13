@@ -84,7 +84,9 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("package.json must expose the deterministic package build script")
     elif scripts.get("consumer-smoke") != "pnpm --filter @nsealr/consumer-smoke smoke":
         errors.append("package.json must expose consumer-smoke through @nsealr/consumer-smoke")
-    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke":
+    elif scripts.get("pack-smoke") != "node scripts/pack_smoke.mjs":
+        errors.append("package.json must expose the packed tarball smoke script")
+    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm pack-smoke":
         errors.append("package.json ci must build package artifacts before checks")
 
     makefile = makefile_path.read_text(encoding="utf-8")
@@ -96,6 +98,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile must build package artifacts before tests")
     if "package-smoke:" not in makefile or "$(PNPM) consumer-smoke" not in makefile:
         errors.append("Makefile must run the public package consumer smoke")
+    if "pack-smoke:" not in makefile or "$(PNPM) pack-smoke" not in makefile:
+        errors.append("Makefile must run the packed tarball smoke")
 
 
 def read_json(path: Path, errors: list[str]) -> dict[str, object]:
@@ -130,6 +134,8 @@ def verify_companion_package_boundaries(errors: list[str]) -> None:
             errors.append(f"packages/{package_dir}/package.json must be named {package_name}")
         if package.get("type") != "module":
             errors.append(f"packages/{package_dir}/package.json must declare type=module")
+        if package.get("files") != ["dist", "README.md"]:
+            errors.append(f"packages/{package_dir}/package.json must publish only dist and README.md")
         exports = package.get("exports")
         if not isinstance(exports, dict):
             errors.append(f"packages/{package_dir}/package.json must declare explicit exports")

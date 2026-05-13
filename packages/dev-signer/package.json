@@ -5,6 +5,10 @@
   "type": "module",
   "license": "MIT",
   "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

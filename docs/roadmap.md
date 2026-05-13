@@ -190,11 +190,11 @@ line without adding compression, fountain codes, relay sessions, or signer I/O.
   deep-import drift, and production-package dependency drift.
 
 Status: first implementation pass complete. Remaining work before public npm
-alpha is semver and changelog policy, provenance and release automation, packed
-tarball tests, and broader third-party examples. Package README files document
-purpose and trust boundaries, built JS/declaration artifacts are generated
-before tests, and the consumer smoke imports package entrypoints backed by
-those artifacts.
+alpha is semver and changelog policy, provenance and release automation, and
+broader third-party examples. Package README files document purpose and trust
+boundaries, built JS/declaration artifacts are generated before tests, package
+tarballs are restricted to `dist` plus README, and consumer smokes import both
+workspace-built and packed package entrypoints.
 
 ## Later
 
@@ -220,8 +220,9 @@ those artifacts.
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building
   package `dist` artifacts and exercises a minimal no-signer path. Package
-  README files document purpose and trust boundaries. npm publish, provenance,
-  changelog, packed-tarball tests, and broader example coverage remain pending.
+  README files document purpose and trust boundaries. Packed-tarball smoke
+  validates installable tarballs before publication. npm publish, provenance,
+  changelog, and broader example coverage remain pending.
 - M5 full NIP-46/Nostr Connect relay session integration.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and

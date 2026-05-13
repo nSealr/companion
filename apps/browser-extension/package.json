@@ -1,0 +1,12 @@
+{
+  "name": "@nsealr/browser-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Private browser-extension boundary scaffold for nSealr NIP-07 integration.",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@nsealr/core": "workspace:*",
+    "@nsealr/protocol": "workspace:*"
+  }
+}

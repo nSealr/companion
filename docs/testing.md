@@ -67,6 +67,10 @@ single-repository CI. Cross-repository drift remains guarded by
   browser native-messaging local-service client adaptation, shared native host
   name use, invalid native-host-name rejection, and rejection before backend
   contact when an event template contains forbidden signer-owned fields.
+- Browser-extension app tests cover the private internal message parser for
+  `get_public_key` and `sign_event`, including unsupported-method rejection,
+  malformed-envelope rejection, and shared signer-request validation for event
+  templates before background routing exists.
 - `make package-smoke` builds package artifacts, then runs the private
   `@nsealr/consumer-smoke` app. The smoke imports every public `@nsealr/*`
   package through its built package entrypoint and exercises a minimal

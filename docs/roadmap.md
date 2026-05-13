@@ -290,7 +290,9 @@ tarball artifacts without publishing to npm.
   responses while signer dispatch remains blocked. It also has a browser
   native-messaging client adapter that wraps an explicit `sendNativeMessage`
   function with the shared native host name while reusing local-service
-  response validation. Remaining work: extension manifest/content-script
+  response validation. The private `@nsealr/browser-extension` scaffold now
+  parses only internal `get_public_key` and `sign_event` messages before any
+  background routing exists. Remaining work: extension manifest/content-script
   packaging, native-messaging installation, origin permission UX,
   cancellation, and real dispatch after M4.7 gates. No local production signing
   and no extension-side production key storage.

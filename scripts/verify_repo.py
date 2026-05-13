@@ -57,6 +57,7 @@ COMPANION_PACKAGES = {
     "transport": "@nsealr/transport",
 }
 COMPANION_APPS = {
+    "browser-extension": "@nsealr/browser-extension",
     "cli": "@nsealr/cli",
     "consumer-smoke": "@nsealr/consumer-smoke",
     "sdk-examples": "@nsealr/sdk-examples",

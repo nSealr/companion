@@ -12,6 +12,7 @@ import {
   handleLocalServiceRequest,
   LocalServiceClient,
   parseLocalGrantStore,
+  reviewPairingIntent,
   revokeLocalGrant,
   serializeLocalGrantStore,
   type LocalClientGrant,
@@ -191,6 +192,9 @@ async function localServiceExample(): Promise<void> {
   if (!("pairing_intent" in pairing.result)) throw new Error("pairing example returned wrong result type");
   assert.equal(pairing.result.pairing_intent.requires_user_approval, true);
   assert.equal(pairing.result.pairing_intent.stores_production_secrets, false);
+  const pairingReview = reviewPairingIntent(pairing.result.pairing_intent);
+  assert.equal(pairingReview.contains_secret_material, false);
+  assert.equal(pairingReview.requested_operations.length, 3);
 
   const routeSelection = await service.selectAccountRoute(sdkClient, routeVector.request);
   if (routeSelection.ok !== true) throw new Error(routeSelection.error.message);

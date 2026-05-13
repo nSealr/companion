@@ -226,8 +226,9 @@ tarball artifacts without publishing to npm.
 - M4.7 local companion service boundary for browser extension, desktop UI, and
   high-level SDK clients. First native-messaging scaffold is implemented with
   secretless service status, deterministic pairing intents, in-memory
-  client-grant enforcement, manual approval conversion from pairing intent to
-  a grant, signer-request validation, and signer-response verification.
+  client-grant enforcement, deterministic pairing-review projection, manual
+  approval conversion from pairing intent to a grant, signer-request
+  validation, and signer-response verification.
   The first high-level client wrapper validates request-id
   correlation and malformed service responses before browser, SDK, desktop, or
   CLI code can trust them. Pure package-level route selection and the
@@ -236,7 +237,7 @@ tarball artifacts without publishing to npm.
   validated Chromium/Firefox native-host manifest generation. `@nsealr/client`
   now also defines the strict secretless JSON grant-store contract for approved
   and revoked local client grants; remaining work is file-backed service
-  loading, user approval UX, cancellation, deterministic transport errors,
+  loading, full approval UI, cancellation, deterministic transport errors,
   signer dispatch, and native-host installation packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding

@@ -19,7 +19,8 @@ import {
   LocalServiceClient,
   approvePairingIntent,
   createLocalGrantStore,
-  handleLocalServiceRequest
+  handleLocalServiceRequest,
+  reviewPairingIntent
 } from "@nsealr/client";
 
 const client = new LocalServiceClient({
@@ -41,6 +42,7 @@ const approval = approvePairingIntent(pairing.result.pairing_intent, {
   approvedAt: 1_710_000_000,
   expiresAt: 1_710_086_400
 });
+assert.equal(reviewPairingIntent(pairing.result.pairing_intent).requires_user_approval, true);
 assert.equal(approval.stores_production_secrets, false);
 assert.equal(createLocalGrantStore([approval.grant], {
   updatedAt: 1_710_000_000
@@ -50,9 +52,10 @@ assert.equal(createLocalGrantStore([approval.grant], {
 ## Boundary
 
 The local service boundary is secretless. It currently supports status, pairing
-intent generation, explicit manual approval into a grant, request validation,
-secretless route selection, response verification, and a strict
-JSON grant-store contract for persisting approved/revoked local client grants.
+intent generation, deterministic pairing-review projection, explicit manual
+approval into a grant, request validation, secretless route selection, response
+verification, and a strict JSON grant-store contract for persisting
+approved/revoked local client grants.
 It does not store production keys, open relays, or dispatch to real signer
 transports. A host app still has to own the actual file location, backup
 policy, and user approval UX.

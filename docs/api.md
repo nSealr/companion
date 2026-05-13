@@ -38,6 +38,7 @@ Source entrypoint: `packages/client/src/index.ts`
 Exports:
 - `LOCAL_CLIENT_SURFACES`
 - `LOCAL_GRANT_STORE_FORMAT`
+- `LOCAL_PAIRING_REVIEW_FORMAT`
 - `LOCAL_SERVICE_NAME`
 - `LOCAL_SERVICE_OPERATIONS`
 - `LOCAL_SERVICE_PROTOCOL`
@@ -48,6 +49,8 @@ Exports:
 - `LocalGrantStore`
 - `LocalGrantStoreOptions`
 - `LocalPairingApproval`
+- `LocalPairingReview`
+- `LocalPairingReviewOperation`
 - `LocalServiceClient`
 - `LocalServiceClientOptions`
 - `LocalServiceContext`
@@ -74,6 +77,8 @@ Exports:
 - `handleLocalServiceRequest`
 - `parseLocalGrant`
 - `parseLocalGrantStore`
+- `parsePairingIntent`
+- `reviewPairingIntent`
 - `revokeLocalGrant`
 - `serializeLocalGrantStore`
 - `validateLocalServiceResponse`

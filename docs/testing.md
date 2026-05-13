@@ -54,10 +54,11 @@ single-repository CI. Cross-repository drift remains guarded by
   deterministic malformed-frame rejection, secretless local service status,
   deterministic pairing intents, unpaired/revoked/expired/scope-denied client
   rejection, latest-grant selection from in-memory grant history,
-  strict grant-store serialization/revocation, secretless route selection,
-  signer-request validation, signer-response verification, local client
-  request-id correlation, malformed service-response rejection, and
-  native-messaging exchange wrapping before any signer I/O exists.
+  deterministic pairing-review projection, strict grant-store
+  serialization/revocation, secretless route selection, signer-request
+  validation, signer-response verification, local client request-id
+  correlation, malformed service-response rejection including pairing digest
+  mismatch, and native-messaging exchange wrapping before any signer I/O exists.
 - Browser-provider package tests cover NIP-07 `getPublicKey` validation,
   `signEvent` conversion into nSealr signer requests, signed-response
   verification, explicit client identity forwarding, signer refusal propagation,
@@ -102,9 +103,10 @@ single-repository CI. Cross-repository drift remains guarded by
   context to the local service, and returns deterministic errors for malformed
   native-message frames.
 - Local service tests cover deterministic pairing intent creation, digest-bound
-  manual approval into a grant, strict secretless JSON grant-store parsing,
-  serialization, persistent revocation history, tamper rejection, expiry
-  rejection, authorization, and revocation/expiry/scope failures.
+  pairing-review projection, manual approval into a grant, strict secretless
+  JSON grant-store parsing, serialization, persistent revocation history,
+  tamper rejection, expiry rejection, authorization, and revocation/expiry/scope
+  failures.
 - Negative response verification tests for request id mismatch, template
   mismatch, event id mismatch, and invalid signatures.
 - Transport exchange tests proving successful `sign_event` responses are
@@ -253,9 +255,10 @@ single-repository CI. Cross-repository drift remains guarded by
   UX, file-backed grant-store loading, cancellation, deterministic transport
   errors, signer dispatch, and built-package consumer tests after explicit
   policy gates exist. The current test suite already covers pairing intent
-  generation, strict grant-store serialization/revocation, selected account
-  route, malformed native-message rejection, multi-message native-host stdio
-  behavior, and validated Chromium/Firefox native-host manifest generation.
+  generation, deterministic pairing-review projection, strict grant-store
+  serialization/revocation, selected account route, malformed native-message
+  rejection, multi-message native-host stdio behavior, and validated
+  Chromium/Firefox native-host manifest generation.
 - Browser extension provider tests over a fake companion for origin permission,
   revocation, cancel, malformed companion response, native-host disconnects,
   and no key material in extension storage. Current package tests cover the

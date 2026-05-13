@@ -161,6 +161,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function hasOnlyKeys(value: Record<string, unknown>, allowedKeys: string[]): boolean {
+  return Object.keys(value).every((key) => allowedKeys.includes(key));
+}
+
 function isRequestId(value: unknown): value is string {
   return (
     typeof value === "string" &&
@@ -370,8 +374,19 @@ function pairingIntent(client: LocalClientIdentity, requestedOperations: Pairabl
   };
 }
 
-function requirePairingIntent(value: unknown): PairingIntent {
+export function parsePairingIntent(value: unknown): PairingIntent {
   if (!isRecord(value)) throw new Error("pairing intent must be an object");
+  if (!hasOnlyKeys(value, [
+    "format",
+    "client_id",
+    "client",
+    "requested_operations",
+    "pairing_digest",
+    "requires_user_approval",
+    "stores_production_secrets"
+  ])) {
+    throw new Error("pairing intent has unsupported fields");
+  }
   if (value.format !== "nsealr-local-pairing-intent-v0") {
     throw new Error("pairing intent format is unsupported");
   }
@@ -391,7 +406,7 @@ function requirePairingIntent(value: unknown): PairingIntent {
   if (value.stores_production_secrets !== false) {
     throw new Error("pairing intent must not store production secrets");
   }
-  return {
+  const pairing: PairingIntent = {
     format: "nsealr-local-pairing-intent-v0",
     client_id: value.client_id,
     client: client.client,
@@ -400,6 +415,10 @@ function requirePairingIntent(value: unknown): PairingIntent {
     requires_user_approval: true,
     stores_production_secrets: false
   };
+  if (pairing.pairing_digest !== pairingIntentDigest(pairing)) {
+    throw new Error("pairing intent digest mismatch");
+  }
+  return pairing;
 }
 
 function requireNonNegativeTimestamp(value: unknown, label: string): number {
@@ -413,10 +432,7 @@ export function approvePairingIntent(
   intent: PairingIntent,
   options: { approvedAt: number; expiresAt?: number }
 ): LocalPairingApproval {
-  const pairing = requirePairingIntent(intent);
-  if (pairing.pairing_digest !== pairingIntentDigest(pairing)) {
-    throw new Error("pairing intent digest mismatch");
-  }
+  const pairing = parsePairingIntent(intent);
   const approvedAt = requireNonNegativeTimestamp(options.approvedAt, "approvedAt");
   const expiresAt = options.expiresAt === undefined
     ? undefined

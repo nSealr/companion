@@ -18,9 +18,9 @@ package and cover:
 - shared fixture loading, policy descriptor parsing, pure policy decisions,
   review detail-page rendering, approval-digest calculation, and serial-frame
   round-trip;
-- local companion service status, pairing-intent creation, secretless
-  grant-store serialization/revocation, authorized request validation, and
-  authorized response verification;
+- local companion service status, pairing-intent creation, pairing-review
+  projection, secretless grant-store serialization/revocation, authorized
+  request validation, and authorized response verification;
 - browser-provider `getPublicKey` and refused `signEvent` behavior over an
   injected backend;
 - already-decrypted NIP-46 bridge decisions for permitted and denied requests;

@@ -8,6 +8,7 @@ import {
   LOCAL_SERVICE_NAME,
   LOCAL_SERVICE_OPERATIONS,
   LOCAL_SERVICE_PROTOCOL,
+  parsePairingIntent,
   type LocalClientIdentity,
   type LocalServiceOperation,
   type LocalServiceRequest,
@@ -226,6 +227,11 @@ function validateServiceResult(value: unknown): string | undefined {
     if (!isHex64(value.pairing_intent.pairing_digest)) return "local service pairing digest is invalid";
     if (value.pairing_intent.requires_user_approval !== true) return "local service pairing approval flag is invalid";
     if (value.pairing_intent.stores_production_secrets !== false) return "local service pairing secret-storage flag is invalid";
+    try {
+      parsePairingIntent(value.pairing_intent);
+    } catch (error) {
+      return error instanceof Error ? `local service pairing intent is invalid: ${error.message}` : "local service pairing intent is invalid";
+    }
     return undefined;
   }
   if ("route_selection" in value) {

@@ -25,6 +25,8 @@ public npm release.
   work.
 - `@nsealr/client` helper for converting a digest-bound pairing intent into an
   explicitly approved local client grant.
+- `@nsealr/client` deterministic pairing-review projection for future local
+  service approval UX.
 - `@nsealr/client` secretless JSON grant-store contract for persisting approved
   and revoked local client grants without production key material.
 - Deterministic local-service grant-history selection so the latest matching

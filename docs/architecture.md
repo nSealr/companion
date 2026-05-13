@@ -93,11 +93,11 @@ packages, but it must not export test-only signing as a production path.
   storage and grant UX remain separate layers.
 - `packages/client`: local companion service request/response protocol,
   native-messaging frame codec, service status, pairing intent generation,
-  grant enforcement, a strict secretless JSON grant-store contract,
-  secretless account-route selection, signer-request validation,
-  signer-response verification, response validation, and a high-level client
-  wrapper. This is the shared client/service boundary for future browser
-  extension, SDK, and desktop work.
+  deterministic pairing-review projection, grant enforcement, a strict
+  secretless JSON grant-store contract, secretless account-route selection,
+  signer-request validation, signer-response verification, response
+  validation, and a high-level client wrapper. This is the shared
+  client/service boundary for future browser extension, SDK, and desktop work.
 - `packages/browser-provider`: NIP-07 provider adapter for browser-extension
   packaging. It accepts an injected companion backend plus explicit client
   identity, validates public keys, converts `signEvent` inputs into nSealr

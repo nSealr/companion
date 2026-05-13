@@ -7,6 +7,7 @@ import {
 } from "./handler.js";
 import {
   createBrowserExtensionPageProvider,
+  installBrowserExtensionPageProvider,
   type BrowserExtensionBackgroundRequester
 } from "./page-provider.js";
 
@@ -151,5 +152,23 @@ describe("browser extension page provider boundary", () => {
     abortController.abort();
     await expect(pageProvider.getPublicKey()).rejects.toThrow(/cancelled/u);
     expect(seenSignals).toEqual([abortController.signal]);
+  });
+
+  it("installs the page provider on an explicit target without overwriting by default", async () => {
+    const pageProvider = createBrowserExtensionPageProvider({
+      nextRequestId: () => "page-install-provider",
+      requestBackground: (request) => handleBrowserExtensionRequest(request, { provider })
+    });
+    const target: { nostr?: unknown } = {};
+
+    expect(installBrowserExtensionPageProvider(target, pageProvider)).toBe(pageProvider);
+    expect(Object.keys(target)).toEqual(["nostr"]);
+    expect(target.nostr).toBe(pageProvider);
+    expect(() => {
+      target.nostr = {};
+    }).toThrow();
+    await expect((target.nostr as typeof pageProvider).getPublicKey()).resolves.toBe(signedEvent.pubkey);
+
+    expect(() => installBrowserExtensionPageProvider(target, pageProvider)).toThrow(/already has/u);
   });
 });

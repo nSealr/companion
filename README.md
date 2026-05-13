@@ -93,8 +93,9 @@ match the shared `contract_id`.
   includes a pure background-controller boundary over injected native
   messaging with optional response timeouts and request-scoped cancellation,
   includes a pure page-provider boundary that maps NIP-07 `getPublicKey` and
-  `signEvent` calls to validated background requests, and can build a minimal
-  no-host-permission manifest. It does not package or install a browser
+  `signEvent` calls to validated background requests and installs it only on an
+  explicit target without overwriting an existing provider, and can build a
+  minimal no-host-permission manifest. It does not package or install a browser
   extension.
 - `@nsealr/client` exposes the shared local-client identity parser, including
   the browser-safe `@nsealr/client/client-identity` subpath, used before

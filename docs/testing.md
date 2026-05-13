@@ -94,7 +94,9 @@ single-repository CI. Cross-repository drift remains guarded by
   contacted. Page-provider tests prove NIP-07 `getPublicKey` and `signEvent`
   calls become validated background requests, unsafe templates fail before the
   background boundary, malformed responses are rejected, and cancellation is
-  forwarded without content-script injection.
+  forwarded without content-script injection. Install tests prove the frozen
+  provider is attached only to an explicit target and does not overwrite an
+  existing provider.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids.

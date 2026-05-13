@@ -261,9 +261,10 @@ The same app now has a browser-API-free page-provider boundary that exposes the
 minimal NIP-07 `getPublicKey` and `signEvent` methods over an injected
 background requester. It constructs only validated internal extension messages,
 rejects unsafe event templates before contacting the background boundary,
-verifies signed event responses, and forwards cancellation signals. It does
-not install or inject content scripts, write browser storage, create grants, or
-hold key material.
+verifies signed event responses, forwards cancellation signals, and can install
+the frozen provider on an explicit target without overwriting an existing
+provider. It does not inject content scripts, write browser storage, create
+grants, or hold key material.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

@@ -31,6 +31,10 @@ export type BrowserExtensionPageProviderOptions = {
   abortSignal?: AbortSignal;
 };
 
+export type BrowserExtensionPageProviderTarget = {
+  nostr?: unknown;
+};
+
 function defaultRequestIdFactory(): () => string {
   let sequence = 0;
   return () => {
@@ -150,7 +154,7 @@ export function createBrowserExtensionPageProvider(
   options: BrowserExtensionPageProviderOptions
 ): BrowserExtensionPageProvider {
   const nextRequestId = options.nextRequestId ?? defaultRequestIdFactory();
-  return {
+  return Object.freeze({
     async getPublicKey(): Promise<string> {
       assertNotCancelled(options.abortSignal);
       const request = parseBrowserExtensionRequest({
@@ -183,5 +187,21 @@ export function createBrowserExtensionPageProvider(
       });
       return requireSignedEvent(response, signerRequest);
     }
-  };
+  });
+}
+
+export function installBrowserExtensionPageProvider(
+  target: BrowserExtensionPageProviderTarget,
+  provider: BrowserExtensionPageProvider
+): BrowserExtensionPageProvider {
+  if (target.nostr !== undefined) {
+    throw new Error("browser page already has a nostr provider");
+  }
+  Object.defineProperty(target, "nostr", {
+    value: provider,
+    enumerable: true,
+    configurable: false,
+    writable: false
+  });
+  return provider;
 }

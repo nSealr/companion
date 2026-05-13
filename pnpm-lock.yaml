@@ -113,6 +113,31 @@ importers:
         specifier: 4.21.0
         version: 4.21.0
 
+  apps/sdk-examples:
+    dependencies:
+      '@nsealr/browser-provider':
+        specifier: workspace:*
+        version: link:../../packages/browser-provider
+      '@nsealr/client':
+        specifier: workspace:*
+        version: link:../../packages/client
+      '@nsealr/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@nsealr/nip46':
+        specifier: workspace:*
+        version: link:../../packages/nip46
+      '@nsealr/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      '@nsealr/qr':
+        specifier: workspace:*
+        version: link:../../packages/qr
+    devDependencies:
+      tsx:
+        specifier: 4.21.0
+        version: 4.21.0
+
   apps/service:
     dependencies:
       '@nsealr/client':

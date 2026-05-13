@@ -190,12 +190,14 @@ line without adding compression, fountain codes, relay sessions, or signer I/O.
   deep-import drift, and production-package dependency drift.
 
 Status: first implementation pass complete. Remaining work before public npm
-alpha is release automation and broader third-party examples. Package README
-files document purpose and trust boundaries, built JS/declaration artifacts are
-generated before tests, package tarballs are restricted to `dist` plus README,
-consumer smokes import both workspace-built and packed package entrypoints, and
-the changelog/release policy pins synchronized pre-release versioning plus npm
-provenance requirements.
+alpha is release automation and broader package-specific examples. Package
+README files document purpose and trust boundaries, built JS/declaration
+artifacts are generated before tests, package tarballs are restricted to `dist`
+plus README, consumer smokes import both workspace-built and packed package
+entrypoints, executable SDK examples now cover request/QR, local-service,
+browser-provider, and already-decrypted NIP-46 flows, and the changelog/release
+policy pins synchronized pre-release versioning plus npm provenance
+requirements.
 
 ## Later
 
@@ -222,9 +224,10 @@ provenance requirements.
   public `@nsealr/*` entrypoints through workspace package names after building
   package `dist` artifacts and exercises a minimal no-signer path. Package
   README files document purpose and trust boundaries. Packed-tarball smoke
-  validates installable tarballs before publication. Changelog and release
-  policy are present. npm publish automation, provenance workflow, and broader
-  example coverage remain pending.
+  validates installable tarballs before publication. Executable SDK examples
+  prove common public package flows without test-only signer imports. Changelog
+  and release policy are present. npm publish automation, provenance workflow,
+  and broader package-specific example coverage remain pending.
 - M5 full NIP-46/Nostr Connect relay session integration.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and

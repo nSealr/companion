@@ -46,6 +46,10 @@ match the shared `contract_id`.
   manifest, source `src/index.ts` entrypoint, and built `dist` export.
   Internal imports use those package entrypoints instead of deep relative paths
   so SDK, extension, service, and CLI code share the same boundaries.
+- `@nsealr/sdk-examples` is a private executable examples app that imports
+  public packages through their built entrypoints and exercises request/QR,
+  local-service, browser-provider, and already-decrypted NIP-46 flows without
+  importing test-only signing helpers.
 - `@nsealr/client` defines the first local companion service protocol and
   native-messaging frame codec plus the high-level local-service client used by
   future browser, SDK, desktop, and CLI callers. The implemented operations are
@@ -189,8 +193,8 @@ match the shared `contract_id`.
   third-party import tests are stable. Package README coverage and a
   built-artifact consumer smoke are now part of `make ci`; packed-tarball
   installation smoke is also part of `make ci`; synchronized package version,
-  changelog, and release/provenance policy are documented before npm
-  publish/provenance plumbing.
+  changelog, executable SDK examples, and release/provenance policy are
+  documented before npm publish/provenance plumbing.
 - Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,
   permissions, and auth challenges.
 - WebUSB, HID, CDC, WebSerial, and persistent transport experiments.

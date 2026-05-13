@@ -36,6 +36,7 @@ Before any npm publication:
 - Package tarballs must contain only `dist`, README, and package metadata.
 - Packed tarballs must install into a temporary consumer project and import by
   package name.
+- Executable SDK examples must pass against built package entrypoints.
 - The changelog must describe the release.
 - No package may contain production private-key custody or depend on private
   `@nsealr/dev-signer` from production code.
@@ -49,4 +50,3 @@ using npm trusted publishing or `npm publish --provenance`.
 
 Local `npm publish` is not an accepted release path. A release workflow must be
 added and reviewed before the first public package publication.
-

@@ -12,8 +12,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "consumer-smoke": "pnpm --filter @nsealr/consumer-smoke smoke",
+    "examples-smoke": "pnpm --filter @nsealr/sdk-examples verify",
     "pack-smoke": "node scripts/pack_smoke.mjs",
-    "ci": "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm pack-smoke"
+    "ci": "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm pack-smoke"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

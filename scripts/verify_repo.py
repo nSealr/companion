@@ -59,6 +59,7 @@ COMPANION_PACKAGES = {
 COMPANION_APPS = {
     "cli": "@nsealr/cli",
     "consumer-smoke": "@nsealr/consumer-smoke",
+    "sdk-examples": "@nsealr/sdk-examples",
     "service": "@nsealr/service",
 }
 DEEP_SOURCE_IMPORT_RE = re.compile(r'from\s+["\'](?:\.\./){2,}[^"\']*/src/|from\s+["\'][^"\']*packages/[^"\']*/src/')
@@ -73,6 +74,7 @@ def verify_companion_tooling(errors: list[str]) -> None:
     makefile_path = ROOT / "Makefile"
     changelog_path = ROOT / "CHANGELOG.md"
     release_path = ROOT / "docs" / "release.md"
+    sdk_examples_path = ROOT / "docs" / "sdk-examples.md"
     if not package_path.exists() or not makefile_path.exists():
         return
 
@@ -86,10 +88,12 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("package.json must expose the deterministic package build script")
     elif scripts.get("consumer-smoke") != "pnpm --filter @nsealr/consumer-smoke smoke":
         errors.append("package.json must expose consumer-smoke through @nsealr/consumer-smoke")
+    elif scripts.get("examples-smoke") != "pnpm --filter @nsealr/sdk-examples verify":
+        errors.append("package.json must expose examples-smoke through @nsealr/sdk-examples")
     elif scripts.get("pack-smoke") != "node scripts/pack_smoke.mjs":
         errors.append("package.json must expose the packed tarball smoke script")
-    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm pack-smoke":
-        errors.append("package.json ci must build package artifacts before checks")
+    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm pack-smoke":
+        errors.append("package.json ci must build package artifacts and examples before checks")
 
     makefile = makefile_path.read_text(encoding="utf-8")
     if "PNPM_VERSION := 10.33.4" not in makefile:
@@ -100,6 +104,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile must build package artifacts before tests")
     if "package-smoke:" not in makefile or "$(PNPM) consumer-smoke" not in makefile:
         errors.append("Makefile must run the public package consumer smoke")
+    if "examples-smoke:" not in makefile or "$(PNPM) examples-smoke" not in makefile:
+        errors.append("Makefile must run the SDK examples smoke")
     if "pack-smoke:" not in makefile or "$(PNPM) pack-smoke" not in makefile:
         errors.append("Makefile must run the packed tarball smoke")
 
@@ -111,6 +117,12 @@ def verify_companion_tooling(errors: list[str]) -> None:
         release_text = release_path.read_text(encoding="utf-8")
         if "npm publish --provenance" not in release_text or "make integration" not in release_text:
             errors.append("docs/release.md must document provenance and integration release gates")
+    if not sdk_examples_path.exists():
+        errors.append("docs/sdk-examples.md must document executable SDK examples")
+    else:
+        sdk_examples_text = sdk_examples_path.read_text(encoding="utf-8")
+        if "make examples-smoke" not in sdk_examples_text or "@nsealr/sdk-examples" not in sdk_examples_text:
+            errors.append("docs/sdk-examples.md must document make examples-smoke and @nsealr/sdk-examples")
 
 
 def read_json(path: Path, errors: list[str]) -> dict[str, object]:

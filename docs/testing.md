@@ -64,6 +64,11 @@ single-repository CI. Cross-repository drift remains guarded by
   package through its built package entrypoint and exercises a minimal
   no-signer consumer path. This catches broken exports that relative in-package
   tests would miss.
+- `make examples-smoke` builds package artifacts, then runs private
+  `@nsealr/sdk-examples`. The examples are executable documentation for public
+  package usage and cover request/QR handling, local companion-service calls,
+  browser-provider refusal behavior, and already-decrypted NIP-46 bridge
+  decisions without importing `@nsealr/dev-signer`.
 - `make pack-smoke` packs public `@nsealr/*` tarballs, verifies they contain
   only `dist`, README, and package metadata, verifies `workspace:*` dependency
   protocols were rewritten, installs the tarballs into a temporary npm consumer
@@ -210,8 +215,8 @@ single-repository CI. Cross-repository drift remains guarded by
 ## Next Test Additions
 
 - Third-party consumer import tests for future `@nsealr/*` publication:
-  executable package README examples, no test-only signer leakage, and no
-  production secret storage in public helpers.
+  more package-specific executable examples, no test-only signer leakage, and
+  no production secret storage in public helpers.
 - Local companion service tests with a fake extension/app client: pairing,
   selected account route, user approval UX, persistent grant storage,
   cancellation, persistent revocation, deterministic transport errors, signer

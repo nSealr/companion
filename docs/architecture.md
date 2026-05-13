@@ -161,6 +161,13 @@ extension manifest, native-host install flow, permission UI, account routing,
 persistent grants, NIP-04, NIP-44, or relay sessions. It is the package-level
 contract that a future extension will expose as `window.nostr`.
 
+Executable SDK examples live in private app `@nsealr/sdk-examples`. They are
+not another access surface and do not own production behavior. Their role is to
+prove that a consumer can use the built public package entrypoints for request
+validation, QR envelopes, local-service calls, browser-provider integration,
+and already-decrypted NIP-46 decisions without importing private test-only
+signing code or storing secrets.
+
 ## Current CLI Flow
 
 The M2 CLI flow is:

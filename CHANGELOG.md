@@ -38,6 +38,9 @@ public npm release.
   native-host packaging.
 - Private native-messaging service app now generates validated Chromium and
   Firefox native-host manifest JSON without installing files.
+- Private native-messaging service app now loads explicit read-only secretless
+  grant/account JSON context files for developer and integration harnesses
+  without choosing storage defaults, approving clients, or writing files.
 - `@nsealr/policy` pure route-selection helper and shared specs vectors for
   account-to-route metadata selection without signer dispatch.
 - `@nsealr/client` local-service route-selection operation gated by in-memory

@@ -161,6 +161,9 @@ importers:
       '@nsealr/client':
         specifier: workspace:*
         version: link:../../packages/client
+      '@nsealr/policy':
+        specifier: workspace:*
+        version: link:../../packages/policy
     devDependencies:
       '@nsealr/fixtures':
         specifier: workspace:*

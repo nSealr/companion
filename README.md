@@ -69,10 +69,11 @@ match the shared `contract_id`.
 - `@nsealr/service` is the private native-messaging host scaffold over
   `@nsealr/client`. It can process multiple length-prefixed service messages
   on one stdio session, returns deterministic native-frame errors, and accepts
-  explicit in-memory authorization context in tests. It can also print
-  validated Chromium/Firefox native-host manifest JSON for installer work. It
-  does not open relays, store keys, persist accounts, or contact signer
-  transports.
+  explicit in-memory authorization context in tests. It can also load explicit
+  read-only secretless grant/account JSON files for developer and integration
+  harnesses, and print validated Chromium/Firefox native-host manifest JSON for
+  installer work. It does not open relays, store keys, write grant/account
+  files, or contact signer transports.
 - `nsealr review-request` renders deterministic review JSON, digest-bound
   screen-review pages, or complete constrained-display detail pages from a
   signing request for untrusted host-side previews and test harnesses.

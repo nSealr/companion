@@ -109,10 +109,12 @@ packages, but it must not export test-only signing as a production path.
 - `apps/service`: private native-messaging host scaffold over
   `packages/client`. It processes multiple length-prefixed service messages on
   one stdio session, accepts explicit in-memory authorization context in tests,
-  returns deterministic native-frame errors, and can print validated
-  Chromium/Firefox native-host manifest JSON. It is intentionally secretless and
-  does not yet install manifest files, perform persistent grant lookup, account
-  storage, relay work, or signer transport dispatch.
+  can load explicit read-only secretless grant/account JSON context files for
+  developer and integration harnesses, returns deterministic native-frame
+  errors, and can print validated Chromium/Firefox native-host manifest JSON.
+  It is intentionally secretless and does not yet install manifest files, write
+  grant/account storage, perform production grant persistence, open relays, or
+  dispatch signer transports.
 
 Each reusable package has its own `package.json`, source `src/index.ts`
 entrypoint, and built `dist` JS/declaration export. Cross-package source imports
@@ -173,9 +175,10 @@ open and receive one deterministic response per length-prefixed service
 request. It can also generate validated Chromium/Firefox native-host manifest
 JSON with explicit host path and extension id inputs. `@nsealr/client` also
 defines the persistent grant-store JSON contract used to serialize approved and
-revoked local client grants without secret material. This still does not add
-manifest installation, file-backed service loading, signer dispatch, relay
-sessions, or browser packaging.
+revoked local client grants without secret material. The private service app
+can now load explicit read-only grant/account context files for local harnesses,
+but this still does not add manifest installation, default storage locations,
+file writes, signer dispatch, relay sessions, or browser packaging.
 
 The browser-provider package is intentionally one layer above this service
 boundary. Each provider instance is bound to a client identity so the future

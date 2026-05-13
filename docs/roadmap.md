@@ -166,7 +166,13 @@ Status note, 2026-05-13: companion policy code now consumes shared
 route-selection vectors. The pure selector maps parsed account descriptors and
 requested methods to secretless route metadata, rejecting unknown accounts,
 ambiguous account ids, unsupported methods, and route-type mismatches before
-any signer transport or runtime grant-store loading exists.
+any signer transport or production service storage exists.
+
+Status note, 2026-05-13: the private `@nsealr/service` app now has explicit
+read-only context loading for secretless local grant-store and account-store
+JSON files. This is a developer and integration harness only: it chooses no
+default path, writes no files, approves no clients, opens no transports, and
+does not change the production approval UI or storage-location review gates.
 
 Status note, 2026-05-13: `@nsealr/client` now exposes route selection through
 the local-service boundary after explicit in-memory pairing authorization. The
@@ -236,9 +242,10 @@ tarball artifacts without publishing to npm.
   service app now has a tested multi-message native-host stdio loop plus
   validated Chromium/Firefox native-host manifest generation. `@nsealr/client`
   now also defines the strict secretless JSON grant-store contract for approved
-  and revoked local client grants; remaining work is file-backed service
-  loading, full approval UI, cancellation, deterministic transport errors,
-  signer dispatch, and native-host installation packaging.
+  and revoked local client grants; private service context loading can read
+  explicit grant/account JSON files for local harnesses only. Remaining work is
+  full approval UI, reviewed storage locations, cancellation, deterministic
+  transport errors, signer dispatch, and native-host installation packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are

@@ -8,7 +8,8 @@
     "service": "node --no-warnings --import tsx/esm src/index.ts"
   },
   "dependencies": {
-    "@nsealr/client": "workspace:*"
+    "@nsealr/client": "workspace:*",
+    "@nsealr/policy": "workspace:*"
   },
   "devDependencies": {
     "@nsealr/fixtures": "workspace:*",

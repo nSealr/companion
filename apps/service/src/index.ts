@@ -9,6 +9,7 @@ import {
   type LocalServiceContext,
   type LocalServiceResponse
 } from "@nsealr/client";
+import { contextArgsFromCliArgs, loadServiceContextFromFiles } from "./context.js";
 import { nativeHostManifestJsonFromArgs } from "./manifest.js";
 
 function nativeMessageError(message: string): LocalServiceResponse {
@@ -131,7 +132,14 @@ export function runServiceCli(args: string[]): void {
     return;
   }
   try {
-    writeSync(1, nativeHostManifestJsonFromArgs(args));
+    const normalizedArgs = args[0] === "--" ? args.slice(1) : args;
+    if (normalizedArgs.includes("--native-host-manifest")) {
+      writeSync(1, nativeHostManifestJsonFromArgs(args));
+      return;
+    }
+    runServiceStdio({
+      context: loadServiceContextFromFiles(contextArgsFromCliArgs(args))
+    });
   } catch (error) {
     writeSync(2, `${error instanceof Error ? error.message : String(error)}\n`);
     process.exitCode = 1;

@@ -100,7 +100,9 @@ single-repository CI. Cross-repository drift remains guarded by
   rehearsal workflow. It does not publish to npm.
 - Service app tests prove the private native-messaging host scaffold stays a
   thin wrapper around `@nsealr/client`, passes injected in-memory authorization
-  context to the local service, and returns deterministic errors for malformed
+  context to the local service, loads explicit read-only secretless
+  grant/account JSON files for local harnesses, rejects secret-bearing or
+  malformed account-store files, and returns deterministic errors for malformed
   native-message frames.
 - Local service tests cover deterministic pairing intent creation, digest-bound
   pairing-review projection, manual approval into a grant, strict secretless
@@ -252,13 +254,14 @@ single-repository CI. Cross-repository drift remains guarded by
 - Package release workflow tests should eventually add trusted-publishing dry
   run or npm provenance verification once npm organization settings exist.
 - Local companion service tests with a fake extension/app client: user approval
-  UX, file-backed grant-store loading, cancellation, deterministic transport
-  errors, signer dispatch, and built-package consumer tests after explicit
-  policy gates exist. The current test suite already covers pairing intent
-  generation, deterministic pairing-review projection, strict grant-store
-  serialization/revocation, selected account route, malformed native-message
-  rejection, multi-message native-host stdio behavior, and validated
-  Chromium/Firefox native-host manifest generation.
+  UX, reviewed storage locations, cancellation, deterministic transport errors,
+  signer dispatch, and built-package consumer tests after explicit policy gates
+  exist. The current test suite already covers pairing intent generation,
+  deterministic pairing-review projection, strict grant-store
+  serialization/revocation, explicit read-only context loading, selected
+  account route, malformed native-message rejection, multi-message native-host
+  stdio behavior, and validated Chromium/Firefox native-host manifest
+  generation.
 - Browser extension provider tests over a fake companion for origin permission,
   revocation, cancel, malformed companion response, native-host disconnects,
   and no key material in extension storage. Current package tests cover the

@@ -63,6 +63,9 @@ public npm release.
   `getPublicKey` and `signEvent` calls to validated background requests
   and installs on an explicit target without overwriting an existing provider,
   without content-script injection, browser storage, grants, or key custody.
+- Private browser-extension page-bridge envelope that validates future
+  page/content-script messages over an injected background requester without
+  adding postMessage listeners, browser APIs, storage, grants, or key custody.
 - Private `@nsealr/browser-extension` app scaffold with strict internal
   `get_public_key` and `sign_event` message parsing plus a provider-backed
   handler that validates returned pubkeys/events before extension packaging,

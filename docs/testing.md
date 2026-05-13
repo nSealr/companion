@@ -96,7 +96,10 @@ single-repository CI. Cross-repository drift remains guarded by
   background boundary, malformed responses are rejected, and cancellation is
   forwarded without content-script injection. Install tests prove the frozen
   provider is attached only to an explicit target and does not overwrite an
-  existing provider.
+  existing provider. Page-bridge tests prove future page/content-script
+  envelopes reject malformed direction, mismatched request ids, malformed
+  background responses, and already-cancelled requests before any browser
+  listener exists.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids.

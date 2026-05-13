@@ -52,10 +52,11 @@ packages, but it must not export test-only signing as a production path.
   injected native messaging with optional response timeouts and request-scoped
   cancellation, has a pure page-provider boundary that maps NIP-07
   `getPublicKey` and `signEvent` calls to validated background requests, and
-  can build a minimal MV3 manifest with `nativeMessaging` as the only
+  has a pure page-bridge envelope for future page/content-script messaging.
+  It can build a minimal MV3 manifest with `nativeMessaging` as the only
   permission. It does not yet ship extension packaging, content-script
-  injection, native-host installation, permission UI, persistent grants, or
-  signer dispatch.
+  injection, page-script injection, native-host installation, permission UI,
+  persistent grants, or signer dispatch.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
   central nSealr v0 implementation limit profile used by companion parsers,
@@ -265,6 +266,13 @@ verifies signed event responses, forwards cancellation signals, and can install
 the frozen provider on an explicit target without overwriting an existing
 provider. It does not inject content scripts, write browser storage, create
 grants, or hold key material.
+The page-bridge boundary defines a validated `page_to_extension` envelope over
+the internal browser-extension request format and an `extension_to_page`
+response envelope over the internal response format. It rejects malformed
+directions, mismatched request ids, unsafe inner requests, and mismatched
+background responses before a future content script can forward data across the
+isolated-world boundary. It has no `postMessage` listener, no browser runtime
+dependency, no storage, and no key custody.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

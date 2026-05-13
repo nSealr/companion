@@ -318,12 +318,14 @@ and uploads checked tarball artifacts without publishing to npm.
   cancellation. A pure page-provider boundary now maps NIP-07 `getPublicKey`
   and `signEvent` calls to validated background requests, verifies signed
   responses, forwards cancellation signals, and installs on an explicit target
-  without overwriting an existing provider. It can build a minimal MV3 manifest
-  with `nativeMessaging` as the only permission and no host/content-script/
-  storage permissions. Remaining work: extension packaging, actual
-  content-script/page-script injection, native-messaging installation, origin
-  permission UX, cancellation UI wiring, and real dispatch after M4.7 gates. No
-  local production signing and no extension-side production key storage.
+  without overwriting an existing provider. A pure page-bridge envelope now
+  validates future page/content-script messages over an injected background
+  requester. It can build a minimal MV3 manifest with `nativeMessaging` as the
+  only permission and no host/content-script/storage permissions. Remaining
+  work: extension packaging, actual content-script/page-script injection,
+  native-messaging installation, origin permission UX, cancellation UI wiring,
+  and real dispatch after M4.7 gates. No local production signing and no
+  extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

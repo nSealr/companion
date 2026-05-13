@@ -11,7 +11,8 @@ NIP-07 provider adapter for future nSealr browser-extension packaging.
 - Provide a local-service backend adapter for authorized account-route
   selection and deterministic signer-unavailable responses.
 - Provide a browser native-messaging local-service client adapter over an
-  explicit `sendNativeMessage` function and shared native host name.
+  explicit `sendNativeMessage` function, shared native host name, and optional
+  deterministic response timeout.
 - Verify signed responses before returning them to `window.nostr` callers.
 
 ## Example

@@ -182,6 +182,24 @@ describe("NIP-07 browser provider boundary", () => {
     expect(called).toBe(false);
   });
 
+  it("rejects invalid or silent browser native-messaging exchanges deterministically", async () => {
+    expect(() => createBrowserNativeMessagingLocalServiceClient({
+      timeoutMs: 0,
+      sendNativeMessage: () => handleLocalServiceRequest({
+        version: 1,
+        request_id: "unused",
+        operation: "service_status"
+      })
+    })).toThrow(/timeout/u);
+
+    const service = createBrowserNativeMessagingLocalServiceClient({
+      timeoutMs: 1,
+      sendNativeMessage: () => new Promise(() => undefined)
+    });
+
+    await expect(service.serviceStatus("browser-native-timeout")).rejects.toThrow(/response timed out/u);
+  });
+
   it("surfaces local-service authorization failure before browser callers trust a key", async () => {
     const service = new LocalServiceClient({
       exchange: (message) => handleLocalServiceRequest(message, {

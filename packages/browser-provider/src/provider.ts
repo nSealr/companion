@@ -45,6 +45,7 @@ export type BrowserNativeMessagingLocalServiceClientOptions = {
   sendNativeMessage: BrowserNativeMessageSender;
   hostName?: string;
   nextRequestId?: () => string;
+  timeoutMs?: number;
 };
 
 function defaultRequestIdFactory(): () => string {
@@ -67,6 +68,30 @@ function assertLowerHex(value: unknown, length: number, label: string): asserts 
 function assertNativeHostName(value: string): void {
   if (!/^[a-z0-9_]+(?:\.[a-z0-9_]+)*$/u.test(value) || value.length > 128) {
     throw new Error("native host name is invalid");
+  }
+}
+
+function assertTimeoutMs(value: number): void {
+  if (!Number.isInteger(value) || value <= 0 || value > 300_000) {
+    throw new Error("native messaging timeout must be a positive integer not greater than 300000");
+  }
+}
+
+async function withTimeout<T>(operation: Promise<T>, timeoutMs: number | undefined): Promise<T> {
+  if (timeoutMs === undefined) return operation;
+  assertTimeoutMs(timeoutMs);
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((_resolve, reject) => {
+        timeout = setTimeout(() => {
+          reject(new Error("browser native messaging response timed out"));
+        }, timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timeout !== undefined) clearTimeout(timeout);
   }
 }
 
@@ -148,7 +173,11 @@ export function createBrowserNativeMessagingLocalServiceClient(
 ): LocalServiceClient {
   const hostName = options.hostName ?? NATIVE_HOST_NAME;
   assertNativeHostName(hostName);
-  const exchange: LocalServiceExchange = (request) => options.sendNativeMessage(hostName, request);
+  if (options.timeoutMs !== undefined) assertTimeoutMs(options.timeoutMs);
+  const exchange: LocalServiceExchange = (request) => withTimeout(
+    Promise.resolve(options.sendNativeMessage(hostName, request)),
+    options.timeoutMs
+  );
   return new LocalServiceClient({
     exchange,
     ...(options.nextRequestId !== undefined ? { nextRequestId: options.nextRequestId } : {})

@@ -34,11 +34,13 @@ signer access to an injected backend. The local-service adapter can read the
 selected account public key through authorized route selection and returns
 deterministic signer-unavailable responses until signer dispatch is explicitly
 implemented. The native-messaging adapter only wraps an explicit
-`sendNativeMessage` function and validates the host name; it does not install a
-native host or persist grants. `signEvent` validates the generated nSealr
-request and verifies successful responses before returning a Nostr event. Keep
-future extension storage, native-host installation, origin grants, NIP-04, and
-NIP-44 outside this package until those contracts are reviewed separately.
+`sendNativeMessage` function, validates the host name, and can bound silent
+native exchanges with an optional deterministic response timeout; it does not
+install a native host or persist grants. `signEvent` validates the generated
+nSealr request and verifies successful responses before returning a Nostr
+event. Keep future extension storage, native-host installation, origin grants,
+NIP-04, and NIP-44 outside this package until those contracts are reviewed
+separately.
 
 ## @nsealr/client
 

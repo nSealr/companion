@@ -23,6 +23,7 @@ export type BrowserExtensionNativeMessagingPairingOptions = {
   hostName?: string;
   nextServiceRequestId?: () => string;
   requestedOperations?: readonly PairableLocalServiceOperation[];
+  nativeMessageTimeoutMs?: number;
 };
 
 export type BrowserExtensionPairingIntentResult = {
@@ -42,7 +43,8 @@ export async function requestBrowserExtensionNativeMessagingPairingIntent(
   const service = createBrowserNativeMessagingLocalServiceClient({
     sendNativeMessage: options.sendNativeMessage,
     ...(options.hostName !== undefined ? { hostName: options.hostName } : {}),
-    ...(options.nextServiceRequestId !== undefined ? { nextRequestId: options.nextServiceRequestId } : {})
+    ...(options.nextServiceRequestId !== undefined ? { nextRequestId: options.nextServiceRequestId } : {}),
+    ...(options.nativeMessageTimeoutMs !== undefined ? { timeoutMs: options.nativeMessageTimeoutMs } : {})
   });
   const response = await service.requestPairing(
     context.client,

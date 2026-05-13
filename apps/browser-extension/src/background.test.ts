@@ -193,4 +193,30 @@ describe("browser extension background controller boundary", () => {
     });
     expect(requests.map((request) => request.operation)).toEqual(["request_pairing"]);
   });
+
+  it("keeps silent native messaging deterministic without approving grants", async () => {
+    const controller = createBrowserExtensionBackgroundController({
+      routeRequest,
+      nativeMessageTimeoutMs: 1,
+      sendNativeMessage: () => new Promise(() => undefined)
+    });
+
+    await expect(controller.requestPairingReview(sender)).rejects.toThrow(/response timed out/u);
+    await expect(controller.handleRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "background-timeout-get-public-key",
+      method: "get_public_key"
+    }, sender)).resolves.toEqual({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "background-timeout-get-public-key",
+      ok: false,
+      error: {
+        code: "provider_request_failed",
+        message: "browser provider get_public_key failed",
+        retryable: false
+      }
+    });
+  });
 });

@@ -15,6 +15,7 @@ export type BrowserExtensionNativeMessagingProviderSelectorOptions = {
   nextServiceRequestId?: () => string;
   nextSignerRequestId?: () => string;
   signingUnavailableMessage?: string;
+  nativeMessageTimeoutMs?: number;
 };
 
 export function createBrowserExtensionNativeMessagingProviderSelector(
@@ -23,7 +24,8 @@ export function createBrowserExtensionNativeMessagingProviderSelector(
   const service = createBrowserNativeMessagingLocalServiceClient({
     sendNativeMessage: options.sendNativeMessage,
     ...(options.hostName !== undefined ? { hostName: options.hostName } : {}),
-    ...(options.nextServiceRequestId !== undefined ? { nextRequestId: options.nextServiceRequestId } : {})
+    ...(options.nextServiceRequestId !== undefined ? { nextRequestId: options.nextServiceRequestId } : {}),
+    ...(options.nativeMessageTimeoutMs !== undefined ? { timeoutMs: options.nativeMessageTimeoutMs } : {})
   });
   const backend = createLocalServiceBrowserProviderBackend({
     service,

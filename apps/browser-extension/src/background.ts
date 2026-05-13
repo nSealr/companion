@@ -27,6 +27,7 @@ export type BrowserExtensionBackgroundControllerOptions = {
   nextSignerRequestId?: () => string;
   signingUnavailableMessage?: string;
   pairingOperations?: readonly PairableLocalServiceOperation[];
+  nativeMessageTimeoutMs?: number;
 };
 
 export type BrowserExtensionBackgroundController = {
@@ -44,6 +45,7 @@ export function createBrowserExtensionBackgroundController(
     ...(options.hostName !== undefined ? { hostName: options.hostName } : {}),
     ...(options.nextServiceRequestId !== undefined ? { nextServiceRequestId: options.nextServiceRequestId } : {}),
     ...(options.nextSignerRequestId !== undefined ? { nextSignerRequestId: options.nextSignerRequestId } : {}),
+    ...(options.nativeMessageTimeoutMs !== undefined ? { nativeMessageTimeoutMs: options.nativeMessageTimeoutMs } : {}),
     ...(options.signingUnavailableMessage !== undefined
       ? { signingUnavailableMessage: options.signingUnavailableMessage }
       : {})
@@ -52,7 +54,8 @@ export function createBrowserExtensionBackgroundController(
     sendNativeMessage: options.sendNativeMessage,
     ...(options.hostName !== undefined ? { hostName: options.hostName } : {}),
     ...(options.nextServiceRequestId !== undefined ? { nextServiceRequestId: options.nextServiceRequestId } : {}),
-    ...(options.pairingOperations !== undefined ? { requestedOperations: options.pairingOperations } : {})
+    ...(options.pairingOperations !== undefined ? { requestedOperations: options.pairingOperations } : {}),
+    ...(options.nativeMessageTimeoutMs !== undefined ? { nativeMessageTimeoutMs: options.nativeMessageTimeoutMs } : {})
   };
 
   return {

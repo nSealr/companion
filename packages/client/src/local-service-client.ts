@@ -4,10 +4,10 @@ import {
   type NativeMessageFrameExchange
 } from "./native-messaging.js";
 import {
-  LOCAL_CLIENT_SURFACES,
   LOCAL_SERVICE_NAME,
   LOCAL_SERVICE_OPERATIONS,
   LOCAL_SERVICE_PROTOCOL,
+  parseLocalClientIdentity,
   parsePairingIntent,
   type LocalClientIdentity,
   type LocalServiceOperation,
@@ -55,15 +55,12 @@ function isPairableOperation(value: unknown): value is PairableLocalServiceOpera
 }
 
 function isLocalClientIdentity(value: unknown): value is LocalClientIdentity {
-  if (!isRecord(value)) return false;
-  if (!hasOnlyKeys(value, ["surface", "origin", "app_name", "instance_id"])) return false;
-  if (typeof value.surface !== "string" || !LOCAL_CLIENT_SURFACES.includes(value.surface as LocalClientIdentity["surface"])) {
+  try {
+    parseLocalClientIdentity(value);
+    return true;
+  } catch {
     return false;
   }
-  if (typeof value.origin !== "string" || value.origin.length === 0) return false;
-  if ("app_name" in value && typeof value.app_name !== "string") return false;
-  if ("instance_id" in value && typeof value.instance_id !== "string") return false;
-  return true;
 }
 
 const ROUTE_TYPES = new Set([

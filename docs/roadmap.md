@@ -271,8 +271,10 @@ tarball artifacts without publishing to npm.
   and revoked local client grants. The CLI can render pairing-review metadata,
   create digest-confirmed approval artifacts, and build explicit output
   grant-store artifacts from approval artifacts or latest-client revocations
-  without default storage paths or input-file mutation. Private service context
-  loading can read explicit
+  without default storage paths or input-file mutation. `@nsealr/client` now
+  exposes the shared local-client identity parser so future browser extension,
+  SDK, desktop, CLI, and native-host surfaces do not fork origin/app binding
+  rules. Private service context loading can read explicit
   grant/account JSON files for local harnesses only. Remaining work is full
   approval UI, reviewed storage locations, cancellation, deterministic
   transport errors, signer dispatch, and native-host installation packaging.

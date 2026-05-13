@@ -207,6 +207,9 @@ function validationResult(valid: boolean, error?: string): { validation: { valid
 
 function validateClientIdentity(value: unknown): { ok: true; client: LocalClientIdentity } | { ok: false; error: string } {
   if (!isRecord(value)) return { ok: false, error: "client identity must be an object" };
+  if (!hasOnlyKeys(value, ["surface", "origin", "app_name", "instance_id"])) {
+    return { ok: false, error: "client identity contains unsupported fields" };
+  }
   if (!isLocalClientSurface(value.surface)) return { ok: false, error: "client surface is unsupported" };
   if (typeof value.origin !== "string" || value.origin.length === 0 || value.origin.length > 256) {
     return { ok: false, error: "client origin is invalid" };
@@ -227,6 +230,14 @@ function validateClientIdentity(value: unknown): { ok: true; client: LocalClient
       ...(typeof value.instance_id === "string" ? { instance_id: value.instance_id } : {})
     }
   };
+}
+
+export function parseLocalClientIdentity(value: unknown): LocalClientIdentity {
+  const result = validateClientIdentity(value);
+  if (!result.ok) {
+    throw new Error(result.error);
+  }
+  return result.client;
 }
 
 function isSupportedOrigin(origin: string): boolean {

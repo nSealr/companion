@@ -85,6 +85,7 @@ Exports:
 - `decodeNativeMessage`
 - `encodeNativeMessage`
 - `handleLocalServiceRequest`
+- `parseLocalClientIdentity`
 - `parseLocalGrant`
 - `parseLocalGrantStore`
 - `parseLocalPairingApproval`

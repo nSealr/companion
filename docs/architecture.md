@@ -100,7 +100,8 @@ packages, but it must not export test-only signing as a production path.
   storage and grant UX remain separate layers.
 - `packages/client`: local companion service request/response protocol,
   native-messaging frame codec, service status, pairing intent generation,
-  deterministic pairing-review projection, grant enforcement, a strict
+  shared local-client identity parsing, deterministic pairing-review
+  projection, grant enforcement, a strict
   secretless JSON grant-store contract, secretless account-route selection,
   signer-request validation, signer-response verification, response
   validation, and a high-level client wrapper. This is the shared
@@ -165,6 +166,12 @@ model.
 The first native-messaging scaffold accepts `service_status`,
 `request_pairing`, `select_account_route`, `validate_signer_request`, and
 `verify_signer_response`.
+`@nsealr/client` owns the shared local-client identity parser for every access
+surface. Browser extension, SDK, desktop, CLI, and native-host code must reuse
+that parser before deriving client ids, requesting pairing, selecting account
+routes, or trusting pairing responses. It rejects unsupported surfaces, non-
+origin URLs such as `https://example.com/path`, deceptive localhost names,
+overlong app names, invalid instance ids, and extra fields.
 Pairing requests return a deterministic intent for later user review; they do
 not approve the client. Validation and verification require explicit grants
 supplied by the caller/test harness. When grant history is supplied, the latest

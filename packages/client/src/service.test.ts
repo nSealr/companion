@@ -8,6 +8,7 @@ import {
   handleLocalServiceRequest,
   LOCAL_SERVICE_OPERATIONS,
   LOCAL_SERVICE_PROTOCOL,
+  parseLocalClientIdentity,
   type LocalClientGrant,
   type LocalClientIdentity
 } from "./service.js";
@@ -37,6 +38,45 @@ const routeGrant: LocalClientGrant = {
 };
 
 describe("local service boundary", () => {
+  it("parses local client identities through the shared origin boundary", () => {
+    expect(parseLocalClientIdentity(client)).toEqual(client);
+    expect(clientIdForIdentity(parseLocalClientIdentity(client))).toBe(clientIdForIdentity(client));
+    expect(parseLocalClientIdentity({
+      surface: "browser_extension",
+      origin: "http://localhost",
+      app_name: "Local Demo",
+      instance_id: "local-demo-1"
+    })).toEqual({
+      surface: "browser_extension",
+      origin: "http://localhost",
+      app_name: "Local Demo",
+      instance_id: "local-demo-1"
+    });
+  });
+
+  it("rejects ambiguous local client identities before pairing or route checks", () => {
+    expect(() => parseLocalClientIdentity({
+      ...client,
+      extra: "not allowed"
+    })).toThrow(/unsupported fields/u);
+    expect(() => parseLocalClientIdentity({
+      ...client,
+      origin: "https://example.com/path"
+    })).toThrow(/origin scheme/u);
+    expect(() => parseLocalClientIdentity({
+      ...client,
+      origin: "http://localhost.evil.example"
+    })).toThrow(/origin scheme/u);
+    expect(() => parseLocalClientIdentity({
+      ...client,
+      app_name: "x".repeat(81)
+    })).toThrow(/app_name/u);
+    expect(() => parseLocalClientIdentity({
+      ...client,
+      instance_id: "bad instance id"
+    })).toThrow(/instance_id/u);
+  });
+
   it("reports secretless service status and pairing requirement", () => {
     const result = handleLocalServiceRequest({
       version: 1,

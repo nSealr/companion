@@ -84,6 +84,9 @@ match the shared `contract_id`.
   only internal `get_public_key` and `sign_event` requests, validates provider
   outputs, and can build a minimal no-host-permission manifest. It does not
   package or install a browser extension.
+- `@nsealr/client` exposes the shared local-client identity parser used before
+  pairing, route selection, signer-request validation, and response
+  verification.
 - `@nsealr/service` is the private native-messaging host scaffold over
   `@nsealr/client`. It can process multiple length-prefixed service messages
   on one stdio session, returns deterministic native-frame errors, and accepts

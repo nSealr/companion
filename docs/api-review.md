@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:cabdf55dc9a10694cfc78c1e226fee35c6c3e1f744816550e1fee56414b4ff1c`
+API surface digest: `sha256:8299682de5cd26180a468dd48bc879ba1bca02f62e6fbc7d49842cea0514e3ed`
 
 Source: `docs/api.md`
 
@@ -49,13 +49,13 @@ intent creation, deterministic pairing-review projection, manual pairing
 approval into a grant, strict pairing-approval artifact parsing, strict JSON
 grant-store serialization and output-only revocation appending for
 approved/revoked local client grants, secretless route selection,
-signer-request validation, and signer-response verification. Client identity,
-request-id correlation, native-message framing, and malformed-response
-rejection are public helpers. The shared native host name is exported so the
-service manifest generator and browser adapter do not drift. Route selection
-returns metadata only; file-backed service loading, signer dispatch,
-cancellation, and native-host installation packaging remain future work and
-must not be implied by this package.
+signer-request validation, and signer-response verification. Client identity
+parsing, request-id correlation, native-message framing, and
+malformed-response rejection are public helpers. The shared native host name is
+exported so the service manifest generator and browser adapter do not drift.
+Route selection returns metadata only; file-backed service loading, signer
+dispatch, cancellation, and native-host installation packaging remain future
+work and must not be implied by this package.
 
 ## @nsealr/core
 

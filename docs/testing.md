@@ -52,8 +52,9 @@ single-repository CI. Cross-repository drift remains guarded by
   `@nsealr/dev-signer`.
 - Client package tests cover native-messaging frame encoding/decoding,
   deterministic malformed-frame rejection, secretless local service status,
-  deterministic pairing intents, unpaired/revoked/expired/scope-denied client
-  rejection, latest-grant selection from in-memory grant history,
+  deterministic pairing intents, shared local-client identity parsing,
+  unpaired/revoked/expired/scope-denied client rejection, latest-grant
+  selection from in-memory grant history,
   deterministic pairing-review projection, strict grant-store
   serialization/revocation, strict pairing-approval artifact parsing before
   grant-store persistence, latest-client revocation appending, secretless route

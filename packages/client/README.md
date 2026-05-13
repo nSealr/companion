@@ -8,8 +8,8 @@ Local companion service protocol and client wrappers.
 - Validate local service requests and responses.
 - Provide a high-level client wrapper for future browser, SDK, desktop, and CLI
   callers.
-- Enforce explicit client identity, request-id correlation, and deterministic
-  malformed-response rejection.
+- Enforce explicit client identity parsing, request-id correlation, and
+  deterministic malformed-response rejection.
 
 ## Example
 
@@ -21,19 +21,21 @@ import {
   approvePairingIntent,
   createLocalGrantStore,
   handleLocalServiceRequest,
+  parseLocalClientIdentity,
   reviewPairingIntent
 } from "@nsealr/client";
 
+const identity = parseLocalClientIdentity({
+  surface: "sdk",
+  origin: "sdk:readme",
+  app_name: "README client"
+});
 const client = new LocalServiceClient({
   exchange: (message) => handleLocalServiceRequest(message, { now: 1_710_000_000 })
 });
 
 const status = await client.serviceStatus("readme-client-status");
-const pairing = await client.requestPairing({
-  surface: "sdk",
-  origin: "sdk:readme",
-  app_name: "README client"
-}, ["validate_signer_request"], "readme-client-pair");
+const pairing = await client.requestPairing(identity, ["validate_signer_request"], "readme-client-pair");
 
 assert.equal(status.ok, true);
 if (pairing.ok !== true || !("pairing_intent" in pairing.result)) {

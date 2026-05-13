@@ -186,6 +186,25 @@ describe("local service client", () => {
         pairing_intent: {
           format: "nsealr-local-pairing-intent-v0",
           client_id: clientIdForIdentity(client),
+          client: {
+            ...client,
+            origin: "https://example.com/path"
+          },
+          requested_operations: ["validate_signer_request"],
+          pairing_digest: "0".repeat(64),
+          requires_user_approval: true,
+          stores_production_secrets: false
+        }
+      }
+    }, "expected-request")).toThrow(/pairing client/u);
+    expect(() => validateLocalServiceResponse({
+      version: 1,
+      request_id: "expected-request",
+      ok: true,
+      result: {
+        pairing_intent: {
+          format: "nsealr-local-pairing-intent-v0",
+          client_id: clientIdForIdentity(client),
           client,
           requested_operations: ["request_pairing"],
           pairing_digest: "0".repeat(64),

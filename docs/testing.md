@@ -91,7 +91,10 @@ single-repository CI. Cross-repository drift remains guarded by
   projection share the same injected native-messaging boundary, silent or
   cancelled native messaging can be bounded by deterministic timeout/abort
   handling, and malformed browser requests fail before native messaging is
-  contacted.
+  contacted. Page-provider tests prove NIP-07 `getPublicKey` and `signEvent`
+  calls become validated background requests, unsafe templates fail before the
+  background boundary, malformed responses are rejected, and cancellation is
+  forwarded without content-script injection.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids.

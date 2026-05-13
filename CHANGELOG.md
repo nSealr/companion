@@ -59,6 +59,9 @@ public npm release.
 - Private browser-extension background-controller boundary that composes
   sender-aware request handling and pairing-intent requests over injected
   native messaging without using browser APIs, storage, or signer dispatch.
+- Private browser-extension page-provider boundary that maps NIP-07
+  `getPublicKey` and `signEvent` calls to validated background requests
+  without content-script injection, browser storage, grants, or key custody.
 - Private `@nsealr/browser-extension` app scaffold with strict internal
   `get_public_key` and `sign_event` message parsing plus a provider-backed
   handler that validates returned pubkeys/events before extension packaging,

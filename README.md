@@ -92,7 +92,8 @@ match the shared `contract_id`.
   pairing intent and deterministic pairing-review metadata for that identity,
   includes a pure background-controller boundary over injected native
   messaging with optional response timeouts and request-scoped cancellation,
-  and can build a minimal
+  includes a pure page-provider boundary that maps NIP-07 `getPublicKey` and
+  `signEvent` calls to validated background requests, and can build a minimal
   no-host-permission manifest. It does not package or install a browser
   extension.
 - `@nsealr/client` exposes the shared local-client identity parser, including

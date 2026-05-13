@@ -50,10 +50,12 @@ packages, but it must not export test-only signing as a production path.
   same identity, can project those intents into deterministic review metadata
   without approving clients, has a pure background-controller boundary over
   injected native messaging with optional response timeouts and request-scoped
-  cancellation, and can build a minimal MV3 manifest with `nativeMessaging` as
-  the only permission. It does not yet ship extension
-  packaging, content-script injection, native-host installation, permission UI,
-  persistent grants, or signer dispatch.
+  cancellation, has a pure page-provider boundary that maps NIP-07
+  `getPublicKey` and `signEvent` calls to validated background requests, and
+  can build a minimal MV3 manifest with `nativeMessaging` as the only
+  permission. It does not yet ship extension packaging, content-script
+  injection, native-host installation, permission UI, persistent grants, or
+  signer dispatch.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
   central nSealr v0 implementation limit profile used by companion parsers,
@@ -255,6 +257,13 @@ is still browser-API-free and receives an injected provider; it validates
 public keys, checks signed events against the original request, and returns
 secretless deterministic errors for malformed requests or malformed provider
 outputs.
+The same app now has a browser-API-free page-provider boundary that exposes the
+minimal NIP-07 `getPublicKey` and `signEvent` methods over an injected
+background requester. It constructs only validated internal extension messages,
+rejects unsafe event templates before contacting the background boundary,
+verifies signed event responses, and forwards cancellation signals. It does
+not install or inject content scripts, write browser storage, create grants, or
+hold key material.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

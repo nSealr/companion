@@ -315,9 +315,12 @@ and uploads checked tarball artifacts without publishing to npm.
   now composes request handling, pairing-intent requests, and pairing-review
   projection over injected native messaging without using browser APIs, and can
   use the same optional native response timeout and request-scoped
-  cancellation. It can build a minimal MV3 manifest with `nativeMessaging` as
-  the only permission and no host/content-script/storage permissions.
-  Remaining work: extension packaging, content-script injection,
+  cancellation. A pure page-provider boundary now maps NIP-07 `getPublicKey`
+  and `signEvent` calls to validated background requests, verifies signed
+  responses, and forwards cancellation signals without injecting content
+  scripts. It can build a minimal MV3 manifest with `nativeMessaging` as the
+  only permission and no host/content-script/storage permissions. Remaining
+  work: extension packaging, actual content-script/page-script injection,
   native-messaging installation, origin permission UX, cancellation UI wiring,
   and real dispatch after M4.7 gates. No local production signing and no
   extension-side production key storage.

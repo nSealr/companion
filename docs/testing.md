@@ -81,7 +81,10 @@ single-repository CI. Cross-repository drift remains guarded by
   selection, provider-selection failures produce deterministic errors, and the
   native-messaging provider selector binds sender-derived identity to the
   local-service route path while `sign_event` remains deterministically
-  unavailable until signer dispatch is implemented.
+  unavailable until signer dispatch is implemented. Pairing tests prove the
+  same sender-derived identity can request a digest-bound local-service pairing
+  intent without creating grants, writing extension storage, or touching native
+  host installation.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids.

@@ -305,12 +305,14 @@ and uploads checked tarball artifacts without publishing to npm.
   scaffold can now create a native-messaging-backed provider selector that
   binds that sender-derived identity to the local-service route path and keeps
   `sign_event` deterministically unavailable until signer dispatch is
-  implemented. It can build a minimal MV3 manifest with `nativeMessaging` as
-  the only permission and no host/content-script/storage permissions. Remaining
-  work: extension packaging, content-script injection, native-messaging
-  installation, origin permission UX, cancellation, and real dispatch after
-  M4.7 gates. No local production signing and no extension-side production key
-  storage.
+  implemented. It can also request a digest-bound local-service pairing intent
+  for the same sender-derived identity without writing grants, extension
+  storage, or native-host files. It can build a minimal MV3 manifest with
+  `nativeMessaging` as the only permission and no host/content-script/storage
+  permissions. Remaining work: extension packaging, content-script injection,
+  native-messaging installation, origin permission UX, cancellation, and real
+  dispatch after M4.7 gates. No local production signing and no extension-side
+  production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

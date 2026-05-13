@@ -102,9 +102,10 @@ packages, but it must not export test-only signing as a production path.
   signer requests, verifies signed responses, and stores no browser-side
   production keys.
 - `apps/service`: private one-shot native-messaging host scaffold over
-  `packages/client`. It is intentionally secretless and does not yet perform
-  persistent grant lookup, account selection, relay work, or signer transport
-  dispatch.
+  `packages/client`. It accepts explicit in-memory authorization context in
+  tests and returns deterministic native-frame errors. It is intentionally
+  secretless and does not yet perform persistent grant lookup, account
+  selection, relay work, or signer transport dispatch.
 
 Each reusable package has its own `package.json`, source `src/index.ts`
 entrypoint, and built `dist` JS/declaration export. Cross-package source imports

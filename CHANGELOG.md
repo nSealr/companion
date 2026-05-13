@@ -27,6 +27,8 @@ public npm release.
   explicitly approved in-memory grant without persistent storage.
 - Deterministic local-service grant-history selection so the latest matching
   in-memory grant controls revocation, expiry, and operation scope.
+- Private native-messaging service scaffold now returns deterministic malformed
+  frame errors and is tested with injected in-memory authorization context.
 - Secretless local companion service, client wrapper, and browser-provider
   boundaries for future SDK, browser extension, desktop, and CLI access
   surfaces.

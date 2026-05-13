@@ -1,19 +1,31 @@
 #!/usr/bin/env node
 import { readFileSync, writeFileSync } from "node:fs";
-import { decodeNativeMessage, encodeNativeMessage, handleLocalServiceRequest } from "@nsealr/client";
+import {
+  decodeNativeMessage,
+  encodeNativeMessage,
+  handleLocalServiceRequest,
+  type LocalServiceContext,
+  type LocalServiceResponse
+} from "@nsealr/client";
 
-export function runServiceOnce(input: Uint8Array): Uint8Array {
+function nativeMessageError(message: string): LocalServiceResponse {
+  return {
+    version: 1,
+    request_id: "invalid-service-request",
+    ok: false,
+    error: {
+      code: "invalid_native_message",
+      message,
+      retryable: false
+    }
+  };
+}
+
+export function runServiceOnce(input: Uint8Array, context: LocalServiceContext = {}): Uint8Array {
   try {
-    return encodeNativeMessage(handleLocalServiceRequest(decodeNativeMessage(input)));
+    return encodeNativeMessage(handleLocalServiceRequest(decodeNativeMessage(input), context));
   } catch (error) {
-    return encodeNativeMessage(handleLocalServiceRequest({
-      version: 1,
-      request_id: "invalid-service-request",
-      operation: "invalid",
-      params: {
-        error: error instanceof Error ? error.message : String(error)
-      }
-    }));
+    return encodeNativeMessage(nativeMessageError(error instanceof Error ? error.message : String(error)));
   }
 }
 

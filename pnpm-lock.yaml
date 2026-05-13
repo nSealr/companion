@@ -162,6 +162,9 @@ importers:
         specifier: workspace:*
         version: link:../../packages/client
     devDependencies:
+      '@nsealr/fixtures':
+        specifier: workspace:*
+        version: link:../../packages/fixtures
       tsx:
         specifier: 4.21.0
         version: 4.21.0

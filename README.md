@@ -64,8 +64,9 @@ match the shared `contract_id`.
   nSealr signer requests, verifies signed responses, and stores no browser-side
   production keys.
 - `@nsealr/service` is the private one-shot native-messaging host scaffold over
-  `@nsealr/client`. It does not open relays, store keys, select accounts, or
-  contact signer transports.
+  `@nsealr/client`. It returns deterministic native-frame errors and accepts
+  explicit in-memory authorization context in tests. It does not open relays,
+  store keys, select accounts, or contact signer transports.
 - `nsealr review-request` renders deterministic review JSON, digest-bound
   screen-review pages, or complete constrained-display detail pages from a
   signing request for untrusted host-side previews and test harnesses.

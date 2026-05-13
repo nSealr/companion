@@ -11,6 +11,7 @@
     "@nsealr/client": "workspace:*"
   },
   "devDependencies": {
+    "@nsealr/fixtures": "workspace:*",
     "tsx": "4.21.0"
   }
 }

@@ -103,7 +103,9 @@ single-repository CI. Cross-repository drift remains guarded by
   background responses, malformed bridge responses, invalid page-side requester
   input, and already-cancelled requests before any browser listener exists.
   Page-side requester tests also prove bridge-envelope wrapping and
-  cancellation forwarding through an injected bridge exchange. Page-script
+  cancellation forwarding through an injected bridge exchange. Content-script
+  bridge tests prove accepted page envelopes are bound to an explicit sender
+  and injected background requester without adding browser listeners. Page-script
   bootstrap tests prove the explicit-target NIP-07 provider can be installed
   over that bridge exchange without overwriting an existing provider or adding
   browser injection.

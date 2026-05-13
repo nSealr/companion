@@ -73,6 +73,9 @@ public npm release.
 - Private browser-extension page-side bridge requester that wraps internal
   requests in the page/content bridge envelope, validates bridge responses,
   and forwards cancellation without adding browser listeners or runtime APIs.
+- Private browser-extension content-script bridge handler that binds validated
+  page bridge envelopes to an injected sender-aware background requester
+  without adding browser listeners, runtime APIs, storage, or grants.
 - Private browser-extension page-script provider bootstrap that composes the
   NIP-07 provider installer with the injected page bridge exchange without
   adding content-script registration, browser listeners, storage, or grants.

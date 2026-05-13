@@ -80,8 +80,9 @@ match the shared `contract_id`.
   adapter over explicit `sendNativeMessage`, verifies signed responses, and
   stores no browser-side production keys.
 - `@nsealr/browser-extension` is a private app scaffold for extension-owned
-  message parsing. It currently accepts only internal `get_public_key` and
-  `sign_event` requests and does not package or install a browser extension.
+  message parsing and provider-backed request handling. It currently accepts
+  only internal `get_public_key` and `sign_event` requests, validates provider
+  outputs, and does not package or install a browser extension.
 - `@nsealr/service` is the private native-messaging host scaffold over
   `@nsealr/client`. It can process multiple length-prefixed service messages
   on one stdio session, returns deterministic native-frame errors, and accepts

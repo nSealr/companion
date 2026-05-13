@@ -42,8 +42,9 @@ public npm release.
   adapter over an explicit `sendNativeMessage` function and the shared native
   host name.
 - Private `@nsealr/browser-extension` app scaffold with strict internal
-  `get_public_key` and `sign_event` message parsing before extension
-  packaging, browser injection, or signer dispatch.
+  `get_public_key` and `sign_event` message parsing plus a provider-backed
+  handler that validates returned pubkeys/events before extension packaging,
+  browser injection, or signer dispatch.
 - `@nsealr/client` secretless JSON grant-store contract for persisting approved
   and revoked local client grants without production key material.
 - Deterministic local-service grant-history selection so the latest matching

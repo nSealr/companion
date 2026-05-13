@@ -42,10 +42,11 @@ packages, but it must not export test-only signing as a production path.
 
 - `apps/cli`: command-line entrypoint.
 - `apps/browser-extension`: private browser-extension boundary scaffold. It
-  owns strict internal message parsing for `get_public_key` and `sign_event`,
-  but does not yet ship an extension manifest, content-script injection,
-  native-host installation, permission UI, persistent grants, or signer
-  dispatch.
+  owns strict internal message parsing and provider-backed request handling for
+  `get_public_key` and `sign_event`, validates provider outputs before browser
+  callers can trust them, and does not yet ship an extension manifest,
+  content-script injection, native-host installation, permission UI,
+  persistent grants, or signer dispatch.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
   central nSealr v0 implementation limit profile used by companion parsers,
@@ -223,10 +224,13 @@ validation and the shared native host name used by the private service manifest
 generator. It does not install native-host manifests, persist grants, or open
 signer transports.
 The private `@nsealr/browser-extension` app now defines the internal extension
-message boundary for `get_public_key` and `sign_event`. This parser rejects
+message boundary for `get_public_key` and `sign_event`. The parser rejects
 unsupported NIP-07/NIP-44/NIP-04-style methods, malformed request ids, extra
-fields, and unsafe event templates before any background logic can route a
-message to the local service.
+fields, and unsafe event templates before provider handling. The first handler
+is still browser-API-free and receives an injected provider; it validates
+public keys, checks signed events against the original request, and returns
+secretless deterministic errors for malformed requests or malformed provider
+outputs.
 
 Executable SDK examples live in private app `@nsealr/sdk-examples`. They are
 not another access surface and do not own production behavior. Their role is to

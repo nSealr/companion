@@ -1,5 +1,5 @@
 import { type EventTemplate, type SignEventRequest } from "@nsealr/core";
-import { validateRequest } from "@nsealr/protocol";
+import { NSEALR_V0_LIMITS, validateRequest } from "@nsealr/protocol";
 
 export const BROWSER_EXTENSION_MESSAGE_PROTOCOL = "nsealr-browser-extension-v0";
 
@@ -34,6 +34,16 @@ export type BrowserExtensionErrorResponse = {
   };
 };
 
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]+$/u;
+
+export function isBrowserExtensionRequestId(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    REQUEST_ID_PATTERN.test(value) &&
+    value.length <= NSEALR_V0_LIMITS.max_request_id_length
+  );
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -43,7 +53,7 @@ function hasOnlyKeys(value: Record<string, unknown>, allowedKeys: string[]): boo
 }
 
 function requireRequestId(value: unknown): string {
-  if (typeof value !== "string" || !/^[A-Za-z0-9._:-]{1,128}$/u.test(value)) {
+  if (!isBrowserExtensionRequestId(value)) {
     throw new Error("browser extension request_id is invalid");
   }
   return value;

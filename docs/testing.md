@@ -70,7 +70,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - Browser-extension app tests cover the private internal message parser for
   `get_public_key` and `sign_event`, including unsupported-method rejection,
   malformed-envelope rejection, and shared signer-request validation for event
-  templates before background routing exists.
+  templates. Handler tests cover injected provider success paths, request
+  rejection before provider contact, and malformed provider-output rejection
+  before browser callers can trust returned pubkeys/events.
 - `make package-smoke` builds package artifacts, then runs the private
   `@nsealr/consumer-smoke` app. The smoke imports every public `@nsealr/*`
   package through its built package entrypoint and exercises a minimal

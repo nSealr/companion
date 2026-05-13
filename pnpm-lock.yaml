@@ -26,6 +26,9 @@ importers:
 
   apps/browser-extension:
     dependencies:
+      '@nsealr/browser-provider':
+        specifier: workspace:*
+        version: link:../../packages/browser-provider
       '@nsealr/core':
         specifier: workspace:*
         version: link:../../packages/core

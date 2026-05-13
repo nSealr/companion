@@ -6,6 +6,7 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
+    "@nsealr/browser-provider": "workspace:*",
     "@nsealr/core": "workspace:*",
     "@nsealr/protocol": "workspace:*"
   }

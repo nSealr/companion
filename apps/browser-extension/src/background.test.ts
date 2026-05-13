@@ -219,4 +219,40 @@ describe("browser extension background controller boundary", () => {
       }
     });
   });
+
+  it("honors request-scoped cancellation without approving grants or contacting native messaging", async () => {
+    const abortController = new AbortController();
+    abortController.abort();
+    let called = false;
+    const controller = createBrowserExtensionBackgroundController({
+      routeRequest,
+      sendNativeMessage: () => {
+        called = true;
+        return {};
+      }
+    });
+
+    await expect(controller.requestPairingReview(sender, {
+      nativeMessageAbortSignal: abortController.signal
+    })).rejects.toThrow(/cancelled/u);
+    await expect(controller.handleRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "background-cancelled-get-public-key",
+      method: "get_public_key"
+    }, sender, {
+      nativeMessageAbortSignal: abortController.signal
+    })).resolves.toEqual({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "background-cancelled-get-public-key",
+      ok: false,
+      error: {
+        code: "provider_request_failed",
+        message: "browser provider get_public_key failed",
+        retryable: false
+      }
+    });
+    expect(called).toBe(false);
+  });
 });

@@ -296,10 +296,11 @@ and uploads checked tarball artifacts without publishing to npm.
   responses while signer dispatch remains blocked. It also has a browser
   native-messaging client adapter that wraps an explicit `sendNativeMessage`
   function with the shared native host name while reusing local-service
-  response validation and optional deterministic response timeouts. The private
-  `@nsealr/browser-extension` scaffold now parses only internal
-  `get_public_key` and `sign_event` messages and has a provider-backed handler
-  that validates returned pubkeys/events before browser callers can trust them.
+  response validation, optional deterministic response timeouts, and request
+  cancellation. The private `@nsealr/browser-extension` scaffold now parses
+  only internal `get_public_key` and `sign_event` messages and has a
+  provider-backed handler that validates returned pubkeys/events before
+  browser callers can trust them.
   It also derives local client identity from a sanitized sender page-origin
   context through the browser-safe
   `@nsealr/client/client-identity` subpath. The sender-aware handler validates
@@ -313,12 +314,13 @@ and uploads checked tarball artifacts without publishing to npm.
   review metadata for future approval UI. A pure background-controller boundary
   now composes request handling, pairing-intent requests, and pairing-review
   projection over injected native messaging without using browser APIs, and can
-  use the same optional native response timeout. It can build a minimal MV3
-  manifest with `nativeMessaging` as the only permission and no
-  host/content-script/storage permissions. Remaining work: extension
-  packaging, content-script injection, native-messaging installation, origin
-  permission UX, cancellation, and real dispatch after M4.7 gates. No local
-  production signing and no extension-side production key storage.
+  use the same optional native response timeout and request-scoped
+  cancellation. It can build a minimal MV3 manifest with `nativeMessaging` as
+  the only permission and no host/content-script/storage permissions.
+  Remaining work: extension packaging, content-script injection,
+  native-messaging installation, origin permission UX, cancellation UI wiring,
+  and real dispatch after M4.7 gates. No local production signing and no
+  extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

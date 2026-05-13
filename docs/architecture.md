@@ -49,9 +49,9 @@ packages, but it must not export test-only signing as a production path.
   provider path, can request digest-bound local-service pairing intents for the
   same identity, can project those intents into deterministic review metadata
   without approving clients, has a pure background-controller boundary over
-  injected native messaging with optional response timeouts, and can build a
-  minimal MV3 manifest with `nativeMessaging` as the only permission. It does
-  not yet ship extension
+  injected native messaging with optional response timeouts and request-scoped
+  cancellation, and can build a minimal MV3 manifest with `nativeMessaging` as
+  the only permission. It does not yet ship extension
   packaging, content-script injection, native-host installation, permission UI,
   persistent grants, or signer dispatch.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
@@ -121,8 +121,9 @@ packages, but it must not export test-only signing as a production path.
   production keys. Its local-service backend adapter can read the selected
   account public key through authorized route selection and returns
   deterministic signer-unavailable responses until signer dispatch is
-  implemented. Its browser native-messaging adapter can bound silent exchanges
-  with optional deterministic response timeouts.
+  implemented. Its browser native-messaging adapter can bound silent or
+  cancelled exchanges with optional deterministic response timeouts and
+  `AbortSignal` handling.
 - `packages/sdk`: platform-neutral namespace facade for app, browser-extension,
   and companion integrations. It excludes private test signing, Node-only
   fixtures, and host transport adapters so browser-safe consumers have a clean
@@ -242,9 +243,10 @@ dispatch is not implemented yet.
 The package also includes a browser native-messaging local-service client
 adapter over an explicit `sendNativeMessage(hostName, message)` function. This
 keeps browser API integration thin while reusing `LocalServiceClient` response
-validation, optional deterministic response timeouts, and the shared native
-host name used by the private service manifest generator. It does not install
-native-host manifests, persist grants, or open signer transports.
+validation, optional deterministic response timeouts, request cancellation, and
+the shared native host name used by the private service manifest generator. It
+does not install native-host manifests, persist grants, or open signer
+transports.
 The private `@nsealr/browser-extension` app now defines the internal extension
 message boundary for `get_public_key` and `sign_event`. The parser rejects
 unsupported NIP-07/NIP-44/NIP-04-style methods, malformed request ids, extra

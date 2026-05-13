@@ -24,6 +24,7 @@ export type BrowserExtensionNativeMessagingPairingOptions = {
   nextServiceRequestId?: () => string;
   requestedOperations?: readonly PairableLocalServiceOperation[];
   nativeMessageTimeoutMs?: number;
+  nativeMessageAbortSignal?: AbortSignal;
 };
 
 export type BrowserExtensionPairingIntentResult = {
@@ -44,7 +45,8 @@ export async function requestBrowserExtensionNativeMessagingPairingIntent(
     sendNativeMessage: options.sendNativeMessage,
     ...(options.hostName !== undefined ? { hostName: options.hostName } : {}),
     ...(options.nextServiceRequestId !== undefined ? { nextRequestId: options.nextServiceRequestId } : {}),
-    ...(options.nativeMessageTimeoutMs !== undefined ? { timeoutMs: options.nativeMessageTimeoutMs } : {})
+    ...(options.nativeMessageTimeoutMs !== undefined ? { timeoutMs: options.nativeMessageTimeoutMs } : {}),
+    ...(options.nativeMessageAbortSignal !== undefined ? { abortSignal: options.nativeMessageAbortSignal } : {})
   });
   const response = await service.requestPairing(
     context.client,

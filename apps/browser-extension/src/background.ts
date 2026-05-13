@@ -28,47 +28,97 @@ export type BrowserExtensionBackgroundControllerOptions = {
   signingUnavailableMessage?: string;
   pairingOperations?: readonly PairableLocalServiceOperation[];
   nativeMessageTimeoutMs?: number;
+  nativeMessageAbortSignal?: AbortSignal;
+};
+
+export type BrowserExtensionBackgroundRequestOptions = {
+  nativeMessageAbortSignal?: AbortSignal;
 };
 
 export type BrowserExtensionBackgroundController = {
-  handleRequest(value: unknown, sender: unknown): Promise<BrowserExtensionResponse>;
-  requestPairing(sender: unknown): Promise<BrowserExtensionPairingIntentResult>;
-  requestPairingReview(sender: unknown): Promise<BrowserExtensionPairingReviewResult>;
+  handleRequest(
+    value: unknown,
+    sender: unknown,
+    requestOptions?: BrowserExtensionBackgroundRequestOptions
+  ): Promise<BrowserExtensionResponse>;
+  requestPairing(
+    sender: unknown,
+    requestOptions?: BrowserExtensionBackgroundRequestOptions
+  ): Promise<BrowserExtensionPairingIntentResult>;
+  requestPairingReview(
+    sender: unknown,
+    requestOptions?: BrowserExtensionBackgroundRequestOptions
+  ): Promise<BrowserExtensionPairingReviewResult>;
 };
 
 export function createBrowserExtensionBackgroundController(
   options: BrowserExtensionBackgroundControllerOptions
 ): BrowserExtensionBackgroundController {
-  const providerForClient = createBrowserExtensionNativeMessagingProviderSelector({
+  const providerOptions = {
     sendNativeMessage: options.sendNativeMessage,
     routeRequest: options.routeRequest,
     ...(options.hostName !== undefined ? { hostName: options.hostName } : {}),
     ...(options.nextServiceRequestId !== undefined ? { nextServiceRequestId: options.nextServiceRequestId } : {}),
     ...(options.nextSignerRequestId !== undefined ? { nextSignerRequestId: options.nextSignerRequestId } : {}),
     ...(options.nativeMessageTimeoutMs !== undefined ? { nativeMessageTimeoutMs: options.nativeMessageTimeoutMs } : {}),
+    ...(options.nativeMessageAbortSignal !== undefined
+      ? { nativeMessageAbortSignal: options.nativeMessageAbortSignal }
+      : {}),
     ...(options.signingUnavailableMessage !== undefined
       ? { signingUnavailableMessage: options.signingUnavailableMessage }
       : {})
-  });
+  };
   const pairingOptions: BrowserExtensionNativeMessagingPairingOptions = {
     sendNativeMessage: options.sendNativeMessage,
     ...(options.hostName !== undefined ? { hostName: options.hostName } : {}),
     ...(options.nextServiceRequestId !== undefined ? { nextServiceRequestId: options.nextServiceRequestId } : {}),
     ...(options.pairingOperations !== undefined ? { requestedOperations: options.pairingOperations } : {}),
-    ...(options.nativeMessageTimeoutMs !== undefined ? { nativeMessageTimeoutMs: options.nativeMessageTimeoutMs } : {})
+    ...(options.nativeMessageTimeoutMs !== undefined ? { nativeMessageTimeoutMs: options.nativeMessageTimeoutMs } : {}),
+    ...(options.nativeMessageAbortSignal !== undefined
+      ? { nativeMessageAbortSignal: options.nativeMessageAbortSignal }
+      : {})
   };
+  const providerForClient = createBrowserExtensionNativeMessagingProviderSelector(providerOptions);
 
   return {
-    handleRequest(value: unknown, sender: unknown): Promise<BrowserExtensionResponse> {
-      return handleBrowserExtensionSenderRequest(value, sender, { providerForClient });
+    handleRequest(
+      value: unknown,
+      sender: unknown,
+      requestOptions: BrowserExtensionBackgroundRequestOptions = {}
+    ): Promise<BrowserExtensionResponse> {
+      if (requestOptions.nativeMessageAbortSignal === undefined) {
+        return handleBrowserExtensionSenderRequest(value, sender, { providerForClient });
+      }
+      return handleBrowserExtensionSenderRequest(value, sender, {
+        providerForClient: createBrowserExtensionNativeMessagingProviderSelector({
+          ...providerOptions,
+          nativeMessageAbortSignal: requestOptions.nativeMessageAbortSignal
+        })
+      });
     },
 
-    requestPairing(sender: unknown): Promise<BrowserExtensionPairingIntentResult> {
-      return requestBrowserExtensionNativeMessagingPairingIntent(sender, pairingOptions);
+    requestPairing(
+      sender: unknown,
+      requestOptions: BrowserExtensionBackgroundRequestOptions = {}
+    ): Promise<BrowserExtensionPairingIntentResult> {
+      return requestBrowserExtensionNativeMessagingPairingIntent(sender, {
+        ...pairingOptions,
+        ...(requestOptions.nativeMessageAbortSignal !== undefined
+          ? { nativeMessageAbortSignal: requestOptions.nativeMessageAbortSignal }
+          : {})
+      });
     },
 
-    requestPairingReview(sender: unknown): Promise<BrowserExtensionPairingReviewResult> {
-      return requestBrowserExtensionNativeMessagingPairingReview(sender, pairingOptions);
+    requestPairingReview(
+      sender: unknown,
+      requestOptions: BrowserExtensionBackgroundRequestOptions = {}
+    ): Promise<BrowserExtensionPairingReviewResult> {
+      return requestBrowserExtensionNativeMessagingPairingReview(sender, {
+        ...pairingOptions,
+        ...(requestOptions.nativeMessageAbortSignal !== undefined
+          ? { nativeMessageAbortSignal: requestOptions.nativeMessageAbortSignal }
+          : {})
+      });
     }
   };
 }

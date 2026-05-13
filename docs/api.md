@@ -22,6 +22,7 @@ NIP-07 browser provider adapter for routing Nostr signing requests through nSeal
 Source entrypoint: `packages/browser-provider/src/index.ts`
 
 Exports:
+- `BrowserNativeMessageOptions`
 - `BrowserNativeMessageSender`
 - `BrowserNativeMessagingLocalServiceClientOptions`
 - `BrowserProviderBackend`

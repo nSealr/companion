@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:2d633094a0ed06ced2a683b2b70c92acb89646037943f8f33a3973f7c11f8f28`
+API surface digest: `sha256:d3fef691104807b701b713b165cca064f625a2e79a0bdfd31179c6f3722924ca`
 
 Source: `docs/api.md`
 
@@ -34,13 +34,13 @@ signer access to an injected backend. The local-service adapter can read the
 selected account public key through authorized route selection and returns
 deterministic signer-unavailable responses until signer dispatch is explicitly
 implemented. The native-messaging adapter only wraps an explicit
-`sendNativeMessage` function, validates the host name, and can bound silent
-native exchanges with an optional deterministic response timeout; it does not
-install a native host or persist grants. `signEvent` validates the generated
-nSealr request and verifies successful responses before returning a Nostr
-event. Keep future extension storage, native-host installation, origin grants,
-NIP-04, and NIP-44 outside this package until those contracts are reviewed
-separately.
+`sendNativeMessage` function, validates the host name, and can bound silent or
+cancelled native exchanges with optional deterministic response timeout and
+`AbortSignal` handling; it does not install a native host or persist grants.
+`signEvent` validates the generated nSealr request and verifies successful
+responses before returning a Nostr event. Keep future extension storage,
+native-host installation, origin grants, NIP-04, and NIP-44 outside this
+package until those contracts are reviewed separately.
 
 ## @nsealr/client
 

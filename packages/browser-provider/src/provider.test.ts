@@ -200,6 +200,36 @@ describe("NIP-07 browser provider boundary", () => {
     await expect(service.serviceStatus("browser-native-timeout")).rejects.toThrow(/response timed out/u);
   });
 
+  it("cancels browser native-messaging exchanges without contacting an already-aborted sender", async () => {
+    const abortController = new AbortController();
+    abortController.abort();
+    let called = false;
+    const alreadyAbortedService = createBrowserNativeMessagingLocalServiceClient({
+      abortSignal: abortController.signal,
+      sendNativeMessage: () => {
+        called = true;
+        return {};
+      }
+    });
+
+    await expect(alreadyAbortedService.serviceStatus("browser-native-already-cancelled")).rejects.toThrow(/cancelled/u);
+    expect(called).toBe(false);
+
+    const inFlightAbortController = new AbortController();
+    const service = createBrowserNativeMessagingLocalServiceClient({
+      abortSignal: inFlightAbortController.signal,
+      sendNativeMessage: (_hostName, _message, options) => {
+        expect(options.abortSignal).toBe(inFlightAbortController.signal);
+        return new Promise(() => undefined);
+      }
+    });
+
+    const request = service.serviceStatus("browser-native-cancelled");
+    inFlightAbortController.abort();
+
+    await expect(request).rejects.toThrow(/cancelled/u);
+  });
+
   it("surfaces local-service authorization failure before browser callers trust a key", async () => {
     const service = new LocalServiceClient({
       exchange: (message) => handleLocalServiceRequest(message, {

@@ -88,9 +88,10 @@ single-repository CI. Cross-repository drift remains guarded by
   intent and deterministic review metadata without creating grants, writing
   extension storage, or touching native host installation. Background-controller
   tests prove request handling, pairing-intent requests, and pairing-review
-  projection share the same injected native-messaging boundary, silent native
-  messaging can be bounded by a deterministic timeout, and malformed browser
-  requests fail before native messaging is contacted.
+  projection share the same injected native-messaging boundary, silent or
+  cancelled native messaging can be bounded by deterministic timeout/abort
+  handling, and malformed browser requests fail before native messaging is
+  contacted.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids.

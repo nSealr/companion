@@ -81,8 +81,8 @@ match the shared `contract_id`.
   nSealr signer requests, can use local-service route selection for the
   selected account public key, includes a browser native-messaging client
   adapter over explicit `sendNativeMessage` with optional deterministic
-  response timeouts, verifies signed responses, and stores no browser-side
-  production keys.
+  response timeouts and request cancellation, verifies signed responses, and
+  stores no browser-side production keys.
 - `@nsealr/browser-extension` is a private app scaffold for extension-owned
   message parsing and provider-backed request handling. It currently accepts
   only internal `get_public_key` and `sign_event` requests, validates provider
@@ -91,7 +91,8 @@ match the shared `contract_id`.
   native-messaging local-service provider path, can request a digest-bound
   pairing intent and deterministic pairing-review metadata for that identity,
   includes a pure background-controller boundary over injected native
-  messaging with optional response timeouts, and can build a minimal
+  messaging with optional response timeouts and request-scoped cancellation,
+  and can build a minimal
   no-host-permission manifest. It does not package or install a browser
   extension.
 - `@nsealr/client` exposes the shared local-client identity parser, including

@@ -104,9 +104,10 @@ packages, but it must not export test-only signing as a production path.
 - `apps/service`: private native-messaging host scaffold over
   `packages/client`. It processes multiple length-prefixed service messages on
   one stdio session, accepts explicit in-memory authorization context in tests,
-  and returns deterministic native-frame errors. It is intentionally secretless
-  and does not yet perform persistent grant lookup, account storage, relay
-  work, or signer transport dispatch.
+  returns deterministic native-frame errors, and can print validated
+  Chromium/Firefox native-host manifest JSON. It is intentionally secretless and
+  does not yet install manifest files, perform persistent grant lookup, account
+  storage, relay work, or signer transport dispatch.
 
 Each reusable package has its own `package.json`, source `src/index.ts`
 entrypoint, and built `dist` JS/declaration export. Cross-package source imports
@@ -164,8 +165,10 @@ request-id correlation before returning them to higher-level callers.
 The private `@nsealr/service` app now runs a tested multi-message native-host
 stdio loop, so a future browser extension can keep one native-messaging port
 open and receive one deterministic response per length-prefixed service
-request. This still does not add persistent pairing storage, signer dispatch,
-relay sessions, or browser packaging.
+request. It can also generate validated Chromium/Firefox native-host manifest
+JSON with explicit host path and extension id inputs. This still does not add
+manifest installation, persistent pairing storage, signer dispatch, relay
+sessions, or browser packaging.
 
 The browser-provider package is intentionally one layer above this service
 boundary. Each provider instance is bound to a client identity so the future

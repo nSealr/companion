@@ -232,8 +232,9 @@ tarball artifacts without publishing to npm.
   correlation and malformed service responses before browser, SDK, desktop, or
   CLI code can trust them. Pure package-level route selection and the
   local-service route-selection operation are implemented, and the private
-  service app now has a tested multi-message native-host stdio loop; remaining
-  work is persistent pairing store, user approval UX, cancellation, persistent
+  service app now has a tested multi-message native-host stdio loop plus
+  validated Chromium/Firefox native-host manifest generation; remaining work is
+  persistent pairing store, user approval UX, cancellation, persistent
   revocation, deterministic transport errors, signer dispatch, and native-host
   installation packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost

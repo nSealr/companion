@@ -32,6 +32,8 @@ public npm release.
 - Private native-messaging service app now processes multiple length-prefixed
   messages per host session and exposes a tested stdio loop for future browser
   native-host packaging.
+- Private native-messaging service app now generates validated Chromium and
+  Firefox native-host manifest JSON without installing files.
 - `@nsealr/policy` pure route-selection helper and shared specs vectors for
   account-to-route metadata selection without signer dispatch.
 - `@nsealr/client` local-service route-selection operation gated by in-memory

@@ -253,7 +253,8 @@ single-repository CI. Cross-repository drift remains guarded by
   deterministic transport errors, signer dispatch, and built-package consumer
   tests after explicit policy gates exist. The current test suite already
   covers pairing intent generation, selected account route, malformed
-  native-message rejection, and multi-message native-host stdio behavior.
+  native-message rejection, multi-message native-host stdio behavior, and
+  validated Chromium/Firefox native-host manifest generation.
 - Browser extension provider tests over a fake companion for origin permission,
   revocation, cancel, malformed companion response, native-host disconnects,
   and no key material in extension storage.

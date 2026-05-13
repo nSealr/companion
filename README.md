@@ -67,8 +67,10 @@ match the shared `contract_id`.
 - `@nsealr/service` is the private native-messaging host scaffold over
   `@nsealr/client`. It can process multiple length-prefixed service messages
   on one stdio session, returns deterministic native-frame errors, and accepts
-  explicit in-memory authorization context in tests. It does not open relays,
-  store keys, persist accounts, or contact signer transports.
+  explicit in-memory authorization context in tests. It can also print
+  validated Chromium/Firefox native-host manifest JSON for installer work. It
+  does not open relays, store keys, persist accounts, or contact signer
+  transports.
 - `nsealr review-request` renders deterministic review JSON, digest-bound
   screen-review pages, or complete constrained-display detail pages from a
   signing request for untrusted host-side previews and test harnesses.
@@ -188,9 +190,9 @@ match the shared `contract_id`.
 - Expand the local companion service boundary with pairing, origin/app
   identity, cancellation, persistent revocation storage, deterministic errors,
   and signer transport dispatch. The pure package-level route selector, the
-  local-service route-selection operation, the first SDK wrapper, and a
-  multi-message native-messaging host loop are in place; localhost APIs need a
-  separate threat-model pass.
+  local-service route-selection operation, the first SDK wrapper, a
+  multi-message native-messaging host loop, and validated native-host manifest
+  generation are in place; localhost APIs need a separate threat-model pass.
 - Browser extension / NIP-07 bridge packaging around the provider adapter so
   `getPublicKey` and `signEvent` route through companion without storing
   production signing material.

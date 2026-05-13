@@ -12,7 +12,10 @@ import {
 import { createBrowserExtensionNativeMessagingProviderSelector } from "./local-service.js";
 import {
   requestBrowserExtensionNativeMessagingPairingIntent,
-  type BrowserExtensionPairingIntentResult
+  requestBrowserExtensionNativeMessagingPairingReview,
+  type BrowserExtensionPairingIntentResult,
+  type BrowserExtensionPairingReviewResult,
+  type BrowserExtensionNativeMessagingPairingOptions
 } from "./pairing.js";
 import { type BrowserExtensionClientContext } from "./sender.js";
 
@@ -29,6 +32,7 @@ export type BrowserExtensionBackgroundControllerOptions = {
 export type BrowserExtensionBackgroundController = {
   handleRequest(value: unknown, sender: unknown): Promise<BrowserExtensionResponse>;
   requestPairing(sender: unknown): Promise<BrowserExtensionPairingIntentResult>;
+  requestPairingReview(sender: unknown): Promise<BrowserExtensionPairingReviewResult>;
 };
 
 export function createBrowserExtensionBackgroundController(
@@ -44,6 +48,12 @@ export function createBrowserExtensionBackgroundController(
       ? { signingUnavailableMessage: options.signingUnavailableMessage }
       : {})
   });
+  const pairingOptions: BrowserExtensionNativeMessagingPairingOptions = {
+    sendNativeMessage: options.sendNativeMessage,
+    ...(options.hostName !== undefined ? { hostName: options.hostName } : {}),
+    ...(options.nextServiceRequestId !== undefined ? { nextServiceRequestId: options.nextServiceRequestId } : {}),
+    ...(options.pairingOperations !== undefined ? { requestedOperations: options.pairingOperations } : {})
+  };
 
   return {
     handleRequest(value: unknown, sender: unknown): Promise<BrowserExtensionResponse> {
@@ -51,12 +61,11 @@ export function createBrowserExtensionBackgroundController(
     },
 
     requestPairing(sender: unknown): Promise<BrowserExtensionPairingIntentResult> {
-      return requestBrowserExtensionNativeMessagingPairingIntent(sender, {
-        sendNativeMessage: options.sendNativeMessage,
-        ...(options.hostName !== undefined ? { hostName: options.hostName } : {}),
-        ...(options.nextServiceRequestId !== undefined ? { nextServiceRequestId: options.nextServiceRequestId } : {}),
-        ...(options.pairingOperations !== undefined ? { requestedOperations: options.pairingOperations } : {})
-      });
+      return requestBrowserExtensionNativeMessagingPairingIntent(sender, pairingOptions);
+    },
+
+    requestPairingReview(sender: unknown): Promise<BrowserExtensionPairingReviewResult> {
+      return requestBrowserExtensionNativeMessagingPairingReview(sender, pairingOptions);
     }
   };
 }

@@ -88,8 +88,9 @@ match the shared `contract_id`.
   outputs, derives local client identity from a sanitized sender page-origin
   context before provider selection, can compose that context with the
   native-messaging local-service provider path, can request a digest-bound
-  pairing intent for that identity, includes a pure background-controller
-  boundary over injected native messaging, and can build a minimal
+  pairing intent and deterministic pairing-review metadata for that identity,
+  includes a pure background-controller boundary over injected native
+  messaging, and can build a minimal
   no-host-permission manifest. It does not package or install a browser
   extension.
 - `@nsealr/client` exposes the shared local-client identity parser, including

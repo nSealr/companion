@@ -85,10 +85,11 @@ single-repository CI. Cross-repository drift remains guarded by
   local-service route path while `sign_event` remains deterministically
   unavailable until signer dispatch is implemented. Pairing tests prove the
   same sender-derived identity can request a digest-bound local-service pairing
-  intent without creating grants, writing extension storage, or touching native
-  host installation. Background-controller tests prove request handling and
-  pairing-intent requests share the same injected native-messaging boundary and
-  malformed browser requests fail before native messaging is contacted.
+  intent and deterministic review metadata without creating grants, writing
+  extension storage, or touching native host installation. Background-controller
+  tests prove request handling, pairing-intent requests, and pairing-review
+  projection share the same injected native-messaging boundary and malformed
+  browser requests fail before native messaging is contacted.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids.

@@ -3,6 +3,8 @@ import {
   type BrowserNativeMessageSender
 } from "@nsealr/browser-provider";
 import {
+  reviewPairingIntent,
+  type LocalPairingReview,
   type LocalServiceResponse,
   type PairableLocalServiceOperation
 } from "@nsealr/client";
@@ -28,6 +30,10 @@ export type BrowserExtensionPairingIntentResult = {
   response: LocalServiceResponse;
 };
 
+export type BrowserExtensionPairingReviewResult = BrowserExtensionPairingIntentResult & {
+  review: LocalPairingReview;
+};
+
 export async function requestBrowserExtensionNativeMessagingPairingIntent(
   sender: unknown,
   options: BrowserExtensionNativeMessagingPairingOptions
@@ -46,5 +52,19 @@ export async function requestBrowserExtensionNativeMessagingPairingIntent(
   return {
     context,
     response
+  };
+}
+
+export async function requestBrowserExtensionNativeMessagingPairingReview(
+  sender: unknown,
+  options: BrowserExtensionNativeMessagingPairingOptions
+): Promise<BrowserExtensionPairingReviewResult> {
+  const result = await requestBrowserExtensionNativeMessagingPairingIntent(sender, options);
+  if (result.response.ok !== true || !("pairing_intent" in result.response.result)) {
+    throw new Error("browser extension pairing response did not include a pairing intent");
+  }
+  return {
+    ...result,
+    review: reviewPairingIntent(result.response.result.pairing_intent)
   };
 }

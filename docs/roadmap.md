@@ -308,14 +308,15 @@ and uploads checked tarball artifacts without publishing to npm.
   `sign_event` deterministically unavailable until signer dispatch is
   implemented. It can also request a digest-bound local-service pairing intent
   for the same sender-derived identity without writing grants, extension
-  storage, or native-host files. A pure background-controller boundary now
-  composes request handling and pairing-intent requests over injected native
-  messaging without using browser APIs. It can build a minimal MV3 manifest
-  with `nativeMessaging` as the only permission and no host/content-script/
-  storage permissions. Remaining work: extension packaging, content-script
-  injection, native-messaging installation, origin permission UX, cancellation,
-  and real dispatch after M4.7 gates. No local production signing and no
-  extension-side production key storage.
+  storage, or native-host files, and can project that intent into deterministic
+  review metadata for future approval UI. A pure background-controller boundary
+  now composes request handling, pairing-intent requests, and pairing-review
+  projection over injected native messaging without using browser APIs. It can
+  build a minimal MV3 manifest with `nativeMessaging` as the only permission and
+  no host/content-script/storage permissions. Remaining work: extension
+  packaging, content-script injection, native-messaging installation, origin
+  permission UX, cancellation, and real dispatch after M4.7 gates. No local
+  production signing and no extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

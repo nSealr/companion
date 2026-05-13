@@ -6,7 +6,8 @@ import {
 } from "@nsealr/browser-provider";
 import {
   BROWSER_EXTENSION_DEFAULT_PAIRING_OPERATIONS,
-  requestBrowserExtensionNativeMessagingPairingIntent
+  requestBrowserExtensionNativeMessagingPairingIntent,
+  requestBrowserExtensionNativeMessagingPairingReview
 } from "./pairing.js";
 
 const sender = {
@@ -84,6 +85,49 @@ describe("browser extension native-messaging pairing boundary", () => {
         requested_operations: ["select_account_route"]
       }
     });
+  });
+
+  it("projects native pairing intents into deterministic review metadata", async () => {
+    const result = await requestBrowserExtensionNativeMessagingPairingReview(sender, {
+      sendNativeMessage: (_hostName, message) => handleLocalServiceRequest(message),
+      nextServiceRequestId: () => "browser-pairing-review"
+    });
+
+    expect(result.response).toMatchObject({
+      request_id: "browser-pairing-review",
+      ok: true
+    });
+    expect(result.review).toMatchObject({
+      format: "nsealr-local-pairing-review-v0",
+      client: result.context.client,
+      requested_operations: [
+        {
+          operation: "select_account_route",
+          label: "Read selected account route"
+        },
+        {
+          operation: "validate_signer_request",
+          label: "Validate signer requests"
+        }
+      ],
+      requires_user_approval: true,
+      stores_production_secrets: false,
+      contains_secret_material: false
+    });
+    if (result.response.ok !== true || !("pairing_intent" in result.response.result)) {
+      throw new Error("pairing intent was not returned");
+    }
+    expect(result.review.pairing_digest).toBe(result.response.result.pairing_intent.pairing_digest);
+  });
+
+  it("rejects operation-mismatched native pairing responses before review", async () => {
+    await expect(requestBrowserExtensionNativeMessagingPairingReview(sender, {
+      sendNativeMessage: (_hostName, message) => handleLocalServiceRequest({
+        version: 1,
+        request_id: message.request_id,
+        operation: "service_status"
+      })
+    })).rejects.toThrow(/request_pairing returned unexpected local service result/u);
   });
 
   it("rejects invalid senders or native host names before contacting native messaging", async () => {

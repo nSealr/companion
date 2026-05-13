@@ -52,6 +52,9 @@ public npm release.
 - Private browser-extension native-messaging pairing-intent helper that requests
   digest-bound local-service pairing for the sanitized sender-derived client
   identity without writing grants, extension storage, or native-host files.
+- Private browser-extension pairing-review projection that turns the native
+  pairing intent into deterministic review metadata without approving clients
+  or writing extension storage.
 - Private browser-extension background-controller boundary that composes
   sender-aware request handling and pairing-intent requests over injected
   native messaging without using browser APIs, storage, or signer dispatch.

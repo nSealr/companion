@@ -157,4 +157,40 @@ describe("browser extension background controller boundary", () => {
     });
     expect(called).toBe(false);
   });
+
+  it("projects pairing review metadata without browser storage or grants", async () => {
+    const requests: LocalServiceRequest[] = [];
+    const controller = createBrowserExtensionBackgroundController({
+      sendNativeMessage: nativeResponder(requests),
+      routeRequest,
+      nextServiceRequestId: () => "background-pairing-review"
+    });
+
+    await expect(controller.requestPairingReview(sender)).resolves.toMatchObject({
+      response: {
+        request_id: "background-pairing-review",
+        ok: true
+      },
+      review: {
+        format: "nsealr-local-pairing-review-v0",
+        client: {
+          surface: "browser_extension",
+          origin: "https://example.com",
+          instance_id: "extension@nsealr.dev"
+        },
+        requested_operations: [
+          {
+            operation: "select_account_route"
+          },
+          {
+            operation: "validate_signer_request"
+          }
+        ],
+        requires_user_approval: true,
+        stores_production_secrets: false,
+        contains_secret_material: false
+      }
+    });
+    expect(requests.map((request) => request.operation)).toEqual(["request_pairing"]);
+  });
 });

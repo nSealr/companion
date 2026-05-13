@@ -26,7 +26,7 @@ jobs:
           cache: "pnpm"
       - run: make ci
       - run: make release-artifacts
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: nsealr-companion-package-artifacts
           path: release-artifacts/packages/

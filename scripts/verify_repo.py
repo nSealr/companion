@@ -140,7 +140,7 @@ def verify_companion_tooling(errors: list[str]) -> None:
             "workflow_dispatch:",
             "make ci",
             "make release-artifacts",
-            "actions/upload-artifact",
+            "actions/upload-artifact@v6",
             "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24"
         ]:
             if marker not in release_workflow:

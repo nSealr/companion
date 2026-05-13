@@ -91,12 +91,14 @@ packages, but it must not export test-only signing as a production path.
   produce deterministic NIP-46 errors before signer transport. Permission
   storage and grant UX remain separate layers.
 - `packages/client`: local companion service request/response protocol,
-  native-messaging frame codec, service status, signer-request validation, and
-  signer-response verification. This is the shared client/service boundary for
-  future browser extension, SDK, and desktop work.
+  native-messaging frame codec, service status, pairing intent generation,
+  in-memory grant enforcement, signer-request validation, and signer-response
+  verification. This is the shared client/service boundary for future browser
+  extension, SDK, and desktop work.
 - `apps/service`: private one-shot native-messaging host scaffold over
   `packages/client`. It is intentionally secretless and does not yet perform
-  account selection, grant checks, relay work, or signer transport dispatch.
+  persistent grant lookup, account selection, relay work, or signer transport
+  dispatch.
 
 Each reusable package has its own `package.json` and `src/index.ts` entrypoint.
 Cross-package source imports must go through `@nsealr/*` entrypoints, not
@@ -132,10 +134,15 @@ the local companion. A localhost HTTP/WebSocket API remains research until
 origin binding, CSRF protection, pairing, rate limits, and kill-switch behavior
 are explicitly specified and tested.
 
-The first native-messaging scaffold accepts only `service_status`,
-`validate_signer_request`, and `verify_signer_response`. This lets browser,
-SDK, and desktop code integrate against the validation and verification
-boundary before any signer I/O or persistent session state is exposed.
+The first native-messaging scaffold accepts `service_status`,
+`request_pairing`, `validate_signer_request`, and `verify_signer_response`.
+Pairing requests return a deterministic intent for later user review; they do
+not approve the client. Validation and verification require explicit grants
+supplied by the caller/test harness, and revoked, expired, missing, or
+operation-scoped grants fail before signer payload handling. This lets browser,
+SDK, and desktop code integrate against the authorization, validation, and
+verification boundary before any signer I/O or persistent session state is
+exposed.
 
 ## Current CLI Flow
 

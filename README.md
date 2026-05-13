@@ -48,8 +48,10 @@ match the shared `contract_id`.
   CLI code share the same boundaries.
 - `@nsealr/client` defines the first local companion service protocol and
   native-messaging frame codec. The implemented operations are intentionally
-  secretless: service status, signer-request validation, and signer-response
-  verification.
+  secretless: service status, pairing intent generation, signer-request
+  validation, and signer-response verification. Validation and verification
+  require an explicit in-memory client grant; unpaired, revoked, expired, or
+  operation-scoped clients are rejected before signer payload handling.
 - `@nsealr/service` is the private one-shot native-messaging host scaffold over
   `@nsealr/client`. It does not open relays, store keys, select accounts, or
   contact signer transports.
@@ -169,10 +171,10 @@ match the shared `contract_id`.
   explicit entrypoints, deep-import audit, and test-only signer isolation are
   already in place.
 - Expand the local companion service boundary with pairing, origin/app
-  identity, route selection, cancellation, revocation, deterministic errors,
-  and signer transport dispatch. Native messaging is the preferred first
-  serious browser-extension transport; localhost APIs need a separate
-  threat-model pass.
+  identity, route selection, cancellation, persistent revocation storage,
+  deterministic errors, and signer transport dispatch. Native messaging is the
+  preferred first serious browser-extension transport; localhost APIs need a
+  separate threat-model pass.
 - Browser extension / NIP-07 bridge that forwards `getPublicKey` and
   `signEvent` through companion without storing production signing material.
 - Public npm SDK alpha after package APIs, docs, semver, provenance, and

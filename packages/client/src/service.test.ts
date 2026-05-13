@@ -2,14 +2,34 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "@nsealr/fixtures";
-import { handleLocalServiceRequest, LOCAL_SERVICE_OPERATIONS, LOCAL_SERVICE_PROTOCOL } from "./service.js";
+import {
+  clientIdForIdentity,
+  handleLocalServiceRequest,
+  LOCAL_SERVICE_OPERATIONS,
+  LOCAL_SERVICE_PROTOCOL,
+  type LocalClientGrant,
+  type LocalClientIdentity
+} from "./service.js";
 
 const specsRoot = resolveSpecsRoot();
 const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
 const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
+const client: LocalClientIdentity = {
+  surface: "browser_extension",
+  origin: "https://example.com",
+  app_name: "Example Nostr Client",
+  instance_id: "extension-test-1"
+};
+const grant: LocalClientGrant = {
+  client_id: clientIdForIdentity(client),
+  origin: client.origin,
+  surface: client.surface,
+  allowed_operations: ["validate_signer_request", "verify_signer_response"],
+  expires_at: 2_000_000_000
+};
 
 describe("local service boundary", () => {
-  it("reports secretless service status", () => {
+  it("reports secretless service status and pairing requirement", () => {
     const result = handleLocalServiceRequest({
       version: 1,
       request_id: "svc-status-1",
@@ -25,19 +45,85 @@ describe("local service boundary", () => {
           protocol: LOCAL_SERVICE_PROTOCOL,
           name: "nsealr-companion-service",
           operations: [...LOCAL_SERVICE_OPERATIONS],
+          requires_pairing: true,
           stores_production_secrets: false
         }
       }
     });
   });
 
-  it("validates signer requests without contacting a signer", () => {
+  it("creates a deterministic pairing intent without approving the client", () => {
+    const result = handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-pair-1",
+      operation: "request_pairing",
+      params: {
+        client,
+        requested_operations: ["validate_signer_request", "verify_signer_response"]
+      }
+    });
+
+    expect(result).toMatchObject({
+      version: 1,
+      request_id: "svc-pair-1",
+      ok: true,
+      result: {
+        pairing_intent: {
+          format: "nsealr-local-pairing-intent-v0",
+          client_id: clientIdForIdentity(client),
+          client,
+          requested_operations: ["validate_signer_request", "verify_signer_response"],
+          requires_user_approval: true,
+          stores_production_secrets: false
+        }
+      }
+    });
+    if (result.ok === true && "pairing_intent" in result.result) {
+      expect(result.result.pairing_intent.pairing_digest).toMatch(/^[0-9a-f]{64}$/u);
+      const repeatedResult = handleLocalServiceRequest({
+        version: 1,
+        request_id: "svc-pair-2",
+        operation: "request_pairing",
+        params: {
+          client,
+          requested_operations: ["validate_signer_request", "verify_signer_response"]
+        }
+      });
+      expect(repeatedResult.ok).toBe(true);
+      if (repeatedResult.ok === true && "pairing_intent" in repeatedResult.result) {
+        expect(result.result.pairing_intent.pairing_digest).toBe(repeatedResult.result.pairing_intent.pairing_digest);
+      }
+    }
+  });
+
+  it("rejects validation requests from unpaired clients before parsing signer payloads", () => {
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-validate-unpaired",
+      operation: "validate_signer_request",
+      params: {
+        client,
+        request
+      }
+    })).toEqual({
+      version: 1,
+      request_id: "svc-validate-unpaired",
+      ok: false,
+      error: {
+        code: "unauthorized_client",
+        message: "client is not paired",
+        retryable: false
+      }
+    });
+  });
+
+  it("validates signer requests only after explicit in-memory authorization", () => {
     expect(handleLocalServiceRequest({
       version: 1,
       request_id: "svc-validate-1",
       operation: "validate_signer_request",
-      params: { request }
-    })).toMatchObject({
+      params: { client, request }
+    }, { grants: [grant], now: 1_900_000_000 })).toMatchObject({
       ok: true,
       result: { validation: { valid: true } }
     });
@@ -46,10 +132,43 @@ describe("local service boundary", () => {
       version: 1,
       request_id: "svc-validate-2",
       operation: "validate_signer_request",
-      params: { request: { ...request, request_id: "bad request id" } }
-    })).toMatchObject({
+      params: { client, request: { ...request, request_id: "bad request id" } }
+    }, { grants: [grant], now: 1_900_000_000 })).toMatchObject({
       ok: true,
       result: { validation: { valid: false, error: "request_id is invalid" } }
+    });
+  });
+
+  it("rejects revoked, expired, and operation-scoped pairings deterministically", () => {
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-revoked",
+      operation: "validate_signer_request",
+      params: { client, request }
+    }, { grants: [{ ...grant, revoked: true }], now: 1_900_000_000 })).toMatchObject({
+      ok: false,
+      error: { code: "unauthorized_client", message: "client pairing is revoked" }
+    });
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-expired",
+      operation: "validate_signer_request",
+      params: { client, request }
+    }, { grants: [grant], now: 2_000_000_000 })).toMatchObject({
+      ok: false,
+      error: { code: "unauthorized_client", message: "client pairing is expired" }
+    });
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-scope",
+      operation: "verify_signer_response",
+      params: { client, request, response }
+    }, {
+      grants: [{ ...grant, allowed_operations: ["validate_signer_request"] }],
+      now: 1_900_000_000
+    })).toMatchObject({
+      ok: false,
+      error: { code: "unauthorized_client", message: "client is not authorized for operation" }
     });
   });
 
@@ -58,8 +177,8 @@ describe("local service boundary", () => {
       version: 1,
       request_id: "svc-verify-1",
       operation: "verify_signer_response",
-      params: { request, response }
-    })).toMatchObject({
+      params: { client, request, response }
+    }, { grants: [grant], now: 1_900_000_000 })).toMatchObject({
       ok: true,
       result: { validation: { valid: true } }
     });
@@ -68,14 +187,52 @@ describe("local service boundary", () => {
       version: 1,
       request_id: "svc-verify-2",
       operation: "verify_signer_response",
-      params: { request, response: { ...response, request_id: "other-request" } }
-    })).toMatchObject({
+      params: { client, request, response: { ...response, request_id: "other-request" } }
+    }, { grants: [grant], now: 1_900_000_000 })).toMatchObject({
       ok: true,
       result: { validation: { valid: false, error: "response request_id does not match request" } }
     });
   });
 
   it("rejects malformed local service requests deterministically", () => {
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-bad-origin",
+      operation: "request_pairing",
+      params: {
+        client: {
+          ...client,
+          origin: "http://localhost.evil.example"
+        },
+        requested_operations: ["validate_signer_request"]
+      }
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_service_request",
+        message: "client origin scheme is unsupported"
+      }
+    });
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-url-with-path",
+      operation: "request_pairing",
+      params: {
+        client: {
+          ...client,
+          origin: "https://example.com/path"
+        },
+        requested_operations: ["validate_signer_request"]
+      }
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_service_request",
+        message: "client origin scheme is unsupported"
+      }
+    });
+
     expect(handleLocalServiceRequest({
       version: 1,
       request_id: "bad service id",

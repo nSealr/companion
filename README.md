@@ -17,6 +17,9 @@ Browser extension, npm SDK, CLI, local app, local service, and full NIP-46
 relay work are access surfaces over the same companion platform. They must
 reuse package-owned validation, policy scaffolding, transport, and response
 verification logic instead of creating separate signer implementations.
+The repository is intentionally a single TypeScript monorepo: one developer can
+ship multiple artifacts without synchronizing separate SDK, extension, service,
+or CLI repositories.
 
 Feature availability per signer family is tracked in `nSealr/specs` at
 `vectors/features/signer-feature-matrix-v0.json`. Companion packages should
@@ -39,6 +42,10 @@ match the shared `contract_id`.
   `get_signing_status`, with caller-supplied `--request-id` support for
   hardware traces.
 - `nsealr dev-sign` signs requests with an explicit test-only software key.
+- Each reusable `packages/*` module now has an explicit `@nsealr/*` package
+  manifest and `src/index.ts` entrypoint. Internal imports use those package
+  entrypoints instead of deep relative paths so SDK, extension, service, and
+  CLI code share the same boundaries.
 - `nsealr review-request` renders deterministic review JSON, digest-bound
   screen-review pages, or complete constrained-display detail pages from a
   signing request for untrusted host-side previews and test harnesses.
@@ -55,8 +62,10 @@ match the shared `contract_id`.
   hand invalid signatures to higher layers as accepted output.
 - CLI request, dev-sign, and verify-response commands can read/write JSON or
   v0 `nsealr1:` QR envelopes.
-- `packages/transport` provides the first signer transport contract plus
-  development, file, JSON-lines stdio, and serial-frame adapters. The stdio
+- `packages/transport` provides the first signer transport contract plus file,
+  JSON-lines stdio, and serial-frame adapters. The test-only development
+  signer transport lives in private `@nsealr/dev-signer`, so production
+  transport code does not depend on software signing helpers. The stdio
   adapter bounds response-line output and captured stderr before accepting or
   reporting external signer process results, and times out silent processes
   that do not emit a response.
@@ -147,8 +156,11 @@ match the shared `contract_id`.
 
 ## Planned Capabilities
 
-- Package-boundary freeze for future `@nsealr/*` npm SDK publication, with
-  explicit public/private exports and test-only signer isolation.
+- Complete the package-boundary freeze for future `@nsealr/*` npm SDK
+  publication with package README files, third-party import tests, semver,
+  provenance, and built JS/declaration artifacts. The source-level manifests,
+  explicit entrypoints, deep-import audit, and test-only signer isolation are
+  already in place.
 - Local companion service boundary for browser extension, desktop UI, and
   high-level SDK clients. Native messaging is the preferred first serious
   browser-extension transport; localhost APIs need a separate threat-model pass.
@@ -158,18 +170,18 @@ match the shared `contract_id`.
   third-party import tests are stable.
 - Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,
   permissions, and auth challenges.
-- QR encoder and decoder for vault flows.
 - WebUSB, HID, CDC, WebSerial, and persistent transport experiments.
-- PC/SC and NFC smartcard adapter.
+- Real PC/SC reader smoke tests and NFC smartcard adapter work.
 - TROPIC01 USB DevKit research adapter for the custom persistent-secret
   hardware-wallet family.
 - Relay publish and response verification tools.
 
 ## Initial Layout
 
-- `apps/`: CLI, future browser extension, local service, and developer tools.
-- `packages/`: reusable core/protocol/review/qr/framing/transport/NIP-46/
-  policy/client/provider modules.
+- `apps/`: CLI, future local service/native-messaging host, browser extension,
+  desktop shell, and developer tools.
+- `packages/`: reusable `@nsealr/*` core/protocol/review/qr/framing/transport/
+  NIP-46/policy/client/provider modules.
 - `docs/`: implementation notes and usage guides.
 
 ## Quality Baseline

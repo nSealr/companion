@@ -4,12 +4,12 @@ import { join, resolve } from "node:path";
 import { PassThrough } from "node:stream";
 import { once } from "node:events";
 import { describe, expect, it } from "vitest";
-import { verifySignedEventResponse } from "../../core/src/nostr.js";
-import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
-import { decodeSerialFrame, encodeSerialFrame } from "../../framing/src/serial.js";
-import { validateResponse } from "../../protocol/src/protocol.js";
+import { verifySignedEventResponse } from "@nsealr/core";
+import { DevSignerTransport } from "@nsealr/dev-signer";
+import { resolveSpecsRoot } from "@nsealr/fixtures";
+import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
+import { validateResponse } from "@nsealr/protocol";
 import {
-  DevSignerTransport,
   JsonFileTransport,
   JsonLineStdioTransport,
   SerialFrameTransport,

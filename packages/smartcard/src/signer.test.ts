@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { verifySignedEventResponse, type SignEventRequest } from "../../core/src/nostr.js";
-import { approvalDigestForRequest } from "../../review/src/review.js";
-import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
+import { verifySignedEventResponse, type SignEventRequest } from "@nsealr/core";
+import { resolveSpecsRoot } from "@nsealr/fixtures";
+import { approvalDigestForRequest } from "@nsealr/review";
 import { SmartcardSimulator } from "./apdu.js";
 import { SmartcardSigner } from "./signer.js";
 

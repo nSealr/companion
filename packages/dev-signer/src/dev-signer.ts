@@ -3,11 +3,13 @@ import {
   bytesToHex,
   computeEventId,
   hexToBytes,
+  verifySignedEventResponse,
   type EventTemplate,
   type SignEventRequest,
   type SignEventResponse,
   type SignedEvent
-} from "../../core/src/nostr.js";
+} from "@nsealr/core";
+import { validateRequest, validateResponse } from "@nsealr/protocol";
 
 export function publicKeyFromSecret(secretKeyHex: string): string {
   return bytesToHex(schnorr.getPublicKey(hexToBytes(secretKeyHex)));
@@ -42,3 +44,33 @@ export function devSignRequest(request: SignEventRequest, secretKeyHex: string):
   };
 }
 
+function assertValidRequest(value: unknown): void {
+  const validation = validateRequest(value);
+  if (!validation.ok) {
+    throw new Error(`transport request invalid: ${validation.error}`);
+  }
+}
+
+function assertValidResponse(value: unknown): void {
+  const validation = validateResponse(value);
+  if (!validation.ok) {
+    throw new Error(`transport response invalid: ${validation.error}`);
+  }
+}
+
+export class DevSignerTransport {
+  readonly name = "dev-signer";
+
+  constructor(private readonly secretKeyHex: string) {}
+
+  async exchange(request: unknown): Promise<unknown> {
+    assertValidRequest(request);
+    const response = devSignRequest(request as SignEventRequest, this.secretKeyHex);
+    assertValidResponse(response);
+    const verification = verifySignedEventResponse(request, response);
+    if (!verification.ok) {
+      throw new Error(`transport response invalid: ${verification.error}`);
+    }
+    return response;
+  }
+}

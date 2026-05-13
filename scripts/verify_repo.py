@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import sys
 
 
@@ -40,6 +41,24 @@ LICENSE_MARKERS = {
     "hardware": "CERN Open Hardware Licence",
 }
 
+COMPANION_PACKAGES = {
+    "core": "@nsealr/core",
+    "dev-signer": "@nsealr/dev-signer",
+    "fixtures": "@nsealr/fixtures",
+    "framing": "@nsealr/framing",
+    "nip46": "@nsealr/nip46",
+    "policy": "@nsealr/policy",
+    "protocol": "@nsealr/protocol",
+    "qr": "@nsealr/qr",
+    "review": "@nsealr/review",
+    "smartcard": "@nsealr/smartcard",
+    "transport": "@nsealr/transport",
+}
+COMPANION_APPS = {
+    "cli": "@nsealr/cli",
+}
+DEEP_SOURCE_IMPORT_RE = re.compile(r'from\s+["\'](?:\.\./){2,}[^"\']*/src/|from\s+["\'][^"\']*packages/[^"\']*/src/')
+
 
 def expected_license_marker() -> str:
     return LICENSE_MARKERS.get(REPO, "MIT License")
@@ -60,6 +79,58 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile must declare PNPM_VERSION := 10.33.4")
     if "npm exec --yes --package=pnpm@$(PNPM_VERSION) -- pnpm" not in makefile:
         errors.append("Makefile must provide a pinned npm exec fallback for pnpm")
+
+
+def read_json(path: Path, errors: list[str]) -> dict[str, object]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        errors.append(f"invalid JSON in {path.relative_to(ROOT)}: {error}")
+        return {}
+    if not isinstance(value, dict):
+        errors.append(f"{path.relative_to(ROOT)} must contain a JSON object")
+        return {}
+    return value
+
+
+def verify_companion_package_boundaries(errors: list[str]) -> None:
+    for package_dir, package_name in COMPANION_PACKAGES.items():
+        package_root = ROOT / "packages" / package_dir
+        package_json_path = package_root / "package.json"
+        index_path = package_root / "src" / "index.ts"
+        if not package_json_path.exists():
+            errors.append(f"missing package manifest: packages/{package_dir}/package.json")
+            continue
+        if not index_path.exists():
+            errors.append(f"missing package entrypoint: packages/{package_dir}/src/index.ts")
+        package = read_json(package_json_path, errors)
+        if package.get("name") != package_name:
+            errors.append(f"packages/{package_dir}/package.json must be named {package_name}")
+        if package.get("type") != "module":
+            errors.append(f"packages/{package_dir}/package.json must declare type=module")
+        if package.get("exports") is None:
+            errors.append(f"packages/{package_dir}/package.json must declare explicit exports")
+        if package.get("types") != "./src/index.ts":
+            errors.append(f"packages/{package_dir}/package.json must expose ./src/index.ts types")
+        dependencies = package.get("dependencies")
+        if package_dir != "dev-signer" and isinstance(dependencies, dict) and "@nsealr/dev-signer" in dependencies:
+            errors.append(f"packages/{package_dir} must not depend on test-only @nsealr/dev-signer")
+
+    for app_dir, package_name in COMPANION_APPS.items():
+        package_json_path = ROOT / "apps" / app_dir / "package.json"
+        if not package_json_path.exists():
+            errors.append(f"missing app manifest: apps/{app_dir}/package.json")
+            continue
+        package = read_json(package_json_path, errors)
+        if package.get("name") != package_name:
+            errors.append(f"apps/{app_dir}/package.json must be named {package_name}")
+
+    for source_path in [*ROOT.glob("packages/*/src/**/*.ts"), *ROOT.glob("apps/*/src/**/*.ts")]:
+        text = source_path.read_text(encoding="utf-8")
+        if DEEP_SOURCE_IMPORT_RE.search(text):
+            errors.append(
+                f"{source_path.relative_to(ROOT)} must import other packages through @nsealr/* entrypoints"
+            )
 
 
 def main() -> int:
@@ -91,6 +162,7 @@ def main() -> int:
 
     if REPO == "companion":
         verify_companion_tooling(errors)
+        verify_companion_package_boundaries(errors)
 
     if errors:
         for error in errors:

@@ -1,11 +1,9 @@
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { type Readable, type Writable } from "node:stream";
-import { devSignRequest } from "../../dev-signer/src/dev-signer.js";
-import { type SignEventRequest, verifySignedEventResponse } from "../../core/src/nostr.js";
-import { decodeSerialFrame, encodeSerialFrame } from "../../framing/src/serial.js";
-import { NSEALR_V0_LIMITS, utf8ByteLength } from "../../protocol/src/limits.js";
-import { validateRequest, validateResponse } from "../../protocol/src/protocol.js";
+import { verifySignedEventResponse } from "@nsealr/core";
+import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
+import { NSEALR_V0_LIMITS, utf8ByteLength, validateRequest, validateResponse } from "@nsealr/protocol";
 
 export type SignerTransport = {
   readonly name: string;
@@ -198,20 +196,6 @@ function truncateUtf8(value: string, maxBytes: number): string {
     result += char;
   }
   return result;
-}
-
-export class DevSignerTransport implements SignerTransport {
-  readonly name = "dev-signer";
-
-  constructor(private readonly secretKeyHex: string) {}
-
-  async exchange(request: unknown): Promise<unknown> {
-    assertValidRequest(request);
-    const response = devSignRequest(request as SignEventRequest, this.secretKeyHex);
-    assertValidResponse(response);
-    assertResponseVerifiedAgainstRequest(request, response);
-    return response;
-  }
 }
 
 export class JsonFileTransport implements SignerTransport {

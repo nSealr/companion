@@ -2,14 +2,14 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { Command } from "commander";
 import { SerialPort } from "serialport";
-import { verifySignedEventResponse, type SignEventRequest } from "../../../packages/core/src/nostr.js";
-import { devSignRequest } from "../../../packages/dev-signer/src/dev-signer.js";
+import { verifySignedEventResponse, type SignEventRequest } from "@nsealr/core";
+import { devSignRequest } from "@nsealr/dev-signer";
 import {
   loadSpecsFixtures,
   validateFeatureMatrixFixture,
   validateReviewTranscriptFixture
-} from "../../../packages/fixtures/src/fixtures.js";
-import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/src/serial.js";
+} from "@nsealr/fixtures";
+import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
 import {
   decideNip46BridgeAction,
   isNip46RequestPermitted,
@@ -22,30 +22,29 @@ import {
   reviewNip46ConnectMessage,
   type Nip46Permission,
   respondToLocalNip46Request
-} from "../../../packages/nip46/src/nip46.js";
-import { decidePolicyRequest } from "../../../packages/policy/src/policy.js";
-import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
+} from "@nsealr/nip46";
+import { decidePolicyRequest } from "@nsealr/policy";
+import { validateRequest, validateResponse } from "@nsealr/protocol";
 import {
   decodeAnimatedQrEnvelopeFrames,
   decodeQrEnvelope,
   encodeAnimatedQrEnvelopeFrames,
   encodeQrEnvelope
-} from "../../../packages/qr/src/qr.js";
+} from "@nsealr/qr";
 import {
   REVIEW_DETAIL_BODY_LINE_STYLES as REVIEW_DETAIL_BODY_LINE_STYLE_VALUES,
   renderReviewDetailPages,
   reviewEventTemplate,
   screenReviewForRequest,
   type ReviewDetailPageLimits
-} from "../../../packages/review/src/review.js";
-import { SmartcardSimulator } from "../../../packages/smartcard/src/apdu.js";
-import { SmartcardSigner } from "../../../packages/smartcard/src/signer.js";
+} from "@nsealr/review";
+import { SmartcardSigner, SmartcardSimulator } from "@nsealr/smartcard";
 import {
   SerialLineStreamPort,
   exchangeSerialLineRequest,
   type SerialLinePort,
   type SerialLinePortOpener
-} from "../../../packages/transport/src/transport.js";
+} from "@nsealr/transport";
 
 type DataFormat = "json" | "qr" | "qr-animated";
 

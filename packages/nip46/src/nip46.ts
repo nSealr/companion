@@ -1,5 +1,4 @@
-import { validateRequest, validateResponse } from "../../protocol/src/protocol.js";
-import { compactJsonUtf8ByteLength, NSEALR_V0_LIMITS } from "../../protocol/src/limits.js";
+import { compactJsonUtf8ByteLength, NSEALR_V0_LIMITS, validateRequest, validateResponse } from "@nsealr/protocol";
 
 export type Nip46RequestMessage = {
   id: string;

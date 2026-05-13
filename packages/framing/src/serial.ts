@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { TextDecoder } from "node:util";
-import { NSEALR_V0_LIMITS, utf8ByteLength } from "../../protocol/src/limits.js";
+import { NSEALR_V0_LIMITS, utf8ByteLength } from "@nsealr/protocol";
 
 export const SERIAL_FRAME_PREFIX = "nsealr1f:";
 

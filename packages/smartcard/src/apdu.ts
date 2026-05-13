@@ -1,6 +1,5 @@
 import { schnorr } from "@noble/curves/secp256k1.js";
-import { bytesToHex, hexToBytes, verifySchnorrSignature, type VerificationResult } from "../../core/src/nostr.js";
-import { publicKeyFromSecret } from "../../dev-signer/src/dev-signer.js";
+import { bytesToHex, hexToBytes, verifySchnorrSignature, type VerificationResult } from "@nsealr/core";
 
 export const NSEALR_CLA = 0x80;
 export const GET_PUBLIC_KEY_INS = 0x10;
@@ -101,7 +100,7 @@ export class SmartcardSimulator {
     if (command.cla !== NSEALR_CLA) return new ResponseApdu(new Uint8Array(), SW_CLA_NOT_SUPPORTED);
     if (command.ins === GET_PUBLIC_KEY_INS) {
       if (command.data.length !== 0) return new ResponseApdu(new Uint8Array(), SW_WRONG_LENGTH);
-      return new ResponseApdu(Uint8Array.from(hexToBytes(publicKeyFromSecret(this.secretKeyHex))), SW_NO_ERROR);
+      return new ResponseApdu(Uint8Array.from(hexToBytes(simulatorPublicKeyFromSecret(this.secretKeyHex))), SW_NO_ERROR);
     }
     if (command.ins === SIGN_EVENT_ID_INS) {
       if (command.data.length !== 32) return new ResponseApdu(new Uint8Array(), SW_WRONG_LENGTH);
@@ -118,7 +117,7 @@ export class SmartcardSimulator {
     if (response.statusWord !== SW_NO_ERROR || response.data.length !== 64) {
       return { ok: false, error: "response is not a successful Schnorr signature APDU" };
     }
-    const pubkey = publicKeyFromSecret(this.secretKeyHex);
+    const pubkey = simulatorPublicKeyFromSecret(this.secretKeyHex);
     const eventId = bytesToHex(command.data);
     const signature = bytesToHex(response.data);
     if (!verifySchnorrSignature(pubkey, eventId, signature)) {
@@ -126,4 +125,8 @@ export class SmartcardSimulator {
     }
     return { ok: true };
   }
+}
+
+function simulatorPublicKeyFromSecret(secretKeyHex: string): string {
+  return bytesToHex(schnorr.getPublicKey(hexToBytes(secretKeyHex)));
 }

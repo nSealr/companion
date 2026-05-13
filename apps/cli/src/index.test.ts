@@ -2,12 +2,11 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { loadSpecsFixtures } from "../../../packages/fixtures/src/fixtures.js";
-import { resolveSpecsRoot } from "../../../packages/fixtures/src/specs-root.js";
-import { decodeSerialFrame, encodeSerialFrame } from "../../../packages/framing/src/serial.js";
-import { validateRequest, validateResponse } from "../../../packages/protocol/src/protocol.js";
-import { decodeAnimatedQrEnvelopeFrames, decodeQrEnvelope, encodeQrEnvelope } from "../../../packages/qr/src/qr.js";
-import { renderReviewDetailPages, reviewEventTemplate } from "../../../packages/review/src/review.js";
+import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
+import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
+import { validateRequest, validateResponse } from "@nsealr/protocol";
+import { decodeAnimatedQrEnvelopeFrames, decodeQrEnvelope, encodeQrEnvelope } from "@nsealr/qr";
+import { renderReviewDetailPages, reviewEventTemplate } from "@nsealr/review";
 import { buildCli } from "./index.js";
 
 const specsRoot = resolveSpecsRoot();

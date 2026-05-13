@@ -6,9 +6,9 @@ import {
   verifySignedEventResponse,
   type SignEventRequest,
   type SignEventResponse
-} from "../../core/src/nostr.js";
-import { validateRequest } from "../../protocol/src/protocol.js";
-import { approvalDigestForRequest } from "../../review/src/review.js";
+} from "@nsealr/core";
+import { validateRequest } from "@nsealr/protocol";
+import { approvalDigestForRequest } from "@nsealr/review";
 import { CommandApdu, GET_PUBLIC_KEY_INS, NSEALR_CLA, ResponseApdu, SIGN_EVENT_ID_INS, SW_NO_ERROR } from "./apdu.js";
 
 export type SmartcardApduTransport = {

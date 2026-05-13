@@ -7,7 +7,8 @@ make ci
 ```
 
 The baseline check verifies repository structure, license policy, docs, CI,
-TypeScript type safety, unit tests, integration tests, and dependency audit.
+TypeScript type safety, unit tests, integration tests, dependency audit, and
+companion package-boundary rules.
 The Makefile pins `pnpm@10.33.4`; it uses a global `pnpm` when present and
 falls back to `npm exec` on development machines that only have Node/npm.
 
@@ -42,6 +43,9 @@ single-repository CI. Cross-repository drift remains guarded by
   `nSealr/specs`, including visible JSON-style control escapes in event
   content and tags.
 - Development signer verification tests in `packages/dev-signer`.
+- Repository verification now requires explicit `@nsealr/*` package manifests
+  and `src/index.ts` entrypoints, rejects deep cross-package source imports,
+  and rejects production package dependencies on private `@nsealr/dev-signer`.
 - Negative response verification tests for request id mismatch, template
   mismatch, event id mismatch, and invalid signatures.
 - Transport exchange tests proving successful `sign_event` responses are
@@ -181,9 +185,9 @@ single-repository CI. Cross-repository drift remains guarded by
 
 ## Next Test Additions
 
-- Package-boundary tests for future `@nsealr/*` publication: explicit exports,
-  third-party import behavior, no test-only signer leakage, and no production
-  secret storage in public helpers.
+- Third-party consumer import tests for future `@nsealr/*` publication:
+  package README examples, built JS/declaration artifacts, no test-only signer
+  leakage, and no production secret storage in public helpers.
 - Local companion service tests with a fake extension/app client: pairing,
   selected account route, malformed request rejection, deterministic errors,
   and response verification before returning results.

@@ -178,11 +178,23 @@ frame files for larger valid payloads. The implementation consumes the shared
 deterministically, and lets CLI request/response commands use one frame per
 line without adding compression, fountain codes, relay sessions, or signer I/O.
 
+## M4.6: Package Boundary Freeze
+
+- Add explicit `@nsealr/*` package manifests and `src/index.ts` entrypoints.
+- Refactor companion cross-package imports through package entrypoints instead
+  of deep relative source paths.
+- Keep `@nsealr/dev-signer` private and test-only.
+- Remove production `@nsealr/transport` dependency on software signing helpers.
+- Add repository verification for package manifests, explicit exports,
+  deep-import drift, and production-package dependency drift.
+
+Status: first implementation pass complete. Remaining work before public npm
+alpha is package README coverage, third-party consumer import tests, semver and
+changelog policy, provenance/release automation, and generated JS/declaration
+artifacts.
+
 ## Later
 
-- M4.6 package-boundary freeze for future `@nsealr/*` npm SDK publication:
-  explicit exports, no-secret guarantees, package readmes, third-party import
-  tests, and isolation of test-only signing helpers.
 - M4.7 local companion service boundary for browser extension, desktop UI, and
   high-level SDK clients. Prefer native messaging for the first serious
   browser-extension path; treat localhost HTTP/WebSocket as a separate

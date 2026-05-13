@@ -67,9 +67,12 @@ packages, but it must not export test-only signing as a production path.
   checks so CLI code does not grow a parallel policy parser.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
-- `packages/dev-signer`: test-only signing implementation.
-- `packages/transport`: signer transport interface plus in-memory development,
-  JSON file, and JSON-lines stdio adapters.
+- `packages/dev-signer`: private test-only signing implementation and
+  development signer transport. It is not a production signer route and must
+  not become a dependency of publishable production packages.
+- `packages/transport`: signer transport interface plus JSON file, JSON-lines
+  stdio, serial-frame, and serial-line adapters. It is intentionally
+  secretless and does not depend on `@nsealr/dev-signer`.
 - `packages/qr`: v0 `nsealr1:` QR envelope encoding and decoding.
 - `packages/framing`: checksum-protected serial line framing draft with the
   shared v0 serial-frame byte limit.
@@ -87,6 +90,12 @@ packages, but it must not export test-only signing as a production path.
   response, `connect` can produce a review intent, and missing permissions
   produce deterministic NIP-46 errors before signer transport. Permission
   storage and grant UX remain separate layers.
+
+Each reusable package has its own `package.json` and `src/index.ts` entrypoint.
+Cross-package source imports must go through `@nsealr/*` entrypoints, not
+relative paths into another package's `src` directory. The repository verifier
+checks this boundary so future extension, SDK, local-service, and CLI work
+cannot accidentally fork validation or signing helper code.
 
 ## Access Surface Boundary
 

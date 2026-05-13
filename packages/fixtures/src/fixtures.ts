@@ -9,8 +9,8 @@ import {
   type PolicyDecision,
   type PolicyDecisionRequest,
   type PolicyProfile
-} from "../../policy/src/policy.js";
-import { REVIEW_DETAIL_BODY_LINE_STYLES } from "../../review/src/review.js";
+} from "@nsealr/policy";
+import { REVIEW_DETAIL_BODY_LINE_STYLES } from "@nsealr/review";
 
 export type SpecsFixtureSet = {
   key: {

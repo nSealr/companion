@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { TextDecoder } from "node:util";
-import { NSEALR_V0_LIMITS } from "../../protocol/src/limits.js";
+import { NSEALR_V0_LIMITS } from "@nsealr/protocol";
 
 export const QR_ENVELOPE_PREFIX = "nsealr1:";
 export const ANIMATED_QR_ENVELOPE_PREFIX = "nsealr1a:";

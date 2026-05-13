@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { bytesToHex } from "../../core/src/nostr.js";
-import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
+import { bytesToHex } from "@nsealr/core";
+import { resolveSpecsRoot } from "@nsealr/fixtures";
 import {
   CommandApdu,
   GET_PUBLIC_KEY_INS,

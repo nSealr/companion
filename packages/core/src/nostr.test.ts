@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { getEventHash, verifyEvent } from "nostr-tools/pure";
-import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
+import { resolveSpecsRoot } from "@nsealr/fixtures";
 import { computeEventId, verifySchnorrSignature, verifySignedEventResponse } from "./nostr.js";
 
 const specsRoot = resolveSpecsRoot();

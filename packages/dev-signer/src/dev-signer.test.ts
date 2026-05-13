@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { verifySignedEventResponse } from "../../core/src/nostr.js";
-import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
+import { verifySignedEventResponse } from "@nsealr/core";
+import { resolveSpecsRoot } from "@nsealr/fixtures";
 import { devSignRequest } from "./dev-signer.js";
 
 const specsRoot = resolveSpecsRoot();

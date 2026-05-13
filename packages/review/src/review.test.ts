@@ -1,13 +1,59 @@
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { loadSpecsFixtures } from "../../fixtures/src/fixtures.js";
-import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
 import {
   approvalDigestForRequest,
   REVIEW_DETAIL_BODY_LINE_STYLES,
   renderReviewDetailPages,
   reviewEventTemplate,
-  screenReviewForRequest
+  screenReviewForRequest,
+  type EventReview,
+  type ReviewDetailPage,
+  type ReviewDetailPageLimits,
+  type ScreenReview
 } from "./review.js";
+
+const specsRoot = resolveSpecsRoot();
+
+function resolveSpecsRoot(preferredRoot = resolve("../specs")): string {
+  if (existsSync(resolve(preferredRoot, "vectors")) && existsSync(resolve(preferredRoot, "examples"))) {
+    return preferredRoot;
+  }
+  const fallbackRoot = resolve(process.cwd(), "tests/fixtures/specs");
+  if (existsSync(resolve(fallbackRoot, "vectors")) && existsSync(resolve(fallbackRoot, "examples"))) {
+    return fallbackRoot;
+  }
+  return preferredRoot;
+}
+
+function loadJson(path: string): unknown {
+  return JSON.parse(readFileSync(path, "utf8"));
+}
+
+function loadVectorDirectory(directory: string): Array<Record<string, unknown>> {
+  return readdirSync(directory)
+    .filter((entry) => entry.endsWith(".json"))
+    .sort()
+    .map((entry) => loadJson(resolve(directory, entry)) as Record<string, unknown>);
+}
+
+type ReviewVector = {
+  name: string;
+  request: unknown;
+  review: EventReview;
+};
+
+type ReviewScreenVector = {
+  request: unknown;
+  screen_review: ScreenReview;
+};
+
+type ReviewDetailPageVector = {
+  source_review_vector: string;
+  approval_digest: string;
+  limits: ReviewDetailPageLimits;
+  pages: ReviewDetailPage[];
+};
 
 describe("trusted review model", () => {
   it("exports only the shared review detail-page body styles", () => {
@@ -15,9 +61,9 @@ describe("trusted review model", () => {
   });
 
   it("matches every shared trusted-review vector", () => {
-    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    const reviews = loadVectorDirectory(resolve(specsRoot, "vectors/review")) as ReviewVector[];
 
-    for (const vector of fixtures.reviews) {
+    for (const vector of reviews) {
       const request = vector.request as {
         params: { event_template: unknown };
       };
@@ -27,19 +73,20 @@ describe("trusted review model", () => {
   });
 
   it("matches every shared trusted review-screen vector and approval digest", () => {
-    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    const reviewScreens = loadVectorDirectory(resolve(specsRoot, "vectors/review-screens")) as ReviewScreenVector[];
 
-    for (const vector of fixtures.reviewScreens) {
+    for (const vector of reviewScreens) {
       expect(screenReviewForRequest(vector.request)).toEqual(vector.screen_review);
       expect(approvalDigestForRequest(vector.request)).toBe(vector.screen_review.approval_digest);
     }
   });
 
   it("matches every shared review detail-page vector", () => {
-    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    const reviews = loadVectorDirectory(resolve(specsRoot, "vectors/review")) as ReviewVector[];
+    const reviewDetailPages = loadVectorDirectory(resolve(specsRoot, "vectors/review-detail-pages")) as ReviewDetailPageVector[];
 
-    for (const vector of fixtures.reviewDetailPages) {
-      const reviewVector = fixtures.reviews.find((review) => review.name === vector.source_review_vector);
+    for (const vector of reviewDetailPages) {
+      const reviewVector = reviews.find((review) => review.name === vector.source_review_vector);
       expect(reviewVector).toBeDefined();
       expect(renderReviewDetailPages(reviewVector!.review, vector.limits)).toEqual(vector.pages);
       expect(approvalDigestForRequest(reviewVector!.request)).toBe(vector.approval_digest);

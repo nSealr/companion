@@ -7,16 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@noble/curves':
-        specifier: 2.2.0
-        version: 2.2.0
-      commander:
-        specifier: 14.0.2
-        version: 14.0.2
-      serialport:
-        specifier: 13.0.0
-        version: 13.0.0
     devDependencies:
       '@types/node':
         specifier: 24.10.1
@@ -33,6 +23,165 @@ importers:
       vitest:
         specifier: 4.1.5
         version: 4.1.5(@types/node@24.10.1)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.7)(tsx@4.21.0))
+
+  apps/cli:
+    dependencies:
+      '@nsealr/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@nsealr/dev-signer':
+        specifier: workspace:*
+        version: link:../../packages/dev-signer
+      '@nsealr/fixtures':
+        specifier: workspace:*
+        version: link:../../packages/fixtures
+      '@nsealr/framing':
+        specifier: workspace:*
+        version: link:../../packages/framing
+      '@nsealr/nip46':
+        specifier: workspace:*
+        version: link:../../packages/nip46
+      '@nsealr/policy':
+        specifier: workspace:*
+        version: link:../../packages/policy
+      '@nsealr/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      '@nsealr/qr':
+        specifier: workspace:*
+        version: link:../../packages/qr
+      '@nsealr/review':
+        specifier: workspace:*
+        version: link:../../packages/review
+      '@nsealr/smartcard':
+        specifier: workspace:*
+        version: link:../../packages/smartcard
+      '@nsealr/transport':
+        specifier: workspace:*
+        version: link:../../packages/transport
+      commander:
+        specifier: 14.0.2
+        version: 14.0.2
+      serialport:
+        specifier: 13.0.0
+        version: 13.0.0
+    devDependencies:
+      tsx:
+        specifier: 4.21.0
+        version: 4.21.0
+
+  packages/core:
+    dependencies:
+      '@noble/curves':
+        specifier: 2.2.0
+        version: 2.2.0
+    devDependencies:
+      '@nsealr/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
+
+  packages/dev-signer:
+    dependencies:
+      '@noble/curves':
+        specifier: 2.2.0
+        version: 2.2.0
+      '@nsealr/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nsealr/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+    devDependencies:
+      '@nsealr/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
+
+  packages/fixtures:
+    dependencies:
+      '@nsealr/policy':
+        specifier: workspace:*
+        version: link:../policy
+      '@nsealr/review':
+        specifier: workspace:*
+        version: link:../review
+
+  packages/framing:
+    dependencies:
+      '@nsealr/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+    devDependencies:
+      '@nsealr/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
+
+  packages/nip46:
+    dependencies:
+      '@nsealr/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+    devDependencies:
+      '@nsealr/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
+
+  packages/policy: {}
+
+  packages/protocol:
+    devDependencies:
+      '@nsealr/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
+
+  packages/qr:
+    dependencies:
+      '@nsealr/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+    devDependencies:
+      '@nsealr/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
+
+  packages/review: {}
+
+  packages/smartcard:
+    dependencies:
+      '@noble/curves':
+        specifier: 2.2.0
+        version: 2.2.0
+      '@nsealr/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nsealr/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@nsealr/review':
+        specifier: workspace:*
+        version: link:../review
+    devDependencies:
+      '@nsealr/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
+
+  packages/transport:
+    dependencies:
+      '@nsealr/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nsealr/framing':
+        specifier: workspace:*
+        version: link:../framing
+      '@nsealr/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+    devDependencies:
+      '@nsealr/dev-signer':
+        specifier: workspace:*
+        version: link:../dev-signer
+      '@nsealr/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
 
 packages:
 

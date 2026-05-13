@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { hexToBytes } from "../../core/src/nostr.js";
-import { resolveSpecsRoot } from "../../fixtures/src/specs-root.js";
+import { hexToBytes } from "@nsealr/core";
+import { resolveSpecsRoot } from "@nsealr/fixtures";
 import { CommandApdu, ResponseApdu } from "./apdu.js";
 import { PcscApduTransport, PcscUnavailableError, type PcscConnection, type PcscTransmitResult } from "./pcsc.js";
 

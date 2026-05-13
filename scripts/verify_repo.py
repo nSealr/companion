@@ -114,10 +114,15 @@ def verify_companion_package_boundaries(errors: list[str]) -> None:
     for package_dir, package_name in COMPANION_PACKAGES.items():
         package_root = ROOT / "packages" / package_dir
         package_json_path = package_root / "package.json"
+        readme_path = package_root / "README.md"
         index_path = package_root / "src" / "index.ts"
         if not package_json_path.exists():
             errors.append(f"missing package manifest: packages/{package_dir}/package.json")
             continue
+        if not readme_path.exists():
+            errors.append(f"missing package README: packages/{package_dir}/README.md")
+        elif "## Boundary" not in readme_path.read_text(encoding="utf-8"):
+            errors.append(f"packages/{package_dir}/README.md must document the package boundary")
         if not index_path.exists():
             errors.append(f"missing package entrypoint: packages/{package_dir}/src/index.ts")
         package = read_json(package_json_path, errors)

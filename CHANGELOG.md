@@ -41,6 +41,9 @@ public npm release.
 - `@nsealr/browser-provider` browser native-messaging local-service client
   adapter over an explicit `sendNativeMessage` function and the shared native
   host name.
+- Private browser-extension native-messaging provider selector that binds a
+  sanitized sender-derived client identity to the local-service provider path
+  before browser packaging, content-script injection, or signer dispatch.
 - Private `@nsealr/browser-extension` app scaffold with strict internal
   `get_public_key` and `sign_event` message parsing plus a provider-backed
   handler that validates returned pubkeys/events before extension packaging,

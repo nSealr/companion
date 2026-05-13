@@ -83,8 +83,10 @@ match the shared `contract_id`.
   message parsing and provider-backed request handling. It currently accepts
   only internal `get_public_key` and `sign_event` requests, validates provider
   outputs, derives local client identity from a sanitized sender page-origin
-  context before provider selection, and can build a minimal no-host-permission
-  manifest. It does not package or install a browser extension.
+  context before provider selection, can compose that context with the
+  native-messaging local-service provider path, and can build a minimal
+  no-host-permission manifest. It does not package or install a browser
+  extension.
 - `@nsealr/client` exposes the shared local-client identity parser, including
   the browser-safe `@nsealr/client/client-identity` subpath, used before
   pairing, route selection, signer-request validation, and response

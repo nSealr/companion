@@ -299,12 +299,16 @@ tarball artifacts without publishing to npm.
   browser callers can trust them. It also derives local client identity from a
   sanitized sender page-origin context through the browser-safe
   `@nsealr/client/client-identity` subpath. The sender-aware handler validates
-  both internal request and sender before provider selection. It can build a
-  minimal MV3 manifest with `nativeMessaging` as the only permission and no
-  host/content-script/storage permissions. Remaining work: extension packaging,
-  content-script injection, native-messaging installation, origin permission
-  UX, cancellation, and real dispatch after M4.7 gates. No local production
-  signing and no extension-side production key storage.
+  both internal request and sender before provider selection. The extension
+  scaffold can now create a native-messaging-backed provider selector that
+  binds that sender-derived identity to the local-service route path and keeps
+  `sign_event` deterministically unavailable until signer dispatch is
+  implemented. It can build a minimal MV3 manifest with `nativeMessaging` as
+  the only permission and no host/content-script/storage permissions. Remaining
+  work: extension packaging, content-script injection, native-messaging
+  installation, origin permission UX, cancellation, and real dispatch after
+  M4.7 gates. No local production signing and no extension-side production key
+  storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

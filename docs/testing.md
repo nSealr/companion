@@ -78,7 +78,10 @@ single-repository CI. Cross-repository drift remains guarded by
   rejection, deceptive localhost rejection, extension-page-origin rejection,
   and shared local-client identity construction. Sender-aware handler tests
   prove malformed requests and malformed senders fail before provider
-  selection, and provider-selection failures produce deterministic errors.
+  selection, provider-selection failures produce deterministic errors, and the
+  native-messaging provider selector binds sender-derived identity to the
+  local-service route path while `sign_event` remains deterministically
+  unavailable until signer dispatch is implemented.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids.

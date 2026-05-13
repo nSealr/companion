@@ -38,7 +38,8 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "@serialport/bindings-cpp"
+      "@serialport/bindings-cpp",
+      "esbuild"
     ]
   }
 }

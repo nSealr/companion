@@ -10,6 +10,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
+    "consumer-smoke": "pnpm --filter @nsealr/consumer-smoke smoke",
     "ci": "pnpm typecheck && pnpm test"
   },
   "devDependencies": {

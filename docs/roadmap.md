@@ -214,7 +214,10 @@ artifacts.
   permission UX, cancellation, and route selection. No local production signing
   and no extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
-  consumer-import tests are stable.
+  consumer-import tests are stable. Current package-consumer smoke imports the
+  public `@nsealr/*` entrypoints through workspace package names and exercises a
+  minimal no-signer path; built-artifact tests remain pending until packages
+  have a build/publish pipeline.
 - M5 full NIP-46/Nostr Connect relay session integration.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and

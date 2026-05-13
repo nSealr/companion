@@ -57,6 +57,10 @@ single-repository CI. Cross-repository drift remains guarded by
   verification, explicit client identity forwarding, signer refusal propagation,
   and rejection before backend contact when an event template contains forbidden
   signer-owned fields.
+- `make package-smoke` runs the private `@nsealr/consumer-smoke` app, importing
+  every public `@nsealr/*` package through its package entrypoint and exercising
+  a minimal no-signer consumer path. This catches broken exports that relative
+  in-package tests would miss.
 - Service app tests prove the private native-messaging host scaffold stays a
   thin wrapper around `@nsealr/client`.
 - Negative response verification tests for request id mismatch, template
@@ -208,6 +212,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - Browser extension provider tests over a fake companion for origin permission,
   revocation, cancel, malformed companion response, native-host disconnects,
   and no key material in extension storage.
+- Package consumer smoke should eventually run against built JS/declaration
+  artifacts before npm publication; the current gate intentionally uses source
+  exports because packages are not built or published yet.
 - Full NIP-46 relay-session tests with local relay fixtures after NIP-44
   session lifecycle and reviewed `connect` acknowledgement are specified.
 - Large QR payload strategy tests once chunking or compression is designed.

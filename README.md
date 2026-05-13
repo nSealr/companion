@@ -186,7 +186,9 @@ match the shared `contract_id`.
   `getPublicKey` and `signEvent` route through companion without storing
   production signing material.
 - Public npm SDK alpha after package APIs, docs, semver, provenance, and
-  third-party import tests are stable.
+  third-party import tests are stable. A source-entrypoint consumer smoke is now
+  part of `make ci`; built-artifact consumer tests remain pending until package
+  build/publish plumbing exists.
 - Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,
   permissions, and auth challenges.
 - WebUSB, HID, CDC, WebSerial, and persistent transport experiments.

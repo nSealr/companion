@@ -58,6 +58,7 @@ COMPANION_PACKAGES = {
 }
 COMPANION_APPS = {
     "cli": "@nsealr/cli",
+    "consumer-smoke": "@nsealr/consumer-smoke",
     "service": "@nsealr/service",
 }
 DEEP_SOURCE_IMPORT_RE = re.compile(r'from\s+["\'](?:\.\./){2,}[^"\']*/src/|from\s+["\'][^"\']*packages/[^"\']*/src/')
@@ -76,12 +77,17 @@ def verify_companion_tooling(errors: list[str]) -> None:
     package = json.loads(package_path.read_text(encoding="utf-8"))
     if package.get("packageManager") != "pnpm@10.33.4":
         errors.append("package.json must pin packageManager to pnpm@10.33.4")
+    scripts = package.get("scripts")
+    if not isinstance(scripts, dict) or scripts.get("consumer-smoke") != "pnpm --filter @nsealr/consumer-smoke smoke":
+        errors.append("package.json must expose consumer-smoke through @nsealr/consumer-smoke")
 
     makefile = makefile_path.read_text(encoding="utf-8")
     if "PNPM_VERSION := 10.33.4" not in makefile:
         errors.append("Makefile must declare PNPM_VERSION := 10.33.4")
     if "npm exec --yes --package=pnpm@$(PNPM_VERSION) -- pnpm" not in makefile:
         errors.append("Makefile must provide a pinned npm exec fallback for pnpm")
+    if "package-smoke:" not in makefile or "$(PNPM) consumer-smoke" not in makefile:
+        errors.append("Makefile must run the public package consumer smoke")
 
 
 def read_json(path: Path, errors: list[str]) -> dict[str, object]:

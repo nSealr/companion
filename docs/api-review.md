@@ -44,8 +44,8 @@ secretless route selection, signer-request validation, and signer-response
 verification. Client identity, request-id correlation, native-message framing,
 and malformed-response rejection are public helpers. Route selection returns
 metadata only; persistent grant storage, signer dispatch, cancellation, and
-native-host packaging remain future work and must not be implied by this
-package.
+native-host installation packaging remain future work and must not be implied by
+this package.
 
 ## @nsealr/core
 

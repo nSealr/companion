@@ -231,10 +231,11 @@ tarball artifacts without publishing to npm.
   The first high-level client wrapper validates request-id
   correlation and malformed service responses before browser, SDK, desktop, or
   CLI code can trust them. Pure package-level route selection and the
-  local-service route-selection operation are implemented; remaining work is
-  persistent pairing store, user approval UX, cancellation, persistent
+  local-service route-selection operation are implemented, and the private
+  service app now has a tested multi-message native-host stdio loop; remaining
+  work is persistent pairing store, user approval UX, cancellation, persistent
   revocation, deterministic transport errors, signer dispatch, and native-host
-  packaging.
+  installation packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are

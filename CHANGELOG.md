@@ -29,6 +29,9 @@ public npm release.
   in-memory grant controls revocation, expiry, and operation scope.
 - Private native-messaging service scaffold now returns deterministic malformed
   frame errors and is tested with injected in-memory authorization context.
+- Private native-messaging service app now processes multiple length-prefixed
+  messages per host session and exposes a tested stdio loop for future browser
+  native-host packaging.
 - `@nsealr/policy` pure route-selection helper and shared specs vectors for
   account-to-route metadata selection without signer dispatch.
 - `@nsealr/client` local-service route-selection operation gated by in-memory

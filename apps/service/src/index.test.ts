@@ -1,15 +1,17 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { closeSync, mkdtempSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "@nsealr/fixtures";
 import {
+  NATIVE_MESSAGE_LENGTH_BYTES,
   clientIdForIdentity,
   decodeNativeMessage,
   encodeNativeMessage,
   type LocalClientGrant,
   type LocalClientIdentity
 } from "@nsealr/client";
-import { runServiceOnce } from "./index.js";
+import { runServiceFrames, runServiceOnce, runServiceStdio } from "./index.js";
 
 const specsRoot = resolveSpecsRoot();
 const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
@@ -26,6 +28,19 @@ const grant: LocalClientGrant = {
   approved_at: 1_900_000_000,
   expires_at: 2_000_000_000
 };
+
+function decodeFrames(frames: Uint8Array): unknown[] {
+  const messages: unknown[] = [];
+  let offset = 0;
+  while (offset < frames.byteLength) {
+    const prefix = frames.slice(offset, offset + NATIVE_MESSAGE_LENGTH_BYTES);
+    const length = new DataView(prefix.buffer, prefix.byteOffset, prefix.byteLength).getUint32(0, true);
+    const frameEnd = offset + NATIVE_MESSAGE_LENGTH_BYTES + length;
+    messages.push(decodeNativeMessage(frames.slice(offset, frameEnd)));
+    offset = frameEnd;
+  }
+  return messages;
+}
 
 describe("local companion service app", () => {
   it("handles one native-messaging service request", () => {
@@ -82,5 +97,98 @@ describe("local companion service app", () => {
         retryable: false
       }
     });
+  });
+
+  it("handles multiple native-messaging frames in one service stream", () => {
+    const input = Buffer.concat([
+      Buffer.from(encodeNativeMessage({
+        version: 1,
+        request_id: "svc-stream-status",
+        operation: "service_status"
+      })),
+      Buffer.from(encodeNativeMessage({
+        version: 1,
+        request_id: "svc-stream-validate",
+        operation: "validate_signer_request",
+        params: { client, request }
+      }))
+    ]);
+
+    expect(decodeFrames(runServiceFrames(input, {
+      grants: [grant],
+      now: 1_900_000_000
+    }))).toEqual([
+      expect.objectContaining({
+        request_id: "svc-stream-status",
+        ok: true
+      }),
+      expect.objectContaining({
+        request_id: "svc-stream-validate",
+        ok: true,
+        result: { validation: { valid: true } }
+      })
+    ]);
+  });
+
+  it("returns one deterministic error frame for a truncated service stream", () => {
+    expect(decodeFrames(runServiceFrames(new Uint8Array([1, 0])))).toEqual([
+      expect.objectContaining({
+        request_id: "invalid-service-request",
+        ok: false,
+        error: expect.objectContaining({
+          code: "invalid_native_message",
+          message: expect.stringMatching(/length prefix/u)
+        })
+      })
+    ]);
+  });
+
+  it("runs the native-messaging stdio loop over file descriptors", () => {
+    const dir = mkdtempSync(join(tmpdir(), "nsealr-service-"));
+    const inputPath = join(dir, "input.bin");
+    const outputPath = join(dir, "output.bin");
+    writeFileSync(inputPath, Buffer.concat([
+      Buffer.from(encodeNativeMessage({
+        version: 1,
+        request_id: "svc-fd-status",
+        operation: "service_status"
+      })),
+      Buffer.from(encodeNativeMessage({
+        version: 1,
+        request_id: "svc-fd-validate",
+        operation: "validate_signer_request",
+        params: { client, request }
+      }))
+    ]));
+    const inputFd = openSync(inputPath, "r");
+    const outputFd = openSync(outputPath, "w");
+    try {
+      runServiceStdio({
+        inputFd,
+        outputFd,
+        context: {
+          grants: [grant],
+          now: 1_900_000_000
+        }
+      });
+    } finally {
+      closeSync(inputFd);
+      closeSync(outputFd);
+    }
+
+    const output = readFileSync(outputPath);
+    rmSync(dir, { recursive: true, force: true });
+
+    expect(decodeFrames(output)).toEqual([
+      expect.objectContaining({
+        request_id: "svc-fd-status",
+        ok: true
+      }),
+      expect.objectContaining({
+        request_id: "svc-fd-validate",
+        ok: true,
+        result: { validation: { valid: true } }
+      })
+    ]);
   });
 });

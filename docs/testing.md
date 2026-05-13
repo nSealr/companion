@@ -248,10 +248,12 @@ single-repository CI. Cross-repository drift remains guarded by
   helpers.
 - Package release workflow tests should eventually add trusted-publishing dry
   run or npm provenance verification once npm organization settings exist.
-- Local companion service tests with a fake extension/app client: pairing,
-  selected account route, user approval UX, persistent grant storage,
-  cancellation, persistent revocation, deterministic transport errors, signer
-  dispatch, and built-package consumer tests after explicit policy gates exist.
+- Local companion service tests with a fake extension/app client: user approval
+  UX, persistent grant storage, cancellation, persistent revocation,
+  deterministic transport errors, signer dispatch, and built-package consumer
+  tests after explicit policy gates exist. The current test suite already
+  covers pairing intent generation, selected account route, malformed
+  native-message rejection, and multi-message native-host stdio behavior.
 - Browser extension provider tests over a fake companion for origin permission,
   revocation, cancel, malformed companion response, native-host disconnects,
   and no key material in extension storage.

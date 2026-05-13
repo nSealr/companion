@@ -64,8 +64,9 @@ match the shared `contract_id`.
   `getPublicKey` and `signEvent` boundaries, converts event templates into
   nSealr signer requests, verifies signed responses, and stores no browser-side
   production keys.
-- `@nsealr/service` is the private one-shot native-messaging host scaffold over
-  `@nsealr/client`. It returns deterministic native-frame errors and accepts
+- `@nsealr/service` is the private native-messaging host scaffold over
+  `@nsealr/client`. It can process multiple length-prefixed service messages
+  on one stdio session, returns deterministic native-frame errors, and accepts
   explicit in-memory authorization context in tests. It does not open relays,
   store keys, persist accounts, or contact signer transports.
 - `nsealr review-request` renders deterministic review JSON, digest-bound
@@ -187,8 +188,8 @@ match the shared `contract_id`.
 - Expand the local companion service boundary with pairing, origin/app
   identity, cancellation, persistent revocation storage, deterministic errors,
   and signer transport dispatch. The pure package-level route selector, the
-  local-service route-selection operation, and the first SDK wrapper over the
-  native-messaging/local-service boundary are in place; localhost APIs need a
+  local-service route-selection operation, the first SDK wrapper, and a
+  multi-message native-messaging host loop are in place; localhost APIs need a
   separate threat-model pass.
 - Browser extension / NIP-07 bridge packaging around the provider adapter so
   `getPublicKey` and `signEvent` route through companion without storing

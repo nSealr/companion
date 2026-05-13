@@ -101,11 +101,12 @@ packages, but it must not export test-only signing as a production path.
   identity, validates public keys, converts `signEvent` inputs into nSealr
   signer requests, verifies signed responses, and stores no browser-side
   production keys.
-- `apps/service`: private one-shot native-messaging host scaffold over
-  `packages/client`. It accepts explicit in-memory authorization context in
-  tests and returns deterministic native-frame errors. It is intentionally
-  secretless and does not yet perform persistent grant lookup, account
-  storage, relay work, or signer transport dispatch.
+- `apps/service`: private native-messaging host scaffold over
+  `packages/client`. It processes multiple length-prefixed service messages on
+  one stdio session, accepts explicit in-memory authorization context in tests,
+  and returns deterministic native-frame errors. It is intentionally secretless
+  and does not yet perform persistent grant lookup, account storage, relay
+  work, or signer transport dispatch.
 
 Each reusable package has its own `package.json`, source `src/index.ts`
 entrypoint, and built `dist` JS/declaration export. Cross-package source imports
@@ -147,7 +148,8 @@ reuse the same local-service semantics rather than defining a separate security
 model.
 
 The first native-messaging scaffold accepts `service_status`,
-`request_pairing`, `validate_signer_request`, and `verify_signer_response`.
+`request_pairing`, `select_account_route`, `validate_signer_request`, and
+`verify_signer_response`.
 Pairing requests return a deterministic intent for later user review; they do
 not approve the client. Validation and verification require explicit grants
 supplied by the caller/test harness. When grant history is supplied, the latest
@@ -159,6 +161,11 @@ verification boundary before any signer I/O or persistent session state is
 exposed. `@nsealr/client` now includes the caller-side wrapper for both object
 exchange and native-messaging frame exchange; it validates service responses and
 request-id correlation before returning them to higher-level callers.
+The private `@nsealr/service` app now runs a tested multi-message native-host
+stdio loop, so a future browser extension can keep one native-messaging port
+open and receive one deterministic response per length-prefixed service
+request. This still does not add persistent pairing storage, signer dispatch,
+relay sessions, or browser packaging.
 
 The browser-provider package is intentionally one layer above this service
 boundary. Each provider instance is bound to a client identity so the future

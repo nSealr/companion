@@ -38,6 +38,9 @@ public npm release.
 - `nsealr local grant-store revoke-client` for writing a new explicit
   grant-store artifact with a latest-client revocation appended, without
   deleting grant history or mutating input files.
+- `@nsealr/browser-provider` browser native-messaging local-service client
+  adapter over an explicit `sendNativeMessage` function and the shared native
+  host name.
 - `@nsealr/client` secretless JSON grant-store contract for persisting approved
   and revoked local client grants without production key material.
 - Deterministic local-service grant-history selection so the latest matching

@@ -287,11 +287,13 @@ tarball artifacts without publishing to npm.
   stores no browser-side production key material. The provider now has a
   local-service backend adapter that can read the selected public key through
   authorized route selection and return deterministic signer-unavailable
-  responses while signer dispatch remains blocked. Remaining work: extension
-  manifest/content-script packaging, native-messaging installation, origin
-  permission UX, cancellation, and real dispatch after M4.7 gates. No local
-  production signing and no
-  extension-side production key storage.
+  responses while signer dispatch remains blocked. It also has a browser
+  native-messaging client adapter that wraps an explicit `sendNativeMessage`
+  function with the shared native host name while reusing local-service
+  response validation. Remaining work: extension manifest/content-script
+  packaging, native-messaging installation, origin permission UX,
+  cancellation, and real dispatch after M4.7 gates. No local production signing
+  and no extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

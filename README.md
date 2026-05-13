@@ -76,8 +76,9 @@ match the shared `contract_id`.
   injected companion backend and explicit client identity. It validates
   `getPublicKey` and `signEvent` boundaries, converts event templates into
   nSealr signer requests, can use local-service route selection for the
-  selected account public key, verifies signed responses, and stores no
-  browser-side production keys.
+  selected account public key, includes a browser native-messaging client
+  adapter over explicit `sendNativeMessage`, verifies signed responses, and
+  stores no browser-side production keys.
 - `@nsealr/service` is the private native-messaging host scaffold over
   `@nsealr/client`. It can process multiple length-prefixed service messages
   on one stdio session, returns deterministic native-frame errors, and accepts

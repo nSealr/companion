@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:22207783949a187b059f09f197ec4291f6d98f79f0dfbd5177b3abcf9c03f13a`
+API surface digest: `sha256:cabdf55dc9a10694cfc78c1e226fee35c6c3e1f744816550e1fee56414b4ff1c`
 
 Source: `docs/api.md`
 
@@ -28,11 +28,14 @@ Source: `docs/api.md`
 Status: reviewed for pre-alpha.
 
 The surface is intentionally small: `createNip07Provider`, the local-service
-backend adapter, and provider/backend types. It stores no browser-side key
-material and delegates signer access to an injected backend. The local-service
-adapter can read the selected account public key through authorized route
-selection and returns deterministic signer-unavailable responses until signer
-dispatch is explicitly implemented. `signEvent` validates the generated nSealr
+backend adapter, the browser native-messaging local-service client adapter, and
+provider/backend types. It stores no browser-side key material and delegates
+signer access to an injected backend. The local-service adapter can read the
+selected account public key through authorized route selection and returns
+deterministic signer-unavailable responses until signer dispatch is explicitly
+implemented. The native-messaging adapter only wraps an explicit
+`sendNativeMessage` function and validates the host name; it does not install a
+native host or persist grants. `signEvent` validates the generated nSealr
 request and verifies successful responses before returning a Nostr event. Keep
 future extension storage, native-host installation, origin grants, NIP-04, and
 NIP-44 outside this package until those contracts are reviewed separately.
@@ -48,9 +51,11 @@ grant-store serialization and output-only revocation appending for
 approved/revoked local client grants, secretless route selection,
 signer-request validation, and signer-response verification. Client identity,
 request-id correlation, native-message framing, and malformed-response
-rejection are public helpers. Route selection returns metadata only; file-backed
-service loading, signer dispatch, cancellation, and native-host installation
-packaging remain future work and must not be implied by this package.
+rejection are public helpers. The shared native host name is exported so the
+service manifest generator and browser adapter do not drift. Route selection
+returns metadata only; file-backed service loading, signer dispatch,
+cancellation, and native-host installation packaging remain future work and
+must not be implied by this package.
 
 ## @nsealr/core
 

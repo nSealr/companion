@@ -64,8 +64,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - Browser-provider package tests cover NIP-07 `getPublicKey` validation,
   `signEvent` conversion into nSealr signer requests, signed-response
   verification, explicit client identity forwarding, signer refusal propagation,
-  and rejection before backend contact when an event template contains forbidden
-  signer-owned fields.
+  browser native-messaging local-service client adaptation, shared native host
+  name use, invalid native-host-name rejection, and rejection before backend
+  contact when an event template contains forbidden signer-owned fields.
 - `make package-smoke` builds package artifacts, then runs the private
   `@nsealr/consumer-smoke` app. The smoke imports every public `@nsealr/*`
   package through its built package entrypoint and exercises a minimal

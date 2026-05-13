@@ -3,17 +3,19 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  NATIVE_HOST_NAME,
+  createBrowserNativeMessagingLocalServiceClient,
   createLocalServiceBrowserProviderBackend,
   createNip07Provider
 } from "@nsealr/browser-provider";
 import {
+  appendLocalGrantRevocation,
   clientIdForIdentity,
   createLocalGrantStore,
   handleLocalServiceRequest,
   LocalServiceClient,
   parseLocalGrantStore,
   reviewPairingIntent,
-  revokeLocalGrant,
   serializeLocalGrantStore,
   type LocalClientGrant,
   type LocalClientIdentity
@@ -211,10 +213,11 @@ async function localServiceExample(): Promise<void> {
   if (!("validation" in verification.result)) throw new Error("verification example returned wrong result type");
   assert.equal(verification.result.validation.valid, true);
 
-  const revokedStore = createLocalGrantStore([
-    ...grantStore.grants,
-    revokeLocalGrant(grantStore.grants[0], { revokedAt: 1_900_000_010 })
-  ], { updatedAt: 1_900_000_010 });
+  const revokedStore = appendLocalGrantRevocation(grantStore, {
+    clientId: grantStore.grants[0].client_id,
+    origin: grantStore.grants[0].origin,
+    surface: grantStore.grants[0].surface
+  }, { revokedAt: 1_900_000_010 });
   const revokedService = new LocalServiceClient({
     exchange: (message) => handleLocalServiceRequest(message, {
       grants: revokedStore.grants,
@@ -236,20 +239,25 @@ async function browserProviderExample(): Promise<void> {
     app_name: "Example Nostr Client",
     instance_id: "sdk-provider-1"
   };
-  const service = new LocalServiceClient({
-    exchange: (message) => handleLocalServiceRequest(message, {
-      accounts: fixtures.accounts,
-      grants: [{
-        client_id: clientIdForIdentity(browserClient),
-        origin: browserClient.origin,
-        surface: browserClient.surface,
-        allowed_operations: ["select_account_route", "validate_signer_request"],
-        expires_at: 2_000_000_000
-      }],
-      now: 1_900_000_000
-    }),
-    nextRequestId: sequence("sdk-provider-service")
+  const service = createBrowserNativeMessagingLocalServiceClient({
+    sendNativeMessage: (hostName, message) => {
+      assert.equal(hostName, NATIVE_HOST_NAME);
+      return handleLocalServiceRequest(message, {
+        accounts: fixtures.accounts,
+        grants: [{
+          client_id: clientIdForIdentity(browserClient),
+          origin: browserClient.origin,
+          surface: browserClient.surface,
+          allowed_operations: ["select_account_route", "validate_signer_request"],
+          expires_at: 2_000_000_000
+        }],
+        now: 1_900_000_000
+      });
+    },
+    nextRequestId: sequence("sdk-provider-native-service")
   });
+  const nativeStatus = await service.serviceStatus();
+  assert.equal(nativeStatus.ok, true);
   const provider = createNip07Provider({
     client: browserClient,
     backend: createLocalServiceBrowserProviderBackend({

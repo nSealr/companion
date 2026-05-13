@@ -22,10 +22,14 @@ NIP-07 browser provider adapter for routing Nostr signing requests through nSeal
 Source entrypoint: `packages/browser-provider/src/index.ts`
 
 Exports:
+- `BrowserNativeMessageSender`
+- `BrowserNativeMessagingLocalServiceClientOptions`
 - `BrowserProviderBackend`
 - `BrowserProviderOptions`
 - `LocalServiceBrowserProviderBackendOptions`
+- `NATIVE_HOST_NAME`
 - `Nip07Provider`
+- `createBrowserNativeMessagingLocalServiceClient`
 - `createLocalServiceBrowserProviderBackend`
 - `createNip07Provider`
 
@@ -66,6 +70,7 @@ Exports:
 - `MAX_LOCAL_GRANT_STORE_JSON_BYTES`
 - `MAX_NATIVE_MESSAGE_BYTES`
 - `MAX_SERVICE_JSON_BYTES`
+- `NATIVE_HOST_NAME`
 - `NATIVE_MESSAGE_LENGTH_BYTES`
 - `NativeMessageFrameExchange`
 - `NativeMessagingLocalServiceClientOptions`

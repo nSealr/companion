@@ -1,6 +1,7 @@
 import { isAbsolute } from "node:path";
+import { NATIVE_HOST_NAME as CLIENT_NATIVE_HOST_NAME } from "@nsealr/client";
 
-export const NATIVE_HOST_NAME = "dev.nsealr.companion";
+export const NATIVE_HOST_NAME = CLIENT_NATIVE_HOST_NAME;
 export const NATIVE_HOST_DESCRIPTION = "nSealr companion native messaging host";
 
 export type NativeHostBrowser = "chromium" | "firefox";

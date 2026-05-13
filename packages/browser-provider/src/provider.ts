@@ -6,12 +6,16 @@ import {
   verifySignedEventResponse
 } from "@nsealr/core";
 import {
+  LocalServiceClient,
+  NATIVE_HOST_NAME,
   type LocalClientIdentity,
-  type LocalServiceClient,
   type LocalServiceRequest,
-  type LocalServiceResponse
+  type LocalServiceResponse,
+  type LocalServiceExchange
 } from "@nsealr/client";
 import { validateRequest, validateResponse } from "@nsealr/protocol";
+
+export { NATIVE_HOST_NAME } from "@nsealr/client";
 
 export type Nip07Provider = {
   getPublicKey(): Promise<string>;
@@ -35,6 +39,14 @@ export type LocalServiceBrowserProviderBackendOptions = {
   signingUnavailableMessage?: string;
 };
 
+export type BrowserNativeMessageSender = (hostName: string, message: LocalServiceRequest) => Promise<unknown> | unknown;
+
+export type BrowserNativeMessagingLocalServiceClientOptions = {
+  sendNativeMessage: BrowserNativeMessageSender;
+  hostName?: string;
+  nextRequestId?: () => string;
+};
+
 function defaultRequestIdFactory(): () => string {
   let sequence = 0;
   return () => {
@@ -49,6 +61,12 @@ function assertLowerHex(value: unknown, length: number, label: string): asserts 
   }
   if (!new RegExp(`^[0-9a-f]{${length}}$`, "u").test(value)) {
     throw new Error(`${label} is invalid`);
+  }
+}
+
+function assertNativeHostName(value: string): void {
+  if (!/^[a-z0-9_]+(?:\.[a-z0-9_]+)*$/u.test(value) || value.length > 128) {
+    throw new Error("native host name is invalid");
   }
 }
 
@@ -123,6 +141,18 @@ function localServiceProtocolError(request: SignEventRequest, code: string, mess
       retryable: false
     }
   };
+}
+
+export function createBrowserNativeMessagingLocalServiceClient(
+  options: BrowserNativeMessagingLocalServiceClientOptions
+): LocalServiceClient {
+  const hostName = options.hostName ?? NATIVE_HOST_NAME;
+  assertNativeHostName(hostName);
+  const exchange: LocalServiceExchange = (request) => options.sendNativeMessage(hostName, request);
+  return new LocalServiceClient({
+    exchange,
+    ...(options.nextRequestId !== undefined ? { nextRequestId: options.nextRequestId } : {})
+  });
 }
 
 export function createLocalServiceBrowserProviderBackend(

@@ -211,6 +211,12 @@ The first local-service backend adapter uses the same local-service route
 selection and signer-request validation operations, but it still returns
 deterministic signer-unavailable responses for `signEvent` because route
 dispatch is not implemented yet.
+The package also includes a browser native-messaging local-service client
+adapter over an explicit `sendNativeMessage(hostName, message)` function. This
+keeps browser API integration thin while reusing `LocalServiceClient` response
+validation and the shared native host name used by the private service manifest
+generator. It does not install native-host manifests, persist grants, or open
+signer transports.
 
 Executable SDK examples live in private app `@nsealr/sdk-examples`. They are
 not another access surface and do not own production behavior. Their role is to

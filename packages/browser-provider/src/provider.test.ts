@@ -11,6 +11,8 @@ import {
 import { type EventTemplate } from "@nsealr/core";
 import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
 import {
+  NATIVE_HOST_NAME,
+  createBrowserNativeMessagingLocalServiceClient,
   createLocalServiceBrowserProviderBackend,
   createNip07Provider,
   type BrowserProviderBackend
@@ -142,6 +144,42 @@ describe("NIP-07 browser provider boundary", () => {
 
     await expect(provider.getPublicKey()).resolves.toBe(routeVector.selection.public_key);
     await expect(provider.signEvent(request.params.event_template)).rejects.toThrow(/Signer dispatch is not configured/u);
+  });
+
+  it("creates browser native-messaging local-service clients over explicit senders", async () => {
+    const sentHostNames: string[] = [];
+    const service = createBrowserNativeMessagingLocalServiceClient({
+      nextRequestId: () => "browser-native-status",
+      sendNativeMessage: (hostName, message) => {
+        sentHostNames.push(hostName);
+        return handleLocalServiceRequest(message);
+      }
+    });
+
+    await expect(service.serviceStatus()).resolves.toMatchObject({
+      request_id: "browser-native-status",
+      ok: true,
+      result: {
+        service: {
+          name: "nsealr-companion-service",
+          stores_production_secrets: false
+        }
+      }
+    });
+    expect(sentHostNames).toEqual([NATIVE_HOST_NAME]);
+  });
+
+  it("rejects invalid browser native-messaging host names before sending", async () => {
+    let called = false;
+
+    expect(() => createBrowserNativeMessagingLocalServiceClient({
+      hostName: "bad host name",
+      sendNativeMessage: () => {
+        called = true;
+        return {};
+      }
+    })).toThrow(/native host name/u);
+    expect(called).toBe(false);
   });
 
   it("surfaces local-service authorization failure before browser callers trust a key", async () => {

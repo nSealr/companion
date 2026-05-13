@@ -10,6 +10,7 @@ import { compactJsonUtf8ByteLength, NSEALR_V0_LIMITS, validateRequest, validateR
 
 export const LOCAL_SERVICE_PROTOCOL = "nsealr-local-service-v0";
 export const LOCAL_SERVICE_NAME = "nsealr-companion-service";
+export const NATIVE_HOST_NAME = "dev.nsealr.companion";
 export const LOCAL_PAIRING_INTENT_FORMAT = "nsealr-local-pairing-intent-v0";
 export const LOCAL_PAIRING_APPROVAL_FORMAT = "nsealr-local-pairing-approval-v0";
 export const MAX_SERVICE_JSON_BYTES = 16 * 1024;

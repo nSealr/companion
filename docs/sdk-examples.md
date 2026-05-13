@@ -21,8 +21,8 @@ package and cover:
 - local companion service status, pairing-intent creation, pairing-review
   projection, secretless grant-store serialization/revocation, authorized
   request validation, and authorized response verification;
-- browser-provider `getPublicKey` and refused `signEvent` behavior over an
-  injected backend;
+- browser-provider `getPublicKey`, browser native-messaging local-service
+  client adaptation, and refused `signEvent` behavior over an injected backend;
 - already-decrypted NIP-46 bridge decisions for permitted and denied requests;
 - smartcard APDU command/response round-trip and package-owned serial-line
   exchange against an in-memory port that returns `signing_disabled`.

@@ -197,7 +197,8 @@ plus README, consumer smokes import both workspace-built and packed package
 entrypoints, executable SDK examples now cover request/QR, local-service,
 browser-provider, and already-decrypted NIP-46 flows, and the changelog/release
 policy pins synchronized pre-release versioning plus npm provenance
-requirements.
+requirements. A manual package release rehearsal workflow now prepares and
+uploads checked tarball artifacts without publishing to npm.
 
 ## Later
 
@@ -226,8 +227,10 @@ requirements.
   README files document purpose and trust boundaries. Packed-tarball smoke
   validates installable tarballs before publication. Executable SDK examples
   prove common public package flows without test-only signer imports. Changelog
-  and release policy are present. npm publish automation, provenance workflow,
-  and broader package-specific example coverage remain pending.
+  and release policy are present. A manual release rehearsal workflow prepares
+  checked tarball artifacts without npm publication. Actual npm trusted
+  publishing/provenance activation and broader package-specific example
+  coverage remain pending.
 - M5 full NIP-46/Nostr Connect relay session integration.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and

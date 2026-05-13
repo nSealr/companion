@@ -73,6 +73,10 @@ single-repository CI. Cross-repository drift remains guarded by
   only `dist`, README, and package metadata, verifies `workspace:*` dependency
   protocols were rewritten, installs the tarballs into a temporary npm consumer
   project, and imports them by package name.
+- `make release-artifacts` builds package artifacts, packs every public
+  package, validates the same tarball boundaries, and writes
+  `release-artifacts/packages/manifest.json` for the manual package release
+  rehearsal workflow. It does not publish to npm.
 - Service app tests prove the private native-messaging host scaffold stays a
   thin wrapper around `@nsealr/client`.
 - Negative response verification tests for request id mismatch, template
@@ -217,6 +221,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - Third-party consumer import tests for future `@nsealr/*` publication:
   more package-specific executable examples, no test-only signer leakage, and
   no production secret storage in public helpers.
+- Package release workflow tests should eventually add trusted-publishing dry
+  run or npm provenance verification once npm organization settings exist.
 - Local companion service tests with a fake extension/app client: pairing,
   selected account route, user approval UX, persistent grant storage,
   cancellation, persistent revocation, deterministic transport errors, signer

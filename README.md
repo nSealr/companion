@@ -194,7 +194,8 @@ match the shared `contract_id`.
   built-artifact consumer smoke are now part of `make ci`; packed-tarball
   installation smoke is also part of `make ci`; synchronized package version,
   changelog, executable SDK examples, and release/provenance policy are
-  documented before npm publish/provenance plumbing.
+  documented. A manual package release rehearsal workflow prepares checked
+  tarball artifacts without publishing to npm.
 - Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,
   permissions, and auth challenges.
 - WebUSB, HID, CDC, WebSerial, and persistent transport experiments.

@@ -75,6 +75,7 @@ def verify_companion_tooling(errors: list[str]) -> None:
     changelog_path = ROOT / "CHANGELOG.md"
     release_path = ROOT / "docs" / "release.md"
     sdk_examples_path = ROOT / "docs" / "sdk-examples.md"
+    release_workflow_path = ROOT / ".github" / "workflows" / "package-release.yml"
     if not package_path.exists() or not makefile_path.exists():
         return
 
@@ -92,6 +93,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("package.json must expose examples-smoke through @nsealr/sdk-examples")
     elif scripts.get("pack-smoke") != "node scripts/pack_smoke.mjs":
         errors.append("package.json must expose the packed tarball smoke script")
+    elif scripts.get("release-artifacts") != "node scripts/prepare_release_artifacts.mjs --out release-artifacts/packages":
+        errors.append("package.json must expose release-artifacts preparation")
     elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm pack-smoke":
         errors.append("package.json ci must build package artifacts and examples before checks")
 
@@ -108,9 +111,14 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile must run the SDK examples smoke")
     if "pack-smoke:" not in makefile or "$(PNPM) pack-smoke" not in makefile:
         errors.append("Makefile must run the packed tarball smoke")
+    if "release-artifacts:" not in makefile or "$(PNPM) release-artifacts" not in makefile:
+        errors.append("Makefile must prepare release artifacts")
 
     if not changelog_path.exists() or "## Unreleased" not in changelog_path.read_text(encoding="utf-8"):
         errors.append("CHANGELOG.md must track unreleased package changes")
+    for rel in ["scripts/package_set.mjs", "scripts/prepare_release_artifacts.mjs"]:
+        if not (ROOT / rel).exists():
+            errors.append(f"missing companion package release helper: {rel}")
     if not release_path.exists():
         errors.append("docs/release.md must document release policy")
     else:
@@ -123,6 +131,21 @@ def verify_companion_tooling(errors: list[str]) -> None:
         sdk_examples_text = sdk_examples_path.read_text(encoding="utf-8")
         if "make examples-smoke" not in sdk_examples_text or "@nsealr/sdk-examples" not in sdk_examples_text:
             errors.append("docs/sdk-examples.md must document make examples-smoke and @nsealr/sdk-examples")
+    if not release_workflow_path.exists():
+        errors.append(".github/workflows/package-release.yml must document package release rehearsal")
+    else:
+        release_workflow = release_workflow_path.read_text(encoding="utf-8")
+        for marker in [
+            "Package Release Rehearsal",
+            "workflow_dispatch:",
+            "make ci",
+            "make release-artifacts",
+            "actions/upload-artifact"
+        ]:
+            if marker not in release_workflow:
+                errors.append(f"package release rehearsal workflow must include {marker}")
+        if "npm publish" in release_workflow:
+            errors.append("package release rehearsal workflow must not publish to npm")
 
 
 def read_json(path: Path, errors: list[str]) -> dict[str, object]:

@@ -43,10 +43,21 @@ Before any npm publication:
 - Public claims must remain pre-production unless real signer acceptance gates
   are complete.
 
+## Rehearsal Workflow
+
+`.github/workflows/package-release.yml` is a manual package release rehearsal.
+It runs `make ci`, prepares checked package tarballs with
+`make release-artifacts`, and uploads those tarballs plus a manifest as a
+GitHub Actions artifact.
+
+This workflow does not publish to npm. It is the reviewed artifact-preparation
+path that a later publication workflow must build on.
+
 ## Provenance
 
 Publication should happen only from a reviewed GitHub Actions release workflow
 using npm trusted publishing or `npm publish --provenance`.
 
-Local `npm publish` is not an accepted release path. A release workflow must be
-added and reviewed before the first public package publication.
+Local `npm publish` is not an accepted release path. The first public package
+publication still requires a separate reviewed workflow change that enables npm
+trusted publishing or `npm publish --provenance` from CI.

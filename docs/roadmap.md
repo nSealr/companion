@@ -196,9 +196,12 @@ artifacts.
 ## Later
 
 - M4.7 local companion service boundary for browser extension, desktop UI, and
-  high-level SDK clients. Prefer native messaging for the first serious
-  browser-extension path; treat localhost HTTP/WebSocket as a separate
-  threat-model decision.
+  high-level SDK clients. First native-messaging scaffold is implemented with
+  secretless service status, signer-request validation, and signer-response
+  verification. Remaining work: pairing, origin/app identity, account route
+  selection, cancellation, revocation, deterministic transport errors, signer
+  dispatch, and native-host packaging. Treat localhost HTTP/WebSocket as a
+  separate threat-model decision.
 - M4.8 browser extension / NIP-07 bridge with `getPublicKey` and `signEvent`
   routed through companion. No local production signing and no extension-side
   production key storage.

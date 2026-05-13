@@ -42,6 +42,7 @@ LICENSE_MARKERS = {
 }
 
 COMPANION_PACKAGES = {
+    "client": "@nsealr/client",
     "core": "@nsealr/core",
     "dev-signer": "@nsealr/dev-signer",
     "fixtures": "@nsealr/fixtures",
@@ -56,6 +57,7 @@ COMPANION_PACKAGES = {
 }
 COMPANION_APPS = {
     "cli": "@nsealr/cli",
+    "service": "@nsealr/service",
 }
 DEEP_SOURCE_IMPORT_RE = re.compile(r'from\s+["\'](?:\.\./){2,}[^"\']*/src/|from\s+["\'][^"\']*packages/[^"\']*/src/')
 

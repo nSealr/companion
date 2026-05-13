@@ -90,6 +90,13 @@ packages, but it must not export test-only signing as a production path.
   response, `connect` can produce a review intent, and missing permissions
   produce deterministic NIP-46 errors before signer transport. Permission
   storage and grant UX remain separate layers.
+- `packages/client`: local companion service request/response protocol,
+  native-messaging frame codec, service status, signer-request validation, and
+  signer-response verification. This is the shared client/service boundary for
+  future browser extension, SDK, and desktop work.
+- `apps/service`: private one-shot native-messaging host scaffold over
+  `packages/client`. It is intentionally secretless and does not yet perform
+  account selection, grant checks, relay work, or signer transport dispatch.
 
 Each reusable package has its own `package.json` and `src/index.ts` entrypoint.
 Cross-package source imports must go through `@nsealr/*` entrypoints, not
@@ -124,6 +131,11 @@ Native messaging is the preferred first serious browser-extension transport to
 the local companion. A localhost HTTP/WebSocket API remains research until
 origin binding, CSRF protection, pairing, rate limits, and kill-switch behavior
 are explicitly specified and tested.
+
+The first native-messaging scaffold accepts only `service_status`,
+`validate_signer_request`, and `verify_signer_response`. This lets browser,
+SDK, and desktop code integrate against the validation and verification
+boundary before any signer I/O or persistent session state is exposed.
 
 ## Current CLI Flow
 
@@ -237,9 +249,10 @@ write output artifacts. The same invalid-vector suite also covers unsafe
 signed-event response payloads so a real device output cannot bypass the v0
 integer-safety, content, and tag limits after signing.
 
-The current adapters cover three development paths:
+The current adapters cover these development paths:
 
-- `DevSignerTransport`: in-memory test signer for deterministic harnesses.
+- `DevSignerTransport`: in-memory test signer in private `@nsealr/dev-signer`
+  for deterministic harnesses.
 - `JsonFileTransport`: file handoff for QR vault and offline workflow tests.
 - `JsonLineStdioTransport`: one-shot process bridge for external signer
   adapters and future hardware simulators. It bounds the pre-newline response

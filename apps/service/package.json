@@ -1,0 +1,16 @@
+{
+  "name": "@nsealr/service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "service": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@nsealr/client": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "4.21.0"
+  }
+}

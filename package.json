@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "nsealr": "pnpm --filter @nsealr/cli nsealr",
+    "nsealr-service": "pnpm --filter @nsealr/service service",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",

@@ -46,6 +46,12 @@ single-repository CI. Cross-repository drift remains guarded by
 - Repository verification now requires explicit `@nsealr/*` package manifests
   and `src/index.ts` entrypoints, rejects deep cross-package source imports,
   and rejects production package dependencies on private `@nsealr/dev-signer`.
+- Client package tests cover native-messaging frame encoding/decoding,
+  deterministic malformed-frame rejection, secretless local service status,
+  signer-request validation, and signer-response verification before any
+  signer I/O exists.
+- Service app tests prove the private native-messaging host scaffold stays a
+  thin wrapper around `@nsealr/client`.
 - Negative response verification tests for request id mismatch, template
   mismatch, event id mismatch, and invalid signatures.
 - Transport exchange tests proving successful `sign_event` responses are
@@ -189,8 +195,9 @@ single-repository CI. Cross-repository drift remains guarded by
   package README examples, built JS/declaration artifacts, no test-only signer
   leakage, and no production secret storage in public helpers.
 - Local companion service tests with a fake extension/app client: pairing,
-  selected account route, malformed request rejection, deterministic errors,
-  and response verification before returning results.
+  selected account route, origin/app identity, cancellation, revocation,
+  deterministic transport errors, and signer dispatch after explicit policy
+  gates exist.
 - Browser extension provider tests for NIP-07 `getPublicKey` and `signEvent`
   over a fake companion, including origin permission, revocation, cancel,
   refusal, malformed companion response, and no key material in extension

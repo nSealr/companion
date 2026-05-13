@@ -2,6 +2,16 @@
   "name": "@nsealr/companion-workspace",
   "version": "0.1.0",
   "private": true,
+  "description": "Secretless host-side companion packages for nSealr signer integrations.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nSealr/companion.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nSealr/companion/issues"
+  },
+  "homepage": "https://github.com/nSealr/companion#readme",
   "packageManager": "pnpm@10.33.4",
   "type": "module",
   "scripts": {

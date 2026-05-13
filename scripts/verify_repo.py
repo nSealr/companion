@@ -63,6 +63,9 @@ COMPANION_APPS = {
     "service": "@nsealr/service",
 }
 DEEP_SOURCE_IMPORT_RE = re.compile(r'from\s+["\'](?:\.\./){2,}[^"\']*/src/|from\s+["\'][^"\']*packages/[^"\']*/src/')
+COMPANION_REPOSITORY_URL = "git+https://github.com/nSealr/companion.git"
+COMPANION_BUGS_URL = "https://github.com/nSealr/companion/issues"
+COMPANION_HOMEPAGE = "https://github.com/nSealr/companion#readme"
 
 
 def expected_license_marker() -> str:
@@ -81,6 +84,16 @@ def verify_companion_tooling(errors: list[str]) -> None:
         return
 
     package = json.loads(package_path.read_text(encoding="utf-8"))
+    if package.get("description") != "Secretless host-side companion packages for nSealr signer integrations.":
+        errors.append("package.json must document the companion workspace description")
+    if package.get("license") != "MIT":
+        errors.append("package.json must declare MIT license")
+    if package.get("repository") != {"type": "git", "url": COMPANION_REPOSITORY_URL}:
+        errors.append("package.json must point to the companion GitHub repository")
+    if package.get("bugs") != {"url": COMPANION_BUGS_URL}:
+        errors.append("package.json must point bugs to the companion issue tracker")
+    if package.get("homepage") != COMPANION_HOMEPAGE:
+        errors.append("package.json must point homepage to the companion README")
     if package.get("packageManager") != "pnpm@10.33.4":
         errors.append("package.json must pin packageManager to pnpm@10.33.4")
     scripts = package.get("scripts")
@@ -200,13 +213,42 @@ def verify_companion_package_boundaries(errors: list[str]) -> None:
         package = read_json(package_json_path, errors)
         if package.get("name") != package_name:
             errors.append(f"packages/{package_dir}/package.json must be named {package_name}")
+        description = package.get("description")
+        if not isinstance(description, str) or not description:
+            errors.append(f"packages/{package_dir}/package.json must declare a package description")
+        keywords = package.get("keywords")
+        if (
+            not isinstance(keywords, list)
+            or "nostr" not in keywords
+            or "nsealr" not in keywords
+            or "signer" not in keywords
+        ):
+            errors.append(f"packages/{package_dir}/package.json must declare core npm keywords")
+        if package.get("license") != "MIT":
+            errors.append(f"packages/{package_dir}/package.json must declare MIT license")
+        if package.get("sideEffects") is not False:
+            errors.append(f"packages/{package_dir}/package.json must declare sideEffects=false")
+        if package.get("repository") != {
+            "type": "git",
+            "url": COMPANION_REPOSITORY_URL,
+            "directory": f"packages/{package_dir}",
+        }:
+            errors.append(f"packages/{package_dir}/package.json must point to its repository directory")
+        if package.get("bugs") != {"url": COMPANION_BUGS_URL}:
+            errors.append(f"packages/{package_dir}/package.json must point bugs to the companion issue tracker")
+        if package.get("homepage") != COMPANION_HOMEPAGE:
+            errors.append(f"packages/{package_dir}/package.json must point homepage to the companion README")
         if package.get("version") != root_package.get("version"):
             errors.append(f"packages/{package_dir}/package.json must use the synchronized root package version")
         if package_dir == "dev-signer":
             if package.get("private") is not True:
                 errors.append("packages/dev-signer/package.json must remain private")
+            if "publishConfig" in package:
+                errors.append("packages/dev-signer/package.json must not declare public publishConfig")
         elif package.get("private") is True:
             errors.append(f"packages/{package_dir}/package.json must be publishable when release gates open")
+        elif package.get("publishConfig") != {"access": "public", "provenance": True}:
+            errors.append(f"packages/{package_dir}/package.json must declare public provenance publishConfig")
         if package.get("type") != "module":
             errors.append(f"packages/{package_dir}/package.json must declare type=module")
         if package.get("files") != ["dist", "README.md"]:

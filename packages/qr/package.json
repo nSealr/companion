@@ -1,8 +1,25 @@
 {
   "name": "@nsealr/qr",
   "version": "0.1.0",
+  "description": "Static and animated nSealr QR envelope encoding and decoding.",
+  "keywords": [
+    "nostr",
+    "nsealr",
+    "signer",
+    "qr",
+    "airgap"
+  ],
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nSealr/companion.git",
+    "directory": "packages/qr"
+  },
+  "bugs": {
+    "url": "https://github.com/nSealr/companion/issues"
+  },
+  "homepage": "https://github.com/nSealr/companion#readme",
   "sideEffects": false,
   "files": [
     "dist",
@@ -20,5 +37,9 @@
   },
   "devDependencies": {
     "@nsealr/fixtures": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

@@ -1,8 +1,25 @@
 {
   "name": "@nsealr/fixtures",
   "version": "0.1.0",
+  "description": "Shared nSealr specs fixture loading and fixture validation helpers.",
+  "keywords": [
+    "nostr",
+    "nsealr",
+    "signer",
+    "fixtures",
+    "conformance"
+  ],
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nSealr/companion.git",
+    "directory": "packages/fixtures"
+  },
+  "bugs": {
+    "url": "https://github.com/nSealr/companion/issues"
+  },
+  "homepage": "https://github.com/nSealr/companion#readme",
   "sideEffects": false,
   "files": [
     "dist",
@@ -22,5 +39,9 @@
   "dependencies": {
     "@nsealr/policy": "workspace:*",
     "@nsealr/review": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

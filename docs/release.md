@@ -34,6 +34,9 @@ Before any npm publication:
 - `make ci` must pass in `nSealr/companion`.
 - `make integration` must pass in `nSealr/lab`.
 - Package tarballs must contain only `dist`, README, and package metadata.
+- Public package manifests must declare npm-facing descriptions, keywords,
+  repository directories, issue tracker, homepage, MIT license, and public
+  provenance `publishConfig`.
 - Packed tarballs must install into a temporary consumer project and import by
   package name.
 - Executable SDK examples must pass against built package entrypoints.

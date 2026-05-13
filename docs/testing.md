@@ -46,8 +46,10 @@ single-repository CI. Cross-repository drift remains guarded by
 - Repository verification now requires explicit `@nsealr/*` package manifests,
   package READMEs with boundary sections, source `src/index.ts` entrypoints,
   built `dist` exports, synchronized package versions, changelog coverage, and
-  release/provenance policy; it rejects deep cross-package source imports and
-  production package dependencies on private `@nsealr/dev-signer`.
+  npm-facing package metadata plus public provenance `publishConfig`,
+  changelog coverage, and release/provenance policy; it rejects deep
+  cross-package source imports and production package dependencies on private
+  `@nsealr/dev-signer`.
 - Client package tests cover native-messaging frame encoding/decoding,
   deterministic malformed-frame rejection, secretless local service status,
   deterministic pairing intents, unpaired/revoked/expired/scope-denied client

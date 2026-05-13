@@ -1,8 +1,25 @@
 {
   "name": "@nsealr/framing",
   "version": "0.1.0",
+  "description": "nSealr serial-frame encoding and decoding for USB CDC and UART experiments.",
+  "keywords": [
+    "nostr",
+    "nsealr",
+    "signer",
+    "serial",
+    "framing"
+  ],
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nSealr/companion.git",
+    "directory": "packages/framing"
+  },
+  "bugs": {
+    "url": "https://github.com/nSealr/companion/issues"
+  },
+  "homepage": "https://github.com/nSealr/companion#readme",
   "sideEffects": false,
   "files": [
     "dist",
@@ -20,5 +37,9 @@
   },
   "devDependencies": {
     "@nsealr/fixtures": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

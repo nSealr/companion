@@ -5,21 +5,6 @@ import { packageDirName, publicPackages, root, sourceManifest } from "./package_
 
 const docPath = join(root, "docs", "api.md");
 
-const packagePurposes = {
-  "@nsealr/browser-provider": "NIP-07 provider adapter for browser-extension packaging.",
-  "@nsealr/client": "Local companion service, native-messaging, and high-level client boundary.",
-  "@nsealr/core": "NIP-01 event hashing and signed-event verification helpers.",
-  "@nsealr/fixtures": "Shared specs fixture loader and fixture-shape validators.",
-  "@nsealr/framing": "nSealr serial-frame encoding and decoding.",
-  "@nsealr/nip46": "Already-decrypted NIP-46 bridge, permission parsing, and review-intent helpers.",
-  "@nsealr/policy": "Secretless account, route, policy, grant, and decision descriptors.",
-  "@nsealr/protocol": "nSealr request/response validation and v0 implementation limits.",
-  "@nsealr/qr": "Static and animated nSealr QR envelope encoding and decoding.",
-  "@nsealr/review": "Deterministic event-review summaries and constrained-display page rendering.",
-  "@nsealr/smartcard": "APDU, PC/SC, simulator, and display-less smartcard signer boundary.",
-  "@nsealr/transport": "Secretless signer transport adapters and verified exchange boundaries."
-};
-
 function usage() {
   return "usage: node scripts/check_api_docs.mjs [--write]";
 }
@@ -170,6 +155,10 @@ function renderApiDocs() {
   ];
 
   for (const packageName of publicPackages) {
+    const manifest = sourceManifest(packageName);
+    if (typeof manifest.description !== "string" || manifest.description.length === 0) {
+      throw new Error(`${packageName} must declare a package description`);
+    }
     const symbols = [...collectExports(entrypointForPackage(packageName))].sort();
     if (symbols.length === 0) {
       throw new Error(`${packageName} has no public exports`);
@@ -177,7 +166,7 @@ function renderApiDocs() {
 
     lines.push(`## ${packageName}`);
     lines.push("");
-    lines.push(packagePurposes[packageName]);
+    lines.push(manifest.description);
     lines.push("");
     lines.push(`Source entrypoint: \`packages/${packageDirName(packageName)}/src/index.ts\``);
     lines.push("");

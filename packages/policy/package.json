@@ -1,8 +1,25 @@
 {
   "name": "@nsealr/policy",
   "version": "0.1.0",
+  "description": "Secretless account, route, grant, and policy-decision helpers for nSealr companion.",
+  "keywords": [
+    "nostr",
+    "nsealr",
+    "signer",
+    "policy",
+    "permissions"
+  ],
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nSealr/companion.git",
+    "directory": "packages/policy"
+  },
+  "bugs": {
+    "url": "https://github.com/nSealr/companion/issues"
+  },
+  "homepage": "https://github.com/nSealr/companion#readme",
   "sideEffects": false,
   "files": [
     "dist",
@@ -14,5 +31,9 @@
       "import": "./dist/index.js"
     }
   },
-  "types": "./dist/index.d.ts"
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }

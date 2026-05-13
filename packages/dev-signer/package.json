@@ -2,8 +2,24 @@
   "name": "@nsealr/dev-signer",
   "version": "0.1.0",
   "private": true,
+  "description": "Private test-only software signer for nSealr companion tests.",
+  "keywords": [
+    "nostr",
+    "nsealr",
+    "signer",
+    "testing"
+  ],
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nSealr/companion.git",
+    "directory": "packages/dev-signer"
+  },
+  "bugs": {
+    "url": "https://github.com/nSealr/companion/issues"
+  },
+  "homepage": "https://github.com/nSealr/companion#readme",
   "sideEffects": false,
   "files": [
     "dist",

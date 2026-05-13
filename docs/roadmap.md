@@ -198,9 +198,11 @@ entrypoints, executable SDK examples now cover request/QR, local-service,
 browser-provider, and already-decrypted NIP-46 flows, and the changelog/release
 policy pins synchronized pre-release versioning plus npm provenance
 requirements. `docs/api.md` is generated from the actual public package
-entrypoints and checked in CI so exported symbols cannot drift invisibly. A
-manual package release rehearsal workflow now prepares and uploads checked
-tarball artifacts without publishing to npm.
+entrypoints and checked in CI so exported symbols cannot drift invisibly.
+Package manifests now carry npm-facing descriptions, keywords, repository
+directories, issue tracker, homepage, MIT license, and public provenance
+`publishConfig`. A manual package release rehearsal workflow now prepares and
+uploads checked tarball artifacts without publishing to npm.
 
 ## Later
 
@@ -230,9 +232,10 @@ tarball artifacts without publishing to npm.
   validates installable tarballs before publication. Executable SDK examples
   prove common public package flows without test-only signer imports. Generated
   API docs expose every public package entrypoint symbol and fail when stale.
+  Package manifests include npm-facing metadata plus provenance publish config.
   Changelog and release policy are present. A manual release rehearsal workflow
-  prepares checked tarball artifacts without npm publication. Actual npm
-  trusted publishing/provenance activation and broader package-specific example
+  prepares checked tarball artifacts without npm publication. Actual npm trusted
+  publishing/provenance activation and broader package-specific example
   coverage remain pending.
 - M5 full NIP-46/Nostr Connect relay session integration.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.

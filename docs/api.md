@@ -17,7 +17,7 @@ here so API drift is reviewed deliberately.
 
 ## @nsealr/browser-provider
 
-NIP-07 provider adapter for browser-extension packaging.
+NIP-07 browser provider adapter for routing Nostr signing requests through nSealr companion.
 
 Source entrypoint: `packages/browser-provider/src/index.ts`
 
@@ -29,7 +29,7 @@ Exports:
 
 ## @nsealr/client
 
-Local companion service, native-messaging, and high-level client boundary.
+Secretless local companion service and native-messaging client boundary for nSealr integrations.
 
 Source entrypoint: `packages/client/src/index.ts`
 
@@ -64,7 +64,7 @@ Exports:
 
 ## @nsealr/core
 
-NIP-01 event hashing and signed-event verification helpers.
+Nostr event hashing and signed-event verification helpers for nSealr.
 
 Source entrypoint: `packages/core/src/index.ts`
 
@@ -83,7 +83,7 @@ Exports:
 
 ## @nsealr/fixtures
 
-Shared specs fixture loader and fixture-shape validators.
+Shared nSealr specs fixture loading and fixture validation helpers.
 
 Source entrypoint: `packages/fixtures/src/index.ts`
 
@@ -99,7 +99,7 @@ Additional package subpaths:
 
 ## @nsealr/framing
 
-nSealr serial-frame encoding and decoding.
+nSealr serial-frame encoding and decoding for USB CDC and UART experiments.
 
 Source entrypoint: `packages/framing/src/index.ts`
 
@@ -112,7 +112,7 @@ Exports:
 
 ## @nsealr/nip46
 
-Already-decrypted NIP-46 bridge, permission parsing, and review-intent helpers.
+Already-decrypted NIP-46 bridge and permission-review helpers for nSealr companion.
 
 Source entrypoint: `packages/nip46/src/index.ts`
 
@@ -139,7 +139,7 @@ Exports:
 
 ## @nsealr/policy
 
-Secretless account, route, policy, grant, and decision descriptors.
+Secretless account, route, grant, and policy-decision helpers for nSealr companion.
 
 Source entrypoint: `packages/policy/src/index.ts`
 
@@ -160,7 +160,7 @@ Exports:
 
 ## @nsealr/protocol
 
-nSealr request/response validation and v0 implementation limits.
+nSealr request and response validation with shared v0 implementation limits.
 
 Source entrypoint: `packages/protocol/src/index.ts`
 
@@ -191,7 +191,7 @@ Exports:
 
 ## @nsealr/review
 
-Deterministic event-review summaries and constrained-display page rendering.
+Deterministic Nostr event review summaries and constrained-display page rendering.
 
 Source entrypoint: `packages/review/src/index.ts`
 
@@ -212,7 +212,7 @@ Exports:
 
 ## @nsealr/smartcard
 
-APDU, PC/SC, simulator, and display-less smartcard signer boundary.
+APDU, PC/SC, simulator, and display-less smartcard signer boundary for nSealr.
 
 Source entrypoint: `packages/smartcard/src/index.ts`
 
@@ -239,7 +239,7 @@ Exports:
 
 ## @nsealr/transport
 
-Secretless signer transport adapters and verified exchange boundaries.
+Secretless signer transport adapters and verified exchange boundaries for nSealr companion.
 
 Source entrypoint: `packages/transport/src/index.ts`
 

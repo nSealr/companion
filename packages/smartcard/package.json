@@ -1,8 +1,25 @@
 {
   "name": "@nsealr/smartcard",
   "version": "0.1.0",
+  "description": "APDU, PC/SC, simulator, and display-less smartcard signer boundary for nSealr.",
+  "keywords": [
+    "nostr",
+    "nsealr",
+    "signer",
+    "smartcard",
+    "apdu"
+  ],
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nSealr/companion.git",
+    "directory": "packages/smartcard"
+  },
+  "bugs": {
+    "url": "https://github.com/nSealr/companion/issues"
+  },
+  "homepage": "https://github.com/nSealr/companion#readme",
   "sideEffects": false,
   "files": [
     "dist",
@@ -23,5 +40,9 @@
   },
   "devDependencies": {
     "@nsealr/fixtures": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

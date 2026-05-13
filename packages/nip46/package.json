@@ -1,8 +1,25 @@
 {
   "name": "@nsealr/nip46",
   "version": "0.1.0",
+  "description": "Already-decrypted NIP-46 bridge and permission-review helpers for nSealr companion.",
+  "keywords": [
+    "nostr",
+    "nsealr",
+    "signer",
+    "nip46",
+    "nostr-connect"
+  ],
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nSealr/companion.git",
+    "directory": "packages/nip46"
+  },
+  "bugs": {
+    "url": "https://github.com/nSealr/companion/issues"
+  },
+  "homepage": "https://github.com/nSealr/companion#readme",
   "sideEffects": false,
   "files": [
     "dist",
@@ -20,5 +37,9 @@
   },
   "devDependencies": {
     "@nsealr/fixtures": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

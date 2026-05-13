@@ -44,8 +44,9 @@ packages, but it must not export test-only signing as a production path.
 - `apps/browser-extension`: private browser-extension boundary scaffold. It
   owns strict internal message parsing and provider-backed request handling for
   `get_public_key` and `sign_event`, validates provider outputs before browser
-  callers can trust them, and does not yet ship an extension manifest,
-  content-script injection, native-host installation, permission UI,
+  callers can trust them, and can build a minimal MV3 manifest with
+  `nativeMessaging` as the only permission. It does not yet ship extension
+  packaging, content-script injection, native-host installation, permission UI,
   persistent grants, or signer dispatch.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
@@ -231,6 +232,11 @@ is still browser-API-free and receives an injected provider; it validates
 public keys, checks signed events against the original request, and returns
 secretless deterministic errors for malformed requests or malformed provider
 outputs.
+Its manifest builder is intentionally restrictive: Chromium manifests omit host
+permissions, optional host permissions, content scripts, and storage; Firefox
+manifests require an explicit reviewed extension id and otherwise follow the
+same zero-host-permission boundary. Origin injection and durable extension
+metadata remain blocked on permission UX and reviewed storage locations.
 
 Executable SDK examples live in private app `@nsealr/sdk-examples`. They are
 not another access surface and do not own production behavior. Their role is to

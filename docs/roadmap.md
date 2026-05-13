@@ -293,10 +293,12 @@ tarball artifacts without publishing to npm.
   response validation. The private `@nsealr/browser-extension` scaffold now
   parses only internal `get_public_key` and `sign_event` messages and has a
   provider-backed handler that validates returned pubkeys/events before
-  browser callers can trust them. Remaining work: extension
-  manifest/content-script packaging, native-messaging installation, origin
-  permission UX, cancellation, and real dispatch after M4.7 gates. No local
-  production signing and no extension-side production key storage.
+  browser callers can trust them. It can also build a minimal MV3 manifest with
+  `nativeMessaging` as the only permission and no host/content-script/storage
+  permissions. Remaining work: extension packaging, content-script injection,
+  native-messaging installation, origin permission UX, cancellation, and real
+  dispatch after M4.7 gates. No local production signing and no extension-side
+  production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

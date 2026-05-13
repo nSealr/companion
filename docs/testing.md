@@ -181,6 +181,18 @@ single-repository CI. Cross-repository drift remains guarded by
 
 ## Next Test Additions
 
+- Package-boundary tests for future `@nsealr/*` publication: explicit exports,
+  third-party import behavior, no test-only signer leakage, and no production
+  secret storage in public helpers.
+- Local companion service tests with a fake extension/app client: pairing,
+  selected account route, malformed request rejection, deterministic errors,
+  and response verification before returning results.
+- Browser extension provider tests for NIP-07 `getPublicKey` and `signEvent`
+  over a fake companion, including origin permission, revocation, cancel,
+  refusal, malformed companion response, and no key material in extension
+  storage.
+- Full NIP-46 relay-session tests with local relay fixtures after NIP-44
+  session lifecycle and reviewed `connect` acknowledgement are specified.
 - Large QR payload strategy tests once chunking or compression is designed.
 - Hardware serial smoke tests before adding WebUSB, HID, CDC, or persistent
   session adapters.

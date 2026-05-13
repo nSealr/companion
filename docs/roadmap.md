@@ -180,8 +180,19 @@ line without adding compression, fountain codes, relay sessions, or signer I/O.
 
 ## Later
 
-- Browser bridge.
-- Full NIP-46/Nostr Connect relay session integration.
+- M4.6 package-boundary freeze for future `@nsealr/*` npm SDK publication:
+  explicit exports, no-secret guarantees, package readmes, third-party import
+  tests, and isolation of test-only signing helpers.
+- M4.7 local companion service boundary for browser extension, desktop UI, and
+  high-level SDK clients. Prefer native messaging for the first serious
+  browser-extension path; treat localhost HTTP/WebSocket as a separate
+  threat-model decision.
+- M4.8 browser extension / NIP-07 bridge with `getPublicKey` and `signEvent`
+  routed through companion. No local production signing and no extension-side
+  production key storage.
+- M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
+  consumer-import tests are stable.
+- M5 full NIP-46/Nostr Connect relay session integration.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and
   `SmartcardSigner` boundary.

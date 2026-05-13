@@ -13,6 +13,11 @@ verification, and audit export. The companion is not the authoritative policy
 store for persistent nSealr devices and must not store production signing
 material.
 
+Browser extension, npm SDK, CLI, local app, local service, and full NIP-46
+relay work are access surfaces over the same companion platform. They must
+reuse package-owned validation, policy scaffolding, transport, and response
+verification logic instead of creating separate signer implementations.
+
 Feature availability per signer family is tracked in `nSealr/specs` at
 `vectors/features/signer-feature-matrix-v0.json`. Companion packages should
 consume those shared contracts instead of inventing solution-specific behavior:
@@ -142,7 +147,15 @@ match the shared `contract_id`.
 
 ## Planned Capabilities
 
-- Browser extension / NIP-07 bridge.
+- Package-boundary freeze for future `@nsealr/*` npm SDK publication, with
+  explicit public/private exports and test-only signer isolation.
+- Local companion service boundary for browser extension, desktop UI, and
+  high-level SDK clients. Native messaging is the preferred first serious
+  browser-extension transport; localhost APIs need a separate threat-model pass.
+- Browser extension / NIP-07 bridge that forwards `getPublicKey` and
+  `signEvent` through companion without storing production signing material.
+- Public npm SDK alpha after package APIs, docs, semver, provenance, and
+  third-party import tests are stable.
 - Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,
   permissions, and auth challenges.
 - QR encoder and decoder for vault flows.
@@ -154,8 +167,9 @@ match the shared `contract_id`.
 
 ## Initial Layout
 
-- `apps/`: CLI, browser extension, and developer tools.
-- `packages/`: reusable core/protocol/transport modules.
+- `apps/`: CLI, future browser extension, local service, and developer tools.
+- `packages/`: reusable core/protocol/review/qr/framing/transport/NIP-46/
+  policy/client/provider modules.
 - `docs/`: implementation notes and usage guides.
 
 ## Quality Baseline

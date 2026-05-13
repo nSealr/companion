@@ -30,6 +30,13 @@ feature used by multiple signer families, such as request validation, review
 projection, policy decisions, transport framing, or response verification, it
 must follow the shared `contract_id` instead of creating a host-only variant.
 
+Browser extension, npm SDK, CLI, local app, local service, and full NIP-46
+relay support are companion access surfaces. They must stay thin over
+package-owned logic. In particular, a browser extension may expose NIP-07
+`window.nostr`, but it must not store production signing material or implement
+browser-local production signing. An npm SDK may expose reusable helper
+packages, but it must not export test-only signing as a production path.
+
 ## Implemented Modules
 
 - `apps/cli`: command-line entrypoint.
@@ -80,6 +87,34 @@ must follow the shared `contract_id` instead of creating a host-only variant.
   response, `connect` can produce a review intent, and missing permissions
   produce deterministic NIP-46 errors before signer transport. Permission
   storage and grant UX remain separate layers.
+
+## Access Surface Boundary
+
+The intended access surfaces are:
+
+- CLI: operator and lab harness over package-owned logic.
+- Local companion service: future IPC/API boundary for browser extension,
+  desktop UI, and high-level SDK clients.
+- Browser extension: NIP-07 provider that forwards requests to companion and
+  returns only verified results.
+- npm SDK: public package set for clients and tools that need nSealr request,
+  transport, policy, and verification helpers.
+- NIP-46 relay service: encrypted remote-signer compatibility after session,
+  grant, and policy contracts are ready.
+- Desktop/operator UI: account, route, diagnostics, policy proposal, and audit
+  surface over the same local service.
+
+All of them must use the same request validator before contacting a signer
+route and the same response verifier before returning signed events. None of
+them may store production `nsec`, seed, mnemonic, passphrase, decrypted signing
+material, or NIP-49 plaintext. Extension/session pairing data is still
+sensitive and needs expiry, revocation, and origin/app binding before
+production use.
+
+Native messaging is the preferred first serious browser-extension transport to
+the local companion. A localhost HTTP/WebSocket API remains research until
+origin binding, CSRF protection, pairing, rate limits, and kill-switch behavior
+are explicitly specified and tested.
 
 ## Current CLI Flow
 

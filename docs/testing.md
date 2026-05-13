@@ -54,8 +54,9 @@ single-repository CI. Cross-repository drift remains guarded by
   native-messaging exchange wrapping before any signer I/O exists.
 - Browser-provider package tests cover NIP-07 `getPublicKey` validation,
   `signEvent` conversion into nSealr signer requests, signed-response
-  verification, signer refusal propagation, and rejection before backend
-  contact when an event template contains forbidden signer-owned fields.
+  verification, explicit client identity forwarding, signer refusal propagation,
+  and rejection before backend contact when an event template contains forbidden
+  signer-owned fields.
 - Service app tests prove the private native-messaging host scaffold stays a
   thin wrapper around `@nsealr/client`.
 - Negative response verification tests for request id mismatch, template

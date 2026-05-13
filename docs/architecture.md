@@ -97,9 +97,10 @@ packages, but it must not export test-only signing as a production path.
   the shared client/service boundary for future browser extension, SDK, and
   desktop work.
 - `packages/browser-provider`: NIP-07 provider adapter for browser-extension
-  packaging. It accepts an injected companion backend, validates public keys,
-  converts `signEvent` inputs into nSealr signer requests, verifies signed
-  responses, and stores no browser-side production keys.
+  packaging. It accepts an injected companion backend plus explicit client
+  identity, validates public keys, converts `signEvent` inputs into nSealr
+  signer requests, verifies signed responses, and stores no browser-side
+  production keys.
 - `apps/service`: private one-shot native-messaging host scaffold over
   `packages/client`. It is intentionally secretless and does not yet perform
   persistent grant lookup, account selection, relay work, or signer transport
@@ -152,10 +153,12 @@ exchange and native-messaging frame exchange; it validates service responses and
 request-id correlation before returning them to higher-level callers.
 
 The browser-provider package is intentionally one layer above this service
-boundary. It does not include an extension manifest, native-host install flow,
-permission UI, account routing, persistent grants, NIP-04, NIP-44, or relay
-sessions. It is the package-level contract that a future extension will expose
-as `window.nostr`.
+boundary. Each provider instance is bound to a client identity so the future
+native-messaging backend can route pairing, revocation, and origin decisions
+without inferring identity from unsigned browser data. It does not include an
+extension manifest, native-host install flow, permission UI, account routing,
+persistent grants, NIP-04, NIP-44, or relay sessions. It is the package-level
+contract that a future extension will expose as `window.nostr`.
 
 ## Current CLI Flow
 

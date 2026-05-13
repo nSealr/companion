@@ -55,9 +55,10 @@ match the shared `contract_id`.
   expired, or operation-scoped clients are rejected before signer payload
   handling.
 - `@nsealr/browser-provider` defines the first NIP-07 provider adapter over an
-  injected companion backend. It validates `getPublicKey` and `signEvent`
-  boundaries, converts event templates into nSealr signer requests, verifies
-  signed responses, and stores no browser-side production keys.
+  injected companion backend and explicit client identity. It validates
+  `getPublicKey` and `signEvent` boundaries, converts event templates into
+  nSealr signer requests, verifies signed responses, and stores no browser-side
+  production keys.
 - `@nsealr/service` is the private one-shot native-messaging host scaffold over
   `@nsealr/client`. It does not open relays, store keys, select accounts, or
   contact signer transports.

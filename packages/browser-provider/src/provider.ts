@@ -5,6 +5,7 @@ import {
   type SignedEvent,
   verifySignedEventResponse
 } from "@nsealr/core";
+import { type LocalClientIdentity } from "@nsealr/client";
 import { validateRequest, validateResponse } from "@nsealr/protocol";
 
 export type Nip07Provider = {
@@ -13,12 +14,13 @@ export type Nip07Provider = {
 };
 
 export type BrowserProviderBackend = {
-  getPublicKey(): Promise<unknown>;
-  signEventRequest(request: SignEventRequest): Promise<unknown>;
+  getPublicKey(client: LocalClientIdentity): Promise<unknown>;
+  signEventRequest(request: SignEventRequest, client: LocalClientIdentity): Promise<unknown>;
 };
 
 export type BrowserProviderOptions = {
   backend: BrowserProviderBackend;
+  client: LocalClientIdentity;
   nextRequestId?: () => string;
 };
 
@@ -87,14 +89,14 @@ export function createNip07Provider(options: BrowserProviderOptions): Nip07Provi
   const nextRequestId = options.nextRequestId ?? defaultRequestIdFactory();
   return {
     async getPublicKey(): Promise<string> {
-      const publicKey = await options.backend.getPublicKey();
+      const publicKey = await options.backend.getPublicKey(options.client);
       assertLowerHex(publicKey, 64, "NIP-07 public key");
       return publicKey;
     },
 
     async signEvent(eventTemplate: EventTemplate): Promise<SignedEvent> {
       const request = signerRequestForTemplate(nextRequestId(), eventTemplate);
-      const response = await options.backend.signEventRequest(request);
+      const response = await options.backend.signEventRequest(request, options.client);
       return signedEventFromResponse(request, response);
     }
   };

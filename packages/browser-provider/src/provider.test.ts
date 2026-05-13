@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { type LocalClientIdentity } from "@nsealr/client";
 import { type EventTemplate } from "@nsealr/core";
 import { resolveSpecsRoot } from "@nsealr/fixtures";
 import { createNip07Provider, type BrowserProviderBackend } from "./provider.js";
@@ -10,11 +11,21 @@ const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kin
 const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
 const responseError = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-error-rejected.json"), "utf8"));
 const publicKey = response.result.event.pubkey as string;
+const client: LocalClientIdentity = {
+  surface: "browser_extension",
+  origin: "https://example.com",
+  app_name: "Example Nostr Client",
+  instance_id: "extension-test-1"
+};
 
 function backend(overrides: Partial<BrowserProviderBackend> = {}): BrowserProviderBackend {
   return {
-    getPublicKey: async () => publicKey,
-    signEventRequest: async (signerRequest) => {
+    getPublicKey: async (backendClient) => {
+      expect(backendClient).toEqual(client);
+      return publicKey;
+    },
+    signEventRequest: async (signerRequest, backendClient) => {
+      expect(backendClient).toEqual(client);
       expect(signerRequest).toEqual(request);
       return response;
     },
@@ -24,7 +35,7 @@ function backend(overrides: Partial<BrowserProviderBackend> = {}): BrowserProvid
 
 describe("NIP-07 browser provider boundary", () => {
   it("returns a validated public key from an injected companion backend", async () => {
-    const provider = createNip07Provider({ backend: backend() });
+    const provider = createNip07Provider({ backend: backend(), client });
 
     await expect(provider.getPublicKey()).resolves.toBe(publicKey);
   });
@@ -32,6 +43,7 @@ describe("NIP-07 browser provider boundary", () => {
   it("converts signEvent templates into nSealr signer requests", async () => {
     const provider = createNip07Provider({
       backend: backend(),
+      client,
       nextRequestId: () => "req-kind-1-basic"
     });
 
@@ -47,6 +59,7 @@ describe("NIP-07 browser provider boundary", () => {
           return response;
         }
       }),
+      client,
       nextRequestId: () => "req-kind-1-basic"
     });
 
@@ -59,7 +72,8 @@ describe("NIP-07 browser provider boundary", () => {
 
   it("rejects malformed backend outputs and explicit signer refusals", async () => {
     const invalidPublicKeyProvider = createNip07Provider({
-      backend: backend({ getPublicKey: async () => "not-a-pubkey" })
+      backend: backend({ getPublicKey: async () => "not-a-pubkey" }),
+      client
     });
     await expect(invalidPublicKeyProvider.getPublicKey()).rejects.toThrow(/public key/u);
 
@@ -70,6 +84,7 @@ describe("NIP-07 browser provider boundary", () => {
           request_id: "other-request"
         })
       }),
+      client,
       nextRequestId: () => "req-kind-1-basic"
     });
     await expect(mismatchedResponseProvider.signEvent(request.params.event_template)).rejects.toThrow(/request_id/u);
@@ -81,6 +96,7 @@ describe("NIP-07 browser provider boundary", () => {
           request_id: "req-kind-1-basic"
         })
       }),
+      client,
       nextRequestId: () => "req-kind-1-basic"
     });
     await expect(refusedProvider.signEvent(request.params.event_template)).rejects.toThrow(/rejected/u);

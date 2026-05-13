@@ -82,6 +82,9 @@ importers:
 
   packages/browser-provider:
     dependencies:
+      '@nsealr/client':
+        specifier: workspace:*
+        version: link:../client
       '@nsealr/core':
         specifier: workspace:*
         version: link:../core

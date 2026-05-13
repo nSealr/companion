@@ -207,12 +207,12 @@ artifacts.
   Treat localhost HTTP/WebSocket as a separate threat-model decision.
 - M4.8 browser extension / NIP-07 bridge with `getPublicKey` and `signEvent`
   routed through companion. Package-level provider adapter is present: it
-  validates public keys, converts `signEvent` inputs into nSealr
-  `sign_event` requests, verifies signed responses, and stores no browser-side
-  production key material. Remaining work: extension manifest/content-script
-  packaging, native-messaging installation, origin permission UX, cancellation,
-  and route selection. No local production signing and no extension-side
-  production key storage.
+  carries explicit client identity, validates public keys, converts `signEvent`
+  inputs into nSealr `sign_event` requests, verifies signed responses, and
+  stores no browser-side production key material. Remaining work: extension
+  manifest/content-script packaging, native-messaging installation, origin
+  permission UX, cancellation, and route selection. No local production signing
+  and no extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable.
 - M5 full NIP-46/Nostr Connect relay session integration.

@@ -429,7 +429,7 @@ function requireNonNegativeTimestamp(value: unknown, label: string): number {
 }
 
 export function approvePairingIntent(
-  intent: PairingIntent,
+  intent: unknown,
   options: { approvedAt: number; expiresAt?: number }
 ): LocalPairingApproval {
   const pairing = parsePairingIntent(intent);

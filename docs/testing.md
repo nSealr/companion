@@ -234,6 +234,10 @@ single-repository CI. Cross-repository drift remains guarded by
   `nsealr local review-pairing`, including deterministic review metadata for a
   pairing intent and rejection of tampered pairing intents before output files
   are written.
+- CLI local-service pairing approval tests covering
+  `nsealr local approve-pairing`, including explicit reviewed-digest
+  confirmation, expiry handling, and refusal to write approval artifacts when
+  the digest does not match.
 - Policy package tests cover secretless account descriptors, manual-only QR
   vault policy, scoped grants for persistent routes, wildcard/decrypt/export
   rejection, rejection of stateless QR-vault grant targets, and deterministic

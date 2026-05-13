@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  approvePairingIntent,
   handleLocalServiceRequest,
   reviewPairingIntent,
   type LocalClientIdentity,
@@ -764,6 +765,89 @@ describe("nsealr CLI", () => {
       runCli(["local", "review-pairing", "--intent", intentPath, "--out", reviewPath])
     ).rejects.toThrow(/pairing intent client_id mismatch/u);
     expect(existsSync(reviewPath)).toBe(false);
+  });
+
+  it("creates local-service pairing approval artifacts only after explicit digest confirmation", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-pairing-approve-"));
+    const intentPath = join(tempRoot, "pairing-intent.json");
+    const approvalPath = join(tempRoot, "pairing-approval.json");
+    const client: LocalClientIdentity = {
+      surface: "browser_extension",
+      origin: "extension:nsealr-cli-pairing-approve",
+      app_name: "nSealr CLI pairing approve"
+    };
+    const response = handleLocalServiceRequest({
+      version: 1,
+      request_id: "cli-pairing-approve-1",
+      operation: "request_pairing",
+      params: {
+        client,
+        requested_operations: ["select_account_route", "validate_signer_request"]
+      }
+    });
+    if (response.ok !== true || !("pairing_intent" in response.result)) {
+      throw new Error("test setup did not return a pairing intent");
+    }
+    const intent = response.result.pairing_intent;
+
+    writeFileSync(intentPath, `${JSON.stringify(intent, null, 2)}\n`, "utf8");
+    await runCli([
+      "local",
+      "approve-pairing",
+      "--intent",
+      intentPath,
+      "--reviewed-pairing-digest",
+      intent.pairing_digest,
+      "--approved-at",
+      "1900000000",
+      "--expires-at",
+      "1900003600",
+      "--out",
+      approvalPath
+    ]);
+
+    expect(loadJson(approvalPath)).toEqual(approvePairingIntent(intent, {
+      approvedAt: 1_900_000_000,
+      expiresAt: 1_900_003_600
+    }));
+  });
+
+  it("rejects local-service pairing approval when the reviewed digest does not match", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-pairing-approve-mismatch-"));
+    const intentPath = join(tempRoot, "pairing-intent.json");
+    const approvalPath = join(tempRoot, "pairing-approval.json");
+    const response = handleLocalServiceRequest({
+      version: 1,
+      request_id: "cli-pairing-approve-mismatch-1",
+      operation: "request_pairing",
+      params: {
+        client: {
+          surface: "browser_extension",
+          origin: "extension:nsealr-cli-pairing-approve-mismatch"
+        },
+        requested_operations: ["select_account_route"]
+      }
+    });
+    if (response.ok !== true || !("pairing_intent" in response.result)) {
+      throw new Error("test setup did not return a pairing intent");
+    }
+
+    writeFileSync(intentPath, `${JSON.stringify(response.result.pairing_intent, null, 2)}\n`, "utf8");
+    await expect(
+      runCli([
+        "local",
+        "approve-pairing",
+        "--intent",
+        intentPath,
+        "--reviewed-pairing-digest",
+        "0".repeat(64),
+        "--approved-at",
+        "1900000000",
+        "--out",
+        approvalPath
+      ])
+    ).rejects.toThrow(/reviewed pairing digest does not match intent/u);
+    expect(existsSync(approvalPath)).toBe(false);
   });
 
   it("renders review detail pages from a QR signing request", async () => {

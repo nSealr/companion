@@ -180,6 +180,12 @@ uses the same digest-bound parser as pairing approval, writes review output
 only after validation, and does not create grants, approve clients, or mutate a
 grant store.
 
+Status note, 2026-05-13: the CLI now also exposes
+`nsealr local approve-pairing` for digest-confirmed pairing approval artifacts.
+It requires the reviewed pairing digest before writing output and does not
+append to grant stores, choose storage locations, dispatch signers, or approve
+clients implicitly.
+
 Status note, 2026-05-13: `@nsealr/client` now exposes route selection through
 the local-service boundary after explicit in-memory pairing authorization. The
 operation returns the same secretless route metadata pinned by shared specs
@@ -249,10 +255,11 @@ tarball artifacts without publishing to npm.
   validated Chromium/Firefox native-host manifest generation. `@nsealr/client`
   now also defines the strict secretless JSON grant-store contract for approved
   and revoked local client grants. The CLI can render pairing-review metadata
-  without approving clients, and private service context loading can read
-  explicit grant/account JSON files for local harnesses only. Remaining work is
-  full approval UI, reviewed storage locations, cancellation, deterministic
-  transport errors, signer dispatch, and native-host installation packaging.
+  and create digest-confirmed approval artifacts without mutating grant stores,
+  and private service context loading can read explicit grant/account JSON files
+  for local harnesses only. Remaining work is full approval UI, reviewed
+  storage locations, cancellation, deterministic transport errors, signer
+  dispatch, and native-host installation packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are

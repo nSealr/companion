@@ -2,7 +2,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { Command } from "commander";
 import { SerialPort } from "serialport";
-import { reviewPairingIntent } from "@nsealr/client";
+import { approvePairingIntent, reviewPairingIntent } from "@nsealr/client";
 import { verifySignedEventResponse, type SignEventRequest } from "@nsealr/core";
 import { devSignRequest } from "@nsealr/dev-signer";
 import {
@@ -100,6 +100,21 @@ function positiveIntegerOption(value: string | undefined, fallback: number, opti
     throw new Error(`${optionName} must be a positive integer`);
   }
   return parsed;
+}
+
+function nonNegativeIntegerOption(value: string, optionName: string): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(`${optionName} must be a non-negative integer`);
+  }
+  return parsed;
+}
+
+function lowerHex64Option(value: string, optionName: string): string {
+  if (!/^[0-9a-f]{64}$/u.test(value)) {
+    throw new Error(`${optionName} must be 32-byte lowercase hex`);
+  }
+  return value;
 }
 
 function reviewDetailPageLimitsFromOptions(options: {
@@ -720,6 +735,40 @@ export function buildCli(options: BuildCliOptions = {}): Command {
     .description("Render local-service pairing review metadata without approving a client")
     .action((options: { intent: string; out: string }) => {
       writeJson(options.out, reviewPairingIntent(readJson(options.intent)));
+    });
+
+  local
+    .command("approve-pairing")
+    .requiredOption("--intent <path>", "Read a local-service pairing intent JSON file")
+    .requiredOption("--reviewed-pairing-digest <hex>", "Pairing digest the user reviewed and approved")
+    .requiredOption("--approved-at <timestamp>", "Approval timestamp as a non-negative integer")
+    .option("--expires-at <timestamp>", "Optional expiry timestamp as a non-negative integer")
+    .requiredOption("--out <path>", "Write the pairing approval artifact JSON")
+    .description("Create a pairing approval artifact after explicit digest confirmation")
+    .action((options: {
+      intent: string;
+      reviewedPairingDigest: string;
+      approvedAt: string;
+      expiresAt?: string;
+      out: string;
+    }) => {
+      const intent = readJson(options.intent);
+      const review = reviewPairingIntent(intent);
+      const reviewedPairingDigest = lowerHex64Option(
+        options.reviewedPairingDigest,
+        "--reviewed-pairing-digest"
+      );
+      if (reviewedPairingDigest !== review.pairing_digest) {
+        throw new Error("reviewed pairing digest does not match intent");
+      }
+      const approvedAt = nonNegativeIntegerOption(options.approvedAt, "--approved-at");
+      const expiresAt = options.expiresAt === undefined
+        ? undefined
+        : nonNegativeIntegerOption(options.expiresAt, "--expires-at");
+      writeJson(options.out, approvePairingIntent(intent, {
+        approvedAt,
+        ...(expiresAt !== undefined ? { expiresAt } : {})
+      }));
     });
 
   program

@@ -173,6 +173,11 @@ The CLI `nsealr local review-pairing` command exposes the same deterministic
 pairing-review projection for local/manual inspection. It validates the
 digest-bound intent and writes review metadata only; it does not create grants,
 approve clients, or write grant-store files.
+The companion CLI also has `nsealr local approve-pairing`, which creates a
+pairing approval artifact only after the caller supplies the reviewed pairing
+digest. The artifact contains the approved grant metadata, but the command does
+not append it to a grant store, choose storage locations, or contact signer
+transports.
 The private `@nsealr/service` app now runs a tested multi-message native-host
 stdio loop, so a future browser extension can keep one native-messaging port
 open and receive one deterministic response per length-prefixed service

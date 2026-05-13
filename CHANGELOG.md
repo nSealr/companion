@@ -30,6 +30,8 @@ public npm release.
 - `nsealr local review-pairing` for rendering deterministic pairing-review
   metadata from a digest-bound local-service pairing intent without approval or
   grant-store writes.
+- `nsealr local approve-pairing` for creating a pairing approval artifact after
+  explicit reviewed-digest confirmation, without mutating grant stores.
 - `@nsealr/client` secretless JSON grant-store contract for persisting approved
   and revoked local client grants without production key material.
 - Deterministic local-service grant-history selection so the latest matching

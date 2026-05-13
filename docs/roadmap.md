@@ -221,7 +221,10 @@ tarball artifacts without publishing to npm.
   CLI code can trust them. Remaining work: persistent pairing store, user
   approval UX, account route selection, cancellation, persistent revocation,
   deterministic transport errors, signer dispatch, and native-host packaging.
-  Treat localhost HTTP/WebSocket as a separate threat-model decision.
+  The M4.7 threat model selects native messaging for browser alpha; localhost
+  HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
+  resistance, pairing, rate limits, app suspension, and kill-switch behavior are
+  specified and tested.
 - M4.8 browser extension / NIP-07 bridge with `getPublicKey` and `signEvent`
   routed through companion. Package-level provider adapter is present: it
   carries explicit client identity, validates public keys, converts `signEvent`

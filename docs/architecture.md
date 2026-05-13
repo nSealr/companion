@@ -140,7 +140,11 @@ production use.
 Native messaging is the preferred first serious browser-extension transport to
 the local companion. A localhost HTTP/WebSocket API remains research until
 origin binding, CSRF protection, pairing, rate limits, and kill-switch behavior
-are explicitly specified and tested.
+are explicitly specified and tested. The M4.7 threat-model decision selects
+native messaging for browser alpha because it avoids exposing an always-on
+loopback service to ordinary web pages. Desktop, CLI, and SDK callers should
+reuse the same local-service semantics rather than defining a separate security
+model.
 
 The first native-messaging scaffold accepts `service_status`,
 `request_pairing`, `validate_signer_request`, and `verify_signer_response`.

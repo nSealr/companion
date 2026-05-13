@@ -168,6 +168,12 @@ requested methods to secretless route metadata, rejecting unknown accounts,
 ambiguous account ids, unsupported methods, and route-type mismatches before
 any signer transport or persistent grant store exists.
 
+Status note, 2026-05-13: `@nsealr/client` now exposes route selection through
+the local-service boundary after explicit in-memory pairing authorization. The
+operation returns the same secretless route metadata pinned by shared specs
+vectors. It does not create grants, persist routes, open transports, or dispatch
+signer IO.
+
 Status note, 2026-05-11: the companion identity/policy boundary now follows
 the official account model. Account metadata is per resulting public key and
 route; key sources such as mnemonics, passphrase namespaces, standalone
@@ -224,10 +230,11 @@ tarball artifacts without publishing to npm.
   in-memory grant, signer-request validation, and signer-response verification.
   The first high-level client wrapper validates request-id
   correlation and malformed service responses before browser, SDK, desktop, or
-  CLI code can trust them. Pure package-level route selection is implemented;
-  remaining work is persistent pairing store, user approval UX, a local-service
-  route-selection endpoint, cancellation, persistent revocation, deterministic
-  transport errors, signer dispatch, and native-host packaging.
+  CLI code can trust them. Pure package-level route selection and the
+  local-service route-selection operation are implemented; remaining work is
+  persistent pairing store, user approval UX, cancellation, persistent
+  revocation, deterministic transport errors, signer dispatch, and native-host
+  packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are
@@ -238,8 +245,8 @@ tarball artifacts without publishing to npm.
   inputs into nSealr `sign_event` requests, verifies signed responses, and
   stores no browser-side production key material. Remaining work: extension
   manifest/content-script packaging, native-messaging installation, origin
-  permission UX, cancellation, and local-service route selection. No local
-  production signing and no extension-side production key storage.
+  permission UX, and cancellation. No local production signing and no
+  extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

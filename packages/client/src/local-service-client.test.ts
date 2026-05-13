@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { resolveSpecsRoot } from "@nsealr/fixtures";
+import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
 import {
   createNativeMessagingLocalServiceClient,
   LocalServiceClient,
@@ -17,8 +17,11 @@ import {
 } from "./service.js";
 
 const specsRoot = resolveSpecsRoot();
+const fixtures = loadSpecsFixtures(specsRoot);
 const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
 const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
+const routeVector = fixtures.routeSelections.find((selection) => selection.name === "esp32-usb-sign-event-slot-0");
+if (!routeVector) throw new Error("route selection fixture is missing");
 const client: LocalClientIdentity = {
   surface: "browser_extension",
   origin: "https://example.com",
@@ -29,7 +32,7 @@ const grant: LocalClientGrant = {
   client_id: clientIdForIdentity(client),
   origin: client.origin,
   surface: client.surface,
-  allowed_operations: ["validate_signer_request", "verify_signer_response"],
+  allowed_operations: ["select_account_route", "validate_signer_request", "verify_signer_response"],
   expires_at: 2_000_000_000
 };
 
@@ -84,7 +87,11 @@ describe("local service client", () => {
 
   it("validates and verifies through authorized service exchanges", async () => {
     const service = new LocalServiceClient({
-      exchange: (message) => handleLocalServiceRequest(message, { grants: [grant], now: 1_900_000_000 })
+      exchange: (message) => handleLocalServiceRequest(message, {
+        accounts: fixtures.accounts,
+        grants: [grant],
+        now: 1_900_000_000
+      })
     });
 
     await expect(service.validateSignerRequest(client, request, "client-validate")).resolves.toMatchObject({
@@ -97,6 +104,15 @@ describe("local service client", () => {
       request_id: "client-verify",
       ok: true,
       result: { validation: { valid: true } }
+    });
+
+    await expect(service.selectAccountRoute(client, routeVector.request, "client-route")).resolves.toEqual({
+      version: 1,
+      request_id: "client-route",
+      ok: true,
+      result: {
+        route_selection: routeVector.selection
+      }
     });
   });
 
@@ -140,6 +156,28 @@ describe("local service client", () => {
         }
       }
     }, "expected-request")).toThrow(/secret-storage flag/u);
+    expect(() => validateLocalServiceResponse({
+      version: 1,
+      request_id: "expected-request",
+      ok: true,
+      result: {
+        route_selection: {
+          ...routeVector.selection,
+          contains_secret_material: true
+        }
+      }
+    }, "expected-request")).toThrow(/secret-material flag/u);
+    expect(() => validateLocalServiceResponse({
+      version: 1,
+      request_id: "expected-request",
+      ok: true,
+      result: {
+        route_selection: {
+          ...routeVector.selection,
+          repository: "raspberry"
+        }
+      }
+    }, "expected-request")).toThrow(/repository does not match/u);
     expect(() => validateLocalServiceResponse({
       version: 1,
       request_id: "expected-request",

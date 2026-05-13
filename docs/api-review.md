@@ -40,11 +40,12 @@ Status: reviewed for pre-alpha.
 
 The local-service surface is secretless and limited to service status, pairing
 intent creation, manual pairing approval into an in-memory grant,
-signer-request validation, and signer-response verification. Client identity,
-request-id correlation, native-message framing, and malformed-response
-rejection are public helpers. Route selection, persistent grant storage, signer
-dispatch, cancellation, and native-host packaging remain future work and must
-not be implied by this package.
+secretless route selection, signer-request validation, and signer-response
+verification. Client identity, request-id correlation, native-message framing,
+and malformed-response rejection are public helpers. Route selection returns
+metadata only; persistent grant storage, signer dispatch, cancellation, and
+native-host packaging remain future work and must not be implied by this
+package.
 
 ## @nsealr/core
 

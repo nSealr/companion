@@ -41,6 +41,6 @@ assert.equal(approvePairingIntent(pairing.result.pairing_intent, {
 
 The local service boundary is secretless. It currently supports status, pairing
 intent generation, explicit manual approval into an in-memory grant, request
-validation, and response verification. It does not store production keys,
-persist grants, select routes, open relays, or dispatch to real signer
+validation, secretless route selection, and response verification. It does not
+store production keys, persist grants, open relays, or dispatch to real signer
 transports.

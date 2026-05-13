@@ -156,8 +156,12 @@ async function fixturesPolicyReviewAndFramingExample(): Promise<void> {
 }
 
 async function localServiceExample(): Promise<void> {
+  const fixtures = loadSpecsFixtures(specsRootForExamples());
+  const routeVector = fixtures.routeSelections.find((candidate) => candidate.name === "esp32-usb-sign-event-slot-0");
+  if (!routeVector) throw new Error("local service example could not find a route-selection vector");
   const service = new LocalServiceClient({
     exchange: (message) => handleLocalServiceRequest(message, {
+      accounts: fixtures.accounts,
       grants: [exampleGrant()],
       now: 1_900_000_000
     }),
@@ -169,11 +173,20 @@ async function localServiceExample(): Promise<void> {
   if (!("service" in status.result)) throw new Error("service status example returned wrong result type");
   assert.equal(status.result.service.stores_production_secrets, false);
 
-  const pairing = await service.requestPairing(sdkClient, ["validate_signer_request", "verify_signer_response"]);
+  const pairing = await service.requestPairing(sdkClient, [
+    "select_account_route",
+    "validate_signer_request",
+    "verify_signer_response"
+  ]);
   if (pairing.ok !== true) throw new Error(pairing.error.message);
   if (!("pairing_intent" in pairing.result)) throw new Error("pairing example returned wrong result type");
   assert.equal(pairing.result.pairing_intent.requires_user_approval, true);
   assert.equal(pairing.result.pairing_intent.stores_production_secrets, false);
+
+  const routeSelection = await service.selectAccountRoute(sdkClient, routeVector.request);
+  if (routeSelection.ok !== true) throw new Error(routeSelection.error.message);
+  if (!("route_selection" in routeSelection.result)) throw new Error("route selection example returned wrong result type");
+  assert.deepEqual(routeSelection.result.route_selection, routeVector.selection);
 
   const validation = await service.validateSignerRequest(sdkClient, request);
   if (validation.ok !== true) throw new Error(validation.error.message);
@@ -301,7 +314,7 @@ function exampleGrant(): LocalClientGrant {
     client_id: clientIdForIdentity(sdkClient),
     origin: sdkClient.origin,
     surface: sdkClient.surface,
-    allowed_operations: ["validate_signer_request", "verify_signer_response"],
+    allowed_operations: ["select_account_route", "validate_signer_request", "verify_signer_response"],
     expires_at: 2_000_000_000
   };
 }

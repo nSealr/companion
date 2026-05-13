@@ -190,6 +190,9 @@ importers:
       '@nsealr/core':
         specifier: workspace:*
         version: link:../core
+      '@nsealr/policy':
+        specifier: workspace:*
+        version: link:../policy
       '@nsealr/protocol':
         specifier: workspace:*
         version: link:../protocol

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { resolveSpecsRoot } from "@nsealr/fixtures";
+import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
 import {
   approvePairingIntent,
   clientIdForIdentity,
@@ -13,8 +13,11 @@ import {
 } from "./service.js";
 
 const specsRoot = resolveSpecsRoot();
+const fixtures = loadSpecsFixtures(specsRoot);
 const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
 const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
+const routeVector = fixtures.routeSelections.find((selection) => selection.name === "esp32-usb-sign-event-slot-0");
+if (!routeVector) throw new Error("route selection fixture is missing");
 const client: LocalClientIdentity = {
   surface: "browser_extension",
   origin: "https://example.com",
@@ -27,6 +30,10 @@ const grant: LocalClientGrant = {
   surface: client.surface,
   allowed_operations: ["validate_signer_request", "verify_signer_response"],
   expires_at: 2_000_000_000
+};
+const routeGrant: LocalClientGrant = {
+  ...grant,
+  allowed_operations: ["select_account_route"]
 };
 
 describe("local service boundary", () => {
@@ -213,6 +220,57 @@ describe("local service boundary", () => {
     }, { grants: [grant], now: 1_900_000_000 })).toMatchObject({
       ok: true,
       result: { validation: { valid: false, error: "request_id is invalid" } }
+    });
+  });
+
+  it("selects a secretless account route only after explicit in-memory authorization", () => {
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-route-unpaired",
+      operation: "select_account_route",
+      params: {
+        client,
+        route_request: routeVector.request
+      }
+    }, { accounts: fixtures.accounts, now: 1_900_000_000 })).toMatchObject({
+      ok: false,
+      error: { code: "unauthorized_client", message: "client is not paired" }
+    });
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-route-1",
+      operation: "select_account_route",
+      params: {
+        client,
+        route_request: routeVector.request
+      }
+    }, { accounts: fixtures.accounts, grants: [routeGrant], now: 1_900_000_000 })).toEqual({
+      version: 1,
+      request_id: "svc-route-1",
+      ok: true,
+      result: {
+        route_selection: routeVector.selection
+      }
+    });
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-route-unknown",
+      operation: "select_account_route",
+      params: {
+        client,
+        route_request: {
+          ...routeVector.request,
+          account_id: "acct-missing"
+        }
+      }
+    }, { accounts: fixtures.accounts, grants: [routeGrant], now: 1_900_000_000 })).toMatchObject({
+      ok: false,
+      error: {
+        code: "route_selection_failed",
+        message: "route selection account_id is unknown"
+      }
     });
   });
 

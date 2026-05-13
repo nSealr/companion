@@ -54,9 +54,10 @@ single-repository CI. Cross-repository drift remains guarded by
   deterministic malformed-frame rejection, secretless local service status,
   deterministic pairing intents, unpaired/revoked/expired/scope-denied client
   rejection, latest-grant selection from in-memory grant history,
-  signer-request validation, signer-response verification, local client
-  request-id correlation, malformed service-response rejection, and
-  native-messaging exchange wrapping before any signer I/O exists.
+  secretless route selection, signer-request validation, signer-response
+  verification, local client request-id correlation, malformed service-response
+  rejection, and native-messaging exchange wrapping before any signer I/O
+  exists.
 - Browser-provider package tests cover NIP-07 `getPublicKey` validation,
   `signEvent` conversion into nSealr signer requests, signed-response
   verification, explicit client identity forwarding, signer refusal propagation,

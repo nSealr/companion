@@ -31,6 +31,8 @@ public npm release.
   frame errors and is tested with injected in-memory authorization context.
 - `@nsealr/policy` pure route-selection helper and shared specs vectors for
   account-to-route metadata selection without signer dispatch.
+- `@nsealr/client` local-service route-selection operation gated by in-memory
+  pairing authorization and shared route-selection validators.
 - Secretless local companion service, client wrapper, and browser-provider
   boundaries for future SDK, browser extension, desktop, and CLI access
   surfaces.

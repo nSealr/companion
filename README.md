@@ -54,10 +54,11 @@ match the shared `contract_id`.
   native-messaging frame codec plus the high-level local-service client used by
   future browser, SDK, desktop, and CLI callers. The implemented operations are
   intentionally secretless: service status, pairing intent generation,
-  digest-bound manual approval into an in-memory grant, signer-request
-  validation, and signer-response verification. Validation and verification
-  require an explicit in-memory client grant; unpaired, revoked, expired, or
-  operation-scoped clients are rejected before signer payload handling.
+  digest-bound manual approval into an in-memory grant, secretless route
+  selection, signer-request validation, and signer-response verification. Route
+  selection, validation, and verification require an explicit in-memory client
+  grant; unpaired, revoked, expired, or operation-scoped clients are rejected
+  before signer payload handling.
 - `@nsealr/browser-provider` defines the first NIP-07 provider adapter over an
   injected companion backend and explicit client identity. It validates
   `getPublicKey` and `signEvent` boundaries, converts event templates into
@@ -66,7 +67,7 @@ match the shared `contract_id`.
 - `@nsealr/service` is the private one-shot native-messaging host scaffold over
   `@nsealr/client`. It returns deterministic native-frame errors and accepts
   explicit in-memory authorization context in tests. It does not open relays,
-  store keys, select accounts, or contact signer transports.
+  store keys, persist accounts, or contact signer transports.
 - `nsealr review-request` renders deterministic review JSON, digest-bound
   screen-review pages, or complete constrained-display detail pages from a
   signing request for untrusted host-side previews and test harnesses.
@@ -184,9 +185,9 @@ match the shared `contract_id`.
   manifests, explicit entrypoints, deep-import audit, and test-only signer
   isolation are already in place.
 - Expand the local companion service boundary with pairing, origin/app
-  identity, local-service route selection endpoints, cancellation, persistent
-  revocation storage, deterministic errors, and signer transport dispatch. The
-  pure package-level route selector and first SDK wrapper over the
+  identity, cancellation, persistent revocation storage, deterministic errors,
+  and signer transport dispatch. The pure package-level route selector, the
+  local-service route-selection operation, and the first SDK wrapper over the
   native-messaging/local-service boundary are in place; localhost APIs need a
   separate threat-model pass.
 - Browser extension / NIP-07 bridge packaging around the provider adapter so

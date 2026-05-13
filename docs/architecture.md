@@ -92,10 +92,10 @@ packages, but it must not export test-only signing as a production path.
   storage and grant UX remain separate layers.
 - `packages/client`: local companion service request/response protocol,
   native-messaging frame codec, service status, pairing intent generation,
-  in-memory grant enforcement, signer-request validation, signer-response
-  verification, response validation, and a high-level client wrapper. This is
-  the shared client/service boundary for future browser extension, SDK, and
-  desktop work.
+  in-memory grant enforcement, secretless account-route selection,
+  signer-request validation, signer-response verification, response validation,
+  and a high-level client wrapper. This is the shared client/service boundary
+  for future browser extension, SDK, and desktop work.
 - `packages/browser-provider`: NIP-07 provider adapter for browser-extension
   packaging. It accepts an injected companion backend plus explicit client
   identity, validates public keys, converts `signEvent` inputs into nSealr
@@ -105,7 +105,7 @@ packages, but it must not export test-only signing as a production path.
   `packages/client`. It accepts explicit in-memory authorization context in
   tests and returns deterministic native-frame errors. It is intentionally
   secretless and does not yet perform persistent grant lookup, account
-  selection, relay work, or signer transport dispatch.
+  storage, relay work, or signer transport dispatch.
 
 Each reusable package has its own `package.json`, source `src/index.ts`
 entrypoint, and built `dist` JS/declaration export. Cross-package source imports

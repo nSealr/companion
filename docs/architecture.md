@@ -247,6 +247,11 @@ rejects mismatched origin/URL pairs, rejects deceptive localhost names and
 extension-page origins, and creates the `browser_extension` local client
 identity through `@nsealr/client/client-identity`. It stores no browser-side
 production secrets and does not grant a page by itself.
+The sender-aware handler composes both boundaries before provider selection: it
+parses the internal request, validates sender-derived identity, and only then
+asks the injected provider factory for a provider bound to that client context.
+Malformed requests and malformed senders return deterministic secretless errors
+without provider selection or signer I/O.
 Its manifest builder is intentionally restrictive: Chromium manifests omit host
 permissions, optional host permissions, content scripts, and storage; Firefox
 manifests require an explicit reviewed extension id and otherwise follow the

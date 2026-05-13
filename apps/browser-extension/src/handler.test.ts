@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BROWSER_EXTENSION_MESSAGE_PROTOCOL,
   handleBrowserExtensionRequest,
+  handleBrowserExtensionSenderRequest,
   type BrowserExtensionHandlerOptions
 } from "./handler.js";
 
@@ -136,6 +137,107 @@ describe("browser extension request handler", () => {
       request_id: "browser-bad-event",
       ok: false,
       error: { code: "provider_request_failed" }
+    });
+  });
+
+  it("binds browser requests to validated sender-derived client identity before provider selection", async () => {
+    const seenOrigins: string[] = [];
+    await expect(handleBrowserExtensionSenderRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "browser-sender-get-pubkey",
+      method: "get_public_key"
+    }, {
+      extension_id: "extension@nsealr.dev",
+      page_url: "https://example.com/app"
+    }, {
+      providerForClient: (context) => {
+        seenOrigins.push(context.client.origin);
+        return provider;
+      }
+    })).resolves.toMatchObject({
+      request_id: "browser-sender-get-pubkey",
+      ok: true,
+      result: {
+        pubkey: signedEvent.pubkey
+      }
+    });
+
+    expect(seenOrigins).toEqual(["https://example.com"]);
+  });
+
+  it("rejects invalid request or sender before provider selection", async () => {
+    let selected = false;
+    const options = {
+      providerForClient: () => {
+        selected = true;
+        return provider;
+      }
+    };
+
+    await expect(handleBrowserExtensionSenderRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "bad request id",
+      method: "get_public_key"
+    }, {
+      extension_id: "extension@nsealr.dev",
+      page_url: "https://example.com/app"
+    }, options)).resolves.toEqual({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "invalid-browser-extension-request",
+      ok: false,
+      error: {
+        code: "invalid_request",
+        message: "browser extension request is invalid",
+        retryable: false
+      }
+    });
+    expect(selected).toBe(false);
+
+    await expect(handleBrowserExtensionSenderRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "browser-bad-sender",
+      method: "get_public_key"
+    }, {
+      extension_id: "extension@nsealr.dev",
+      page_url: "http://localhost.evil.example/app"
+    }, options)).resolves.toMatchObject({
+      request_id: "browser-bad-sender",
+      ok: false,
+      error: {
+        code: "invalid_sender",
+        message: "browser extension sender is invalid"
+      }
+    });
+    expect(selected).toBe(false);
+  });
+
+  it("returns deterministic errors when provider selection fails", async () => {
+    await expect(handleBrowserExtensionSenderRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "browser-provider-selection-failed",
+      method: "get_public_key"
+    }, {
+      extension_id: "extension@nsealr.dev",
+      page_url: "https://example.com/app"
+    }, {
+      providerForClient: () => {
+        throw new Error("route store unavailable");
+      }
+    })).resolves.toEqual({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "browser-provider-selection-failed",
+      ok: false,
+      error: {
+        code: "provider_selection_failed",
+        message: "browser extension provider selection failed",
+        retryable: false
+      }
     });
   });
 });

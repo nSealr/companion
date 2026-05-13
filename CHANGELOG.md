@@ -51,6 +51,8 @@ public npm release.
 - Browser-safe `@nsealr/client/client-identity` parser and private
   browser-extension sender boundary so browser, SDK, CLI, service, and
   native-host code use one origin/app binding rule set.
+- Private browser-extension sender-aware handler that validates both the
+  internal request and sender-derived page origin before provider selection.
 - `@nsealr/client` secretless JSON grant-store contract for persisting approved
   and revoked local client grants without production key material.
 - Deterministic local-service grant-history selection so the latest matching

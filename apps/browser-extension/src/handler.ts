@@ -9,6 +9,10 @@ import {
   isBrowserExtensionRequestId,
   parseBrowserExtensionRequest
 } from "./messages.js";
+import {
+  browserExtensionClientContextFromSender,
+  type BrowserExtensionClientContext
+} from "./sender.js";
 
 export { BROWSER_EXTENSION_MESSAGE_PROTOCOL } from "./messages.js";
 
@@ -36,6 +40,10 @@ export type BrowserExtensionResponse = BrowserExtensionSuccessResponse | Browser
 
 export type BrowserExtensionHandlerOptions = {
   provider: Pick<Nip07Provider, "getPublicKey" | "signEvent">;
+};
+
+export type BrowserExtensionSenderHandlerOptions = {
+  providerForClient: (context: BrowserExtensionClientContext) => BrowserExtensionHandlerOptions["provider"];
 };
 
 const FALLBACK_REQUEST_ID = "invalid-browser-extension-request";
@@ -145,8 +153,40 @@ export async function handleBrowserExtensionRequest(
     return errorResponse(requestId, "invalid_request", "browser extension request is invalid");
   }
 
+  return handleParsedBrowserExtensionRequest(request, options.provider);
+}
+
+async function handleParsedBrowserExtensionRequest(
+  request: BrowserExtensionRequest,
+  provider: BrowserExtensionHandlerOptions["provider"]
+): Promise<BrowserExtensionResponse> {
   if (request.method === "get_public_key") {
-    return handleGetPublicKey(request, options.provider);
+    return handleGetPublicKey(request, provider);
   }
-  return handleSignEvent(request, options.provider);
+  return handleSignEvent(request, provider);
+}
+
+export async function handleBrowserExtensionSenderRequest(
+  value: unknown,
+  sender: unknown,
+  options: BrowserExtensionSenderHandlerOptions
+): Promise<BrowserExtensionResponse> {
+  const requestId = fallbackRequestId(value);
+  let request: BrowserExtensionRequest;
+  let context: BrowserExtensionClientContext;
+  try {
+    request = parseBrowserExtensionRequest(value);
+  } catch {
+    return errorResponse(requestId, "invalid_request", "browser extension request is invalid");
+  }
+  try {
+    context = browserExtensionClientContextFromSender(sender);
+  } catch {
+    return errorResponse(requestId, "invalid_sender", "browser extension sender is invalid");
+  }
+  try {
+    return handleParsedBrowserExtensionRequest(request, options.providerForClient(context));
+  } catch {
+    return errorResponse(request.request_id, "provider_selection_failed", "browser extension provider selection failed");
+  }
 }

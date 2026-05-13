@@ -298,8 +298,9 @@ tarball artifacts without publishing to npm.
   provider-backed handler that validates returned pubkeys/events before
   browser callers can trust them. It also derives local client identity from a
   sanitized sender page-origin context through the browser-safe
-  `@nsealr/client/client-identity` subpath, and can build a minimal MV3
-  manifest with `nativeMessaging` as the only permission and no
+  `@nsealr/client/client-identity` subpath. The sender-aware handler validates
+  both internal request and sender before provider selection. It can build a
+  minimal MV3 manifest with `nativeMessaging` as the only permission and no
   host/content-script/storage permissions. Remaining work: extension packaging,
   content-script injection, native-messaging installation, origin permission
   UX, cancellation, and real dispatch after M4.7 gates. No local production

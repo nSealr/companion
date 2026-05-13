@@ -76,9 +76,12 @@ single-repository CI. Cross-repository drift remains guarded by
   before browser callers can trust returned pubkeys/events. Sender-boundary
   tests cover page-origin derivation from full URLs, origin/URL mismatch
   rejection, deceptive localhost rejection, extension-page-origin rejection,
-  and shared local-client identity construction. Manifest tests pin the minimal
-  MV3 permission boundary: native messaging only, no host permission fields, no
-  content scripts, no storage permission, and explicit Firefox extension ids.
+  and shared local-client identity construction. Sender-aware handler tests
+  prove malformed requests and malformed senders fail before provider
+  selection, and provider-selection failures produce deterministic errors.
+  Manifest tests pin the minimal MV3 permission boundary: native messaging
+  only, no host permission fields, no content scripts, no storage permission,
+  and explicit Firefox extension ids.
 - `make package-smoke` builds package artifacts, then runs the private
   `@nsealr/consumer-smoke` app. The smoke imports every public `@nsealr/*`
   package through its built package entrypoint plus the public

@@ -83,6 +83,10 @@ single-repository CI. Cross-repository drift remains guarded by
   reachable from every public package entrypoint. `make api-docs-update`
   regenerates the file after an intentional public API change. This keeps the
   npm-facing surface visible and reviewable before publication.
+- `make api-review` verifies that `docs/api-review.md` records the current
+  `docs/api.md` digest and includes a review section for every publishable
+  package. Intentional export changes must update both API docs and the API
+  review before CI can pass.
 - `make pack-smoke` packs public `@nsealr/*` tarballs, verifies they contain
   only `dist`, README, and package metadata, verifies `workspace:*` dependency
   protocols were rewritten, installs the tarballs into a temporary npm consumer
@@ -247,7 +251,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - Package consumer smoke currently runs against built JS/declaration artifacts,
   packed tarballs, and executable examples importing every publishable public
   package. README snippets for every publishable package are now executed from
-  CI; the remaining npm-facing gate is trusted-publishing/provenance activation.
+  CI, and the public API review is digest-bound to `docs/api.md`. The remaining
+  npm-facing gate is trusted-publishing/provenance activation.
 - Full NIP-46 relay-session tests with local relay fixtures after NIP-44
   session lifecycle and reviewed `connect` acknowledgement are specified.
 - Large QR payload strategy tests once chunking or compression is designed.

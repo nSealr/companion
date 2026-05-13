@@ -79,6 +79,7 @@ def verify_companion_tooling(errors: list[str]) -> None:
     release_path = ROOT / "docs" / "release.md"
     sdk_examples_path = ROOT / "docs" / "sdk-examples.md"
     api_docs_path = ROOT / "docs" / "api.md"
+    api_review_path = ROOT / "docs" / "api-review.md"
     release_workflow_path = ROOT / ".github" / "workflows" / "package-release.yml"
     if not package_path.exists() or not makefile_path.exists():
         return
@@ -111,12 +112,14 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("package.json must expose API documentation drift checks")
     elif scripts.get("api-docs:update") != "node scripts/check_api_docs.mjs --write":
         errors.append("package.json must expose API documentation regeneration")
+    elif scripts.get("api-review:check") != "node scripts/check_api_review.mjs":
+        errors.append("package.json must expose API review drift checks")
     elif scripts.get("pack-smoke") != "node scripts/pack_smoke.mjs":
         errors.append("package.json must expose the packed tarball smoke script")
     elif scripts.get("release-artifacts") != "node scripts/prepare_release_artifacts.mjs --out release-artifacts/packages":
         errors.append("package.json must expose release-artifacts preparation")
-    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm pack-smoke":
-        errors.append("package.json ci must build package artifacts and README examples before checks")
+    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm api-review:check && pnpm pack-smoke":
+        errors.append("package.json ci must build package artifacts and API review checks")
 
     makefile = makefile_path.read_text(encoding="utf-8")
     if "PNPM_VERSION := 10.33.4" not in makefile:
@@ -135,6 +138,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile must run the API documentation drift check")
     if "api-docs-update:" not in makefile or "$(PNPM) api-docs:update" not in makefile:
         errors.append("Makefile must expose API documentation regeneration")
+    if "api-review:" not in makefile or "$(PNPM) api-review:check" not in makefile:
+        errors.append("Makefile must run the API review drift check")
     if "pack-smoke:" not in makefile or "$(PNPM) pack-smoke" not in makefile:
         errors.append("Makefile must run the packed tarball smoke")
     if "release-artifacts:" not in makefile or "$(PNPM) release-artifacts" not in makefile:
@@ -147,6 +152,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
             errors.append(f"missing companion package release helper: {rel}")
     if not (ROOT / "scripts" / "check_api_docs.mjs").exists():
         errors.append("missing companion API documentation drift helper: scripts/check_api_docs.mjs")
+    if not (ROOT / "scripts" / "check_api_review.mjs").exists():
+        errors.append("missing companion API review drift helper: scripts/check_api_review.mjs")
     if not (ROOT / "scripts" / "check_readme_examples.mjs").exists():
         errors.append("missing companion README example drift helper: scripts/check_readme_examples.mjs")
     if not release_path.exists():
@@ -174,6 +181,17 @@ def verify_companion_tooling(errors: list[str]) -> None:
                 continue
             if f"## {package_name}" not in api_docs_text:
                 errors.append(f"docs/api.md must document {package_name}")
+    if not api_review_path.exists():
+        errors.append("docs/api-review.md must record the reviewed public package API surface")
+    else:
+        api_review_text = api_review_path.read_text(encoding="utf-8")
+        if "API surface digest:" not in api_review_text:
+            errors.append("docs/api-review.md must bind the review to docs/api.md")
+        for package_name in COMPANION_PACKAGES.values():
+            if package_name == "@nsealr/dev-signer":
+                continue
+            if f"## {package_name}" not in api_review_text:
+                errors.append(f"docs/api-review.md must review {package_name}")
     if not release_workflow_path.exists():
         errors.append(".github/workflows/package-release.yml must document package release rehearsal")
     else:

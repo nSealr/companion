@@ -26,9 +26,10 @@
     "readme-examples:check": "node scripts/check_readme_examples.mjs",
     "api-docs:check": "node scripts/check_api_docs.mjs",
     "api-docs:update": "node scripts/check_api_docs.mjs --write",
+    "api-review:check": "node scripts/check_api_review.mjs",
     "pack-smoke": "node scripts/pack_smoke.mjs",
     "release-artifacts": "node scripts/prepare_release_artifacts.mjs --out release-artifacts/packages",
-    "ci": "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm pack-smoke"
+    "ci": "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm api-review:check && pnpm pack-smoke"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

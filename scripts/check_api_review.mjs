@@ -1,0 +1,36 @@
+#!/usr/bin/env node
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { publicPackages, root } from "./package_set.mjs";
+
+const apiDocsPath = join(root, "docs", "api.md");
+const reviewPath = join(root, "docs", "api-review.md");
+
+const apiDocs = readFileSync(apiDocsPath, "utf-8");
+const review = readFileSync(reviewPath, "utf-8");
+const digest = createHash("sha256").update(apiDocs).digest("hex");
+
+assert(
+  review.includes(`API surface digest: \`sha256:${digest}\``),
+  "docs/api-review.md must record the current docs/api.md digest"
+);
+
+for (const packageName of publicPackages) {
+  assert(
+    review.includes(`## ${packageName}`),
+    `docs/api-review.md must include a review section for ${packageName}`
+  );
+}
+
+assert(
+  review.includes("@nsealr/dev-signer") && review.includes("private and test-only"),
+  "docs/api-review.md must keep @nsealr/dev-signer private and test-only"
+);
+assert(
+  review.includes("already-decrypted payloads only"),
+  "docs/api-review.md must preserve the current NIP-46 boundary"
+);
+
+console.log("companion API review is up to date");

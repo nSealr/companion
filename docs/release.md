@@ -43,6 +43,8 @@ Before any npm publication:
 - Public package README snippets must pass against built package entrypoints.
 - `docs/api.md` must match the exported symbols of every public package
   entrypoint through `make api-docs`.
+- `docs/api-review.md` must record the current `docs/api.md` digest through
+  `make api-review`.
 - The changelog must describe the release.
 - No package may contain production private-key custody or depend on private
   `@nsealr/dev-signer` from production code.

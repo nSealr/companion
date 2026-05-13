@@ -190,7 +190,8 @@ line without adding compression, fountain codes, relay sessions, or signer I/O.
   deep-import drift, and production-package dependency drift.
 
 Status: first implementation pass complete. Remaining work before public npm
-alpha is trusted publishing activation and final public API review.
+alpha is trusted publishing activation; the API review must be repeated only
+after intentional export changes.
 Package README files document purpose and trust boundaries, built JS/declaration
 artifacts are generated before tests, package tarballs are restricted to `dist`
 plus README, consumer smokes import both workspace-built and packed package
@@ -203,9 +204,10 @@ entrypoints and checked in CI so exported symbols cannot drift invisibly.
 Package manifests now carry npm-facing descriptions, keywords, repository
 directories, issue tracker, homepage, MIT license, and public provenance
 `publishConfig`. Package README examples are executable TypeScript snippets
-checked against built package entrypoints in CI. A manual package release
-rehearsal workflow now prepares and uploads checked tarball artifacts without
-publishing to npm.
+checked against built package entrypoints in CI. `docs/api-review.md` records a
+package-by-package public API review bound to the current `docs/api.md` digest.
+A manual package release rehearsal workflow now prepares and uploads checked
+tarball artifacts without publishing to npm.
 
 ## Later
 
@@ -238,10 +240,11 @@ publishing to npm.
   Package manifests include npm-facing metadata plus provenance publish config.
   Executable SDK examples now import every publishable public package at least
   once without importing `@nsealr/dev-signer`. Public package README snippets
-  are marked and executed through `make readme-examples`. Changelog and release
-  policy are present. A manual release rehearsal workflow prepares checked
-  tarball artifacts without npm publication. Actual npm trusted
-  publishing/provenance activation remains pending.
+  are marked and executed through `make readme-examples`. The public API review
+  is digest-bound to generated API docs. Changelog and release policy are
+  present. A manual release rehearsal workflow prepares checked tarball
+  artifacts without npm publication. Actual npm trusted publishing/provenance
+  activation remains pending.
 - M5 full NIP-46/Nostr Connect relay session integration.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and

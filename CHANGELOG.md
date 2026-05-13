@@ -21,6 +21,8 @@ public npm release.
   boundaries without test-only signer imports.
 - Executable README snippets for every publishable public package, checked
   against built package entrypoints in CI.
+- Digest-bound public API review for every publishable package before npm alpha
+  work.
 - Secretless local companion service, client wrapper, and browser-provider
   boundaries for future SDK, browser extension, desktop, and CLI access
   surfaces.

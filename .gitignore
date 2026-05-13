@@ -3,5 +3,6 @@ coverage/
 dist/
 packages/*/dist/
 release-artifacts/
+.tmp/
 .env
 .env.*

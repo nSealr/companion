@@ -19,6 +19,8 @@ public npm release.
 - Executable SDK examples now import every publishable public package and cover
   fixture, policy, review, framing, smartcard, and serial-line transport
   boundaries without test-only signer imports.
+- Executable README snippets for every publishable public package, checked
+  against built package entrypoints in CI.
 - Secretless local companion service, client wrapper, and browser-provider
   boundaries for future SDK, browser extension, desktop, and CLI access
   surfaces.

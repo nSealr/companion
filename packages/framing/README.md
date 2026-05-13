@@ -8,8 +8,32 @@ Checksum-protected serial frame helpers for USB CDC and UART experiments.
 - Enforce shared serial-frame byte limits.
 - Reject checksum mismatches and malformed payloads deterministically.
 
+## Example
+
+```ts nsealr-readme-example
+import assert from "node:assert/strict";
+import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
+
+const frame = encodeSerialFrame({
+  type: "request",
+  payload: {
+    version: 1,
+    request_id: "readme-frame",
+    method: "get_public_key"
+  }
+});
+
+assert.deepEqual(decodeSerialFrame(frame), {
+  type: "request",
+  payload: {
+    version: 1,
+    request_id: "readme-frame",
+    method: "get_public_key"
+  }
+});
+```
+
 ## Boundary
 
 This package only frames bytes for transport. It does not open devices, select
 routes, store keys, or sign events.
-

@@ -105,6 +105,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("package.json must expose consumer-smoke through @nsealr/consumer-smoke")
     elif scripts.get("examples-smoke") != "pnpm --filter @nsealr/sdk-examples verify":
         errors.append("package.json must expose examples-smoke through @nsealr/sdk-examples")
+    elif scripts.get("readme-examples:check") != "node scripts/check_readme_examples.mjs":
+        errors.append("package.json must expose README example execution")
     elif scripts.get("api-docs:check") != "node scripts/check_api_docs.mjs":
         errors.append("package.json must expose API documentation drift checks")
     elif scripts.get("api-docs:update") != "node scripts/check_api_docs.mjs --write":
@@ -113,8 +115,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("package.json must expose the packed tarball smoke script")
     elif scripts.get("release-artifacts") != "node scripts/prepare_release_artifacts.mjs --out release-artifacts/packages":
         errors.append("package.json must expose release-artifacts preparation")
-    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm api-docs:check && pnpm pack-smoke":
-        errors.append("package.json ci must build package artifacts and examples before checks")
+    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm pack-smoke":
+        errors.append("package.json ci must build package artifacts and README examples before checks")
 
     makefile = makefile_path.read_text(encoding="utf-8")
     if "PNPM_VERSION := 10.33.4" not in makefile:
@@ -127,6 +129,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile must run the public package consumer smoke")
     if "examples-smoke:" not in makefile or "$(PNPM) examples-smoke" not in makefile:
         errors.append("Makefile must run the SDK examples smoke")
+    if "readme-examples:" not in makefile or "$(PNPM) readme-examples:check" not in makefile:
+        errors.append("Makefile must run package README examples")
     if "api-docs:" not in makefile or "$(PNPM) api-docs:check" not in makefile:
         errors.append("Makefile must run the API documentation drift check")
     if "api-docs-update:" not in makefile or "$(PNPM) api-docs:update" not in makefile:
@@ -143,6 +147,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
             errors.append(f"missing companion package release helper: {rel}")
     if not (ROOT / "scripts" / "check_api_docs.mjs").exists():
         errors.append("missing companion API documentation drift helper: scripts/check_api_docs.mjs")
+    if not (ROOT / "scripts" / "check_readme_examples.mjs").exists():
+        errors.append("missing companion README example drift helper: scripts/check_readme_examples.mjs")
     if not release_path.exists():
         errors.append("docs/release.md must document release policy")
     else:
@@ -157,6 +163,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
             errors.append("docs/sdk-examples.md must document make examples-smoke and @nsealr/sdk-examples")
         if "import every publishable public" not in sdk_examples_text:
             errors.append("docs/sdk-examples.md must document full public-package import coverage")
+        if "make readme-examples" not in sdk_examples_text or "nsealr-readme-example" not in sdk_examples_text:
+            errors.append("docs/sdk-examples.md must document executable package README snippets")
     if not api_docs_path.exists():
         errors.append("docs/api.md must document the public package API surface")
     else:
@@ -208,8 +216,12 @@ def verify_companion_package_boundaries(errors: list[str]) -> None:
             continue
         if not readme_path.exists():
             errors.append(f"missing package README: packages/{package_dir}/README.md")
-        elif "## Boundary" not in readme_path.read_text(encoding="utf-8"):
-            errors.append(f"packages/{package_dir}/README.md must document the package boundary")
+        else:
+            readme_text = readme_path.read_text(encoding="utf-8")
+            if "## Boundary" not in readme_text:
+                errors.append(f"packages/{package_dir}/README.md must document the package boundary")
+            if package_dir != "dev-signer" and "nsealr-readme-example" not in readme_text:
+                errors.append(f"packages/{package_dir}/README.md must include an executable README example")
         if not index_path.exists():
             errors.append(f"missing package entrypoint: packages/{package_dir}/src/index.ts")
         package = read_json(package_json_path, errors)

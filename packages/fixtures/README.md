@@ -9,9 +9,20 @@ Shared fixture loading and conformance helpers for nSealr repositories.
 - Keep companion tests aligned with Raspberry, ESP32, smartcard, and hardware
   contracts.
 
+## Example
+
+```ts nsealr-readme-example
+import assert from "node:assert/strict";
+import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
+
+const fixtures = loadSpecsFixtures(resolveSpecsRoot("../specs"));
+
+assert(fixtures.events.length > 0);
+assert(fixtures.invalidVectors.length > 0);
+```
+
 ## Boundary
 
 This package is for tests, fixture verification, and conformance tooling. It
 does not define production signer behavior and must not become a private-key
 store.
-

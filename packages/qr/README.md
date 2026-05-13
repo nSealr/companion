@@ -9,8 +9,22 @@ Static and animated QR envelope helpers for nSealr requests and responses.
 - Enforce shared QR byte limits, frame digests, frame checksums, and malformed
   payload rejection before JSON parsing.
 
+## Example
+
+```ts nsealr-readme-example
+import assert from "node:assert/strict";
+import { decodeQrEnvelope, encodeQrEnvelope } from "@nsealr/qr";
+
+const request = {
+  version: 1,
+  request_id: "readme-qr",
+  method: "get_public_key"
+};
+
+assert.deepEqual(decodeQrEnvelope(encodeQrEnvelope(request)), request);
+```
+
 ## Boundary
 
 This package transports already-validated payloads. It does not store secrets,
 perform signing, compress payloads, use fountain codes, or define signer policy.
-

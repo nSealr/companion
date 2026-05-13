@@ -10,9 +10,23 @@ validation.
 - Reject unsafe `sign_event` templates before transport or signer routing.
 - Validate capability and signing-status diagnostics.
 
+## Example
+
+```ts nsealr-readme-example
+import assert from "node:assert/strict";
+import { validateRequest } from "@nsealr/protocol";
+
+const validation = validateRequest({
+  version: 1,
+  request_id: "readme-get-public-key",
+  method: "get_public_key"
+});
+
+assert.equal(validation.ok, true);
+```
+
 ## Boundary
 
 These limits are nSealr v0 safety limits, not Nostr protocol limits. This
 package does not perform signing and must be used before any companion access
 surface contacts a signer route.
-

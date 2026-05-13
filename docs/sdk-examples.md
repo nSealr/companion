@@ -30,3 +30,13 @@ The examples must stay secretless. They may use deterministic signed fixture
 values, but they must not import `@nsealr/dev-signer`, create production
 private keys, persist grants, open relays, or dispatch to real signer
 transports.
+
+Package README snippets are a separate public-doc gate. Mark runnable snippets
+with `nsealr-readme-example` and verify them with:
+
+```sh
+make readme-examples
+```
+
+README snippets are extracted from publishable package READMEs and executed
+against built package entrypoints.

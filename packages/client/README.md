@@ -11,10 +11,25 @@ Local companion service protocol and client wrappers.
 - Enforce explicit client identity, request-id correlation, and deterministic
   malformed-response rejection.
 
+## Example
+
+```ts nsealr-readme-example
+import assert from "node:assert/strict";
+import { LocalServiceClient, handleLocalServiceRequest } from "@nsealr/client";
+
+const client = new LocalServiceClient({
+  exchange: (message) => handleLocalServiceRequest(message, { now: 1_710_000_000 }),
+  nextRequestId: () => "readme-client-status"
+});
+
+const status = await client.serviceStatus();
+
+assert.equal(status.ok, true);
+```
+
 ## Boundary
 
 The local service boundary is secretless. It currently supports status, pairing
 intent generation, request validation, and response verification. It does not
 store production keys, persist grants, select routes, open relays, or dispatch
 to real signer transports.
-

@@ -10,9 +10,33 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
 - Parse read-only nSealr policy files used by the CLI and tests.
 - Enforce permission checks before signer routing.
 
+## Example
+
+```ts nsealr-readme-example
+import assert from "node:assert/strict";
+import { decideNip46BridgeAction } from "@nsealr/nip46";
+
+const eventTemplate = {
+  created_at: 1_710_000_000,
+  kind: 1,
+  tags: [],
+  content: "NIP-46 bridge input"
+};
+const decision = decideNip46BridgeAction({
+  id: "readme-nip46",
+  method: "sign_event",
+  params: [JSON.stringify(eventTemplate)]
+}, [{
+  method: "sign_event",
+  parameter: "1",
+  event_kind: 1
+}]);
+
+assert.equal(decision.type, "signer_request");
+```
+
 ## Boundary
 
 This package does not implement relay sessions, NIP-44 encryption/decryption,
 persistent grants, browser extension storage, or signer I/O. Those layers remain
 blocked on separate policy and session gates.
-

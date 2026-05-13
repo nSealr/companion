@@ -230,6 +230,10 @@ single-repository CI. Cross-repository drift remains guarded by
   `--permissions` plus `--policy-file` usage. The positive case consumes the
   shared `nSealr/specs` policy-file vector instead of an inline local copy.
   The CLI fixture verifier also rejects drift in shared policy-file vectors.
+- CLI local-service pairing review tests covering
+  `nsealr local review-pairing`, including deterministic review metadata for a
+  pairing intent and rejection of tampered pairing intents before output files
+  are written.
 - Policy package tests cover secretless account descriptors, manual-only QR
   vault policy, scoped grants for persistent routes, wildcard/decrypt/export
   rejection, rejection of stateless QR-vault grant targets, and deterministic

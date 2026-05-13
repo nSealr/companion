@@ -27,6 +27,9 @@ public npm release.
   explicitly approved local client grant.
 - `@nsealr/client` deterministic pairing-review projection for future local
   service approval UX.
+- `nsealr local review-pairing` for rendering deterministic pairing-review
+  metadata from a digest-bound local-service pairing intent without approval or
+  grant-store writes.
 - `@nsealr/client` secretless JSON grant-store contract for persisting approved
   and revoked local client grants without production key material.
 - Deterministic local-service grant-history selection so the latest matching

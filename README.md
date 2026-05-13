@@ -60,6 +60,9 @@ match the shared `contract_id`.
   and signer-response verification. Route selection, validation, and
   verification require an explicit client grant; unpaired, revoked, expired, or
   operation-scoped clients are rejected before signer payload handling.
+- `nsealr local review-pairing` renders deterministic local-service pairing
+  review metadata from a pairing intent. It validates the digest-bound intent
+  and does not approve clients or write grant stores.
 - `@nsealr/browser-provider` defines the first NIP-07 provider adapter over an
   injected companion backend and explicit client identity. It validates
   `getPublicKey` and `signEvent` boundaries, converts event templates into
@@ -194,10 +197,11 @@ match the shared `contract_id`.
   identity, cancellation, deterministic errors, and signer transport dispatch.
   The pure package-level route selector, the local-service route-selection
   operation, the first SDK wrapper, a deterministic pairing-review projection,
-  a strict persistent grant-store contract, a multi-message native-messaging
-  host loop, and validated native-host manifest generation are in place.
-  File-backed service loading, full approval UI, and localhost APIs need
-  separate threat-model and implementation passes.
+  a CLI pairing-review command, a strict persistent grant-store contract, a
+  multi-message native-messaging host loop, validated native-host manifest
+  generation, and explicit read-only service context loading are in place.
+  Full approval UI, reviewed storage handling, and localhost APIs need separate
+  threat-model and implementation passes.
 - Browser extension / NIP-07 bridge packaging around the provider adapter so
   `getPublicKey` and `signEvent` route through companion without storing
   production signing material. The package-level provider can already read the
@@ -247,6 +251,7 @@ pnpm nsealr request get-signing-status --request-id req-status-1 --out status-re
 pnpm nsealr request sign-event --event-template template.json --out request.qr --output-format qr
 pnpm nsealr review-request --request request.qr --request-format qr --out review.json
 pnpm nsealr review-request --request request.qr --request-format qr --detail-pages --max-compact-line-chars 48 --out review-detail-pages.json
+pnpm nsealr local review-pairing --intent pairing-intent.json --out pairing-review.json
 pnpm nsealr nip46 decide --message nip46-message.json --permissions sign_event:1 --out decision.json
 pnpm nsealr nip46 decide --message nip46-message.json --policy-file policy.json --out decision.json
 pnpm nsealr nip46 review-connect --message nip46-connect.json --out connect-review.json

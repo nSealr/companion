@@ -1,8 +1,7 @@
 import {
   parsePairingIntent,
   type LocalClientIdentity,
-  type PairableLocalServiceOperation,
-  type PairingIntent
+  type PairableLocalServiceOperation
 } from "./service.js";
 
 export const LOCAL_PAIRING_REVIEW_FORMAT = "nsealr-local-pairing-review-v0";
@@ -48,7 +47,7 @@ function operationReview(operation: PairableLocalServiceOperation): LocalPairing
   };
 }
 
-export function reviewPairingIntent(intent: PairingIntent): LocalPairingReview {
+export function reviewPairingIntent(intent: unknown): LocalPairingReview {
   const pairing = parsePairingIntent(intent);
   return {
     format: LOCAL_PAIRING_REVIEW_FORMAT,

@@ -169,6 +169,10 @@ verification boundary before any signer I/O or persistent session state is
 exposed. `@nsealr/client` now includes the caller-side wrapper for both object
 exchange and native-messaging frame exchange; it validates service responses and
 request-id correlation before returning them to higher-level callers.
+The CLI `nsealr local review-pairing` command exposes the same deterministic
+pairing-review projection for local/manual inspection. It validates the
+digest-bound intent and writes review metadata only; it does not create grants,
+approve clients, or write grant-store files.
 The private `@nsealr/service` app now runs a tested multi-message native-host
 stdio loop, so a future browser extension can keep one native-messaging port
 open and receive one deterministic response per length-prefixed service

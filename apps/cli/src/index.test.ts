@@ -2,6 +2,12 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import {
+  handleLocalServiceRequest,
+  reviewPairingIntent,
+  type LocalClientIdentity,
+  type PairingIntent
+} from "@nsealr/client";
 import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
 import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
 import { validateRequest, validateResponse } from "@nsealr/protocol";
@@ -704,6 +710,60 @@ describe("nsealr CLI", () => {
     await runCli(["review-request", "--request", requestPath, "--request-format", "qr", "--screen-review", "--out", reviewPath]);
 
     expect(loadJson(reviewPath)).toEqual(vector.screen_review);
+  });
+
+  it("renders local-service pairing review metadata without approving the client", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-pairing-review-"));
+    const intentPath = join(tempRoot, "pairing-intent.json");
+    const reviewPath = join(tempRoot, "pairing-review.json");
+    const client: LocalClientIdentity = {
+      surface: "browser_extension",
+      origin: "extension:nsealr-cli-pairing-review",
+      app_name: "nSealr CLI pairing review"
+    };
+    const response = handleLocalServiceRequest({
+      version: 1,
+      request_id: "cli-pairing-review-1",
+      operation: "request_pairing",
+      params: {
+        client,
+        requested_operations: ["select_account_route", "validate_signer_request"]
+      }
+    });
+    if (response.ok !== true || !("pairing_intent" in response.result)) {
+      throw new Error("test setup did not return a pairing intent");
+    }
+
+    writeFileSync(intentPath, `${JSON.stringify(response.result.pairing_intent, null, 2)}\n`, "utf8");
+    await runCli(["local", "review-pairing", "--intent", intentPath, "--out", reviewPath]);
+
+    expect(loadJson(reviewPath)).toEqual(reviewPairingIntent(response.result.pairing_intent));
+  });
+
+  it("rejects tampered local-service pairing intents before writing review metadata", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-pairing-review-tampered-"));
+    const intentPath = join(tempRoot, "pairing-intent.json");
+    const reviewPath = join(tempRoot, "pairing-review.json");
+    const intent: PairingIntent = {
+      format: "nsealr-local-pairing-intent-v0",
+      client_id: "0".repeat(64),
+      client: {
+        surface: "browser_extension",
+        origin: "extension:nsealr-cli-pairing-review",
+        app_name: "nSealr CLI pairing review"
+      },
+      requested_operations: ["select_account_route"],
+      pairing_digest: "f".repeat(64),
+      requires_user_approval: true,
+      stores_production_secrets: false
+    };
+
+    writeFileSync(intentPath, `${JSON.stringify(intent, null, 2)}\n`, "utf8");
+
+    await expect(
+      runCli(["local", "review-pairing", "--intent", intentPath, "--out", reviewPath])
+    ).rejects.toThrow(/pairing intent client_id mismatch/u);
+    expect(existsSync(reviewPath)).toBe(false);
   });
 
   it("renders review detail pages from a QR signing request", async () => {

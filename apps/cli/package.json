@@ -11,6 +11,7 @@
     "nsealr": "tsx src/index.ts"
   },
   "dependencies": {
+    "@nsealr/client": "workspace:*",
     "@nsealr/core": "workspace:*",
     "@nsealr/dev-signer": "workspace:*",
     "@nsealr/fixtures": "workspace:*",

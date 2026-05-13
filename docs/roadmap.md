@@ -174,6 +174,12 @@ JSON files. This is a developer and integration harness only: it chooses no
 default path, writes no files, approves no clients, opens no transports, and
 does not change the production approval UI or storage-location review gates.
 
+Status note, 2026-05-13: the CLI now exposes `nsealr local review-pairing` for
+deterministic review metadata from a local-service pairing intent. The command
+uses the same digest-bound parser as pairing approval, writes review output
+only after validation, and does not create grants, approve clients, or mutate a
+grant store.
+
 Status note, 2026-05-13: `@nsealr/client` now exposes route selection through
 the local-service boundary after explicit in-memory pairing authorization. The
 operation returns the same secretless route metadata pinned by shared specs
@@ -242,7 +248,8 @@ tarball artifacts without publishing to npm.
   service app now has a tested multi-message native-host stdio loop plus
   validated Chromium/Firefox native-host manifest generation. `@nsealr/client`
   now also defines the strict secretless JSON grant-store contract for approved
-  and revoked local client grants; private service context loading can read
+  and revoked local client grants. The CLI can render pairing-review metadata
+  without approving clients, and private service context loading can read
   explicit grant/account JSON files for local harnesses only. Remaining work is
   full approval UI, reviewed storage locations, cancellation, deterministic
   transport errors, signer dispatch, and native-host installation packaging.

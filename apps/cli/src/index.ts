@@ -2,6 +2,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { Command } from "commander";
 import { SerialPort } from "serialport";
+import { reviewPairingIntent } from "@nsealr/client";
 import { verifySignedEventResponse, type SignEventRequest } from "@nsealr/core";
 import { devSignRequest } from "@nsealr/dev-signer";
 import {
@@ -708,6 +709,17 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         return;
       }
       writeJson(options.out, reviewEventTemplate(eventTemplate, authorPubkey));
+    });
+
+  const local = program.command("local").description("Inspect local companion service objects");
+
+  local
+    .command("review-pairing")
+    .requiredOption("--intent <path>", "Read a local-service pairing intent JSON file")
+    .requiredOption("--out <path>", "Write deterministic pairing-review metadata JSON")
+    .description("Render local-service pairing review metadata without approving a client")
+    .action((options: { intent: string; out: string }) => {
+      writeJson(options.out, reviewPairingIntent(readJson(options.intent)));
     });
 
   program

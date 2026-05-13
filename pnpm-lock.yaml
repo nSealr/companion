@@ -26,6 +26,9 @@ importers:
 
   apps/cli:
     dependencies:
+      '@nsealr/client':
+        specifier: workspace:*
+        version: link:../../packages/client
       '@nsealr/core':
         specifier: workspace:*
         version: link:../../packages/core

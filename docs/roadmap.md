@@ -190,15 +190,17 @@ line without adding compression, fountain codes, relay sessions, or signer I/O.
   deep-import drift, and production-package dependency drift.
 
 Status: first implementation pass complete. Remaining work before public npm
-alpha is release automation and broader package-specific examples. Package
-README files document purpose and trust boundaries, built JS/declaration
+alpha is trusted publishing activation and broader package-specific examples.
+Package README files document purpose and trust boundaries, built JS/declaration
 artifacts are generated before tests, package tarballs are restricted to `dist`
 plus README, consumer smokes import both workspace-built and packed package
 entrypoints, executable SDK examples now cover request/QR, local-service,
 browser-provider, and already-decrypted NIP-46 flows, and the changelog/release
 policy pins synchronized pre-release versioning plus npm provenance
-requirements. A manual package release rehearsal workflow now prepares and
-uploads checked tarball artifacts without publishing to npm.
+requirements. `docs/api.md` is generated from the actual public package
+entrypoints and checked in CI so exported symbols cannot drift invisibly. A
+manual package release rehearsal workflow now prepares and uploads checked
+tarball artifacts without publishing to npm.
 
 ## Later
 
@@ -226,10 +228,11 @@ uploads checked tarball artifacts without publishing to npm.
   package `dist` artifacts and exercises a minimal no-signer path. Package
   README files document purpose and trust boundaries. Packed-tarball smoke
   validates installable tarballs before publication. Executable SDK examples
-  prove common public package flows without test-only signer imports. Changelog
-  and release policy are present. A manual release rehearsal workflow prepares
-  checked tarball artifacts without npm publication. Actual npm trusted
-  publishing/provenance activation and broader package-specific example
+  prove common public package flows without test-only signer imports. Generated
+  API docs expose every public package entrypoint symbol and fail when stale.
+  Changelog and release policy are present. A manual release rehearsal workflow
+  prepares checked tarball artifacts without npm publication. Actual npm
+  trusted publishing/provenance activation and broader package-specific example
   coverage remain pending.
 - M5 full NIP-46/Nostr Connect relay session integration.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.

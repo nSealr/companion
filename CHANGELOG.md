@@ -12,6 +12,8 @@ public npm release.
   test-only signer isolation.
 - Manual package release rehearsal workflow and checked tarball artifact
   preparation without npm publication.
+- Generated public API surface docs and a CI drift check for every public
+  package entrypoint.
 - Secretless local companion service, client wrapper, and browser-provider
   boundaries for future SDK, browser extension, desktop, and CLI access
   surfaces.

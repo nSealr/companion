@@ -13,9 +13,11 @@
     "lint": "tsc --noEmit",
     "consumer-smoke": "pnpm --filter @nsealr/consumer-smoke smoke",
     "examples-smoke": "pnpm --filter @nsealr/sdk-examples verify",
+    "api-docs:check": "node scripts/check_api_docs.mjs",
+    "api-docs:update": "node scripts/check_api_docs.mjs --write",
     "pack-smoke": "node scripts/pack_smoke.mjs",
     "release-artifacts": "node scripts/prepare_release_artifacts.mjs --out release-artifacts/packages",
-    "ci": "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm pack-smoke"
+    "ci": "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm api-docs:check && pnpm pack-smoke"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

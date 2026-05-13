@@ -37,6 +37,8 @@ Before any npm publication:
 - Packed tarballs must install into a temporary consumer project and import by
   package name.
 - Executable SDK examples must pass against built package entrypoints.
+- `docs/api.md` must match the exported symbols of every public package
+  entrypoint through `make api-docs`.
 - The changelog must describe the release.
 - No package may contain production private-key custody or depend on private
   `@nsealr/dev-signer` from production code.

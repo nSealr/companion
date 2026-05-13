@@ -69,6 +69,10 @@ single-repository CI. Cross-repository drift remains guarded by
   package usage and cover request/QR handling, local companion-service calls,
   browser-provider refusal behavior, and already-decrypted NIP-46 bridge
   decisions without importing `@nsealr/dev-signer`.
+- `make api-docs` verifies that `docs/api.md` matches the exported symbols
+  reachable from every public package entrypoint. `make api-docs-update`
+  regenerates the file after an intentional public API change. This keeps the
+  npm-facing surface visible and reviewable before publication.
 - `make pack-smoke` packs public `@nsealr/*` tarballs, verifies they contain
   only `dist`, README, and package metadata, verifies `workspace:*` dependency
   protocols were rewritten, installs the tarballs into a temporary npm consumer

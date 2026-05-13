@@ -1015,6 +1015,127 @@ describe("nsealr CLI", () => {
     expect(existsSync(grantStorePath)).toBe(false);
   });
 
+  it("appends explicit local grant-store revocations without mutating inputs", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-grant-store-revoke-"));
+    const inputStorePath = join(tempRoot, "local-grants-input.json");
+    const outputStorePath = join(tempRoot, "local-grants-output.json");
+    const response = handleLocalServiceRequest({
+      version: 1,
+      request_id: "cli-grant-store-revoke-1",
+      operation: "request_pairing",
+      params: {
+        client: {
+          surface: "browser_extension",
+          origin: "extension:nsealr-cli-grant-store-revoke"
+        },
+        requested_operations: ["validate_signer_request"]
+      }
+    });
+    if (response.ok !== true || !("pairing_intent" in response.result)) {
+      throw new Error("test setup did not return a pairing intent");
+    }
+    const approval = approvePairingIntent(response.result.pairing_intent, {
+      approvedAt: 1_900_000_000
+    });
+    const inputStore = createLocalGrantStore([approval.grant], { updatedAt: 1_900_000_001 });
+
+    writeFileSync(inputStorePath, serializeLocalGrantStore(inputStore), "utf8");
+    const originalInput = readFileSync(inputStorePath, "utf8");
+
+    await runCli([
+      "local",
+      "grant-store",
+      "revoke-client",
+      "--grant-store",
+      inputStorePath,
+      "--client-id",
+      approval.grant.client_id,
+      "--origin",
+      approval.grant.origin,
+      "--surface",
+      approval.grant.surface,
+      "--revoked-at",
+      "1900000020",
+      "--out",
+      outputStorePath
+    ]);
+
+    const outputStore = parseLocalGrantStore(loadJson(outputStorePath));
+    expect(readFileSync(inputStorePath, "utf8")).toBe(originalInput);
+    expect(outputStore).toEqual({
+      format: LOCAL_GRANT_STORE_FORMAT,
+      updated_at: 1_900_000_020,
+      contains_secret_material: false,
+      grants: [
+        approval.grant,
+        {
+          client_id: approval.grant.client_id,
+          origin: approval.grant.origin,
+          surface: approval.grant.surface,
+          allowed_operations: approval.grant.allowed_operations,
+          pairing_digest: approval.grant.pairing_digest,
+          approved_at: 1_900_000_020,
+          revoked: true
+        }
+      ]
+    });
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "cli-grant-store-revoked-denial",
+      operation: "validate_signer_request",
+      params: {
+        client: {
+          surface: approval.grant.surface,
+          origin: approval.grant.origin
+        },
+        request: {
+          version: 1,
+          request_id: "cli-grant-store-revoked-request",
+          method: "get_public_key"
+        }
+      }
+    }, {
+      grants: outputStore.grants,
+      now: 1_900_000_021
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "unauthorized_client",
+        message: "client pairing is revoked"
+      }
+    });
+  });
+
+  it("rejects local grant-store revocations when no matching grant exists", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-grant-store-revoke-missing-"));
+    const inputStorePath = join(tempRoot, "local-grants-input.json");
+    const outputStorePath = join(tempRoot, "local-grants-output.json");
+    const store = createLocalGrantStore([], { updatedAt: 1_900_000_000 });
+
+    writeFileSync(inputStorePath, serializeLocalGrantStore(store), "utf8");
+
+    await expect(
+      runCli([
+        "local",
+        "grant-store",
+        "revoke-client",
+        "--grant-store",
+        inputStorePath,
+        "--client-id",
+        "0".repeat(64),
+        "--origin",
+        "extension:nsealr-cli-grant-store-revoke-missing",
+        "--surface",
+        "browser_extension",
+        "--revoked-at",
+        "1900000020",
+        "--out",
+        outputStorePath
+      ])
+    ).rejects.toThrow(/no matching grant/u);
+    expect(existsSync(outputStorePath)).toBe(false);
+  });
+
   it("renders review detail pages from a QR signing request", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-detail-pages-"));
     const fixtures = loadSpecsFixtures(specsRoot);

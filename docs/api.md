@@ -48,8 +48,10 @@ Exports:
 - `LocalClientIdentity`
 - `LocalClientSurface`
 - `LocalGrantRevocationOptions`
+- `LocalGrantSelector`
 - `LocalGrantStore`
 - `LocalGrantStoreOptions`
+- `LocalGrantStoreRevocationOptions`
 - `LocalPairingApproval`
 - `LocalPairingReview`
 - `LocalPairingReviewOperation`
@@ -70,6 +72,7 @@ Exports:
 - `PairableLocalServiceOperation`
 - `PairingIntent`
 - `appendLocalGrant`
+- `appendLocalGrantRevocation`
 - `approvePairingIntent`
 - `clientIdForIdentity`
 - `createLocalGrantStore`

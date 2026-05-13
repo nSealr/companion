@@ -184,6 +184,11 @@ artifact builder. It validates a pairing approval artifact through
 JSON object, and writes only the requested output path. It never chooses a
 default storage location, mutates the input store, approves clients by itself,
 or contacts signer transports.
+`nsealr local grant-store revoke-client` appends a latest-client revocation to
+a new output grant-store artifact. Revocation is selected by
+`client_id + origin + surface`, keeps prior grants in the history, and fails
+deterministically if no matching grant exists or if the latest matching grant
+is already revoked.
 The private `@nsealr/service` app now runs a tested multi-message native-host
 stdio loop, so a future browser extension can keep one native-messaging port
 open and receive one deterministic response per length-prefixed service

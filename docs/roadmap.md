@@ -193,6 +193,13 @@ only, can extend a caller-supplied input store, and still avoids default
 storage paths, in-place mutation, signer dispatch, relay sessions, and implicit
 approval.
 
+Status note, 2026-05-13: the CLI now also exposes
+`nsealr local grant-store revoke-client` for explicit latest-client revocation.
+It appends a revocation to a new output store selected by
+`client_id + origin + surface`, keeps the previous grant history intact, and
+still avoids destructive deletion, default storage paths, in-place mutation,
+signer dispatch, and relay sessions.
+
 Status note, 2026-05-13: `@nsealr/client` now exposes route selection through
 the local-service boundary after explicit in-memory pairing authorization. The
 operation returns the same secretless route metadata pinned by shared specs
@@ -261,10 +268,11 @@ tarball artifacts without publishing to npm.
   service app now has a tested multi-message native-host stdio loop plus
   validated Chromium/Firefox native-host manifest generation. `@nsealr/client`
   now also defines the strict secretless JSON grant-store contract for approved
-  and revoked local client grants. The CLI can render pairing-review metadata
+  and revoked local client grants. The CLI can render pairing-review metadata,
   create digest-confirmed approval artifacts, and build explicit output
-  grant-store artifacts from approval artifacts without default storage paths
-  or input-file mutation. Private service context loading can read explicit
+  grant-store artifacts from approval artifacts or latest-client revocations
+  without default storage paths or input-file mutation. Private service context
+  loading can read explicit
   grant/account JSON files for local harnesses only. Remaining work is full
   approval UI, reviewed storage locations, cancellation, deterministic
   transport errors, signer dispatch, and native-host installation packaging.

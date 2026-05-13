@@ -69,6 +69,9 @@ match the shared `contract_id`.
 - `nsealr local grant-store append-approval` writes a new explicit secretless
   grant-store artifact from a pairing approval. It may extend a caller-supplied
   input store, but it never chooses a default path or mutates the input file.
+- `nsealr local grant-store revoke-client` writes a new explicit grant-store
+  artifact with a latest-client revocation appended. It keeps grant history
+  intact and never mutates the input file.
 - `@nsealr/browser-provider` defines the first NIP-07 provider adapter over an
   injected companion backend and explicit client identity. It validates
   `getPublicKey` and `signEvent` boundaries, converts event templates into
@@ -260,6 +263,7 @@ pnpm nsealr review-request --request request.qr --request-format qr --detail-pag
 pnpm nsealr local review-pairing --intent pairing-intent.json --out pairing-review.json
 pnpm nsealr local approve-pairing --intent pairing-intent.json --reviewed-pairing-digest <digest-hex> --approved-at 1900000000 --out pairing-approval.json
 pnpm nsealr local grant-store append-approval --approval pairing-approval.json --updated-at 1900000001 --out local-grants.json
+pnpm nsealr local grant-store revoke-client --grant-store local-grants.json --client-id <client-id-hex> --origin extension:nsealr --surface browser_extension --revoked-at 1900000020 --out local-grants-revoked.json
 pnpm nsealr nip46 decide --message nip46-message.json --permissions sign_event:1 --out decision.json
 pnpm nsealr nip46 decide --message nip46-message.json --policy-file policy.json --out decision.json
 pnpm nsealr nip46 review-connect --message nip46-connect.json --out connect-review.json

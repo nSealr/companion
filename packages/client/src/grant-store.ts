@@ -28,6 +28,16 @@ export type LocalGrantRevocationOptions = {
   revokedAt: number;
 };
 
+export type LocalGrantSelector = {
+  clientId: string;
+  origin: string;
+  surface: LocalClientSurface;
+};
+
+export type LocalGrantStoreRevocationOptions = LocalGrantRevocationOptions & {
+  updatedAt?: number;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -96,6 +106,15 @@ function requireAllowedOperations(value: unknown): PairableLocalServiceOperation
     operations.push(operation as PairableLocalServiceOperation);
   }
   return operations;
+}
+
+function parseLocalGrantSelector(selector: LocalGrantSelector): LocalGrantSelector {
+  if (!isRecord(selector)) throw new Error("local grant selector must be an object");
+  return {
+    clientId: requireHex64(selector.clientId, "local grant selector client_id"),
+    origin: requireOrigin(selector.origin),
+    surface: requireSurface(selector.surface)
+  };
 }
 
 export function parseLocalGrant(value: unknown): LocalClientGrant {
@@ -214,6 +233,45 @@ export function serializeLocalGrantStore(store: LocalGrantStore): string {
 
 export function appendLocalGrant(store: LocalGrantStore, grant: LocalClientGrant, options: LocalGrantStoreOptions): LocalGrantStore {
   return createLocalGrantStore([...parseLocalGrantStore(store).grants, parseLocalGrant(grant)], options);
+}
+
+export function appendLocalGrantRevocation(
+  store: LocalGrantStore,
+  selector: LocalGrantSelector,
+  options: LocalGrantStoreRevocationOptions
+): LocalGrantStore {
+  const parsedStore = parseLocalGrantStore(store);
+  const parsedSelector = parseLocalGrantSelector(selector);
+  let selected: LocalClientGrant | undefined;
+  let selectedApprovedAt = -1;
+  for (const grant of parsedStore.grants) {
+    if (
+      grant.client_id !== parsedSelector.clientId ||
+      grant.origin !== parsedSelector.origin ||
+      grant.surface !== parsedSelector.surface
+    ) {
+      continue;
+    }
+    const approvedAt = grant.approved_at ?? 0;
+    if (approvedAt >= selectedApprovedAt) {
+      selected = grant;
+      selectedApprovedAt = approvedAt;
+    }
+  }
+  if (selected === undefined) {
+    throw new Error("local grant store has no matching grant to revoke");
+  }
+  if (selected.revoked === true) {
+    throw new Error("latest matching local grant is already revoked");
+  }
+  const revokedAt = requireNonNegativeInteger(options.revokedAt, "revokedAt");
+  const updatedAt = options.updatedAt === undefined
+    ? revokedAt
+    : requireNonNegativeInteger(options.updatedAt, "updatedAt");
+  if (updatedAt < revokedAt) {
+    throw new Error("updatedAt must be greater than or equal to revokedAt");
+  }
+  return appendLocalGrant(parsedStore, revokeLocalGrant(selected, { revokedAt }), { updatedAt });
 }
 
 export function revokeLocalGrant(grant: LocalClientGrant, options: LocalGrantRevocationOptions): LocalClientGrant {

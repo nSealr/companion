@@ -17,6 +17,7 @@ Local companion service protocol and client wrappers.
 import assert from "node:assert/strict";
 import {
   LocalServiceClient,
+  appendLocalGrantRevocation,
   approvePairingIntent,
   createLocalGrantStore,
   handleLocalServiceRequest,
@@ -44,9 +45,17 @@ const approval = approvePairingIntent(pairing.result.pairing_intent, {
 });
 assert.equal(reviewPairingIntent(pairing.result.pairing_intent).requires_user_approval, true);
 assert.equal(approval.stores_production_secrets, false);
-assert.equal(createLocalGrantStore([approval.grant], {
+const grantStore = createLocalGrantStore([approval.grant], {
   updatedAt: 1_710_000_000
-}).contains_secret_material, false);
+});
+assert.equal(grantStore.contains_secret_material, false);
+assert.equal(appendLocalGrantRevocation(grantStore, {
+  clientId: approval.grant.client_id,
+  origin: approval.grant.origin,
+  surface: approval.grant.surface
+}, {
+  revokedAt: 1_710_000_100
+}).grants.at(-1)?.revoked, true);
 ```
 
 ## Boundary
@@ -55,7 +64,7 @@ The local service boundary is secretless. It currently supports status, pairing
 intent generation, deterministic pairing-review projection, explicit manual
 approval into a grant, request validation, secretless route selection, response
 verification, and a strict JSON grant-store contract for persisting
-approved/revoked local client grants.
+approved/revoked local client grants without destructive history edits.
 It does not store production keys, open relays, or dispatch to real signer
 transports. A host app still has to own the actual file location, backup
 policy, and user approval UX.

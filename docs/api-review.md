@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:7e5b060a11646000037a5ad382566d10b66727e4ae78227a82079f292eff434b`
+API surface digest: `sha256:22207783949a187b059f09f197ec4291f6d98f79f0dfbd5177b3abcf9c03f13a`
 
 Source: `docs/api.md`
 
@@ -44,8 +44,8 @@ Status: reviewed for pre-alpha.
 The local-service surface is secretless and limited to service status, pairing
 intent creation, deterministic pairing-review projection, manual pairing
 approval into a grant, strict pairing-approval artifact parsing, strict JSON
-grant-store serialization for approved/revoked local client grants, secretless
-route selection,
+grant-store serialization and output-only revocation appending for
+approved/revoked local client grants, secretless route selection,
 signer-request validation, and signer-response verification. Client identity,
 request-id correlation, native-message framing, and malformed-response
 rejection are public helpers. Route selection returns metadata only; file-backed

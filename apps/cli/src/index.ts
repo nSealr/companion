@@ -4,12 +4,15 @@ import { Command } from "commander";
 import { SerialPort } from "serialport";
 import {
   appendLocalGrant,
+  appendLocalGrantRevocation,
   approvePairingIntent,
   createLocalGrantStore,
+  LOCAL_CLIENT_SURFACES,
   parseLocalGrantStore,
   parseLocalPairingApproval,
   reviewPairingIntent,
-  serializeLocalGrantStore
+  serializeLocalGrantStore,
+  type LocalClientSurface
 } from "@nsealr/client";
 import { verifySignedEventResponse, type SignEventRequest } from "@nsealr/core";
 import { devSignRequest } from "@nsealr/dev-signer";
@@ -123,6 +126,13 @@ function lowerHex64Option(value: string, optionName: string): string {
     throw new Error(`${optionName} must be 32-byte lowercase hex`);
   }
   return value;
+}
+
+function localClientSurfaceOption(value: string, optionName: string): LocalClientSurface {
+  if (!LOCAL_CLIENT_SURFACES.includes(value as LocalClientSurface)) {
+    throw new Error(`${optionName} is unsupported`);
+  }
+  return value as LocalClientSurface;
 }
 
 function reviewDetailPageLimitsFromOptions(options: {
@@ -802,6 +812,33 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         ? createLocalGrantStore([], { updatedAt })
         : parseLocalGrantStore(readJson(options.grantStore));
       const nextStore = appendLocalGrant(currentStore, approval.grant, { updatedAt });
+      writeFileSync(options.out, serializeLocalGrantStore(nextStore), "utf8");
+    });
+
+  localGrantStore
+    .command("revoke-client")
+    .requiredOption("--grant-store <path>", "Read an existing local grant-store JSON file")
+    .requiredOption("--client-id <hex>", "Client id to revoke")
+    .requiredOption("--origin <origin>", "Client origin recorded in the grant")
+    .requiredOption("--surface <surface>", "Client surface recorded in the grant")
+    .requiredOption("--revoked-at <timestamp>", "Revocation timestamp as a non-negative integer")
+    .requiredOption("--out <path>", "Write a new local grant-store JSON file")
+    .description("Append a client revocation to a new output grant store")
+    .action((options: {
+      grantStore: string;
+      clientId: string;
+      origin: string;
+      surface: string;
+      revokedAt: string;
+      out: string;
+    }) => {
+      const revokedAt = nonNegativeIntegerOption(options.revokedAt, "--revoked-at");
+      const currentStore = parseLocalGrantStore(readJson(options.grantStore));
+      const nextStore = appendLocalGrantRevocation(currentStore, {
+        clientId: lowerHex64Option(options.clientId, "--client-id"),
+        origin: options.origin,
+        surface: localClientSurfaceOption(options.surface, "--surface")
+      }, { revokedAt });
       writeFileSync(options.out, serializeLocalGrantStore(nextStore), "utf8");
     });
 

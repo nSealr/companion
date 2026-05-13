@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   appendLocalGrant,
+  appendLocalGrantRevocation,
   createLocalGrantStore,
   LOCAL_GRANT_STORE_FORMAT,
   parseLocalGrant,
@@ -139,6 +140,55 @@ describe("local grant store", () => {
         message: "client pairing is revoked"
       }
     });
+  });
+
+  it("appends latest-client revocations to grant stores without mutating history", () => {
+    const grant = approvedGrant();
+    const store = createLocalGrantStore([grant], { updatedAt: 1_900_000_000 });
+    const revokedStore = appendLocalGrantRevocation(store, {
+      clientId: grant.client_id,
+      origin: grant.origin,
+      surface: grant.surface
+    }, {
+      revokedAt: 1_900_000_010
+    });
+
+    expect(store.grants).toEqual([grant]);
+    expect(revokedStore.updated_at).toBe(1_900_000_010);
+    expect(revokedStore.grants).toEqual([
+      grant,
+      {
+        client_id: grant.client_id,
+        origin: grant.origin,
+        surface: grant.surface,
+        allowed_operations: grant.allowed_operations,
+        pairing_digest: grant.pairing_digest,
+        approved_at: 1_900_000_010,
+        revoked: true
+      }
+    ]);
+    expect(() => appendLocalGrantRevocation(revokedStore, {
+      clientId: grant.client_id,
+      origin: grant.origin,
+      surface: grant.surface
+    }, {
+      revokedAt: 1_900_000_011
+    })).toThrow(/already revoked/u);
+    expect(() => appendLocalGrantRevocation(store, {
+      clientId: "0".repeat(64),
+      origin: grant.origin,
+      surface: grant.surface
+    }, {
+      revokedAt: 1_900_000_011
+    })).toThrow(/no matching grant/u);
+    expect(() => appendLocalGrantRevocation(store, {
+      clientId: grant.client_id,
+      origin: grant.origin,
+      surface: grant.surface
+    }, {
+      revokedAt: 1_900_000_011,
+      updatedAt: 1_900_000_010
+    })).toThrow(/updatedAt/u);
   });
 
   it("rejects unsupported fields and secret material claims", () => {

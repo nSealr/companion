@@ -6,6 +6,9 @@ import {
 } from "@nsealr/browser-provider";
 import {
   BROWSER_EXTENSION_DEFAULT_PAIRING_OPERATIONS,
+  approveBrowserExtensionOriginPermissionReview,
+  parseBrowserExtensionOriginPermissionApproval,
+  parseBrowserExtensionOriginPermissionReview,
   projectBrowserExtensionOriginPermissionReview,
   requestBrowserExtensionNativeMessagingPairingIntent,
   requestBrowserExtensionNativeMessagingPairingReview,
@@ -151,6 +154,75 @@ describe("browser extension native-messaging pairing boundary", () => {
       creates_grants: false,
       injects_provider: false
     });
+  });
+
+  it("creates origin permission approvals only after explicit digest confirmation", async () => {
+    const result = await requestBrowserExtensionNativeMessagingOriginPermissionReview(sender, {
+      sendNativeMessage: (_hostName, message) => handleLocalServiceRequest(message),
+      nextServiceRequestId: () => "browser-origin-approve"
+    });
+
+    expect(parseBrowserExtensionOriginPermissionReview(result.originReview)).toEqual(result.originReview);
+    const approval = approveBrowserExtensionOriginPermissionReview(result.originReview, {
+      approvedAt: 1_900_000_000,
+      reviewedLocalPairingDigest: result.originReview.local_pairing_digest
+    });
+
+    expect(approval).toEqual({
+      format: "nsealr-browser-origin-permission-approval-v0",
+      origin: "https://example.com",
+      app_name: "nSealr Browser Extension",
+      extension_id: "extension@nsealr.dev",
+      approved_methods: ["get_public_key", "sign_event"],
+      local_pairing_digest: result.originReview.local_pairing_digest,
+      approved_at: 1_900_000_000,
+      requires_user_approval: true,
+      authorizes_provider_injection: true,
+      creates_grants: false,
+      stores_production_secrets: false,
+      contains_secret_material: false
+    });
+    expect(parseBrowserExtensionOriginPermissionApproval(approval)).toEqual(approval);
+  });
+
+  it("rejects tampered origin permission review or approval artifacts", async () => {
+    const result = await requestBrowserExtensionNativeMessagingOriginPermissionReview(sender, {
+      sendNativeMessage: (_hostName, message) => handleLocalServiceRequest(message),
+      nextServiceRequestId: () => "browser-origin-tamper"
+    });
+
+    expect(() => approveBrowserExtensionOriginPermissionReview(result.originReview, {
+      approvedAt: 1_900_000_000,
+      reviewedLocalPairingDigest: "0".repeat(64)
+    })).toThrow(/digest does not match/u);
+
+    expect(() => parseBrowserExtensionOriginPermissionReview({
+      ...result.originReview,
+      injects_provider: true
+    })).toThrow(/must not inject/u);
+
+    expect(() => parseBrowserExtensionOriginPermissionReview({
+      ...result.originReview,
+      requested_methods: [
+        {
+          ...result.originReview.requested_methods[0],
+          label: "Unsafe rewritten label"
+        }
+      ]
+    })).toThrow(/method text/u);
+
+    const approval = approveBrowserExtensionOriginPermissionReview(result.originReview, {
+      approvedAt: 1_900_000_000,
+      reviewedLocalPairingDigest: result.originReview.local_pairing_digest
+    });
+    expect(() => parseBrowserExtensionOriginPermissionApproval({
+      ...approval,
+      creates_grants: true
+    })).toThrow(/must not create grants/u);
+    expect(() => parseBrowserExtensionOriginPermissionApproval({
+      ...approval,
+      approved_methods: ["get_public_key", "get_public_key"]
+    })).toThrow(/duplicated/u);
   });
 
   it("keeps route-only browser origin review scoped to public-key access", async () => {

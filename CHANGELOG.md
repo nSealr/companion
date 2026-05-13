@@ -59,6 +59,9 @@ public npm release.
 - Private browser-extension browser-origin permission review projection that
   maps the digest-bound pairing intent to page-visible NIP-07 method effects
   without approving grants or injecting providers.
+- Private browser-extension origin-permission approval artifacts that require
+  explicit local pairing digest confirmation and still create no grants,
+  extension storage, provider injection, or key material.
 - Private browser-extension background-controller boundary that composes
   sender-aware request handling, pairing-intent requests, pairing review, and
   origin permission review over injected native messaging without using

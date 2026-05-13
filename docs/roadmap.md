@@ -312,7 +312,10 @@ and uploads checked tarball artifacts without publishing to npm.
   for the same sender-derived identity without writing grants, extension
   storage, or native-host files, and can project that intent into deterministic
   pairing-review metadata plus browser-origin permission review metadata for
-  future approval UI. A pure background-controller boundary now composes
+  future approval UI. The browser-origin permission boundary can now parse that
+  review and create an approval artifact only after explicit local pairing
+  digest confirmation, without creating grants, writing extension storage, or
+  injecting a provider. A pure background-controller boundary now composes
   request handling, pairing-intent requests, pairing-review projection, and
   origin-permission review projection over injected native messaging without
   using browser APIs, and can
@@ -331,8 +334,8 @@ and uploads checked tarball artifacts without publishing to npm.
   injection mechanism. It can build a minimal MV3 manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage
   permissions. Remaining work: extension packaging, actual
-  content-script/page-script injection, native-messaging installation, origin
-  permission UX, cancellation UI wiring,
+  content-script/page-script injection, native-messaging installation, browser
+  UI/storage wiring for origin permission approvals, cancellation UI wiring,
   and real dispatch after M4.7 gates. No local production signing and no
   extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and

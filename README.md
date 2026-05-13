@@ -90,7 +90,8 @@ match the shared `contract_id`.
   context before provider selection, can compose that context with the
   native-messaging local-service provider path, can request a digest-bound
   pairing intent, deterministic pairing-review metadata, and deterministic
-  browser-origin permission review metadata for that identity, includes a pure
+  browser-origin permission review and approval metadata for that identity,
+  with approval bound to the reviewed local pairing digest, includes a pure
   background-controller boundary over injected native messaging with optional
   response timeouts and request-scoped cancellation,
   includes a pure page-provider boundary that maps NIP-07 `getPublicKey` and

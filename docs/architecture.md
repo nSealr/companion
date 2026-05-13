@@ -48,9 +48,11 @@ packages, but it must not export test-only signing as a production path.
   selection, can compose that identity with the native-messaging local-service
   provider path, can request digest-bound local-service pairing intents for the
   same identity, can project those intents into deterministic pairing and
-  browser-origin permission review metadata without approving clients, has a
-  pure background-controller boundary over injected native messaging with
-  optional response timeouts and request-scoped cancellation, has a pure
+  browser-origin permission review metadata without approving clients, and can
+  create origin permission approval artifacts only after explicit local pairing
+  digest confirmation. It has a pure background-controller boundary over
+  injected native messaging with optional response timeouts and request-scoped
+  cancellation, has a pure
   page-provider boundary that maps NIP-07
   `getPublicKey` and `signEvent` calls to validated background requests, and
   has a pure page-bridge envelope and page-side requester adapter for future
@@ -306,6 +308,12 @@ parses the internal request, validates sender-derived identity, and only then
 asks the injected provider factory for a provider bound to that client context.
 Malformed requests and malformed senders return deterministic secretless errors
 without provider selection or signer I/O.
+The origin permission boundary projects digest-bound local-service pairing
+reviews into page-visible NIP-07 method effects and parses them before any
+approval artifact is created. Approval requires the exact reviewed local pairing
+digest, records the approved page-visible methods, and only authorizes a future
+provider-injection step. It does not create local-service grants, write browser
+storage, inject a provider, or contain key material.
 Its manifest builder is intentionally restrictive: Chromium manifests omit host
 permissions, optional host permissions, content scripts, and storage; Firefox
 manifests require an explicit reviewed extension id and otherwise follow the

@@ -88,6 +88,9 @@ single-repository CI. Cross-repository drift remains guarded by
   intent, deterministic pairing-review metadata, and deterministic
   browser-origin permission review metadata without creating grants, writing
   extension storage, injecting providers, or touching native host installation.
+  They also prove origin permission approvals require explicit local pairing
+  digest confirmation and still create no grants, storage writes, provider
+  injection, or key material.
   Background-controller tests prove request handling, pairing-intent requests,
   pairing-review projection, and origin-permission review projection share the
   same injected native-messaging boundary, silent or

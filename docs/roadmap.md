@@ -311,9 +311,11 @@ and uploads checked tarball artifacts without publishing to npm.
   implemented. It can also request a digest-bound local-service pairing intent
   for the same sender-derived identity without writing grants, extension
   storage, or native-host files, and can project that intent into deterministic
-  review metadata for future approval UI. A pure background-controller boundary
-  now composes request handling, pairing-intent requests, and pairing-review
-  projection over injected native messaging without using browser APIs, and can
+  pairing-review metadata plus browser-origin permission review metadata for
+  future approval UI. A pure background-controller boundary now composes
+  request handling, pairing-intent requests, pairing-review projection, and
+  origin-permission review projection over injected native messaging without
+  using browser APIs, and can
   use the same optional native response timeout and request-scoped
   cancellation. A pure page-provider boundary now maps NIP-07 `getPublicKey`
   and `signEvent` calls to validated background requests, verifies signed

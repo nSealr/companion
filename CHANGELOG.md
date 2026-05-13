@@ -56,9 +56,13 @@ public npm release.
 - Private browser-extension pairing-review projection that turns the native
   pairing intent into deterministic review metadata without approving clients
   or writing extension storage.
+- Private browser-extension browser-origin permission review projection that
+  maps the digest-bound pairing intent to page-visible NIP-07 method effects
+  without approving grants or injecting providers.
 - Private browser-extension background-controller boundary that composes
-  sender-aware request handling and pairing-intent requests over injected
-  native messaging without using browser APIs, storage, or signer dispatch.
+  sender-aware request handling, pairing-intent requests, pairing review, and
+  origin permission review over injected native messaging without using
+  browser APIs, storage, or signer dispatch.
 - Private browser-extension page-provider boundary that maps NIP-07
   `getPublicKey` and `signEvent` calls to validated background requests
   and installs on an explicit target without overwriting an existing provider,

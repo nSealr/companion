@@ -194,6 +194,40 @@ describe("browser extension background controller boundary", () => {
     expect(requests.map((request) => request.operation)).toEqual(["request_pairing"]);
   });
 
+  it("projects origin permission review metadata without injecting providers", async () => {
+    const requests: LocalServiceRequest[] = [];
+    const controller = createBrowserExtensionBackgroundController({
+      sendNativeMessage: nativeResponder(requests),
+      routeRequest,
+      nextServiceRequestId: () => "background-origin-permission-review"
+    });
+
+    await expect(controller.requestOriginPermissionReview(sender)).resolves.toMatchObject({
+      response: {
+        request_id: "background-origin-permission-review",
+        ok: true
+      },
+      originReview: {
+        format: "nsealr-browser-origin-permission-review-v0",
+        origin: "https://example.com",
+        extension_id: "extension@nsealr.dev",
+        requested_methods: [
+          {
+            method: "get_public_key"
+          },
+          {
+            method: "sign_event"
+          }
+        ],
+        requires_user_approval: true,
+        stores_production_secrets: false,
+        creates_grants: false,
+        injects_provider: false
+      }
+    });
+    expect(requests.map((request) => request.operation)).toEqual(["request_pairing"]);
+  });
+
   it("keeps silent native messaging deterministic without approving grants", async () => {
     const controller = createBrowserExtensionBackgroundController({
       routeRequest,

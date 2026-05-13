@@ -47,10 +47,11 @@ packages, but it must not export test-only signing as a production path.
   callers can trust them, derives sender-bound client identity before provider
   selection, can compose that identity with the native-messaging local-service
   provider path, can request digest-bound local-service pairing intents for the
-  same identity, can project those intents into deterministic review metadata
-  without approving clients, has a pure background-controller boundary over
-  injected native messaging with optional response timeouts and request-scoped
-  cancellation, has a pure page-provider boundary that maps NIP-07
+  same identity, can project those intents into deterministic pairing and
+  browser-origin permission review metadata without approving clients, has a
+  pure background-controller boundary over injected native messaging with
+  optional response timeouts and request-scoped cancellation, has a pure
+  page-provider boundary that maps NIP-07
   `getPublicKey` and `signEvent` calls to validated background requests, and
   has a pure page-bridge envelope and page-side requester adapter for future
   page/content-script messaging. It also has a pure page-script bootstrap that

@@ -12,8 +12,10 @@ import {
 import { createBrowserExtensionNativeMessagingProviderSelector } from "./local-service.js";
 import {
   requestBrowserExtensionNativeMessagingPairingIntent,
+  requestBrowserExtensionNativeMessagingOriginPermissionReview,
   requestBrowserExtensionNativeMessagingPairingReview,
   type BrowserExtensionPairingIntentResult,
+  type BrowserExtensionOriginPermissionReviewResult,
   type BrowserExtensionPairingReviewResult,
   type BrowserExtensionNativeMessagingPairingOptions
 } from "./pairing.js";
@@ -49,6 +51,10 @@ export type BrowserExtensionBackgroundController = {
     sender: unknown,
     requestOptions?: BrowserExtensionBackgroundRequestOptions
   ): Promise<BrowserExtensionPairingReviewResult>;
+  requestOriginPermissionReview(
+    sender: unknown,
+    requestOptions?: BrowserExtensionBackgroundRequestOptions
+  ): Promise<BrowserExtensionOriginPermissionReviewResult>;
 };
 
 export function createBrowserExtensionBackgroundController(
@@ -114,6 +120,18 @@ export function createBrowserExtensionBackgroundController(
       requestOptions: BrowserExtensionBackgroundRequestOptions = {}
     ): Promise<BrowserExtensionPairingReviewResult> {
       return requestBrowserExtensionNativeMessagingPairingReview(sender, {
+        ...pairingOptions,
+        ...(requestOptions.nativeMessageAbortSignal !== undefined
+          ? { nativeMessageAbortSignal: requestOptions.nativeMessageAbortSignal }
+          : {})
+      });
+    },
+
+    requestOriginPermissionReview(
+      sender: unknown,
+      requestOptions: BrowserExtensionBackgroundRequestOptions = {}
+    ): Promise<BrowserExtensionOriginPermissionReviewResult> {
+      return requestBrowserExtensionNativeMessagingOriginPermissionReview(sender, {
         ...pairingOptions,
         ...(requestOptions.nativeMessageAbortSignal !== undefined
           ? { nativeMessageAbortSignal: requestOptions.nativeMessageAbortSignal }

@@ -6,8 +6,10 @@ import {
 } from "@nsealr/browser-provider";
 import {
   BROWSER_EXTENSION_DEFAULT_PAIRING_OPERATIONS,
+  projectBrowserExtensionOriginPermissionReview,
   requestBrowserExtensionNativeMessagingPairingIntent,
-  requestBrowserExtensionNativeMessagingPairingReview
+  requestBrowserExtensionNativeMessagingPairingReview,
+  requestBrowserExtensionNativeMessagingOriginPermissionReview
 } from "./pairing.js";
 
 const sender = {
@@ -118,6 +120,57 @@ describe("browser extension native-messaging pairing boundary", () => {
       throw new Error("pairing intent was not returned");
     }
     expect(result.review.pairing_digest).toBe(result.response.result.pairing_intent.pairing_digest);
+  });
+
+  it("projects browser origin permission review without approving grants or injecting providers", async () => {
+    const result = await requestBrowserExtensionNativeMessagingOriginPermissionReview(sender, {
+      sendNativeMessage: (_hostName, message) => handleLocalServiceRequest(message),
+      nextServiceRequestId: () => "browser-origin-review"
+    });
+
+    expect(result.originReview).toEqual({
+      format: "nsealr-browser-origin-permission-review-v0",
+      origin: "https://example.com",
+      app_name: "nSealr Browser Extension",
+      extension_id: "extension@nsealr.dev",
+      requested_methods: [
+        {
+          method: "get_public_key",
+          label: "Read public key",
+          effect: "The page can read the selected account public key through the browser provider."
+        },
+        {
+          method: "sign_event",
+          label: "Request event signatures",
+          effect: "The page can ask for Nostr event signatures; the selected signer route still enforces review, approval, and policy."
+        }
+      ],
+      local_pairing_digest: result.review.pairing_digest,
+      requires_user_approval: true,
+      stores_production_secrets: false,
+      creates_grants: false,
+      injects_provider: false
+    });
+  });
+
+  it("keeps route-only browser origin review scoped to public-key access", async () => {
+    const result = await requestBrowserExtensionNativeMessagingOriginPermissionReview(sender, {
+      sendNativeMessage: (_hostName, message) => handleLocalServiceRequest(message),
+      requestedOperations: ["select_account_route"],
+      nextServiceRequestId: () => "browser-origin-route-only"
+    });
+
+    expect(result.originReview.requested_methods.map((method) => method.method)).toEqual(["get_public_key"]);
+  });
+
+  it("rejects origin permission reviews with no page-visible methods", async () => {
+    const result = await requestBrowserExtensionNativeMessagingPairingReview(sender, {
+      sendNativeMessage: (_hostName, message) => handleLocalServiceRequest(message),
+      requestedOperations: ["verify_signer_response"],
+      nextServiceRequestId: () => "browser-origin-no-visible-method"
+    });
+
+    expect(() => projectBrowserExtensionOriginPermissionReview(result)).toThrow(/no page-visible methods/u);
   });
 
   it("rejects operation-mismatched native pairing responses before review", async () => {

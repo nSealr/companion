@@ -89,9 +89,10 @@ match the shared `contract_id`.
   outputs, derives local client identity from a sanitized sender page-origin
   context before provider selection, can compose that context with the
   native-messaging local-service provider path, can request a digest-bound
-  pairing intent and deterministic pairing-review metadata for that identity,
-  includes a pure background-controller boundary over injected native
-  messaging with optional response timeouts and request-scoped cancellation,
+  pairing intent, deterministic pairing-review metadata, and deterministic
+  browser-origin permission review metadata for that identity, includes a pure
+  background-controller boundary over injected native messaging with optional
+  response timeouts and request-scoped cancellation,
   includes a pure page-provider boundary that maps NIP-07 `getPublicKey` and
   `signEvent` calls to validated background requests and installs it only on an
   explicit target without overwriting an existing provider, includes a pure

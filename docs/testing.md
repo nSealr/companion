@@ -85,10 +85,12 @@ single-repository CI. Cross-repository drift remains guarded by
   local-service route path while `sign_event` remains deterministically
   unavailable until signer dispatch is implemented. Pairing tests prove the
   same sender-derived identity can request a digest-bound local-service pairing
-  intent and deterministic review metadata without creating grants, writing
-  extension storage, or touching native host installation. Background-controller
-  tests prove request handling, pairing-intent requests, and pairing-review
-  projection share the same injected native-messaging boundary, silent or
+  intent, deterministic pairing-review metadata, and deterministic
+  browser-origin permission review metadata without creating grants, writing
+  extension storage, injecting providers, or touching native host installation.
+  Background-controller tests prove request handling, pairing-intent requests,
+  pairing-review projection, and origin-permission review projection share the
+  same injected native-messaging boundary, silent or
   cancelled native messaging can be bounded by deterministic timeout/abort
   handling, and malformed browser requests fail before native messaging is
   contacted. Page-provider tests prove NIP-07 `getPublicKey` and `signEvent`

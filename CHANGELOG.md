@@ -25,6 +25,8 @@ public npm release.
   work.
 - `@nsealr/client` helper for converting a digest-bound pairing intent into an
   explicitly approved in-memory grant without persistent storage.
+- Deterministic local-service grant-history selection so the latest matching
+  in-memory grant controls revocation, expiry, and operation scope.
 - Secretless local companion service, client wrapper, and browser-provider
   boundaries for future SDK, browser extension, desktop, and CLI access
   surfaces.

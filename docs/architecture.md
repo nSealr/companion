@@ -145,7 +145,9 @@ The first native-messaging scaffold accepts `service_status`,
 `request_pairing`, `validate_signer_request`, and `verify_signer_response`.
 Pairing requests return a deterministic intent for later user review; they do
 not approve the client. Validation and verification require explicit grants
-supplied by the caller/test harness, and revoked, expired, missing, or
+supplied by the caller/test harness. When grant history is supplied, the latest
+matching grant by `approved_at` wins, so newer revocation or narrower scope
+cannot be bypassed by an older grant. Revoked, expired, missing, or
 operation-scoped grants fail before signer payload handling. This lets browser,
 SDK, and desktop code integrate against the authorization, validation, and
 verification boundary before any signer I/O or persistent session state is

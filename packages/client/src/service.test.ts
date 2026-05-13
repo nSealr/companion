@@ -249,6 +249,66 @@ describe("local service boundary", () => {
     });
   });
 
+  it("uses the latest matching in-memory grant when grant history is supplied", () => {
+    const oldValidationGrant: LocalClientGrant = {
+      ...grant,
+      allowed_operations: ["validate_signer_request"],
+      approved_at: 100
+    };
+    const newerVerificationGrant: LocalClientGrant = {
+      ...grant,
+      allowed_operations: ["verify_signer_response"],
+      approved_at: 200
+    };
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-latest-scope",
+      operation: "validate_signer_request",
+      params: { client, request }
+    }, {
+      grants: [oldValidationGrant, newerVerificationGrant],
+      now: 1_900_000_000
+    })).toMatchObject({
+      ok: false,
+      error: { code: "unauthorized_client", message: "client is not authorized for operation" }
+    });
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-latest-verify",
+      operation: "verify_signer_response",
+      params: { client, request, response }
+    }, {
+      grants: [oldValidationGrant, newerVerificationGrant],
+      now: 1_900_000_000
+    })).toMatchObject({
+      ok: true,
+      result: { validation: { valid: true } }
+    });
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-latest-revoked",
+      operation: "validate_signer_request",
+      params: { client, request }
+    }, {
+      grants: [
+        oldValidationGrant,
+        {
+          ...grant,
+          allowed_operations: ["validate_signer_request", "verify_signer_response"],
+          approved_at: 300,
+          revoked: true
+        }
+      ],
+      now: 1_900_000_000
+    })).toMatchObject({
+      ok: false,
+      error: { code: "unauthorized_client", message: "client pairing is revoked" }
+    });
+  });
+
   it("verifies signer responses against their original request", () => {
     expect(handleLocalServiceRequest({
       version: 1,

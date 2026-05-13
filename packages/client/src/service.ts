@@ -408,18 +408,40 @@ export function approvePairingIntent(
   };
 }
 
+function grantApprovedAt(grant: LocalClientGrant): number {
+  return typeof grant.approved_at === "number" && Number.isInteger(grant.approved_at) && grant.approved_at >= 0
+    ? grant.approved_at
+    : 0;
+}
+
+function selectClientGrant(context: LocalServiceContext, client: LocalClientIdentity): LocalClientGrant | undefined {
+  const clientId = clientIdForIdentity(client);
+  let selected: LocalClientGrant | undefined;
+  let selectedApprovedAt = -1;
+  for (const candidate of context.grants ?? []) {
+    if (
+      candidate.client_id !== clientId ||
+      candidate.origin !== client.origin ||
+      candidate.surface !== client.surface
+    ) {
+      continue;
+    }
+    const approvedAt = grantApprovedAt(candidate);
+    if (selected === undefined || approvedAt >= selectedApprovedAt) {
+      selected = candidate;
+      selectedApprovedAt = approvedAt;
+    }
+  }
+  return selected;
+}
+
 function authorizeClient(
   context: LocalServiceContext,
   client: LocalClientIdentity,
   operation: PairableLocalServiceOperation
 ): { ok: true } | { ok: false; error: string } {
-  const clientId = clientIdForIdentity(client);
   const now = context.now ?? Math.floor(Date.now() / 1000);
-  const grant = (context.grants ?? []).find((candidate) =>
-    candidate.client_id === clientId &&
-    candidate.origin === client.origin &&
-    candidate.surface === client.surface
-  );
+  const grant = selectClientGrant(context, client);
   if (grant === undefined) return { ok: false, error: "client is not paired" };
   if (grant.revoked === true) return { ok: false, error: "client pairing is revoked" };
   if (grant.expires_at !== undefined && grant.expires_at <= now) {

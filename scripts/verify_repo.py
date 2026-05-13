@@ -42,6 +42,7 @@ LICENSE_MARKERS = {
 }
 
 COMPANION_PACKAGES = {
+    "browser-provider": "@nsealr/browser-provider",
     "client": "@nsealr/client",
     "core": "@nsealr/core",
     "dev-signer": "@nsealr/dev-signer",

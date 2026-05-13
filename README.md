@@ -54,6 +54,10 @@ match the shared `contract_id`.
   verification require an explicit in-memory client grant; unpaired, revoked,
   expired, or operation-scoped clients are rejected before signer payload
   handling.
+- `@nsealr/browser-provider` defines the first NIP-07 provider adapter over an
+  injected companion backend. It validates `getPublicKey` and `signEvent`
+  boundaries, converts event templates into nSealr signer requests, verifies
+  signed responses, and stores no browser-side production keys.
 - `@nsealr/service` is the private one-shot native-messaging host scaffold over
   `@nsealr/client`. It does not open relays, store keys, select accounts, or
   contact signer transports.
@@ -177,8 +181,9 @@ match the shared `contract_id`.
   deterministic errors, and signer transport dispatch. The first SDK wrapper
   over the native-messaging/local-service boundary is in place; localhost APIs
   need a separate threat-model pass.
-- Browser extension / NIP-07 bridge that forwards `getPublicKey` and
-  `signEvent` through companion without storing production signing material.
+- Browser extension / NIP-07 bridge packaging around the provider adapter so
+  `getPublicKey` and `signEvent` route through companion without storing
+  production signing material.
 - Public npm SDK alpha after package APIs, docs, semver, provenance, and
   third-party import tests are stable.
 - Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,

@@ -52,6 +52,10 @@ single-repository CI. Cross-repository drift remains guarded by
   rejection, signer-request validation, signer-response verification, local
   client request-id correlation, malformed service-response rejection, and
   native-messaging exchange wrapping before any signer I/O exists.
+- Browser-provider package tests cover NIP-07 `getPublicKey` validation,
+  `signEvent` conversion into nSealr signer requests, signed-response
+  verification, signer refusal propagation, and rejection before backend
+  contact when an event template contains forbidden signer-owned fields.
 - Service app tests prove the private native-messaging host scaffold stays a
   thin wrapper around `@nsealr/client`.
 - Negative response verification tests for request id mismatch, template
@@ -200,10 +204,9 @@ single-repository CI. Cross-repository drift remains guarded by
   selected account route, user approval UX, persistent grant storage,
   cancellation, persistent revocation, deterministic transport errors, signer
   dispatch, and built-package consumer tests after explicit policy gates exist.
-- Browser extension provider tests for NIP-07 `getPublicKey` and `signEvent`
-  over a fake companion, including origin permission, revocation, cancel,
-  refusal, malformed companion response, and no key material in extension
-  storage.
+- Browser extension provider tests over a fake companion for origin permission,
+  revocation, cancel, malformed companion response, native-host disconnects,
+  and no key material in extension storage.
 - Full NIP-46 relay-session tests with local relay fixtures after NIP-44
   session lifecycle and reviewed `connect` acknowledgement are specified.
 - Large QR payload strategy tests once chunking or compression is designed.

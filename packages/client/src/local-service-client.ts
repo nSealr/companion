@@ -31,6 +31,7 @@ export type NativeMessagingLocalServiceClientOptions = {
 };
 
 type RequestParams = Extract<LocalServiceRequest, { params: unknown }>["params"];
+type LocalServiceResultKey = "service" | "pairing_intent" | "route_selection" | "validation";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -272,6 +273,17 @@ export function validateLocalServiceResponse(value: unknown, expectedRequestId: 
   throw new Error("local service response ok flag is invalid");
 }
 
+function requireResultType(
+  response: LocalServiceResponse,
+  resultType: LocalServiceResultKey,
+  operation: LocalServiceOperation
+): LocalServiceResponse {
+  if (response.ok === true && !(resultType in response.result)) {
+    throw new Error(`${operation} returned unexpected local service result`);
+  }
+  return response;
+}
+
 export class LocalServiceClient {
   private readonly exchange: LocalServiceExchange;
   private readonly nextRequestId: () => string;
@@ -286,7 +298,7 @@ export class LocalServiceClient {
       version: 1,
       request_id: requestId,
       operation: "service_status"
-    });
+    }).then((response) => requireResultType(response, "service", "service_status"));
   }
 
   requestPairing(
@@ -297,7 +309,7 @@ export class LocalServiceClient {
     return this.sendWithParams("request_pairing", {
       client,
       requested_operations: requestedOperations
-    }, requestId);
+    }, requestId).then((response) => requireResultType(response, "pairing_intent", "request_pairing"));
   }
 
   validateSignerRequest(
@@ -308,7 +320,7 @@ export class LocalServiceClient {
     return this.sendWithParams("validate_signer_request", {
       client,
       request
-    }, requestId);
+    }, requestId).then((response) => requireResultType(response, "validation", "validate_signer_request"));
   }
 
   verifySignerResponse(
@@ -321,7 +333,7 @@ export class LocalServiceClient {
       client,
       request,
       response
-    }, requestId);
+    }, requestId).then((localResponse) => requireResultType(localResponse, "validation", "verify_signer_response"));
   }
 
   selectAccountRoute(
@@ -332,7 +344,7 @@ export class LocalServiceClient {
     return this.sendWithParams("select_account_route", {
       client,
       route_request: routeRequest
-    }, requestId);
+    }, requestId).then((response) => requireResultType(response, "route_selection", "select_account_route"));
   }
 
   private async send(request: LocalServiceRequest): Promise<LocalServiceResponse> {

@@ -108,7 +108,9 @@ packages, but it must not export test-only signing as a production path.
   projection, grant enforcement, a strict
   secretless JSON grant-store contract, secretless account-route selection,
   signer-request validation, signer-response verification, response
-  validation, and a high-level client wrapper. This is the shared
+  validation, and a high-level client wrapper. The wrapper checks request-id
+  correlation, malformed responses, and operation-specific result types before
+  callers can trust native-messaging responses. This is the shared
   client/service boundary for future browser extension, SDK, and desktop work.
 - `packages/browser-provider`: NIP-07 provider adapter for browser-extension
   packaging. It accepts an injected companion backend plus explicit client

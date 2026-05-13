@@ -231,6 +231,45 @@ describe("local service client", () => {
     }, "expected-request")).toThrow(/digest mismatch/u);
   });
 
+  it("rejects valid but operation-mismatched service results before callers trust them", async () => {
+    const serviceResultForEveryOperation = new LocalServiceClient({
+      exchange: (message) => handleLocalServiceRequest({
+        version: 1,
+        request_id: message.request_id,
+        operation: "service_status"
+      })
+    });
+
+    await expect(
+      serviceResultForEveryOperation.requestPairing(client, ["validate_signer_request"], "pairing-mismatch")
+    ).rejects.toThrow(/request_pairing returned unexpected local service result/u);
+    await expect(
+      serviceResultForEveryOperation.validateSignerRequest(client, request, "validation-mismatch")
+    ).rejects.toThrow(/validate_signer_request returned unexpected local service result/u);
+    await expect(
+      serviceResultForEveryOperation.verifySignerResponse(client, request, response, "verify-mismatch")
+    ).rejects.toThrow(/verify_signer_response returned unexpected local service result/u);
+    await expect(
+      serviceResultForEveryOperation.selectAccountRoute(client, routeVector.request, "route-mismatch")
+    ).rejects.toThrow(/select_account_route returned unexpected local service result/u);
+
+    const pairingResultForStatus = new LocalServiceClient({
+      exchange: (message) => handleLocalServiceRequest({
+        version: 1,
+        request_id: message.request_id,
+        operation: "request_pairing",
+        params: {
+          client,
+          requested_operations: ["validate_signer_request"]
+        }
+      })
+    });
+
+    await expect(
+      pairingResultForStatus.serviceStatus("status-mismatch")
+    ).rejects.toThrow(/service_status returned unexpected local service result/u);
+  });
+
   it("wraps native-messaging frame exchanges without exposing signer IO", async () => {
     const service = createNativeMessagingLocalServiceClient({
       exchange: (frame) => encodeNativeMessage(handleLocalServiceRequest(decodeNativeMessage(frame)))

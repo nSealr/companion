@@ -264,8 +264,9 @@ and uploads checked tarball artifacts without publishing to npm.
   approval conversion from pairing intent to a grant, signer-request
   validation, and signer-response verification.
   The first high-level client wrapper validates request-id
-  correlation and malformed service responses before browser, SDK, desktop, or
-  CLI code can trust them. Pure package-level route selection and the
+  correlation, malformed service responses, and operation-specific result
+  types before browser, SDK, desktop, or CLI code can trust them. Pure
+  package-level route selection and the
   local-service route-selection operation are implemented, and the private
   service app now has a tested multi-message native-host stdio loop plus
   validated Chromium/Firefox native-host manifest generation. `@nsealr/client`

@@ -59,7 +59,10 @@ match the shared `contract_id`.
   approvals/revocations, secretless route selection, signer-request validation,
   and signer-response verification. Route selection, validation, and
   verification require an explicit client grant; unpaired, revoked, expired, or
-  operation-scoped clients are rejected before signer payload handling.
+  operation-scoped clients are rejected before signer payload handling. The
+  high-level client also binds each operation to its expected result type, so a
+  native-messaging host cannot satisfy `request_pairing` with an unrelated
+  valid service result.
 - `nsealr local review-pairing` renders deterministic local-service pairing
   review metadata from a pairing intent. It validates the digest-bound intent
   and does not approve clients or write grant stores.

@@ -138,7 +138,9 @@ single-repository CI. Cross-repository drift remains guarded by
   pairing-review projection, manual approval into a grant, strict secretless
   JSON grant-store parsing, serialization, persistent revocation history,
   tamper rejection, expiry rejection, authorization, and revocation/expiry/scope
-  failures.
+  failures. The high-level client tests also reject operation/result mismatches
+  such as a valid service-status result returned to a pairing, validation, or
+  route-selection call.
 - Negative response verification tests for request id mismatch, template
   mismatch, event id mismatch, and invalid signatures.
 - Transport exchange tests proving successful `sign_event` responses are

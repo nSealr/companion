@@ -28,6 +28,8 @@ public npm release.
   signing helpers, Node-only fixtures, or host transport adapters.
 - `@nsealr/client` helper for converting a digest-bound pairing intent into an
   explicitly approved local client grant.
+- `@nsealr/client` method-specific local-service response binding so callers
+  reject valid-but-wrong result types before trusting native messaging.
 - `@nsealr/client` deterministic pairing-review projection for future local
   service approval UX.
 - `nsealr local review-pairing` for rendering deterministic pairing-review

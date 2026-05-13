@@ -37,6 +37,8 @@ export type LocalClientGrant = {
   origin: string;
   surface: LocalClientSurface;
   allowed_operations: PairableLocalServiceOperation[];
+  pairing_digest?: string;
+  approved_at?: number;
   revoked?: boolean;
   expires_at?: number;
 };
@@ -53,6 +55,14 @@ export type PairingIntent = {
   requested_operations: PairableLocalServiceOperation[];
   pairing_digest: string;
   requires_user_approval: true;
+  stores_production_secrets: false;
+};
+
+export type LocalPairingApproval = {
+  format: "nsealr-local-pairing-approval-v0";
+  pairing_digest: string;
+  approved_at: number;
+  grant: LocalClientGrant;
   stores_production_secrets: false;
 };
 
@@ -300,6 +310,17 @@ function pairingDigest(intent: Omit<PairingIntent, "pairing_digest">): string {
   return createHash("sha256").update(JSON.stringify(intent)).digest("hex");
 }
 
+function pairingIntentDigest(intent: PairingIntent): string {
+  return pairingDigest({
+    format: intent.format,
+    client_id: intent.client_id,
+    client: intent.client,
+    requested_operations: intent.requested_operations,
+    requires_user_approval: intent.requires_user_approval,
+    stores_production_secrets: intent.stores_production_secrets
+  });
+}
+
 function pairingIntent(client: LocalClientIdentity, requestedOperations: PairableLocalServiceOperation[]): PairingIntent {
   const intentWithoutDigest = {
     format: "nsealr-local-pairing-intent-v0" as const,
@@ -312,6 +333,78 @@ function pairingIntent(client: LocalClientIdentity, requestedOperations: Pairabl
   return {
     ...intentWithoutDigest,
     pairing_digest: pairingDigest(intentWithoutDigest)
+  };
+}
+
+function requirePairingIntent(value: unknown): PairingIntent {
+  if (!isRecord(value)) throw new Error("pairing intent must be an object");
+  if (value.format !== "nsealr-local-pairing-intent-v0") {
+    throw new Error("pairing intent format is unsupported");
+  }
+  const client = validateClientIdentity(value.client);
+  if (!client.ok) throw new Error(client.error);
+  const requestedOperations = validateRequestedOperations(value.requested_operations);
+  if (!requestedOperations.ok) throw new Error(requestedOperations.error);
+  if (typeof value.client_id !== "string" || value.client_id !== clientIdForIdentity(client.client)) {
+    throw new Error("pairing intent client_id mismatch");
+  }
+  if (typeof value.pairing_digest !== "string" || !/^[0-9a-f]{64}$/u.test(value.pairing_digest)) {
+    throw new Error("pairing intent digest is invalid");
+  }
+  if (value.requires_user_approval !== true) {
+    throw new Error("pairing intent must require user approval");
+  }
+  if (value.stores_production_secrets !== false) {
+    throw new Error("pairing intent must not store production secrets");
+  }
+  return {
+    format: "nsealr-local-pairing-intent-v0",
+    client_id: value.client_id,
+    client: client.client,
+    requested_operations: requestedOperations.operations,
+    pairing_digest: value.pairing_digest,
+    requires_user_approval: true,
+    stores_production_secrets: false
+  };
+}
+
+function requireNonNegativeTimestamp(value: unknown, label: string): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new Error(`${label} must be a non-negative integer timestamp`);
+  }
+  return value;
+}
+
+export function approvePairingIntent(
+  intent: PairingIntent,
+  options: { approvedAt: number; expiresAt?: number }
+): LocalPairingApproval {
+  const pairing = requirePairingIntent(intent);
+  if (pairing.pairing_digest !== pairingIntentDigest(pairing)) {
+    throw new Error("pairing intent digest mismatch");
+  }
+  const approvedAt = requireNonNegativeTimestamp(options.approvedAt, "approvedAt");
+  const expiresAt = options.expiresAt === undefined
+    ? undefined
+    : requireNonNegativeTimestamp(options.expiresAt, "expiresAt");
+  if (expiresAt !== undefined && expiresAt <= approvedAt) {
+    throw new Error("expiresAt must be greater than approvedAt");
+  }
+  const grant: LocalClientGrant = {
+    client_id: pairing.client_id,
+    origin: pairing.client.origin,
+    surface: pairing.client.surface,
+    allowed_operations: [...pairing.requested_operations],
+    pairing_digest: pairing.pairing_digest,
+    approved_at: approvedAt,
+    ...(expiresAt !== undefined ? { expires_at: expiresAt } : {})
+  };
+  return {
+    format: "nsealr-local-pairing-approval-v0",
+    pairing_digest: pairing.pairing_digest,
+    approved_at: approvedAt,
+    grant,
+    stores_production_secrets: false
   };
 }
 

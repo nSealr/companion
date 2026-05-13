@@ -214,8 +214,9 @@ tarball artifacts without publishing to npm.
 - M4.7 local companion service boundary for browser extension, desktop UI, and
   high-level SDK clients. First native-messaging scaffold is implemented with
   secretless service status, deterministic pairing intents, in-memory
-  client-grant enforcement, signer-request validation, and signer-response
-  verification. The first high-level client wrapper validates request-id
+  client-grant enforcement, manual approval conversion from pairing intent to
+  in-memory grant, signer-request validation, and signer-response verification.
+  The first high-level client wrapper validates request-id
   correlation and malformed service responses before browser, SDK, desktop, or
   CLI code can trust them. Remaining work: persistent pairing store, user
   approval UX, account route selection, cancellation, persistent revocation,

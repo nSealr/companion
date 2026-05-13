@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "@nsealr/fixtures";
 import {
+  approvePairingIntent,
   clientIdForIdentity,
   handleLocalServiceRequest,
   LOCAL_SERVICE_OPERATIONS,
@@ -94,6 +95,82 @@ describe("local service boundary", () => {
         expect(result.result.pairing_intent.pairing_digest).toBe(repeatedResult.result.pairing_intent.pairing_digest);
       }
     }
+  });
+
+  it("turns a manually approved pairing intent into an in-memory grant", () => {
+    const pairing = handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-pair-approve",
+      operation: "request_pairing",
+      params: {
+        client,
+        requested_operations: ["validate_signer_request"]
+      }
+    });
+    expect(pairing.ok).toBe(true);
+    if (pairing.ok !== true || !("pairing_intent" in pairing.result)) {
+      throw new Error("pairing intent was not returned");
+    }
+
+    const approval = approvePairingIntent(pairing.result.pairing_intent, {
+      approvedAt: 1_900_000_000,
+      expiresAt: 2_000_000_000
+    });
+
+    expect(approval).toMatchObject({
+      format: "nsealr-local-pairing-approval-v0",
+      pairing_digest: pairing.result.pairing_intent.pairing_digest,
+      approved_at: 1_900_000_000,
+      stores_production_secrets: false,
+      grant: {
+        client_id: clientIdForIdentity(client),
+        origin: client.origin,
+        surface: client.surface,
+        allowed_operations: ["validate_signer_request"],
+        expires_at: 2_000_000_000
+      }
+    });
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-approved-validation",
+      operation: "validate_signer_request",
+      params: { client, request }
+    }, { grants: [approval.grant], now: 1_900_000_000 })).toMatchObject({
+      ok: true,
+      result: { validation: { valid: true } }
+    });
+  });
+
+  it("rejects tampered pairing intents and invalid approval expiry", () => {
+    const pairing = handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-pair-tampered",
+      operation: "request_pairing",
+      params: {
+        client,
+        requested_operations: ["validate_signer_request"]
+      }
+    });
+    if (pairing.ok !== true || !("pairing_intent" in pairing.result)) {
+      throw new Error("pairing intent was not returned");
+    }
+    const intent = pairing.result.pairing_intent;
+    expect(() => approvePairingIntent({
+      ...intent,
+      requested_operations: ["verify_signer_response"]
+    }, { approvedAt: 1_900_000_000 })).toThrow(/digest mismatch/u);
+    expect(() => approvePairingIntent({
+      ...intent,
+      client_id: "0".repeat(64)
+    }, { approvedAt: 1_900_000_000 })).toThrow(/client_id mismatch/u);
+    expect(() => approvePairingIntent({
+      ...intent,
+      requested_operations: ["service_status"]
+    } as unknown as typeof intent, { approvedAt: 1_900_000_000 })).toThrow(/does not require pairing/u);
+    expect(() => approvePairingIntent(intent, {
+      approvedAt: 1_900_000_000,
+      expiresAt: 1_900_000_000
+    })).toThrow(/greater than approvedAt/u);
   });
 
   it("rejects validation requests from unpaired clients before parsing signer payloads", () => {

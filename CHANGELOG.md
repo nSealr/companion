@@ -23,6 +23,8 @@ public npm release.
   against built package entrypoints in CI.
 - Digest-bound public API review for every publishable package before npm alpha
   work.
+- `@nsealr/client` helper for converting a digest-bound pairing intent into an
+  explicitly approved in-memory grant without persistent storage.
 - Secretless local companion service, client wrapper, and browser-provider
   boundaries for future SDK, browser extension, desktop, and CLI access
   surfaces.

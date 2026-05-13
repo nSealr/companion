@@ -41,6 +41,7 @@ Exports:
 - `LocalClientGrant`
 - `LocalClientIdentity`
 - `LocalClientSurface`
+- `LocalPairingApproval`
 - `LocalServiceClient`
 - `LocalServiceClientOptions`
 - `LocalServiceContext`
@@ -55,6 +56,7 @@ Exports:
 - `NativeMessagingLocalServiceClientOptions`
 - `PairableLocalServiceOperation`
 - `PairingIntent`
+- `approvePairingIntent`
 - `clientIdForIdentity`
 - `createNativeMessagingLocalServiceClient`
 - `decodeNativeMessage`

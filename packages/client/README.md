@@ -15,21 +15,32 @@ Local companion service protocol and client wrappers.
 
 ```ts nsealr-readme-example
 import assert from "node:assert/strict";
-import { LocalServiceClient, handleLocalServiceRequest } from "@nsealr/client";
+import { LocalServiceClient, approvePairingIntent, handleLocalServiceRequest } from "@nsealr/client";
 
 const client = new LocalServiceClient({
-  exchange: (message) => handleLocalServiceRequest(message, { now: 1_710_000_000 }),
-  nextRequestId: () => "readme-client-status"
+  exchange: (message) => handleLocalServiceRequest(message, { now: 1_710_000_000 })
 });
 
-const status = await client.serviceStatus();
+const status = await client.serviceStatus("readme-client-status");
+const pairing = await client.requestPairing({
+  surface: "sdk",
+  origin: "sdk:readme",
+  app_name: "README client"
+}, ["validate_signer_request"], "readme-client-pair");
 
 assert.equal(status.ok, true);
+if (pairing.ok !== true || !("pairing_intent" in pairing.result)) {
+  throw new Error("pairing intent missing");
+}
+assert.equal(approvePairingIntent(pairing.result.pairing_intent, {
+  approvedAt: 1_710_000_000
+}).stores_production_secrets, false);
 ```
 
 ## Boundary
 
 The local service boundary is secretless. It currently supports status, pairing
-intent generation, request validation, and response verification. It does not
-store production keys, persist grants, select routes, open relays, or dispatch
-to real signer transports.
+intent generation, explicit manual approval into an in-memory grant, request
+validation, and response verification. It does not store production keys,
+persist grants, select routes, open relays, or dispatch to real signer
+transports.

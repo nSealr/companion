@@ -97,6 +97,9 @@ single-repository CI. Cross-repository drift remains guarded by
   rehearsal workflow. It does not publish to npm.
 - Service app tests prove the private native-messaging host scaffold stays a
   thin wrapper around `@nsealr/client`.
+- Local service tests cover deterministic pairing intent creation, digest-bound
+  manual approval into an in-memory grant, tamper rejection, expiry rejection,
+  authorization, and revocation/expiry/scope failures.
 - Negative response verification tests for request id mismatch, template
   mismatch, event id mismatch, and invalid signatures.
 - Transport exchange tests proving successful `sign_event` responses are

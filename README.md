@@ -54,10 +54,10 @@ match the shared `contract_id`.
   native-messaging frame codec plus the high-level local-service client used by
   future browser, SDK, desktop, and CLI callers. The implemented operations are
   intentionally secretless: service status, pairing intent generation,
-  signer-request validation, and signer-response verification. Validation and
-  verification require an explicit in-memory client grant; unpaired, revoked,
-  expired, or operation-scoped clients are rejected before signer payload
-  handling.
+  digest-bound manual approval into an in-memory grant, signer-request
+  validation, and signer-response verification. Validation and verification
+  require an explicit in-memory client grant; unpaired, revoked, expired, or
+  operation-scoped clients are rejected before signer payload handling.
 - `@nsealr/browser-provider` defines the first NIP-07 provider adapter over an
   injected companion backend and explicit client identity. It validates
   `getPublicKey` and `signEvent` boundaries, converts event templates into

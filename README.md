@@ -188,8 +188,9 @@ match the shared `contract_id`.
 - Public npm SDK alpha after package APIs, docs, semver, provenance, and
   third-party import tests are stable. Package README coverage and a
   built-artifact consumer smoke are now part of `make ci`; packed-tarball
-  installation smoke is also part of `make ci` before npm publish/provenance
-  plumbing.
+  installation smoke is also part of `make ci`; synchronized package version,
+  changelog, and release/provenance policy are documented before npm
+  publish/provenance plumbing.
 - Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,
   permissions, and auth challenges.
 - WebUSB, HID, CDC, WebSerial, and persistent transport experiments.

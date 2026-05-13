@@ -71,6 +71,8 @@ def expected_license_marker() -> str:
 def verify_companion_tooling(errors: list[str]) -> None:
     package_path = ROOT / "package.json"
     makefile_path = ROOT / "Makefile"
+    changelog_path = ROOT / "CHANGELOG.md"
+    release_path = ROOT / "docs" / "release.md"
     if not package_path.exists() or not makefile_path.exists():
         return
 
@@ -101,6 +103,15 @@ def verify_companion_tooling(errors: list[str]) -> None:
     if "pack-smoke:" not in makefile or "$(PNPM) pack-smoke" not in makefile:
         errors.append("Makefile must run the packed tarball smoke")
 
+    if not changelog_path.exists() or "## Unreleased" not in changelog_path.read_text(encoding="utf-8"):
+        errors.append("CHANGELOG.md must track unreleased package changes")
+    if not release_path.exists():
+        errors.append("docs/release.md must document release policy")
+    else:
+        release_text = release_path.read_text(encoding="utf-8")
+        if "npm publish --provenance" not in release_text or "make integration" not in release_text:
+            errors.append("docs/release.md must document provenance and integration release gates")
+
 
 def read_json(path: Path, errors: list[str]) -> dict[str, object]:
     try:
@@ -115,6 +126,7 @@ def read_json(path: Path, errors: list[str]) -> dict[str, object]:
 
 
 def verify_companion_package_boundaries(errors: list[str]) -> None:
+    root_package = read_json(ROOT / "package.json", errors)
     for package_dir, package_name in COMPANION_PACKAGES.items():
         package_root = ROOT / "packages" / package_dir
         package_json_path = package_root / "package.json"
@@ -132,6 +144,13 @@ def verify_companion_package_boundaries(errors: list[str]) -> None:
         package = read_json(package_json_path, errors)
         if package.get("name") != package_name:
             errors.append(f"packages/{package_dir}/package.json must be named {package_name}")
+        if package.get("version") != root_package.get("version"):
+            errors.append(f"packages/{package_dir}/package.json must use the synchronized root package version")
+        if package_dir == "dev-signer":
+            if package.get("private") is not True:
+                errors.append("packages/dev-signer/package.json must remain private")
+        elif package.get("private") is True:
+            errors.append(f"packages/{package_dir}/package.json must be publishable when release gates open")
         if package.get("type") != "module":
             errors.append(f"packages/{package_dir}/package.json must declare type=module")
         if package.get("files") != ["dist", "README.md"]:

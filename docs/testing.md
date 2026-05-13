@@ -45,7 +45,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - Development signer verification tests in `packages/dev-signer`.
 - Repository verification now requires explicit `@nsealr/*` package manifests,
   package READMEs with boundary sections, source `src/index.ts` entrypoints,
-  and built `dist` exports; it rejects deep cross-package source imports and
+  built `dist` exports, synchronized package versions, changelog coverage, and
+  release/provenance policy; it rejects deep cross-package source imports and
   production package dependencies on private `@nsealr/dev-signer`.
 - Client package tests cover native-messaging frame encoding/decoding,
   deterministic malformed-frame rejection, secretless local service status,

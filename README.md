@@ -66,6 +66,9 @@ match the shared `contract_id`.
 - `nsealr local approve-pairing` creates a pairing approval artifact only when
   the caller supplies the reviewed pairing digest. It writes an approval JSON
   object, not a grant store, and does not contact signer transports.
+- `nsealr local grant-store append-approval` writes a new explicit secretless
+  grant-store artifact from a pairing approval. It may extend a caller-supplied
+  input store, but it never chooses a default path or mutates the input file.
 - `@nsealr/browser-provider` defines the first NIP-07 provider adapter over an
   injected companion backend and explicit client identity. It validates
   `getPublicKey` and `signEvent` boundaries, converts event templates into
@@ -256,6 +259,7 @@ pnpm nsealr review-request --request request.qr --request-format qr --out review
 pnpm nsealr review-request --request request.qr --request-format qr --detail-pages --max-compact-line-chars 48 --out review-detail-pages.json
 pnpm nsealr local review-pairing --intent pairing-intent.json --out pairing-review.json
 pnpm nsealr local approve-pairing --intent pairing-intent.json --reviewed-pairing-digest <digest-hex> --approved-at 1900000000 --out pairing-approval.json
+pnpm nsealr local grant-store append-approval --approval pairing-approval.json --updated-at 1900000001 --out local-grants.json
 pnpm nsealr nip46 decide --message nip46-message.json --permissions sign_event:1 --out decision.json
 pnpm nsealr nip46 decide --message nip46-message.json --policy-file policy.json --out decision.json
 pnpm nsealr nip46 review-connect --message nip46-connect.json --out connect-review.json

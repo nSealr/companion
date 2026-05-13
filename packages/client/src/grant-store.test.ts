@@ -5,6 +5,7 @@ import {
   LOCAL_GRANT_STORE_FORMAT,
   parseLocalGrant,
   parseLocalGrantStore,
+  parseLocalPairingApproval,
   revokeLocalGrant,
   serializeLocalGrantStore
 } from "./grant-store.js";
@@ -35,7 +36,7 @@ const request = {
   }
 };
 
-function approvedGrant() {
+function approvedPairingApproval() {
   const pairing = handleLocalServiceRequest({
     version: 1,
     request_id: "grant-store-pairing",
@@ -51,7 +52,11 @@ function approvedGrant() {
   return approvePairingIntent(pairing.result.pairing_intent, {
     approvedAt: 1_900_000_000,
     expiresAt: 2_000_000_000
-  }).grant;
+  });
+}
+
+function approvedGrant() {
+  return approvedPairingApproval().grant;
 }
 
 describe("local grant store", () => {
@@ -75,6 +80,34 @@ describe("local grant store", () => {
 
     expect(appended.updated_at).toBe(1_900_000_001);
     expect(appended.grants).toEqual([grant]);
+  });
+
+  it("parses pairing approval artifacts before grant-store persistence", () => {
+    const approval = approvedPairingApproval();
+
+    expect(parseLocalPairingApproval(approval)).toEqual(approval);
+    expect(() => parseLocalPairingApproval({
+      ...approval,
+      private_key: "nope"
+    })).toThrow(/unsupported fields/u);
+    expect(() => parseLocalPairingApproval({
+      ...approval,
+      stores_production_secrets: true
+    })).toThrow(/production secrets/u);
+    expect(() => parseLocalPairingApproval({
+      ...approval,
+      grant: {
+        ...approval.grant,
+        pairing_digest: "0".repeat(64)
+      }
+    })).toThrow(/pairing_digest mismatch/u);
+    expect(() => parseLocalPairingApproval({
+      ...approval,
+      grant: {
+        ...approval.grant,
+        approved_at: approval.approved_at + 1
+      }
+    })).toThrow(/approved_at mismatch/u);
   });
 
   it("turns a latest persistent revocation into deterministic authorization denial", () => {

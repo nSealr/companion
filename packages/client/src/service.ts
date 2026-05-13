@@ -10,6 +10,8 @@ import { compactJsonUtf8ByteLength, NSEALR_V0_LIMITS, validateRequest, validateR
 
 export const LOCAL_SERVICE_PROTOCOL = "nsealr-local-service-v0";
 export const LOCAL_SERVICE_NAME = "nsealr-companion-service";
+export const LOCAL_PAIRING_INTENT_FORMAT = "nsealr-local-pairing-intent-v0";
+export const LOCAL_PAIRING_APPROVAL_FORMAT = "nsealr-local-pairing-approval-v0";
 export const MAX_SERVICE_JSON_BYTES = 16 * 1024;
 
 export const LOCAL_SERVICE_OPERATIONS = [
@@ -57,7 +59,7 @@ export type LocalServiceContext = {
 };
 
 export type PairingIntent = {
-  format: "nsealr-local-pairing-intent-v0";
+  format: typeof LOCAL_PAIRING_INTENT_FORMAT;
   client_id: string;
   client: LocalClientIdentity;
   requested_operations: PairableLocalServiceOperation[];
@@ -67,7 +69,7 @@ export type PairingIntent = {
 };
 
 export type LocalPairingApproval = {
-  format: "nsealr-local-pairing-approval-v0";
+  format: typeof LOCAL_PAIRING_APPROVAL_FORMAT;
   pairing_digest: string;
   approved_at: number;
   grant: LocalClientGrant;
@@ -360,8 +362,8 @@ function pairingIntentDigest(intent: PairingIntent): string {
 }
 
 function pairingIntent(client: LocalClientIdentity, requestedOperations: PairableLocalServiceOperation[]): PairingIntent {
-  const intentWithoutDigest = {
-    format: "nsealr-local-pairing-intent-v0" as const,
+  const intentWithoutDigest: Omit<PairingIntent, "pairing_digest"> = {
+    format: LOCAL_PAIRING_INTENT_FORMAT,
     client_id: clientIdForIdentity(client),
     client,
     requested_operations: requestedOperations,
@@ -387,7 +389,7 @@ export function parsePairingIntent(value: unknown): PairingIntent {
   ])) {
     throw new Error("pairing intent has unsupported fields");
   }
-  if (value.format !== "nsealr-local-pairing-intent-v0") {
+  if (value.format !== LOCAL_PAIRING_INTENT_FORMAT) {
     throw new Error("pairing intent format is unsupported");
   }
   const client = validateClientIdentity(value.client);
@@ -407,7 +409,7 @@ export function parsePairingIntent(value: unknown): PairingIntent {
     throw new Error("pairing intent must not store production secrets");
   }
   const pairing: PairingIntent = {
-    format: "nsealr-local-pairing-intent-v0",
+    format: LOCAL_PAIRING_INTENT_FORMAT,
     client_id: value.client_id,
     client: client.client,
     requested_operations: requestedOperations.operations,
@@ -450,7 +452,7 @@ export function approvePairingIntent(
     ...(expiresAt !== undefined ? { expires_at: expiresAt } : {})
   };
   return {
-    format: "nsealr-local-pairing-approval-v0",
+    format: LOCAL_PAIRING_APPROVAL_FORMAT,
     pairing_digest: pairing.pairing_digest,
     approved_at: approvedAt,
     grant,

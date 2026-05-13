@@ -2,7 +2,15 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { Command } from "commander";
 import { SerialPort } from "serialport";
-import { approvePairingIntent, reviewPairingIntent } from "@nsealr/client";
+import {
+  appendLocalGrant,
+  approvePairingIntent,
+  createLocalGrantStore,
+  parseLocalGrantStore,
+  parseLocalPairingApproval,
+  reviewPairingIntent,
+  serializeLocalGrantStore
+} from "@nsealr/client";
 import { verifySignedEventResponse, type SignEventRequest } from "@nsealr/core";
 import { devSignRequest } from "@nsealr/dev-signer";
 import {
@@ -769,6 +777,32 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         approvedAt,
         ...(expiresAt !== undefined ? { expiresAt } : {})
       }));
+    });
+
+  const localGrantStore = local
+    .command("grant-store")
+    .description("Build explicit local-service grant-store artifacts");
+
+  localGrantStore
+    .command("append-approval")
+    .requiredOption("--approval <path>", "Read a local-service pairing approval artifact JSON file")
+    .option("--grant-store <path>", "Optional existing local grant-store JSON file to extend")
+    .requiredOption("--updated-at <timestamp>", "Grant-store update timestamp as a non-negative integer")
+    .requiredOption("--out <path>", "Write a new local grant-store JSON file")
+    .description("Append a pairing approval artifact to a new output grant store")
+    .action((options: {
+      approval: string;
+      grantStore?: string;
+      updatedAt: string;
+      out: string;
+    }) => {
+      const updatedAt = nonNegativeIntegerOption(options.updatedAt, "--updated-at");
+      const approval = parseLocalPairingApproval(readJson(options.approval));
+      const currentStore = options.grantStore === undefined
+        ? createLocalGrantStore([], { updatedAt })
+        : parseLocalGrantStore(readJson(options.grantStore));
+      const nextStore = appendLocalGrant(currentStore, approval.grant, { updatedAt });
+      writeFileSync(options.out, serializeLocalGrantStore(nextStore), "utf8");
     });
 
   program

@@ -178,6 +178,12 @@ pairing approval artifact only after the caller supplies the reviewed pairing
 digest. The artifact contains the approved grant metadata, but the command does
 not append it to a grant store, choose storage locations, or contact signer
 transports.
+`nsealr local grant-store append-approval` is the first explicit grant-store
+artifact builder. It validates a pairing approval artifact through
+`@nsealr/client`, creates or extends a caller-supplied secretless grant-store
+JSON object, and writes only the requested output path. It never chooses a
+default storage location, mutates the input store, approves clients by itself,
+or contacts signer transports.
 The private `@nsealr/service` app now runs a tested multi-message native-host
 stdio loop, so a future browser extension can keep one native-messaging port
 open and receive one deterministic response per length-prefixed service

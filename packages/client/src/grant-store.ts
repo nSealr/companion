@@ -1,9 +1,11 @@
 import { compactJsonUtf8ByteLength } from "@nsealr/protocol";
 import {
   LOCAL_CLIENT_SURFACES,
+  LOCAL_PAIRING_APPROVAL_FORMAT,
   LOCAL_SERVICE_OPERATIONS,
   type LocalClientGrant,
   type LocalClientSurface,
+  type LocalPairingApproval,
   type PairableLocalServiceOperation
 } from "./service.js";
 
@@ -132,6 +134,35 @@ export function parseLocalGrant(value: unknown): LocalClientGrant {
     ...(pairingDigest !== undefined ? { pairing_digest: pairingDigest } : {}),
     ...(value.revoked === true ? { revoked: true } : {}),
     ...(expiresAt !== undefined ? { expires_at: expiresAt } : {})
+  };
+}
+
+export function parseLocalPairingApproval(value: unknown): LocalPairingApproval {
+  if (!isRecord(value)) throw new Error("local pairing approval must be an object");
+  if (!hasOnlyKeys(value, ["format", "pairing_digest", "approved_at", "grant", "stores_production_secrets"])) {
+    throw new Error("local pairing approval has unsupported fields");
+  }
+  if (value.format !== LOCAL_PAIRING_APPROVAL_FORMAT) {
+    throw new Error("local pairing approval format is unsupported");
+  }
+  if (value.stores_production_secrets !== false) {
+    throw new Error("local pairing approval must not store production secrets");
+  }
+  const pairingDigest = requireHex64(value.pairing_digest, "local pairing approval pairing_digest");
+  const approvedAt = requireNonNegativeInteger(value.approved_at, "local pairing approval approved_at");
+  const grant = parseLocalGrant(value.grant);
+  if (grant.pairing_digest !== pairingDigest) {
+    throw new Error("local pairing approval grant pairing_digest mismatch");
+  }
+  if (grant.approved_at !== approvedAt) {
+    throw new Error("local pairing approval grant approved_at mismatch");
+  }
+  return {
+    format: LOCAL_PAIRING_APPROVAL_FORMAT,
+    pairing_digest: pairingDigest,
+    approved_at: approvedAt,
+    grant,
+    stores_production_secrets: false
   };
 }
 

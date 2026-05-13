@@ -32,6 +32,9 @@ public npm release.
   grant-store writes.
 - `nsealr local approve-pairing` for creating a pairing approval artifact after
   explicit reviewed-digest confirmation, without mutating grant stores.
+- `nsealr local grant-store append-approval` for writing a new explicit
+  secretless grant-store artifact from a pairing approval, with no default
+  path selection and no input-file mutation.
 - `@nsealr/client` secretless JSON grant-store contract for persisting approved
   and revoked local client grants without production key material.
 - Deterministic local-service grant-history selection so the latest matching

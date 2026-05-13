@@ -4,8 +4,12 @@ import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   approvePairingIntent,
+  createLocalGrantStore,
   handleLocalServiceRequest,
+  LOCAL_GRANT_STORE_FORMAT,
+  parseLocalGrantStore,
   reviewPairingIntent,
+  serializeLocalGrantStore,
   type LocalClientIdentity,
   type PairingIntent
 } from "@nsealr/client";
@@ -848,6 +852,167 @@ describe("nsealr CLI", () => {
       ])
     ).rejects.toThrow(/reviewed pairing digest does not match intent/u);
     expect(existsSync(approvalPath)).toBe(false);
+  });
+
+  it("creates explicit local grant-store artifacts from pairing approvals", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-grant-store-"));
+    const approvalPath = join(tempRoot, "pairing-approval.json");
+    const grantStorePath = join(tempRoot, "local-grants.json");
+    const response = handleLocalServiceRequest({
+      version: 1,
+      request_id: "cli-grant-store-append-1",
+      operation: "request_pairing",
+      params: {
+        client: {
+          surface: "browser_extension",
+          origin: "extension:nsealr-cli-grant-store"
+        },
+        requested_operations: ["select_account_route", "verify_signer_response"]
+      }
+    });
+    if (response.ok !== true || !("pairing_intent" in response.result)) {
+      throw new Error("test setup did not return a pairing intent");
+    }
+    const approval = approvePairingIntent(response.result.pairing_intent, {
+      approvedAt: 1_900_000_000,
+      expiresAt: 1_900_003_600
+    });
+
+    writeFileSync(approvalPath, `${JSON.stringify(approval, null, 2)}\n`, "utf8");
+    await runCli([
+      "local",
+      "grant-store",
+      "append-approval",
+      "--approval",
+      approvalPath,
+      "--updated-at",
+      "1900000001",
+      "--out",
+      grantStorePath
+    ]);
+
+    expect(parseLocalGrantStore(loadJson(grantStorePath))).toEqual({
+      format: LOCAL_GRANT_STORE_FORMAT,
+      updated_at: 1_900_000_001,
+      contains_secret_material: false,
+      grants: [approval.grant]
+    });
+  });
+
+  it("extends explicit local grant-store inputs without mutating them", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-grant-store-extend-"));
+    const approvalPath = join(tempRoot, "pairing-approval.json");
+    const inputStorePath = join(tempRoot, "local-grants-input.json");
+    const outputStorePath = join(tempRoot, "local-grants-output.json");
+    const firstResponse = handleLocalServiceRequest({
+      version: 1,
+      request_id: "cli-grant-store-append-first",
+      operation: "request_pairing",
+      params: {
+        client: {
+          surface: "desktop_app",
+          origin: "app:nsealr-cli-grant-store-first"
+        },
+        requested_operations: ["select_account_route"]
+      }
+    });
+    const secondResponse = handleLocalServiceRequest({
+      version: 1,
+      request_id: "cli-grant-store-append-second",
+      operation: "request_pairing",
+      params: {
+        client: {
+          surface: "browser_extension",
+          origin: "extension:nsealr-cli-grant-store-second"
+        },
+        requested_operations: ["validate_signer_request"]
+      }
+    });
+    if (firstResponse.ok !== true || !("pairing_intent" in firstResponse.result)) {
+      throw new Error("test setup did not return the first pairing intent");
+    }
+    if (secondResponse.ok !== true || !("pairing_intent" in secondResponse.result)) {
+      throw new Error("test setup did not return the second pairing intent");
+    }
+    const firstApproval = approvePairingIntent(firstResponse.result.pairing_intent, {
+      approvedAt: 1_900_000_000
+    });
+    const secondApproval = approvePairingIntent(secondResponse.result.pairing_intent, {
+      approvedAt: 1_900_000_010
+    });
+    const inputStore = createLocalGrantStore([firstApproval.grant], { updatedAt: 1_900_000_001 });
+
+    writeFileSync(inputStorePath, serializeLocalGrantStore(inputStore), "utf8");
+    writeFileSync(approvalPath, `${JSON.stringify(secondApproval, null, 2)}\n`, "utf8");
+    const originalInput = readFileSync(inputStorePath, "utf8");
+
+    await runCli([
+      "local",
+      "grant-store",
+      "append-approval",
+      "--approval",
+      approvalPath,
+      "--grant-store",
+      inputStorePath,
+      "--updated-at",
+      "1900000011",
+      "--out",
+      outputStorePath
+    ]);
+
+    expect(readFileSync(inputStorePath, "utf8")).toBe(originalInput);
+    expect(parseLocalGrantStore(loadJson(outputStorePath))).toEqual({
+      ...inputStore,
+      updated_at: 1_900_000_011,
+      grants: [firstApproval.grant, secondApproval.grant]
+    });
+  });
+
+  it("rejects malformed pairing approval artifacts before writing grant stores", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-grant-store-invalid-"));
+    const approvalPath = join(tempRoot, "pairing-approval.json");
+    const grantStorePath = join(tempRoot, "local-grants.json");
+    const response = handleLocalServiceRequest({
+      version: 1,
+      request_id: "cli-grant-store-invalid-1",
+      operation: "request_pairing",
+      params: {
+        client: {
+          surface: "browser_extension",
+          origin: "extension:nsealr-cli-grant-store-invalid"
+        },
+        requested_operations: ["select_account_route"]
+      }
+    });
+    if (response.ok !== true || !("pairing_intent" in response.result)) {
+      throw new Error("test setup did not return a pairing intent");
+    }
+    const approval = approvePairingIntent(response.result.pairing_intent, {
+      approvedAt: 1_900_000_000
+    });
+
+    writeFileSync(approvalPath, `${JSON.stringify({
+      ...approval,
+      grant: {
+        ...approval.grant,
+        approved_at: 1_900_000_001
+      }
+    }, null, 2)}\n`, "utf8");
+
+    await expect(
+      runCli([
+        "local",
+        "grant-store",
+        "append-approval",
+        "--approval",
+        approvalPath,
+        "--updated-at",
+        "1900000002",
+        "--out",
+        grantStorePath
+      ])
+    ).rejects.toThrow(/approved_at mismatch/u);
+    expect(existsSync(grantStorePath)).toBe(false);
   });
 
   it("renders review detail pages from a QR signing request", async () => {

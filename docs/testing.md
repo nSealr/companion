@@ -55,7 +55,8 @@ single-repository CI. Cross-repository drift remains guarded by
   deterministic pairing intents, unpaired/revoked/expired/scope-denied client
   rejection, latest-grant selection from in-memory grant history,
   deterministic pairing-review projection, strict grant-store
-  serialization/revocation, secretless route selection, signer-request
+  serialization/revocation, strict pairing-approval artifact parsing before
+  grant-store persistence, secretless route selection, signer-request
   validation, signer-response verification, local client request-id
   correlation, malformed service-response rejection including pairing digest
   mismatch, and native-messaging exchange wrapping before any signer I/O exists.
@@ -238,6 +239,10 @@ single-repository CI. Cross-repository drift remains guarded by
   `nsealr local approve-pairing`, including explicit reviewed-digest
   confirmation, expiry handling, and refusal to write approval artifacts when
   the digest does not match.
+- CLI local grant-store artifact tests covering
+  `nsealr local grant-store append-approval`, including new-store creation,
+  explicit input-store extension without input-file mutation, and malformed
+  approval rejection before output files are written.
 - Policy package tests cover secretless account descriptors, manual-only QR
   vault policy, scoped grants for persistent routes, wildcard/decrypt/export
   rejection, rejection of stateless QR-vault grant targets, and deterministic

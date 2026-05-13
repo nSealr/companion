@@ -106,11 +106,12 @@ packages, but it must not export test-only signing as a production path.
   persistent grant lookup, account selection, relay work, or signer transport
   dispatch.
 
-Each reusable package has its own `package.json` and `src/index.ts` entrypoint.
-Cross-package source imports must go through `@nsealr/*` entrypoints, not
-relative paths into another package's `src` directory. The repository verifier
-checks this boundary so future extension, SDK, local-service, and CLI work
-cannot accidentally fork validation or signing helper code.
+Each reusable package has its own `package.json`, source `src/index.ts`
+entrypoint, and built `dist` JS/declaration export. Cross-package source imports
+must go through `@nsealr/*` entrypoints, not relative paths into another
+package's `src` directory. The repository verifier checks this boundary so
+future extension, SDK, local-service, and CLI work cannot accidentally fork
+validation or signing helper code.
 
 ## Access Surface Boundary
 

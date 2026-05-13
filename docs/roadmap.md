@@ -180,7 +180,8 @@ line without adding compression, fountain codes, relay sessions, or signer I/O.
 
 ## M4.6: Package Boundary Freeze
 
-- Add explicit `@nsealr/*` package manifests and `src/index.ts` entrypoints.
+- Add explicit `@nsealr/*` package manifests, source `src/index.ts`
+  entrypoints, and built `dist` exports.
 - Refactor companion cross-package imports through package entrypoints instead
   of deep relative source paths.
 - Keep `@nsealr/dev-signer` private and test-only.
@@ -189,9 +190,10 @@ line without adding compression, fountain codes, relay sessions, or signer I/O.
   deep-import drift, and production-package dependency drift.
 
 Status: first implementation pass complete. Remaining work before public npm
-alpha is package README coverage, third-party consumer import tests, semver and
-changelog policy, provenance/release automation, and generated JS/declaration
-artifacts.
+alpha is package README coverage, semver and changelog policy, provenance and
+release automation, and broader third-party examples. Built JS/declaration
+artifacts are generated before tests, and the consumer smoke imports package
+entrypoints backed by those artifacts.
 
 ## Later
 
@@ -215,9 +217,9 @@ artifacts.
   and no extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
-  public `@nsealr/*` entrypoints through workspace package names and exercises a
-  minimal no-signer path; built-artifact tests remain pending until packages
-  have a build/publish pipeline.
+  public `@nsealr/*` entrypoints through workspace package names after building
+  package `dist` artifacts and exercises a minimal no-signer path. npm publish,
+  provenance, changelog, and broader example coverage remain pending.
 - M5 full NIP-46/Nostr Connect relay session integration.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and

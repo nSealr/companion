@@ -78,14 +78,22 @@ def verify_companion_tooling(errors: list[str]) -> None:
     if package.get("packageManager") != "pnpm@10.33.4":
         errors.append("package.json must pin packageManager to pnpm@10.33.4")
     scripts = package.get("scripts")
-    if not isinstance(scripts, dict) or scripts.get("consumer-smoke") != "pnpm --filter @nsealr/consumer-smoke smoke":
+    if not isinstance(scripts, dict):
+        errors.append("package.json must expose repository scripts")
+    elif scripts.get("build") != "node scripts/build_packages.mjs":
+        errors.append("package.json must expose the deterministic package build script")
+    elif scripts.get("consumer-smoke") != "pnpm --filter @nsealr/consumer-smoke smoke":
         errors.append("package.json must expose consumer-smoke through @nsealr/consumer-smoke")
+    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke":
+        errors.append("package.json ci must build package artifacts before checks")
 
     makefile = makefile_path.read_text(encoding="utf-8")
     if "PNPM_VERSION := 10.33.4" not in makefile:
         errors.append("Makefile must declare PNPM_VERSION := 10.33.4")
     if "npm exec --yes --package=pnpm@$(PNPM_VERSION) -- pnpm" not in makefile:
         errors.append("Makefile must provide a pinned npm exec fallback for pnpm")
+    if "build:" not in makefile or "$(PNPM) build" not in makefile:
+        errors.append("Makefile must build package artifacts before tests")
     if "package-smoke:" not in makefile or "$(PNPM) consumer-smoke" not in makefile:
         errors.append("Makefile must run the public package consumer smoke")
 
@@ -117,10 +125,27 @@ def verify_companion_package_boundaries(errors: list[str]) -> None:
             errors.append(f"packages/{package_dir}/package.json must be named {package_name}")
         if package.get("type") != "module":
             errors.append(f"packages/{package_dir}/package.json must declare type=module")
-        if package.get("exports") is None:
+        exports = package.get("exports")
+        if not isinstance(exports, dict):
             errors.append(f"packages/{package_dir}/package.json must declare explicit exports")
-        if package.get("types") != "./src/index.ts":
-            errors.append(f"packages/{package_dir}/package.json must expose ./src/index.ts types")
+        else:
+            root_export = exports.get(".")
+            if (
+                not isinstance(root_export, dict)
+                or root_export.get("types") != "./dist/index.d.ts"
+                or root_export.get("import") != "./dist/index.js"
+            ):
+                errors.append(f"packages/{package_dir}/package.json must export built dist entrypoints")
+            if package_dir == "fixtures":
+                specs_root_export = exports.get("./specs-root")
+                if (
+                    not isinstance(specs_root_export, dict)
+                    or specs_root_export.get("types") != "./dist/specs-root.d.ts"
+                    or specs_root_export.get("import") != "./dist/specs-root.js"
+                ):
+                    errors.append("packages/fixtures/package.json must export built specs-root entrypoint")
+        if package.get("types") != "./dist/index.d.ts":
+            errors.append(f"packages/{package_dir}/package.json must expose ./dist/index.d.ts types")
         dependencies = package.get("dependencies")
         if package_dir != "dev-signer" and isinstance(dependencies, dict) and "@nsealr/dev-signer" in dependencies:
             errors.append(f"packages/{package_dir} must not depend on test-only @nsealr/dev-signer")

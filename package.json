@@ -7,11 +7,12 @@
   "scripts": {
     "nsealr": "pnpm --filter @nsealr/cli nsealr",
     "nsealr-service": "pnpm --filter @nsealr/service service",
+    "build": "node scripts/build_packages.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "consumer-smoke": "pnpm --filter @nsealr/consumer-smoke smoke",
-    "ci": "pnpm typecheck && pnpm test"
+    "ci": "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

@@ -43,9 +43,10 @@ single-repository CI. Cross-repository drift remains guarded by
   `nSealr/specs`, including visible JSON-style control escapes in event
   content and tags.
 - Development signer verification tests in `packages/dev-signer`.
-- Repository verification now requires explicit `@nsealr/*` package manifests
-  and `src/index.ts` entrypoints, rejects deep cross-package source imports,
-  and rejects production package dependencies on private `@nsealr/dev-signer`.
+- Repository verification now requires explicit `@nsealr/*` package manifests,
+  source `src/index.ts` entrypoints, and built `dist` exports; it rejects deep
+  cross-package source imports and production package dependencies on private
+  `@nsealr/dev-signer`.
 - Client package tests cover native-messaging frame encoding/decoding,
   deterministic malformed-frame rejection, secretless local service status,
   deterministic pairing intents, unpaired/revoked/expired/scope-denied client
@@ -57,10 +58,11 @@ single-repository CI. Cross-repository drift remains guarded by
   verification, explicit client identity forwarding, signer refusal propagation,
   and rejection before backend contact when an event template contains forbidden
   signer-owned fields.
-- `make package-smoke` runs the private `@nsealr/consumer-smoke` app, importing
-  every public `@nsealr/*` package through its package entrypoint and exercising
-  a minimal no-signer consumer path. This catches broken exports that relative
-  in-package tests would miss.
+- `make package-smoke` builds package artifacts, then runs the private
+  `@nsealr/consumer-smoke` app. The smoke imports every public `@nsealr/*`
+  package through its built package entrypoint and exercises a minimal
+  no-signer consumer path. This catches broken exports that relative in-package
+  tests would miss.
 - Service app tests prove the private native-messaging host scaffold stays a
   thin wrapper around `@nsealr/client`.
 - Negative response verification tests for request id mismatch, template
@@ -203,7 +205,7 @@ single-repository CI. Cross-repository drift remains guarded by
 ## Next Test Additions
 
 - Third-party consumer import tests for future `@nsealr/*` publication:
-  package README examples, built JS/declaration artifacts, no test-only signer
+  package README examples, packed tarball installation, no test-only signer
   leakage, and no production secret storage in public helpers.
 - Local companion service tests with a fake extension/app client: pairing,
   selected account route, user approval UX, persistent grant storage,
@@ -212,9 +214,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - Browser extension provider tests over a fake companion for origin permission,
   revocation, cancel, malformed companion response, native-host disconnects,
   and no key material in extension storage.
-- Package consumer smoke should eventually run against built JS/declaration
-  artifacts before npm publication; the current gate intentionally uses source
-  exports because packages are not built or published yet.
+- Package consumer smoke currently runs against built JS/declaration artifacts.
+  The remaining npm-facing gate is packed-tarball installation and package
+  README example execution before publication.
 - Full NIP-46 relay-session tests with local relay fixtures after NIP-44
   session lifecycle and reviewed `connect` acknowledgement are specified.
 - Large QR payload strategy tests once chunking or compression is designed.

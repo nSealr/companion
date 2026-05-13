@@ -43,9 +43,9 @@ match the shared `contract_id`.
   hardware traces.
 - `nsealr dev-sign` signs requests with an explicit test-only software key.
 - Each reusable `packages/*` module now has an explicit `@nsealr/*` package
-  manifest and `src/index.ts` entrypoint. Internal imports use those package
-  entrypoints instead of deep relative paths so SDK, extension, service, and
-  CLI code share the same boundaries.
+  manifest, source `src/index.ts` entrypoint, and built `dist` export.
+  Internal imports use those package entrypoints instead of deep relative paths
+  so SDK, extension, service, and CLI code share the same boundaries.
 - `@nsealr/client` defines the first local companion service protocol and
   native-messaging frame codec plus the high-level local-service client used by
   future browser, SDK, desktop, and CLI callers. The implemented operations are
@@ -174,9 +174,9 @@ match the shared `contract_id`.
 
 - Complete the package-boundary freeze for future `@nsealr/*` npm SDK
   publication with package README files, third-party import tests, semver,
-  provenance, and built JS/declaration artifacts. The source-level manifests,
-  explicit entrypoints, deep-import audit, and test-only signer isolation are
-  already in place.
+  provenance, and release automation. Built JS/declaration artifacts,
+  manifests, explicit entrypoints, deep-import audit, and test-only signer
+  isolation are already in place.
 - Expand the local companion service boundary with pairing, origin/app
   identity, route selection, cancellation, persistent revocation storage,
   deterministic errors, and signer transport dispatch. The first SDK wrapper
@@ -186,9 +186,8 @@ match the shared `contract_id`.
   `getPublicKey` and `signEvent` route through companion without storing
   production signing material.
 - Public npm SDK alpha after package APIs, docs, semver, provenance, and
-  third-party import tests are stable. A source-entrypoint consumer smoke is now
-  part of `make ci`; built-artifact consumer tests remain pending until package
-  build/publish plumbing exists.
+  third-party import tests are stable. A built-artifact consumer smoke is now
+  part of `make ci`; npm publish/provenance plumbing remains pending.
 - Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,
   permissions, and auth challenges.
 - WebUSB, HID, CDC, WebSerial, and persistent transport experiments.

@@ -1,10 +1,13 @@
 import { compactJsonUtf8ByteLength } from "@nsealr/protocol";
 import {
   LOCAL_CLIENT_SURFACES,
+  parseLocalClientIdentity,
+  type LocalClientSurface
+} from "./client-identity.js";
+import {
   LOCAL_PAIRING_APPROVAL_FORMAT,
   LOCAL_SERVICE_OPERATIONS,
   type LocalClientGrant,
-  type LocalClientSurface,
   type LocalPairingApproval,
   type PairableLocalServiceOperation
 } from "./service.js";
@@ -60,29 +63,22 @@ function requireHex64(value: unknown, label: string): string {
   return value;
 }
 
-function requireOrigin(value: unknown): string {
-  if (typeof value !== "string" || value.length === 0 || value.length > 256) {
-    throw new Error("grant origin is invalid");
-  }
-  if (value.startsWith("extension:") || value.startsWith("app:") || value.startsWith("cli:") || value.startsWith("sdk:")) {
-    return value;
-  }
-  try {
-    const url = new URL(value);
-    if (url.origin === value && (url.protocol === "https:" || (url.protocol === "http:" && (url.hostname === "localhost" || url.hostname === "127.0.0.1")))) {
-      return value;
-    }
-  } catch {
-    throw new Error("grant origin scheme is unsupported");
-  }
-  throw new Error("grant origin scheme is unsupported");
-}
-
 function requireSurface(value: unknown): LocalClientSurface {
   if (typeof value !== "string" || !LOCAL_CLIENT_SURFACES.includes(value as LocalClientSurface)) {
     throw new Error("grant surface is unsupported");
   }
   return value as LocalClientSurface;
+}
+
+function requireOriginForSurface(value: unknown, surface: LocalClientSurface): string {
+  try {
+    return parseLocalClientIdentity({ surface, origin: value }).origin;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("origin scheme")) {
+      throw new Error("grant origin scheme is unsupported");
+    }
+    throw new Error("grant origin is invalid");
+  }
 }
 
 function requireAllowedOperations(value: unknown): PairableLocalServiceOperation[] {
@@ -110,10 +106,11 @@ function requireAllowedOperations(value: unknown): PairableLocalServiceOperation
 
 function parseLocalGrantSelector(selector: LocalGrantSelector): LocalGrantSelector {
   if (!isRecord(selector)) throw new Error("local grant selector must be an object");
+  const surface = requireSurface(selector.surface);
   return {
     clientId: requireHex64(selector.clientId, "local grant selector client_id"),
-    origin: requireOrigin(selector.origin),
-    surface: requireSurface(selector.surface)
+    origin: requireOriginForSurface(selector.origin, surface),
+    surface
   };
 }
 
@@ -144,10 +141,11 @@ export function parseLocalGrant(value: unknown): LocalClientGrant {
   const pairingDigest = "pairing_digest" in value
     ? requireHex64(value.pairing_digest, "grant pairing_digest")
     : undefined;
+  const surface = requireSurface(value.surface);
   return {
     client_id: requireHex64(value.client_id, "grant client_id"),
-    origin: requireOrigin(value.origin),
-    surface: requireSurface(value.surface),
+    origin: requireOriginForSurface(value.origin, surface),
+    surface,
     allowed_operations: requireAllowedOperations(value.allowed_operations),
     approved_at: approvedAt,
     ...(pairingDigest !== undefined ? { pairing_digest: pairingDigest } : {}),

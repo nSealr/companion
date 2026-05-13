@@ -7,6 +7,18 @@ import {
   type RouteSelectionRequest
 } from "@nsealr/policy";
 import { compactJsonUtf8ByteLength, NSEALR_V0_LIMITS, validateRequest, validateResponse } from "@nsealr/protocol";
+import {
+  parseLocalClientIdentity,
+  type LocalClientIdentity,
+  type LocalClientSurface
+} from "./client-identity.js";
+
+export {
+  LOCAL_CLIENT_SURFACES,
+  parseLocalClientIdentity,
+  type LocalClientIdentity,
+  type LocalClientSurface
+} from "./client-identity.js";
 
 export const LOCAL_SERVICE_PROTOCOL = "nsealr-local-service-v0";
 export const LOCAL_SERVICE_NAME = "nsealr-companion-service";
@@ -23,24 +35,8 @@ export const LOCAL_SERVICE_OPERATIONS = [
   "verify_signer_response"
 ] as const;
 
-export const LOCAL_CLIENT_SURFACES = [
-  "browser_extension",
-  "desktop_app",
-  "cli",
-  "sdk",
-  "native_host_test"
-] as const;
-
 export type LocalServiceOperation = (typeof LOCAL_SERVICE_OPERATIONS)[number];
 export type PairableLocalServiceOperation = Exclude<LocalServiceOperation, "service_status" | "request_pairing">;
-export type LocalClientSurface = (typeof LOCAL_CLIENT_SURFACES)[number];
-
-export type LocalClientIdentity = {
-  surface: LocalClientSurface;
-  origin: string;
-  app_name?: string;
-  instance_id?: string;
-};
 
 export type LocalClientGrant = {
   client_id: string;
@@ -176,10 +172,6 @@ function isRequestId(value: unknown): value is string {
   );
 }
 
-function isLocalClientSurface(value: unknown): value is LocalClientSurface {
-  return typeof value === "string" && LOCAL_CLIENT_SURFACES.includes(value as LocalClientSurface);
-}
-
 function isAllowedOperation(value: unknown): value is LocalServiceOperation {
   return typeof value === "string" && LOCAL_SERVICE_OPERATIONS.includes(value as LocalServiceOperation);
 }
@@ -206,54 +198,14 @@ function validationResult(valid: boolean, error?: string): { validation: { valid
 }
 
 function validateClientIdentity(value: unknown): { ok: true; client: LocalClientIdentity } | { ok: false; error: string } {
-  if (!isRecord(value)) return { ok: false, error: "client identity must be an object" };
-  if (!hasOnlyKeys(value, ["surface", "origin", "app_name", "instance_id"])) {
-    return { ok: false, error: "client identity contains unsupported fields" };
-  }
-  if (!isLocalClientSurface(value.surface)) return { ok: false, error: "client surface is unsupported" };
-  if (typeof value.origin !== "string" || value.origin.length === 0 || value.origin.length > 256) {
-    return { ok: false, error: "client origin is invalid" };
-  }
-  if (!isSupportedOrigin(value.origin)) return { ok: false, error: "client origin scheme is unsupported" };
-  if ("app_name" in value && (typeof value.app_name !== "string" || value.app_name.length > 80)) {
-    return { ok: false, error: "client app_name is invalid" };
-  }
-  if ("instance_id" in value && (typeof value.instance_id !== "string" || !/^[A-Za-z0-9._:-]{1,128}$/u.test(value.instance_id))) {
-    return { ok: false, error: "client instance_id is invalid" };
-  }
-  return {
-    ok: true,
-    client: {
-      surface: value.surface,
-      origin: value.origin,
-      ...(typeof value.app_name === "string" ? { app_name: value.app_name } : {}),
-      ...(typeof value.instance_id === "string" ? { instance_id: value.instance_id } : {})
-    }
-  };
-}
-
-export function parseLocalClientIdentity(value: unknown): LocalClientIdentity {
-  const result = validateClientIdentity(value);
-  if (!result.ok) {
-    throw new Error(result.error);
-  }
-  return result.client;
-}
-
-function isSupportedOrigin(origin: string): boolean {
-  if (origin.startsWith("extension:")) return true;
-  if (origin.startsWith("app:")) return true;
-  if (origin.startsWith("cli:")) return true;
-  if (origin.startsWith("sdk:")) return true;
   try {
-    const url = new URL(origin);
-    if (url.origin !== origin) return false;
-    if (url.protocol === "https:") return true;
-    if (url.protocol === "http:" && (url.hostname === "localhost" || url.hostname === "127.0.0.1")) return true;
-  } catch {
-    return false;
+    return { ok: true, client: parseLocalClientIdentity(value) };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "client identity is invalid"
+    };
   }
-  return false;
 }
 
 function validateRequestedOperations(value: unknown): { ok: true; operations: PairableLocalServiceOperation[] } | { ok: false; error: string } {

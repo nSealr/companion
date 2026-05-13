@@ -95,6 +95,9 @@ Exports:
 - `serializeLocalGrantStore`
 - `validateLocalServiceResponse`
 
+Additional package subpaths:
+- `@nsealr/client/client-identity`: `LOCAL_CLIENT_SURFACES`, `LocalClientIdentity`, `LocalClientSurface`, `parseLocalClientIdentity`
+
 ## @nsealr/core
 
 Nostr event hashing and signed-event verification helpers for nSealr.

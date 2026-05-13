@@ -23,6 +23,7 @@ for (const packageName of publicPackages) {
 const protocol = await import("@nsealr/protocol");
 const core = await import("@nsealr/core");
 const browserProvider = await import("@nsealr/browser-provider");
+const clientIdentity = await import("@nsealr/client/client-identity");
 
 assert.equal(protocol.validateRequest({
   version: 1,
@@ -37,6 +38,13 @@ assert.equal(core.computeEventId({
   tags: [],
   content: "consumer smoke"
 }).length, 64);
+
+assert.equal(clientIdentity.parseLocalClientIdentity({
+  surface: "browser_extension",
+  origin: "https://example.com",
+  app_name: "Package Consumer Smoke",
+  instance_id: "consumer-smoke"
+}).origin, "https://example.com");
 
 const provider = browserProvider.createNip07Provider({
   client: {

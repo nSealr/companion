@@ -82,9 +82,11 @@ match the shared `contract_id`.
 - `@nsealr/browser-extension` is a private app scaffold for extension-owned
   message parsing and provider-backed request handling. It currently accepts
   only internal `get_public_key` and `sign_event` requests, validates provider
-  outputs, and can build a minimal no-host-permission manifest. It does not
+  outputs, derives local client identity from a sanitized sender page-origin
+  context, and can build a minimal no-host-permission manifest. It does not
   package or install a browser extension.
-- `@nsealr/client` exposes the shared local-client identity parser used before
+- `@nsealr/client` exposes the shared local-client identity parser, including
+  the browser-safe `@nsealr/client/client-identity` subpath, used before
   pairing, route selection, signer-request validation, and response
   verification.
 - `@nsealr/service` is the private native-messaging host scaffold over
@@ -224,7 +226,9 @@ match the shared `contract_id`.
   `getPublicKey` and `signEvent` route through companion without storing
   production signing material. The package-level provider can already read the
   selected public key through local-service route selection and returns
-  deterministic signer-unavailable errors until real dispatch is gated.
+  deterministic signer-unavailable errors until real dispatch is gated. The
+  private extension scaffold now also has the sender/page-origin identity
+  boundary needed before content-script injection is considered.
 - Public npm SDK alpha after package APIs, docs, semver, provenance, and
   third-party import tests are stable. Package README coverage and a
   built-artifact consumer smoke are now part of `make ci`; packed-tarball

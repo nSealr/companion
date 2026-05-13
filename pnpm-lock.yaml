@@ -29,6 +29,9 @@ importers:
       '@nsealr/browser-provider':
         specifier: workspace:*
         version: link:../../packages/browser-provider
+      '@nsealr/client':
+        specifier: workspace:*
+        version: link:../../packages/client
       '@nsealr/core':
         specifier: workspace:*
         version: link:../../packages/core

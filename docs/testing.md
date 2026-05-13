@@ -52,8 +52,8 @@ single-repository CI. Cross-repository drift remains guarded by
   `@nsealr/dev-signer`.
 - Client package tests cover native-messaging frame encoding/decoding,
   deterministic malformed-frame rejection, secretless local service status,
-  deterministic pairing intents, shared local-client identity parsing,
-  unpaired/revoked/expired/scope-denied client rejection, latest-grant
+  deterministic pairing intents, browser-safe shared local-client identity
+  parsing, unpaired/revoked/expired/scope-denied client rejection, latest-grant
   selection from in-memory grant history,
   deterministic pairing-review projection, strict grant-store
   serialization/revocation, strict pairing-approval artifact parsing before
@@ -73,15 +73,18 @@ single-repository CI. Cross-repository drift remains guarded by
   malformed-envelope rejection, and shared signer-request validation for event
   templates. Handler tests cover injected provider success paths, request
   rejection before provider contact, and malformed provider-output rejection
-  before browser callers can trust returned pubkeys/events. Manifest tests pin
-  the minimal MV3 permission boundary: native messaging only, no host
-  permission fields, no content scripts, no storage permission, and explicit
-  Firefox extension ids.
+  before browser callers can trust returned pubkeys/events. Sender-boundary
+  tests cover page-origin derivation from full URLs, origin/URL mismatch
+  rejection, deceptive localhost rejection, extension-page-origin rejection,
+  and shared local-client identity construction. Manifest tests pin the minimal
+  MV3 permission boundary: native messaging only, no host permission fields, no
+  content scripts, no storage permission, and explicit Firefox extension ids.
 - `make package-smoke` builds package artifacts, then runs the private
   `@nsealr/consumer-smoke` app. The smoke imports every public `@nsealr/*`
-  package through its built package entrypoint and exercises a minimal
-  no-signer consumer path. This catches broken exports that relative in-package
-  tests would miss.
+  package through its built package entrypoint plus the public
+  `@nsealr/client/client-identity` subpath, and exercises a minimal no-signer
+  consumer path. This catches broken exports that relative in-package tests
+  would miss.
 - `make examples-smoke` builds package artifacts, then runs private
   `@nsealr/sdk-examples`. The examples are executable documentation for public
   package usage. They import every publishable public package and cover

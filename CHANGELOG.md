@@ -48,8 +48,9 @@ public npm release.
 - Minimal private browser-extension manifest builder that pins native messaging
   as the only permission and omits host permissions, content scripts, and
   extension storage until origin-permission UX is reviewed.
-- Shared `@nsealr/client` local-client identity parser so browser, SDK, CLI,
-  service, and native-host code use one origin/app binding boundary.
+- Browser-safe `@nsealr/client/client-identity` parser and private
+  browser-extension sender boundary so browser, SDK, CLI, service, and
+  native-host code use one origin/app binding rule set.
 - `@nsealr/client` secretless JSON grant-store contract for persisting approved
   and revoked local client grants without production key material.
 - Deterministic local-service grant-history selection so the latest matching

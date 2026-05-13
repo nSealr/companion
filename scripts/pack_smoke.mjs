@@ -60,6 +60,7 @@ for (const packageName of packages) {
 
 const { computeEventId } = await import("@nsealr/core");
 const { validateRequest } = await import("@nsealr/protocol");
+const { parseLocalClientIdentity } = await import("@nsealr/client/client-identity");
 
 assert.equal(validateRequest({
   version: 1,
@@ -73,6 +74,12 @@ assert.equal(computeEventId({
   tags: [],
   content: "packed consumer smoke"
 }).length, 64);
+assert.equal(parseLocalClientIdentity({
+  surface: "browser_extension",
+  origin: "https://example.com",
+  app_name: "Packed Consumer Smoke",
+  instance_id: "packed-consumer-smoke"
+}).origin, "https://example.com");
 
 console.log("nSealr packed package smoke passed");
 `);

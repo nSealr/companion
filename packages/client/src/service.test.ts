@@ -8,10 +8,10 @@ import {
   handleLocalServiceRequest,
   LOCAL_SERVICE_OPERATIONS,
   LOCAL_SERVICE_PROTOCOL,
-  parseLocalClientIdentity,
   type LocalClientGrant,
   type LocalClientIdentity
 } from "./service.js";
+import { parseLocalClientIdentity } from "./client-identity.js";
 
 const specsRoot = resolveSpecsRoot();
 const fixtures = loadSpecsFixtures(specsRoot);
@@ -51,6 +51,17 @@ describe("local service boundary", () => {
       origin: "http://localhost",
       app_name: "Local Demo",
       instance_id: "local-demo-1"
+    });
+    expect(parseLocalClientIdentity({
+      surface: "browser_extension",
+      origin: "https://example.com",
+      app_name: "Firefox Extension",
+      instance_id: "extension@nsealr.dev"
+    })).toEqual({
+      surface: "browser_extension",
+      origin: "https://example.com",
+      app_name: "Firefox Extension",
+      instance_id: "extension@nsealr.dev"
     });
   });
 

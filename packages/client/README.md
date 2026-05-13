@@ -10,6 +10,9 @@ Local companion service protocol and client wrappers.
   callers.
 - Enforce explicit client identity parsing, request-id correlation, and
   deterministic malformed-response rejection.
+- Expose `@nsealr/client/client-identity` as the browser-safe subpath for
+  access surfaces that need identity parsing without importing Node-only
+  native-messaging or service helpers.
 
 ## Example
 

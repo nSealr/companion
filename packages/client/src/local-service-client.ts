@@ -7,14 +7,16 @@ import {
   LOCAL_SERVICE_NAME,
   LOCAL_SERVICE_OPERATIONS,
   LOCAL_SERVICE_PROTOCOL,
-  parseLocalClientIdentity,
   parsePairingIntent,
-  type LocalClientIdentity,
   type LocalServiceOperation,
   type LocalServiceRequest,
   type LocalServiceResponse,
   type PairableLocalServiceOperation
 } from "./service.js";
+import {
+  parseLocalClientIdentity,
+  type LocalClientIdentity
+} from "./client-identity.js";
 
 export type LocalServiceExchange = (request: LocalServiceRequest) => Promise<unknown> | unknown;
 

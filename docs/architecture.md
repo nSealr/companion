@@ -166,12 +166,13 @@ model.
 The first native-messaging scaffold accepts `service_status`,
 `request_pairing`, `select_account_route`, `validate_signer_request`, and
 `verify_signer_response`.
-`@nsealr/client` owns the shared local-client identity parser for every access
-surface. Browser extension, SDK, desktop, CLI, and native-host code must reuse
-that parser before deriving client ids, requesting pairing, selecting account
-routes, or trusting pairing responses. It rejects unsupported surfaces, non-
-origin URLs such as `https://example.com/path`, deceptive localhost names,
-overlong app names, invalid instance ids, and extra fields.
+`@nsealr/client/client-identity` owns the browser-safe shared local-client
+identity parser for every access surface. Browser extension, SDK, desktop, CLI,
+and native-host code must reuse that parser before deriving client ids,
+requesting pairing, selecting account routes, or trusting pairing responses.
+It rejects unsupported surfaces, non-origin URLs such as
+`https://example.com/path`, deceptive localhost names, overlong app names,
+invalid instance ids, and extra fields.
 Pairing requests return a deterministic intent for later user review; they do
 not approve the client. Validation and verification require explicit grants
 supplied by the caller/test harness. When grant history is supplied, the latest
@@ -239,6 +240,13 @@ is still browser-API-free and receives an injected provider; it validates
 public keys, checks signed events against the original request, and returns
 secretless deterministic errors for malformed requests or malformed provider
 outputs.
+The same private app has a browser-API-free sender context boundary. The future
+adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
+and optional reviewed app name. The boundary strips full URLs down to origins,
+rejects mismatched origin/URL pairs, rejects deceptive localhost names and
+extension-page origins, and creates the `browser_extension` local client
+identity through `@nsealr/client/client-identity`. It stores no browser-side
+production secrets and does not grant a page by itself.
 Its manifest builder is intentionally restrictive: Chromium manifests omit host
 permissions, optional host permissions, content scripts, and storage; Firefox
 manifests require an explicit reviewed extension id and otherwise follow the

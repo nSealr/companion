@@ -53,7 +53,8 @@ packages, but it must not export test-only signing as a production path.
   cancellation, has a pure page-provider boundary that maps NIP-07
   `getPublicKey` and `signEvent` calls to validated background requests, and
   has a pure page-bridge envelope and page-side requester adapter for future
-  page/content-script messaging.
+  page/content-script messaging. It also has a pure page-script bootstrap that
+  installs the provider over an injected bridge exchange.
   It can build a minimal MV3 manifest with `nativeMessaging` as the only
   permission. It does not yet ship extension packaging, content-script
   injection, page-script injection, native-host installation, permission UI,
@@ -278,6 +279,12 @@ response, forwards cancellation signals through the injected bridge exchange,
 and rejects malformed input before the bridge is contacted. It has no
 `postMessage` listener, no browser runtime dependency, no storage, and no key
 custody.
+The page-script bootstrap composes that requester with the NIP-07 page
+provider and explicit-target installer. It gives the future injected page
+script a single pure entrypoint while still requiring an injected bridge
+exchange and still refusing to overwrite an existing `window.nostr` provider.
+It does not include an injection mechanism, content-script registration,
+browser runtime dependency, storage, grants, or key custody.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

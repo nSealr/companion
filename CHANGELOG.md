@@ -69,6 +69,9 @@ public npm release.
 - Private browser-extension page-side bridge requester that wraps internal
   requests in the page/content bridge envelope, validates bridge responses,
   and forwards cancellation without adding browser listeners or runtime APIs.
+- Private browser-extension page-script provider bootstrap that composes the
+  NIP-07 provider installer with the injected page bridge exchange without
+  adding content-script registration, browser listeners, storage, or grants.
 - Private `@nsealr/browser-extension` app scaffold with strict internal
   `get_public_key` and `sign_event` message parsing plus a provider-backed
   handler that validates returned pubkeys/events before extension packaging,

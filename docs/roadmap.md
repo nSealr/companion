@@ -322,7 +322,9 @@ and uploads checked tarball artifacts without publishing to npm.
   validates future page/content-script messages over an injected background
   requester, and the matching page-side requester adapter wraps internal
   requests into that bridge envelope before accepting validated bridge
-  responses. It can build a minimal MV3 manifest with `nativeMessaging` as the
+  responses. A pure page-script bootstrap now composes that requester with the
+  explicit-target NIP-07 provider installer without adding an injection
+  mechanism. It can build a minimal MV3 manifest with `nativeMessaging` as the
   only permission and no host/content-script/storage permissions. Remaining
   work: extension packaging, actual content-script/page-script injection,
   native-messaging installation, origin permission UX, cancellation UI wiring,

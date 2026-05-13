@@ -101,7 +101,10 @@ single-repository CI. Cross-repository drift remains guarded by
   background responses, malformed bridge responses, invalid page-side requester
   input, and already-cancelled requests before any browser listener exists.
   Page-side requester tests also prove bridge-envelope wrapping and
-  cancellation forwarding through an injected bridge exchange.
+  cancellation forwarding through an injected bridge exchange. Page-script
+  bootstrap tests prove the explicit-target NIP-07 provider can be installed
+  over that bridge exchange without overwriting an existing provider or adding
+  browser injection.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids.

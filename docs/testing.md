@@ -11,6 +11,8 @@ TypeScript type safety, unit tests, integration tests, dependency audit, and
 companion package-boundary rules.
 The Makefile pins `pnpm@10.33.4`; it uses a global `pnpm` when present and
 falls back to `npm exec` on development machines that only have Node/npm.
+The workspace Vitest command is bounded to four workers to avoid local or CI
+fork-worker oversubscription while keeping the full test suite enabled.
 
 ## Single-Repository CI
 
@@ -84,7 +86,9 @@ single-repository CI. Cross-repository drift remains guarded by
   unavailable until signer dispatch is implemented. Pairing tests prove the
   same sender-derived identity can request a digest-bound local-service pairing
   intent without creating grants, writing extension storage, or touching native
-  host installation.
+  host installation. Background-controller tests prove request handling and
+  pairing-intent requests share the same injected native-messaging boundary and
+  malformed browser requests fail before native messaging is contacted.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids.

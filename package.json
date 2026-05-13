@@ -18,7 +18,7 @@
     "nsealr": "pnpm --filter @nsealr/cli nsealr",
     "nsealr-service": "pnpm --filter @nsealr/service service",
     "build": "node scripts/build_packages.mjs",
-    "test": "vitest run",
+    "test": "vitest run --maxWorkers=4",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "consumer-smoke": "pnpm --filter @nsealr/consumer-smoke smoke",

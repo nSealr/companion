@@ -47,10 +47,11 @@ packages, but it must not export test-only signing as a production path.
   callers can trust them, derives sender-bound client identity before provider
   selection, can compose that identity with the native-messaging local-service
   provider path, can request digest-bound local-service pairing intents for the
-  same identity, and can build a minimal MV3 manifest with `nativeMessaging` as
-  the only permission. It does not yet ship extension packaging, content-script
-  injection, native-host installation, permission UI, persistent grants, or
-  signer dispatch.
+  same identity, has a pure background-controller boundary over injected
+  native messaging, and can build a minimal MV3 manifest with `nativeMessaging`
+  as the only permission. It does not yet ship extension packaging,
+  content-script injection, native-host installation, permission UI, persistent
+  grants, or signer dispatch.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
   central nSealr v0 implementation limit profile used by companion parsers,

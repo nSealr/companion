@@ -11,9 +11,15 @@
     "@nsealr/browser-provider": "workspace:*",
     "@nsealr/client": "workspace:*",
     "@nsealr/core": "workspace:*",
+    "@nsealr/fixtures": "workspace:*",
+    "@nsealr/framing": "workspace:*",
     "@nsealr/nip46": "workspace:*",
+    "@nsealr/policy": "workspace:*",
     "@nsealr/protocol": "workspace:*",
-    "@nsealr/qr": "workspace:*"
+    "@nsealr/qr": "workspace:*",
+    "@nsealr/review": "workspace:*",
+    "@nsealr/smartcard": "workspace:*",
+    "@nsealr/transport": "workspace:*"
   },
   "devDependencies": {
     "tsx": "4.21.0"

@@ -155,6 +155,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         sdk_examples_text = sdk_examples_path.read_text(encoding="utf-8")
         if "make examples-smoke" not in sdk_examples_text or "@nsealr/sdk-examples" not in sdk_examples_text:
             errors.append("docs/sdk-examples.md must document make examples-smoke and @nsealr/sdk-examples")
+        if "import every publishable public" not in sdk_examples_text:
+            errors.append("docs/sdk-examples.md must document full public-package import coverage")
     if not api_docs_path.exists():
         errors.append("docs/api.md must document the public package API surface")
     else:
@@ -286,6 +288,18 @@ def verify_companion_package_boundaries(errors: list[str]) -> None:
         package = read_json(package_json_path, errors)
         if package.get("name") != package_name:
             errors.append(f"apps/{app_dir}/package.json must be named {package_name}")
+
+    sdk_examples_package = read_json(ROOT / "apps" / "sdk-examples" / "package.json", errors)
+    sdk_examples_dependencies = sdk_examples_package.get("dependencies")
+    sdk_examples_source = ROOT / "apps" / "sdk-examples" / "src" / "index.ts"
+    sdk_examples_text = sdk_examples_source.read_text(encoding="utf-8") if sdk_examples_source.exists() else ""
+    for package_dir, package_name in COMPANION_PACKAGES.items():
+        if package_dir == "dev-signer":
+            continue
+        if not isinstance(sdk_examples_dependencies, dict) or package_name not in sdk_examples_dependencies:
+            errors.append(f"apps/sdk-examples/package.json must depend on {package_name}")
+        if f'from "{package_name}"' not in sdk_examples_text:
+            errors.append(f"apps/sdk-examples/src/index.ts must import {package_name}")
 
     for source_path in [*ROOT.glob("packages/*/src/**/*.ts"), *ROOT.glob("apps/*/src/**/*.ts")]:
         text = source_path.read_text(encoding="utf-8")

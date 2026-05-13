@@ -16,6 +16,9 @@ public npm release.
   package entrypoint.
 - npm-facing package manifest metadata and public provenance `publishConfig`
   checks for publishable packages.
+- Executable SDK examples now import every publishable public package and cover
+  fixture, policy, review, framing, smartcard, and serial-line transport
+  boundaries without test-only signer imports.
 - Secretless local companion service, client wrapper, and browser-provider
   boundaries for future SDK, browser extension, desktop, and CLI access
   surfaces.

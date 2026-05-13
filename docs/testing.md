@@ -68,9 +68,12 @@ single-repository CI. Cross-repository drift remains guarded by
   tests would miss.
 - `make examples-smoke` builds package artifacts, then runs private
   `@nsealr/sdk-examples`. The examples are executable documentation for public
-  package usage and cover request/QR handling, local companion-service calls,
-  browser-provider refusal behavior, and already-decrypted NIP-46 bridge
-  decisions without importing `@nsealr/dev-signer`.
+  package usage. They import every publishable public package and cover
+  request/QR handling, fixture loading, policy decisions, review rendering,
+  serial framing, local companion-service calls, browser-provider refusal
+  behavior, already-decrypted NIP-46 bridge decisions, smartcard APDU
+  round-trip, and in-memory serial-line transport refusal without importing
+  `@nsealr/dev-signer`.
 - `make api-docs` verifies that `docs/api.md` matches the exported symbols
   reachable from every public package entrypoint. `make api-docs-update`
   regenerates the file after an intentional public API change. This keeps the
@@ -225,8 +228,8 @@ single-repository CI. Cross-repository drift remains guarded by
 ## Next Test Additions
 
 - Third-party consumer import tests for future `@nsealr/*` publication:
-  more package-specific executable examples, no test-only signer leakage, and
-  no production secret storage in public helpers.
+  README snippet execution, no test-only signer leakage, and no production
+  secret storage in public helpers.
 - Package release workflow tests should eventually add trusted-publishing dry
   run or npm provenance verification once npm organization settings exist.
 - Local companion service tests with a fake extension/app client: pairing,
@@ -236,9 +239,10 @@ single-repository CI. Cross-repository drift remains guarded by
 - Browser extension provider tests over a fake companion for origin permission,
   revocation, cancel, malformed companion response, native-host disconnects,
   and no key material in extension storage.
-- Package consumer smoke currently runs against built JS/declaration artifacts
-  and packed tarballs. The remaining npm-facing gate is package README example
-  execution before publication.
+- Package consumer smoke currently runs against built JS/declaration artifacts,
+  packed tarballs, and executable examples importing every publishable public
+  package. The remaining npm-facing gate is package README example execution
+  before publication.
 - Full NIP-46 relay-session tests with local relay fixtures after NIP-44
   session lifecycle and reviewed `connect` acknowledgement are specified.
 - Large QR payload strategy tests once chunking or compression is designed.

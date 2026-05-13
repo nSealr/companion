@@ -195,7 +195,8 @@ Package README files document purpose and trust boundaries, built JS/declaration
 artifacts are generated before tests, package tarballs are restricted to `dist`
 plus README, consumer smokes import both workspace-built and packed package
 entrypoints, executable SDK examples now cover request/QR, local-service,
-browser-provider, and already-decrypted NIP-46 flows, and the changelog/release
+browser-provider, already-decrypted NIP-46, fixtures, policy, review, framing,
+smartcard APDU, and serial-line transport flows, and the changelog/release
 policy pins synchronized pre-release versioning plus npm provenance
 requirements. `docs/api.md` is generated from the actual public package
 entrypoints and checked in CI so exported symbols cannot drift invisibly.
@@ -233,10 +234,11 @@ uploads checked tarball artifacts without publishing to npm.
   prove common public package flows without test-only signer imports. Generated
   API docs expose every public package entrypoint symbol and fail when stale.
   Package manifests include npm-facing metadata plus provenance publish config.
-  Changelog and release policy are present. A manual release rehearsal workflow
-  prepares checked tarball artifacts without npm publication. Actual npm trusted
-  publishing/provenance activation and broader package-specific example
-  coverage remain pending.
+  Executable SDK examples now import every publishable public package at least
+  once without importing `@nsealr/dev-signer`. Changelog and release policy are
+  present. A manual release rehearsal workflow prepares checked tarball
+  artifacts without npm publication. Actual npm trusted publishing/provenance
+  activation remains pending.
 - M5 full NIP-46/Nostr Connect relay session integration.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and

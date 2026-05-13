@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createNip07Provider } from "@nsealr/browser-provider";
 import {
   clientIdForIdentity,
@@ -14,9 +17,30 @@ import {
   type SignEventRequest,
   type SignEventResponse
 } from "@nsealr/core";
+import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
+import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
 import { decideNip46BridgeAction } from "@nsealr/nip46";
+import {
+  decidePolicyRequest,
+  parseAccountDescriptor,
+  parseGrantDescriptor,
+  parsePolicyProfile
+} from "@nsealr/policy";
 import { validateRequest, validateResponse } from "@nsealr/protocol";
 import { decodeQrEnvelope, encodeQrEnvelope } from "@nsealr/qr";
+import {
+  approvalDigestForRequest,
+  renderReviewDetailPages,
+  reviewEventTemplate
+} from "@nsealr/review";
+import {
+  CommandApdu,
+  GET_PUBLIC_KEY_INS,
+  NSEALR_CLA,
+  ResponseApdu,
+  SW_NO_ERROR
+} from "@nsealr/smartcard";
+import { exchangeSerialLineRequest, type SerialLinePort } from "@nsealr/transport";
 
 const request: SignEventRequest = {
   version: 1,
@@ -49,6 +73,8 @@ const response: SignEventResponse = {
   }
 };
 const publicKey = response.result.event.pubkey;
+const companionRoot = fileURLToPath(new URL("../../..", import.meta.url));
+const siblingSpecsRoot = join(dirname(companionRoot), "specs");
 
 const sdkClient: LocalClientIdentity = {
   surface: "sdk",
@@ -78,6 +104,48 @@ async function requestAndQrExample(): Promise<void> {
 
   const envelope = encodeQrEnvelope(request);
   assert.deepEqual(decodeQrEnvelope(envelope), request);
+}
+
+async function fixturesPolicyReviewAndFramingExample(): Promise<void> {
+  const fixtures = loadSpecsFixtures(specsRootForExamples());
+  assert(fixtures.events.length > 0);
+  assert(fixtures.reviewDetailPages.length > 0);
+  assert(fixtures.policyDecisions.length > 0);
+
+  const policyVector = fixtures.policyDecisions.find((candidate) => candidate.decision.decision === "allow");
+  if (!policyVector) throw new Error("SDK example could not find an allowed policy-decision vector");
+  const sourceAccount = fixtures.accounts.find((candidate) => candidate.account_id === policyVector.request.account_id);
+  if (!sourceAccount) throw new Error("SDK example policy vector references an unknown account");
+  const sourcePolicy = fixtures.policyProfiles.find((candidate) => candidate.policy_id === policyVector.policy_profile_id);
+  if (!sourcePolicy) throw new Error("SDK example policy vector references an unknown policy profile");
+  const sourceGrant = fixtures.grants.find((candidate) => policyVector.request.grant_ids.includes(candidate.grant_id));
+  if (!sourceGrant) throw new Error("SDK example policy vector references an unknown grant");
+  const account = parseAccountDescriptor(JSON.parse(JSON.stringify(sourceAccount)));
+  const policy = parsePolicyProfile(JSON.parse(JSON.stringify(sourcePolicy)));
+  const grant = parseGrantDescriptor(JSON.parse(JSON.stringify(sourceGrant)));
+  assert.deepEqual(decidePolicyRequest({
+    policy,
+    grants: [grant],
+    request: policyVector.request
+  }), policyVector.decision);
+  assert.equal(account.account_id, policyVector.request.account_id);
+  assert.equal(account.policy_profile_id, policyVector.policy_profile_id);
+  assert.equal(grant.account_id, account.account_id);
+  assert.equal(policy.route_types.includes(policyVector.request.route_type), true);
+
+  const review = reviewEventTemplate(request.params.event_template, publicKey);
+  const detailPages = renderReviewDetailPages(review, {
+    max_title_chars: 18,
+    max_body_lines: 5,
+    max_line_chars: 26,
+    max_compact_body_lines: 9,
+    max_compact_line_chars: 48
+  });
+  assert(detailPages.length > 0);
+  assert.equal(approvalDigestForRequest(request, publicKey).length, 64);
+
+  const frame = encodeSerialFrame({ type: "request", payload: request });
+  assert.deepEqual(decodeSerialFrame(frame), { type: "request", payload: request });
 }
 
 async function localServiceExample(): Promise<void> {
@@ -176,6 +244,51 @@ async function nip46BridgeExample(): Promise<void> {
   assert.equal(denied.type, "permission_denied");
 }
 
+async function smartcardAndTransportExample(): Promise<void> {
+  const command = new CommandApdu(NSEALR_CLA, GET_PUBLIC_KEY_INS);
+  assert.equal(CommandApdu.fromHex(command.toHex()).toHex(), command.toHex());
+
+  const apduResponse = new ResponseApdu(Uint8Array.of(1, 2, 3), SW_NO_ERROR);
+  assert.equal(ResponseApdu.fromHex(apduResponse.toHex()).statusWord, SW_NO_ERROR);
+
+  let writtenLine: string | undefined;
+  let closed = false;
+  const port: SerialLinePort = {
+    async writeLine(line: string): Promise<void> {
+      writtenLine = line;
+    },
+    async readLine(): Promise<string | null> {
+      assert(writtenLine);
+      return encodeSerialFrame({
+        type: "response",
+        payload: {
+          version: 1,
+          request_id: request.request_id,
+          ok: false,
+          error: {
+            code: "signing_disabled",
+            message: "SDK example has no signer transport",
+            retryable: false
+          }
+        }
+      });
+    },
+    close(): void {
+      closed = true;
+    }
+  };
+
+  const transportResponse = await exchangeSerialLineRequest({
+    path: "memory",
+    request,
+    openPort: () => port,
+    responseTimeoutMs: 10
+  });
+  assert.equal(validateResponse(transportResponse).ok, true);
+  assert.equal((transportResponse as { error?: { code?: string } }).error?.code, "signing_disabled");
+  assert.equal(closed, true);
+}
+
 function exampleGrant(): LocalClientGrant {
   return {
     client_id: clientIdForIdentity(sdkClient),
@@ -194,9 +307,18 @@ function sequence(prefix: string): () => string {
   };
 }
 
+function specsRootForExamples(): string {
+  if (existsSync(join(siblingSpecsRoot, "vectors")) && existsSync(join(siblingSpecsRoot, "examples"))) {
+    return resolveSpecsRoot(siblingSpecsRoot);
+  }
+  return resolveSpecsRoot(join(companionRoot, "tests", "fixtures", "specs"));
+}
+
 await requestAndQrExample();
+await fixturesPolicyReviewAndFramingExample();
 await localServiceExample();
 await browserProviderExample();
 await nip46BridgeExample();
+await smartcardAndTransportExample();
 
 console.log("nSealr SDK examples passed");

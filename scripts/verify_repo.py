@@ -53,6 +53,7 @@ COMPANION_PACKAGES = {
     "protocol": "@nsealr/protocol",
     "qr": "@nsealr/qr",
     "review": "@nsealr/review",
+    "sdk": "@nsealr/sdk",
     "smartcard": "@nsealr/smartcard",
     "transport": "@nsealr/transport",
 }

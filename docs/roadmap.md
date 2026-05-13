@@ -250,8 +250,10 @@ directories, issue tracker, homepage, MIT license, and public provenance
 `publishConfig`. Package README examples are executable TypeScript snippets
 checked against built package entrypoints in CI. `docs/api-review.md` records a
 package-by-package public API review bound to the current `docs/api.md` digest.
-A manual package release rehearsal workflow now prepares and uploads checked
-tarball artifacts without publishing to npm.
+`@nsealr/sdk` now provides a platform-neutral facade over curated public
+namespaces without importing private test signing, Node-only fixtures, or host
+transport adapters. A manual package release rehearsal workflow now prepares
+and uploads checked tarball artifacts without publishing to npm.
 
 ## Later
 

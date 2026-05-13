@@ -249,6 +249,24 @@ Exports:
 - `reviewEventTemplate`
 - `screenReviewForRequest`
 
+## @nsealr/sdk
+
+Platform-neutral SDK facade for nSealr browser, companion, and signer integrations.
+
+Source entrypoint: `packages/sdk/src/index.ts`
+
+Exports:
+- `browserProvider`
+- `client`
+- `core`
+- `framing`
+- `nip46`
+- `policy`
+- `protocol`
+- `qr`
+- `review`
+- `smartcard`
+
 ## @nsealr/smartcard
 
 APDU, PC/SC, simulator, and display-less smartcard signer boundary for nSealr.

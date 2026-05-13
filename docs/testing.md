@@ -89,16 +89,17 @@ single-repository CI. Cross-repository drift remains guarded by
   `@nsealr/consumer-smoke` app. The smoke imports every public `@nsealr/*`
   package through its built package entrypoint plus the public
   `@nsealr/client/client-identity` subpath, and exercises a minimal no-signer
-  consumer path. This catches broken exports that relative in-package tests
-  would miss.
+  consumer path. It also checks the `@nsealr/sdk` facade namespaces without
+  importing private signing helpers. This catches broken exports that relative
+  in-package tests would miss.
 - `make examples-smoke` builds package artifacts, then runs private
   `@nsealr/sdk-examples`. The examples are executable documentation for public
   package usage. They import every publishable public package and cover
   request/QR handling, fixture loading, policy decisions, review rendering,
   serial framing, local companion-service calls, browser-provider refusal
-  behavior, already-decrypted NIP-46 bridge decisions, smartcard APDU
-  round-trip, and in-memory serial-line transport refusal without importing
-  `@nsealr/dev-signer`.
+  behavior, already-decrypted NIP-46 bridge decisions, `@nsealr/sdk` facade
+  namespace imports, smartcard APDU round-trip, and in-memory serial-line
+  transport refusal without importing `@nsealr/dev-signer`.
 - `make readme-examples` builds package artifacts, then extracts
   `nsealr-readme-example` TypeScript snippets from every publishable package
   README and executes each snippet from the private SDK-example app context.

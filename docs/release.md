@@ -24,6 +24,7 @@ published until the package, policy, and access-surface gates are green.
 - `@nsealr/protocol`
 - `@nsealr/qr`
 - `@nsealr/review`
+- `@nsealr/sdk`
 - `@nsealr/smartcard`
 - `@nsealr/transport`
 

@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:d6d34ed489d9eb8f6bc891bc45d5c7e9683d8b65f9a798528a9f4e29ab5f207e`
+API surface digest: `sha256:2d633094a0ed06ced2a683b2b70c92acb89646037943f8f33a3973f7c11f8f28`
 
 Source: `docs/api.md`
 
@@ -132,6 +132,19 @@ The review package produces deterministic summaries, screen pages, detail
 pages, and approval digests for conformance and host-side previews. Companion
 review output remains untrusted. Hardware routes and display-less external
 review routes own trusted approval.
+
+## @nsealr/sdk
+
+Status: reviewed for pre-alpha.
+
+The SDK package is a platform-neutral facade over curated public namespaces for
+browser, app, and companion integrations. It intentionally excludes the private
+`@nsealr/dev-signer` package and does not import Node-only fixture loading or
+host transport adapters. Use `@nsealr/fixtures` and `@nsealr/transport`
+directly when test/lab or Node host code needs those specialized surfaces. The
+SDK must remain a secretless convenience layer: no production key custody,
+browser-side signing material, grant database, native-host installation, or
+signer dispatch.
 
 ## @nsealr/smartcard
 

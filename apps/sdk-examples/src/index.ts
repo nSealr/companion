@@ -51,6 +51,7 @@ import {
   ResponseApdu,
   SW_NO_ERROR
 } from "@nsealr/smartcard";
+import * as sdk from "@nsealr/sdk";
 import { exchangeSerialLineRequest, type SerialLinePort } from "@nsealr/transport";
 
 const request: SignEventRequest = {
@@ -349,6 +350,31 @@ async function smartcardAndTransportExample(): Promise<void> {
   assert.equal(closed, true);
 }
 
+function sdkFacadeExample(): void {
+  const identity = sdk.client.parseLocalClientIdentity({
+    surface: "browser_extension",
+    origin: "https://example.com",
+    app_name: "SDK Facade Example",
+    instance_id: "sdk-facade"
+  });
+
+  assert.equal(identity.origin, "https://example.com");
+  assert.equal(sdk.protocol.validateRequest({
+    version: 1,
+    request_id: "sdk-facade-get-public-key",
+    method: "get_public_key"
+  }).ok, true);
+  assert.equal(sdk.core.computeEventId({
+    pubkey: "0".repeat(64),
+    created_at: 1,
+    kind: 1,
+    tags: [],
+    content: "sdk facade"
+  }).length, 64);
+  assert.equal(typeof sdk.browserProvider.createNip07Provider, "function");
+  assert.equal(typeof sdk.smartcard.CommandApdu, "function");
+}
+
 function exampleGrant(): LocalClientGrant {
   return {
     client_id: clientIdForIdentity(sdkClient),
@@ -381,5 +407,6 @@ await localServiceExample();
 await browserProviderExample();
 await nip46BridgeExample();
 await smartcardAndTransportExample();
+sdkFacadeExample();
 
 console.log("nSealr SDK examples passed");

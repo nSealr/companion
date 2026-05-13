@@ -116,6 +116,10 @@ packages, but it must not export test-only signing as a production path.
   account public key through authorized route selection and returns
   deterministic signer-unavailable responses until signer dispatch is
   implemented.
+- `packages/sdk`: platform-neutral namespace facade for app, browser-extension,
+  and companion integrations. It excludes private test signing, Node-only
+  fixtures, and host transport adapters so browser-safe consumers have a clean
+  entrypoint.
 - `apps/service`: private native-messaging host scaffold over
   `packages/client`. It processes multiple length-prefixed service messages on
   one stdio session, accepts explicit in-memory authorization context in tests,

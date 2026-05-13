@@ -17,6 +17,7 @@ export const publicPackages = [
   "@nsealr/protocol",
   "@nsealr/qr",
   "@nsealr/review",
+  "@nsealr/sdk",
   "@nsealr/smartcard",
   "@nsealr/transport"
 ];

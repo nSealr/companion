@@ -24,6 +24,8 @@ package and cover:
 - browser-provider `getPublicKey`, browser native-messaging local-service
   client adaptation, and refused `signEvent` behavior over an injected backend;
 - already-decrypted NIP-46 bridge decisions for permitted and denied requests;
+- platform-neutral `@nsealr/sdk` facade imports for browser-provider, client,
+  core, protocol, and smartcard namespaces;
 - smartcard APDU command/response round-trip and package-owned serial-line
   exchange against an in-memory port that returns `signing_disabled`.
 

@@ -120,6 +120,9 @@ importers:
       '@nsealr/review':
         specifier: workspace:*
         version: link:../../packages/review
+      '@nsealr/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@nsealr/smartcard':
         specifier: workspace:*
         version: link:../../packages/smartcard
@@ -163,6 +166,9 @@ importers:
       '@nsealr/review':
         specifier: workspace:*
         version: link:../../packages/review
+      '@nsealr/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@nsealr/smartcard':
         specifier: workspace:*
         version: link:../../packages/smartcard
@@ -296,6 +302,39 @@ importers:
         version: link:../fixtures
 
   packages/review: {}
+
+  packages/sdk:
+    dependencies:
+      '@nsealr/browser-provider':
+        specifier: workspace:*
+        version: link:../browser-provider
+      '@nsealr/client':
+        specifier: workspace:*
+        version: link:../client
+      '@nsealr/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nsealr/framing':
+        specifier: workspace:*
+        version: link:../framing
+      '@nsealr/nip46':
+        specifier: workspace:*
+        version: link:../nip46
+      '@nsealr/policy':
+        specifier: workspace:*
+        version: link:../policy
+      '@nsealr/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@nsealr/qr':
+        specifier: workspace:*
+        version: link:../qr
+      '@nsealr/review':
+        specifier: workspace:*
+        version: link:../review
+      '@nsealr/smartcard':
+        specifier: workspace:*
+        version: link:../smartcard
 
   packages/smartcard:
     dependencies:

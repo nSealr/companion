@@ -19,7 +19,8 @@ const packageOrder = [
   "dev-signer",
   "smartcard",
   "transport",
-  "browser-provider"
+  "browser-provider",
+  "sdk"
 ];
 
 function packageManagerCommand() {

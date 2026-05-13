@@ -91,6 +91,10 @@ match the shared `contract_id`.
   the browser-safe `@nsealr/client/client-identity` subpath, used before
   pairing, route selection, signer-request validation, and response
   verification.
+- `@nsealr/sdk` is the platform-neutral npm facade over curated browser,
+  companion, protocol, policy, QR, review, and smartcard namespaces. It
+  deliberately excludes private test signing, Node-only fixture loading, and
+  host transport adapters.
 - `@nsealr/service` is the private native-messaging host scaffold over
   `@nsealr/client`. It can process multiple length-prefixed service messages
   on one stdio session, returns deterministic native-frame errors, and accepts
@@ -251,8 +255,8 @@ match the shared `contract_id`.
 
 - `apps/`: CLI, local service/native-messaging host, browser extension,
   desktop shell, and developer tools.
-- `packages/`: reusable `@nsealr/*` core/protocol/review/qr/framing/transport/
-  NIP-46/policy/client/provider modules.
+- `packages/`: reusable `@nsealr/*` SDK/core/protocol/review/qr/framing/
+  transport/NIP-46/policy/client/provider modules.
 - `docs/`: implementation notes and usage guides.
 
 ## Quality Baseline

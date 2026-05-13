@@ -18,6 +18,7 @@
     "@nsealr/protocol": "workspace:*",
     "@nsealr/qr": "workspace:*",
     "@nsealr/review": "workspace:*",
+    "@nsealr/sdk": "workspace:*",
     "@nsealr/smartcard": "workspace:*",
     "@nsealr/transport": "workspace:*"
   },

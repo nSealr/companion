@@ -23,6 +23,9 @@ public npm release.
   against built package entrypoints in CI.
 - Digest-bound public API review for every publishable package before npm alpha
   work.
+- `@nsealr/sdk` platform-neutral facade over curated public namespaces for app,
+  browser-extension, and companion integrations without importing private
+  signing helpers, Node-only fixtures, or host transport adapters.
 - `@nsealr/client` helper for converting a digest-bound pairing intent into an
   explicitly approved local client grant.
 - `@nsealr/client` deterministic pairing-review projection for future local

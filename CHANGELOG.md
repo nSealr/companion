@@ -127,6 +127,10 @@ public npm release.
 - Private browser-extension page-script browser provider entrypoint adapter that
   installs NIP-07 over explicit browser-like window/location dependencies
   without reading globals or adding storage/grants.
+- Private browser-extension background browser entrypoint adapter that installs
+  runtime message handling over explicit `runtime.onMessage` and
+  `runtime.sendNativeMessage` dependencies without reading globals, writing
+  storage, or dispatching signers.
 - Private browser-extension explicit-origin content-script manifest profile
   that keeps the minimal no-content-script manifest as the default and rejects
   broad URL access, host-permission fields, storage, and duplicate matches.

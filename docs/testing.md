@@ -140,6 +140,10 @@ single-repository CI. Cross-repository drift remains guarded by
   window/location dependencies install NIP-07 over the page-window bridge,
   reject invalid dependencies before provider injection, and avoid global
   browser reads.
+  Background browser entrypoint tests prove explicit browser-like runtime
+  dependencies install runtime message handling over `runtime.onMessage`, route
+  accepted requests through `runtime.sendNativeMessage`, dispose listeners, and
+  reject invalid or cancelled dependencies before native messaging.
   Page-origin tests prove the browser-extension bridge accepts HTTPS page
   origins and local HTTP developer origins while rejecting non-origin URLs,
   unsupported schemes, extension URLs, and overlong values through one shared

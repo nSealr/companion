@@ -264,6 +264,12 @@ validation, optional deterministic response timeouts, request cancellation, and
 the shared native host name used by the private service manifest generator. It
 does not install native-host manifests, persist grants, or open signer
 transports.
+The background browser entrypoint adapter is the browser-like wrapper over the
+background controller and runtime-message listener. It accepts an explicit
+runtime object with reviewed `onMessage` and `sendNativeMessage` capabilities,
+installs the runtime listener, and forwards native-messaging calls through the
+same local-service client path. It does not read global browser objects, write
+extension storage, create grants, dispatch signers, or hold key material.
 The private `@nsealr/browser-extension` app now defines the internal extension
 message boundary for `get_public_key` and `sign_event`. The parser rejects
 unsupported NIP-07/NIP-44/NIP-04-style methods, malformed request ids, extra

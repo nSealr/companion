@@ -360,7 +360,10 @@ and uploads checked tarball artifacts without publishing to npm.
   installer with either an injected bridge exchange or the injected page-window
   bridge, and a page-script browser provider entrypoint adapter now composes
   explicit window/location dependencies over that page-window bootstrap,
-  without adding an injection mechanism. A pure page-script injection
+  without adding an injection mechanism. A background browser entrypoint adapter
+  now installs runtime message handling over explicit `runtime.onMessage` and
+  `runtime.sendNativeMessage` dependencies without storage, grants, or signer
+  dispatch. A pure page-script injection
   helper now injects the reviewed page-script resource through explicit
   document and extension-URL resolver dependencies with duplicate-target and
   URL checks. The browser-extension manifest builder can still build a minimal

@@ -125,6 +125,8 @@ match the shared `contract_id`.
   document/window/location/runtime dependencies,
   includes a page-script browser provider entrypoint adapter over explicit
   window/location dependencies,
+  includes a background browser entrypoint adapter over explicit
+  `runtime.onMessage` and `runtime.sendNativeMessage` dependencies,
   includes content-runtime API adapters that wrap reviewed `runtime.getURL`
   and `runtime.sendMessage` dependencies,
   uses one shared page-origin validator across page-window and content-window

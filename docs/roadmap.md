@@ -346,9 +346,10 @@ and uploads checked tarball artifacts without publishing to npm.
   explicit teardown and injected response posting. The matching page-window
   bridge exchange now posts validated page requests to the exact reviewed
   origin, accepts only matching extension responses, and cleans up listeners on
-  response, abort, timeout, or posting failure. A pure page-script bootstrap
-  now composes that requester with the explicit-target NIP-07 provider
-  installer without adding an injection mechanism. It can build a minimal MV3
+  response, abort, timeout, or posting failure. Pure page-script bootstraps now
+  compose the explicit-target NIP-07 provider installer with either an injected
+  bridge exchange or the injected page-window bridge, without adding an
+  injection mechanism. It can build a minimal MV3
   manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage
   permissions by default, plus an opt-in explicit-origin content-script

@@ -104,6 +104,9 @@ public npm release.
 - Private browser-extension page-script provider bootstrap that composes the
   NIP-07 provider installer with the injected page bridge exchange without
   adding content-script registration, browser listeners, storage, or grants.
+- Private browser-extension page-script window-provider bootstrap that composes
+  the NIP-07 provider installer with the page-window bridge exchange without
+  direct browser API calls.
 - Private browser-extension explicit-origin content-script manifest profile
   that keeps the minimal no-content-script manifest as the default and rejects
   broad URL access, host-permission fields, storage, and duplicate matches.

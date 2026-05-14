@@ -135,8 +135,9 @@ single-repository CI. Cross-repository drift remains guarded by
   origin, accepts only matching extension responses, ignores unrelated
   messages, and cleans up listeners on response, abort, timeout, and
   `postMessage` failure. Page-script bootstrap tests prove the explicit-target
-  NIP-07 provider can be installed over that bridge exchange without
-  overwriting an existing provider or adding browser injection.
+  NIP-07 provider can be installed over either an injected bridge exchange or
+  the injected page-window bridge without overwriting an existing provider or
+  adding browser injection.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids. They also pin the opt-in explicit-origin

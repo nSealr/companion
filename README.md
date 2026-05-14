@@ -113,7 +113,8 @@ match the shared `contract_id`.
   posting, includes a page-window bridge exchange that posts page requests and
   accepts only matching extension responses through an injected window-like
   target,
-  has a pure page-script provider bootstrap over that injected bridge exchange,
+  has pure page-script provider bootstraps over either an injected bridge
+  exchange or the injected page-window bridge,
   and can build either the default minimal no-host-permission manifest or an
   opt-in explicit-origin content-script manifest profile. The content-script
   profile still omits host-permission fields, broad URL matches, extension

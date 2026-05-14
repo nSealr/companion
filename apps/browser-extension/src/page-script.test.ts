@@ -8,7 +8,12 @@ import {
   BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL,
   handleBrowserExtensionPageBridgeRequest
 } from "./page-bridge.js";
-import { installBrowserExtensionPageScriptProvider } from "./page-script.js";
+import { installBrowserExtensionContentScriptRuntimeBridge } from "./content-bootstrap.js";
+import {
+  installBrowserExtensionPageScriptProvider,
+  installBrowserExtensionPageScriptWindowProvider
+} from "./page-script.js";
+import { type BrowserExtensionPageWindowMessageListener } from "./page-window.js";
 
 const publicKey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
 const eventTemplate = {
@@ -31,6 +36,45 @@ const provider: BrowserExtensionHandlerOptions["provider"] = {
   getPublicKey: async () => publicKey,
   signEvent: async () => signedEvent
 };
+
+function createInjectedPageWindow(origin = "https://example.com"): {
+  pageWindow: {
+    nostr?: unknown;
+    addEventListener(type: "message", listener: BrowserExtensionPageWindowMessageListener): void;
+    removeEventListener(type: "message", listener: BrowserExtensionPageWindowMessageListener): void;
+    postMessage(message: unknown, targetOrigin: string): void;
+  };
+  listenerCount(): number;
+} {
+  const listeners = new Set<BrowserExtensionPageWindowMessageListener>();
+  const pageWindow = {
+    nostr: undefined as unknown,
+    addEventListener(type: "message", listener: BrowserExtensionPageWindowMessageListener): void {
+      expect(type).toBe("message");
+      listeners.add(listener);
+    },
+    removeEventListener(type: "message", listener: BrowserExtensionPageWindowMessageListener): void {
+      expect(type).toBe("message");
+      listeners.delete(listener);
+    },
+    postMessage(message: unknown, targetOrigin: string): void {
+      expect(targetOrigin).toBe(origin);
+      for (const listener of listeners) {
+        listener({
+          source: pageWindow,
+          origin,
+          data: message
+        });
+      }
+    }
+  };
+  return {
+    pageWindow,
+    listenerCount(): number {
+      return listeners.size;
+    }
+  };
+}
 
 describe("browser extension page-script provider bootstrap", () => {
   it("installs a NIP-07 provider over the injected page bridge exchange", async () => {
@@ -97,5 +141,56 @@ describe("browser extension page-script provider bootstrap", () => {
 
     await expect(pageProvider.getPublicKey()).rejects.toThrow(/cancelled/u);
     expect(called).toBe(false);
+  });
+
+  it("installs a NIP-07 provider over the page-window bridge and content runtime bridge", async () => {
+    const injectedWindow = createInjectedPageWindow();
+    const runtimeRequests: unknown[] = [];
+    installBrowserExtensionContentScriptRuntimeBridge({
+      target: injectedWindow.pageWindow,
+      expectedSource: injectedWindow.pageWindow,
+      expectedOrigin: "https://example.com",
+      sender: {
+        extension_id: "extension@nsealr.dev",
+        page_url: "https://example.com/app"
+      },
+      sendRuntimeMessage: (request) => {
+        runtimeRequests.push(request);
+        if (request.method === "get_public_key") {
+          return {
+            protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+            version: 1,
+            request_id: request.request_id,
+            ok: true,
+            result: {
+              pubkey: publicKey
+            }
+          };
+        }
+        return handleBrowserExtensionRequest(request, { provider });
+      },
+      postResponse: (response, target) => {
+        expect(target.source).toBe(injectedWindow.pageWindow);
+        injectedWindow.pageWindow.postMessage(response, target.origin);
+      }
+    });
+
+    const pageProvider = installBrowserExtensionPageScriptWindowProvider({
+      providerTarget: injectedWindow.pageWindow,
+      windowTarget: injectedWindow.pageWindow,
+      expectedSource: injectedWindow.pageWindow,
+      expectedOrigin: "https://example.com",
+      nextRequestId: () => "page-window-provider-get-public-key"
+    });
+
+    await expect(pageProvider.getPublicKey()).resolves.toBe(publicKey);
+    expect(injectedWindow.pageWindow.nostr).toBe(pageProvider);
+    expect(runtimeRequests).toEqual([{
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "page-window-provider-get-public-key",
+      method: "get_public_key"
+    }]);
+    expect(injectedWindow.listenerCount()).toBe(1);
   });
 });

@@ -337,6 +337,12 @@ script a single pure entrypoint while still requiring an injected bridge
 exchange and still refusing to overwrite an existing `window.nostr` provider.
 It does not include an injection mechanism, content-script registration,
 browser runtime dependency, storage, grants, or key custody.
+The page-script window-provider bootstrap is the page-side convenience wrapper
+over the same provider installer and the page-window bridge exchange. It
+installs the NIP-07 provider on an explicit target, posts through the injected
+window-like bridge target, enforces exact origin and source filtering through
+that exchange, and still contains no direct browser API dependency, storage,
+grants, or key material.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

@@ -120,7 +120,10 @@ single-repository CI. Cross-repository drift remains guarded by
   prove the runtime requester forwards validated internal requests through an
   injected runtime-message sender, forwards cancellation, and rejects
   already-cancelled or in-flight-cancelled requests before trusting a runtime
-  response.
+  response. Content-script bootstrap tests prove the injected window listener,
+  runtime-message sender, and response poster can be composed behind one
+  install/dispose handle while still ignoring unrelated messages and reporting
+  malformed accepted page envelopes.
   Content-window tests prove already-received page messages are source/origin
   gated, unrelated messages are ignored, and malformed nSealr envelopes fail
   before background contact without registering listeners or calling

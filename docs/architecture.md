@@ -304,6 +304,12 @@ forwards the validated internal request, combines bootstrap and per-request
 abort signals, and rejects already-cancelled or in-flight-cancelled requests
 without relying on global `browser`/`chrome` APIs. It still performs no
 storage, grants, signer dispatch, or key custody.
+The content-script runtime bridge bootstrap composes the injected window
+listener with that runtime requester. It wires expected page source, exact page
+origin, explicit sender metadata, injected runtime-message sender, injected
+response poster, cancellation, and diagnostics into one install/dispose handle
+without touching global browser APIs, storage, grants, signer dispatch, or key
+material.
 The content-window event adapter handles one already-received window message at
 a time. It accepts only messages from the expected page source and normalized
 page origin, ignores unrelated data without responding, and forwards only

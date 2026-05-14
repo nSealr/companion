@@ -89,6 +89,9 @@ public npm release.
 - Private browser-extension content-script runtime requester over an injected
   runtime-message sender, with abort propagation and no direct browser API
   dependency.
+- Private browser-extension content-script runtime bridge bootstrap that
+  composes the injected window listener, injected runtime-message sender, and
+  injected response poster without direct browser API calls.
 - Private browser-extension content-window event adapter that source/origin
   gates already-received page messages before forwarding nSealr page-bridge
   envelopes, without registering listeners or calling `postMessage`.

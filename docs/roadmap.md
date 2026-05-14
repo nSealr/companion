@@ -336,8 +336,11 @@ and uploads checked tarball artifacts without publishing to npm.
   envelopes to an injected sender-aware background requester without adding a
   browser listener, and a content-script runtime requester now forwards those
   validated internal requests through an injected runtime-message sender with
-  cancellation propagation. A pure content-window event adapter now gates already
-  received page messages by expected source and normalized origin before
+  cancellation propagation. A content-script runtime bridge bootstrap now
+  composes the injected window listener, runtime-message sender, and response
+  poster behind one install/dispose handle. A pure content-window event adapter
+  now gates already received page messages by expected source and normalized
+  origin before
   forwarding nSealr page-bridge envelopes, and an injected content-window
   listener installer can register that boundary on an explicit target with
   explicit teardown and injected response posting. The matching page-window

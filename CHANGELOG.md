@@ -116,6 +116,9 @@ public npm release.
 - Private browser-extension content-runtime API adapters for reviewed
   `runtime.getURL` resource resolution and `runtime.sendMessage` forwarding
   without browser storage or signer dispatch.
+- Private browser-extension content-window response poster adapter that posts
+  extension responses only to reviewed `postMessage` targets and normalized
+  page origins.
 - Private browser-extension explicit-origin content-script manifest profile
   that keeps the minimal no-content-script manifest as the default and rejects
   broad URL access, host-permission fields, storage, and duplicate matches.

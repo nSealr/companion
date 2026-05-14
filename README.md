@@ -110,7 +110,9 @@ match the shared `contract_id`.
   includes a pure content-window event adapter that checks page source/origin
   before that bridge handler is reached, includes an injected content-window
   message-listener installer with explicit teardown and injected response
-  posting, includes a page-window bridge exchange that posts page requests and
+  posting plus a response-poster adapter that posts only to reviewed
+  `postMessage` targets and normalized page origins, includes a page-window
+  bridge exchange that posts page requests and
   accepts only matching extension responses through an injected window-like
   target,
   has pure page-script provider bootstraps over either an injected bridge

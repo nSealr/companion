@@ -135,9 +135,11 @@ single-repository CI. Cross-repository drift remains guarded by
   Content-window tests prove already-received page messages are source/origin
   gated, unrelated messages are ignored, and malformed nSealr envelopes fail
   before background contact without registering listeners or calling
-  `postMessage`. They also prove the injected listener installer registers
-  only on an explicit target, posts accepted responses only through an injected
-  poster, reports malformed nSealr envelopes through an injected error callback,
+  `postMessage`. They also prove the response-poster adapter posts only to
+  reviewed `postMessage` targets and normalized page origins, and that the
+  injected listener installer registers only on an explicit target, posts
+  accepted responses only through an injected poster, reports malformed nSealr
+  envelopes through an injected error callback,
   and removes the listener through `dispose()`. Page-window
   bridge-exchange tests prove the page side posts only to the exact reviewed
   origin, accepts only matching extension responses, ignores unrelated

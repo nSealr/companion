@@ -77,6 +77,25 @@ function requireExpectedPageOrigin(value: unknown): string {
   return origin;
 }
 
+function requireResponseOrigin(value: unknown): string {
+  const origin = normalizePageOrigin(value);
+  if (origin === undefined) {
+    throw new Error("browser content-window response origin is invalid");
+  }
+  return origin;
+}
+
+function requireResponsePostMessageTarget(value: unknown): {
+  postMessage(message: BrowserExtensionPageBridgeResponse, targetOrigin: string): void;
+} {
+  if (!isRecord(value) || typeof value.postMessage !== "function") {
+    throw new Error("browser content-window response target is invalid");
+  }
+  return value as {
+    postMessage(message: BrowserExtensionPageBridgeResponse, targetOrigin: string): void;
+  };
+}
+
 function isIncomingPageBridgeEnvelope(value: unknown): boolean {
   if (isRecord(value) && value.protocol === BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL) {
     return value.direction !== "extension_to_page";
@@ -107,6 +126,12 @@ function requireResponseTarget(event: unknown): BrowserExtensionContentWindowRes
   return {
     source: event.source,
     origin: event.origin
+  };
+}
+
+export function createBrowserExtensionContentWindowResponsePoster(): BrowserExtensionContentWindowResponsePoster {
+  return (response, target) => {
+    requireResponsePostMessageTarget(target.source).postMessage(response, requireResponseOrigin(target.origin));
   };
 }
 

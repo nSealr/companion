@@ -6,11 +6,12 @@ import {
   type BrowserExtensionBackgroundRequestOptions
 } from "./background.js";
 import {
+  createBrowserExtensionContentWindowResponsePoster,
   handleBrowserExtensionContentWindowBridgeEvent,
   installBrowserExtensionContentWindowBridgeListener,
   type BrowserExtensionContentWindowMessageListener
 } from "./content-window.js";
-import { BROWSER_EXTENSION_MESSAGE_PROTOCOL } from "./handler.js";
+import { BROWSER_EXTENSION_MESSAGE_PROTOCOL, type BrowserExtensionResponse } from "./handler.js";
 import { type BrowserExtensionRequest } from "./messages.js";
 import { BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL } from "./page-bridge.js";
 
@@ -74,6 +75,18 @@ function pageBridgeRequest(requestId: string): unknown {
   };
 }
 
+function getPublicKeyResponse(requestId: string): BrowserExtensionResponse {
+  return {
+    protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+    version: 1,
+    request_id: requestId,
+    ok: true,
+    result: {
+      pubkey: publicKey
+    }
+  };
+}
+
 function createInjectedWindowTarget(): {
   target: {
     addEventListener(type: "message", listener: BrowserExtensionContentWindowMessageListener): void;
@@ -110,6 +123,61 @@ async function flushAsyncListeners(): Promise<void> {
 }
 
 describe("browser extension content-window bridge boundary", () => {
+  it("posts extension responses to the reviewed page response target", () => {
+    const postMessages: unknown[] = [];
+    const pageWindow = {
+      postMessage(message: unknown, targetOrigin: string): void {
+        postMessages.push({ message, targetOrigin });
+      }
+    };
+    const postResponse = createBrowserExtensionContentWindowResponsePoster();
+    const response = {
+      protocol: BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL,
+      version: 1,
+      direction: "extension_to_page",
+      request_id: "content-window-response-poster",
+      response: {
+        protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+        version: 1,
+        request_id: "content-window-response-poster",
+        ok: true,
+        result: {
+          pubkey: publicKey
+        }
+      }
+    } as const;
+
+    postResponse(response, {
+      source: pageWindow,
+      origin: "https://example.com"
+    });
+
+    expect(postMessages).toEqual([{
+      message: response,
+      targetOrigin: "https://example.com"
+    }]);
+  });
+
+  it("rejects unsafe response targets before posting", () => {
+    const postResponse = createBrowserExtensionContentWindowResponsePoster();
+    const response = {
+      protocol: BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL,
+      version: 1,
+      direction: "extension_to_page",
+      request_id: "content-window-response-poster-invalid",
+      response: getPublicKeyResponse("content-window-response-poster-invalid")
+    } as const;
+
+    expect(() => postResponse(response, {
+      source: {},
+      origin: "https://example.com"
+    })).toThrow(/response target/u);
+    expect(() => postResponse(response, {
+      source: { postMessage: () => undefined },
+      origin: "https://example.com/path"
+    })).toThrow(/response origin/u);
+  });
+
   it("accepts page bridge events only from the expected source and origin", async () => {
     const nativeRequests: LocalServiceRequest[] = [];
     const pageWindow = {};

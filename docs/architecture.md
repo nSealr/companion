@@ -337,6 +337,12 @@ through an injected response poster, and reports malformed nSealr envelopes
 through an injected error callback. It still does not touch global `window`,
 browser runtime APIs, extension storage, grants, provider injection, signer
 dispatch, or key material.
+The content-window response poster is the reviewed default poster for that
+listener. It sends extension responses only through the `postMessage` function
+on the accepted message source and only to a normalized HTTPS or localhost page
+origin. It does not register listeners, touch global `window`, use browser
+runtime APIs, write storage, create grants, dispatch signers, or hold key
+material.
 The page-window bridge exchange is the matching page-side adapter over an
 injected window-like target. For each request it registers a temporary
 `message` listener, posts the validated `page_to_extension` envelope only to

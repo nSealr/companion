@@ -318,6 +318,12 @@ together, and removes the injected page script if bridge installation fails.
 It still does not call global `document`, `window`, `browser`, or `chrome`
 APIs directly and does not write storage, create grants, dispatch signers, or
 hold key material.
+The content-runtime adapters are the next browser API boundary below that
+composer. They turn an injected runtime-like object into a reviewed extension
+resource URL resolver and a runtime-message sender, reject unsafe resource
+paths before `runtime.getURL`, and reject already-cancelled sends before
+`runtime.sendMessage`. They do not read or write extension storage, register
+listeners, dispatch signers, or hold key material.
 The content-window event adapter handles one already-received window message at
 a time. It accepts only messages from the expected page source and normalized
 page origin, ignores unrelated data without responding, and forwards only

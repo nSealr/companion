@@ -119,6 +119,8 @@ match the shared `contract_id`.
   extension-URL resolver dependencies,
   includes a pure content-script entrypoint composer that joins page-script
   injection with the runtime bridge and cleans up partial installs,
+  includes content-runtime API adapters that wrap reviewed `runtime.getURL`
+  and `runtime.sendMessage` dependencies,
   and can build either the default minimal no-host-permission manifest or an
   opt-in explicit-origin content-script manifest profile. The content-script
   profile still omits host-permission fields, broad URL matches, extension

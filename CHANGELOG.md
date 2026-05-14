@@ -113,6 +113,9 @@ public npm release.
 - Private browser-extension content-script entrypoint composer that injects the
   reviewed page script and installs the runtime bridge with cleanup if listener
   setup fails.
+- Private browser-extension content-runtime API adapters for reviewed
+  `runtime.getURL` resource resolution and `runtime.sendMessage` forwarding
+  without browser storage or signer dispatch.
 - Private browser-extension explicit-origin content-script manifest profile
   that keeps the minimal no-content-script manifest as the default and rejects
   broad URL access, host-permission fields, storage, and duplicate matches.

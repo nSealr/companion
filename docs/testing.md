@@ -127,7 +127,11 @@ single-repository CI. Cross-repository drift remains guarded by
   page-script injection helper and runtime bridge can be installed as one
   pre-packaging unit, forward accepted page requests to runtime messaging, clean
   up both resources through one dispose handle, and remove the injected script
-  if bridge listener setup fails.
+  if bridge listener setup fails. Content-runtime API adapter tests prove
+  reviewed resource paths are passed to injected `runtime.getURL`, unsafe paths
+  are rejected before runtime contact, runtime messages are forwarded through
+  injected `runtime.sendMessage`, and already-cancelled sends stop before the
+  runtime API is called.
   Content-window tests prove already-received page messages are source/origin
   gated, unrelated messages are ignored, and malformed nSealr envelopes fail
   before background contact without registering listeners or calling

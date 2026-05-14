@@ -318,6 +318,14 @@ together, and removes the injected page script if bridge installation fails.
 It still does not call global `document`, `window`, `browser`, or `chrome`
 APIs directly and does not write storage, create grants, dispatch signers, or
 hold key material.
+The content-script browser entrypoint adapter is the first browser-like
+composition over that composer. It accepts explicit document, page-window,
+location, and runtime-like dependencies; derives the reviewed page origin,
+runtime URL resolver, runtime message sender, and response poster; and then
+delegates to the pure composer. It still does not read global browser objects,
+choose storage locations, create grants, dispatch signers, or hold key
+material. Trusted runtime sender identity remains a background/runtime-message
+boundary, not content-script metadata.
 The content-runtime adapters are the next browser API boundary below that
 composer. They turn an injected runtime-like object into a reviewed extension
 resource URL resolver and a runtime-message sender, reject unsafe resource

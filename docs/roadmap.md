@@ -340,16 +340,19 @@ and uploads checked tarball artifacts without publishing to npm.
   composes the injected window listener, runtime-message sender, and response
   poster behind one install/dispose handle. A content-script entrypoint
   composer now joins page-script injection and that runtime bridge over explicit
-  dependencies, including cleanup if bridge setup fails. Content-runtime API
-  adapters now wrap reviewed `runtime.getURL` resource resolution and
-  `runtime.sendMessage` forwarding without storage or signer dispatch. A shared
-  page-origin validator now keeps page-window and content-window origin checks
-  aligned. A pure content-window event adapter now gates already received page
-  messages by expected source and normalized origin before forwarding nSealr
-  page-bridge envelopes, an injected content-window listener installer can
-  register that boundary on an explicit target with explicit teardown and
-  injected response posting, and a response-poster adapter now posts extension
-  responses only to reviewed `postMessage` targets and normalized page origins.
+  dependencies, including cleanup if bridge setup fails. A content-script
+  browser entrypoint adapter now composes explicit document, window, location,
+  and runtime dependencies over that composer without reading globals.
+  Content-runtime API adapters now wrap reviewed `runtime.getURL` resource
+  resolution and `runtime.sendMessage` forwarding without storage or signer
+  dispatch. A shared page-origin validator now keeps page-window and
+  content-window origin checks aligned. A pure content-window event adapter now
+  gates already received page messages by expected source and normalized origin
+  before forwarding nSealr page-bridge envelopes, an injected content-window
+  listener installer can register that boundary on an explicit target with
+  explicit teardown and injected response posting, and a response-poster adapter
+  now posts extension responses only to reviewed `postMessage` targets and
+  normalized page origins.
   The matching page-window bridge exchange now posts validated page requests to
   the exact reviewed origin, accepts only matching extension responses, and
   cleans up listeners on response, abort, timeout, or posting failure. Pure

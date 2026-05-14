@@ -121,6 +121,8 @@ match the shared `contract_id`.
   extension-URL resolver dependencies,
   includes a pure content-script entrypoint composer that joins page-script
   injection with the runtime bridge and cleans up partial installs,
+  includes a content-script browser entrypoint adapter over explicit
+  document/window/location/runtime dependencies,
   includes content-runtime API adapters that wrap reviewed `runtime.getURL`
   and `runtime.sendMessage` dependencies,
   uses one shared page-origin validator across page-window and content-window

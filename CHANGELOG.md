@@ -121,6 +121,9 @@ public npm release.
   page origins.
 - Shared private browser-extension page-origin validator used by page-window
   and content-window boundaries.
+- Private browser-extension content-script browser entrypoint adapter that
+  composes explicit browser-like document/window/location/runtime dependencies
+  without reading globals or adding storage/signer dispatch.
 - Private browser-extension explicit-origin content-script manifest profile
   that keeps the minimal no-content-script manifest as the default and rejects
   broad URL access, host-permission fields, storage, and duplicate matches.

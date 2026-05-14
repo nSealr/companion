@@ -24,6 +24,7 @@ for (const packageName of publicPackages) {
 const protocol = await import("@nsealr/protocol");
 const core = await import("@nsealr/core");
 const browserProvider = await import("@nsealr/browser-provider");
+const clientBrowser = await import("@nsealr/client/browser");
 const clientIdentity = await import("@nsealr/client/client-identity");
 const sdk = await import("@nsealr/sdk");
 
@@ -47,6 +48,8 @@ assert.equal(clientIdentity.parseLocalClientIdentity({
   app_name: "Package Consumer Smoke",
   instance_id: "consumer-smoke"
 }).origin, "https://example.com");
+assert.equal(clientBrowser.NATIVE_HOST_NAME, browserProvider.NATIVE_HOST_NAME);
+assert.equal(typeof clientBrowser.LocalServiceClient, "function");
 
 const provider = browserProvider.createNip07Provider({
   client: {

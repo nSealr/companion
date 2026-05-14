@@ -17,8 +17,10 @@ export const NSEALR_V0_LIMITS = {
 
 export type nSealrV0Limits = typeof NSEALR_V0_LIMITS;
 
+const textEncoder = new TextEncoder();
+
 export function utf8ByteLength(value: string): number {
-  return Buffer.byteLength(value, "utf8");
+  return textEncoder.encode(value).byteLength;
 }
 
 export function compactJsonUtf8ByteLength(value: unknown): number {

@@ -1,5 +1,10 @@
-import { createHash } from "node:crypto";
 import { schnorr } from "@noble/curves/secp256k1.js";
+import { sha256 } from "@noble/hashes/sha2.js";
+import {
+  bytesToHex as nobleBytesToHex,
+  hexToBytes as nobleHexToBytes,
+  utf8ToBytes
+} from "@noble/hashes/utils.js";
 
 export type EventTemplate = {
   created_at: number;
@@ -41,11 +46,15 @@ export function hexToBytes(hex: string): Uint8Array {
   if (!/^[0-9a-f]+$/u.test(hex) || hex.length % 2 !== 0) {
     throw new Error("expected lowercase even-length hex");
   }
-  return Uint8Array.from(Buffer.from(hex, "hex"));
+  return nobleHexToBytes(hex);
 }
 
 export function bytesToHex(bytes: Uint8Array): string {
-  return Buffer.from(bytes).toString("hex");
+  return nobleBytesToHex(bytes);
+}
+
+export function sha256Utf8Hex(value: string): string {
+  return bytesToHex(sha256(utf8ToBytes(value)));
 }
 
 export function canonicalEventSerialization(event: Pick<SignedEvent, "pubkey" | "created_at" | "kind" | "tags" | "content">): string {
@@ -53,7 +62,7 @@ export function canonicalEventSerialization(event: Pick<SignedEvent, "pubkey" | 
 }
 
 export function computeEventId(event: Pick<SignedEvent, "pubkey" | "created_at" | "kind" | "tags" | "content">): string {
-  return createHash("sha256").update(canonicalEventSerialization(event), "utf8").digest("hex");
+  return sha256Utf8Hex(canonicalEventSerialization(event));
 }
 
 export function verifySchnorrSignature(pubkey: string, eventId: string, signature: string): boolean {
@@ -97,4 +106,3 @@ export function verifySignedEventResponse(request: unknown, response: unknown): 
   }
   return { ok: true };
 }
-

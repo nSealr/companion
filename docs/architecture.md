@@ -141,10 +141,11 @@ packages, but it must not export test-only signing as a production path.
   implemented. Its browser native-messaging adapter can bound silent or
   cancelled exchanges with optional deterministic response timeouts and
   `AbortSignal` handling.
-- `packages/sdk`: platform-neutral namespace facade for app, browser-extension,
-  and companion integrations. It excludes private test signing, Node-only
-  fixtures, and host transport adapters so browser-safe consumers have a clean
-  entrypoint.
+- `packages/sdk`: public namespace facade for app, browser-extension, and
+  companion integrations. It excludes private test signing from the public
+  package surface, but browser runtime code must use reviewed browser-facing
+  entrypoints such as `@nsealr/browser-provider` and
+  `@nsealr/client/browser` instead of assuming the SDK root is bundle-safe.
 - `apps/service`: private native-messaging host scaffold over
   `packages/client`. It processes multiple length-prefixed service messages on
   one stdio session, accepts explicit in-memory authorization context in tests,
@@ -198,10 +199,11 @@ model.
 The first native-messaging scaffold accepts `service_status`,
 `request_pairing`, `select_account_route`, `validate_signer_request`, and
 `verify_signer_response`.
-`@nsealr/client/client-identity` owns the browser-safe shared local-client
-identity parser for every access surface. Browser extension, SDK, desktop, CLI,
-and native-host code must reuse that parser before deriving client ids,
-requesting pairing, selecting account routes, or trusting pairing responses.
+`@nsealr/client/browser` owns the browser-runtime local-service client
+boundary, and `@nsealr/client/client-identity` remains the minimal
+identity-only subpath. Browser extension, SDK, desktop, CLI, and native-host
+code must reuse those contracts before deriving client ids, requesting pairing,
+selecting account routes, or trusting pairing responses.
 It rejects unsupported surfaces, non-origin URLs such as
 `https://example.com/path`, deceptive localhost names, overlong app names,
 invalid instance ids, and extra fields.
@@ -435,7 +437,7 @@ adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,
 rejects mismatched origin/URL pairs, rejects deceptive localhost names and
 extension-page origins, and creates the `browser_extension` local client
-identity through `@nsealr/client/client-identity`. It stores no browser-side
+identity through `@nsealr/client/browser`. It stores no browser-side
 production secrets and does not grant a page by itself.
 The sender-aware handler composes both boundaries before provider selection: it
 parses the internal request, validates sender-derived identity, and only then

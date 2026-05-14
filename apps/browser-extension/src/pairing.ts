@@ -7,8 +7,8 @@ import {
   type LocalPairingReview,
   type LocalServiceResponse,
   type PairableLocalServiceOperation
-} from "@nsealr/client";
-import { parseLocalClientIdentity } from "@nsealr/client/client-identity";
+} from "@nsealr/client/browser";
+import { parseLocalClientIdentity } from "@nsealr/client/browser";
 import {
   browserExtensionClientContextFromSender,
   type BrowserExtensionClientContext

@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:4fcd15c9f654fe0bb5ae95ac1bf801655efa5d6b624fb06c24f49e1380fb002a`
+API surface digest: `sha256:c0e08c54b601802ccc1deb1f63a518ab46c24f6f20076f8dc908ba5f771c7125`
 
 Source: `docs/api.md`
 
@@ -55,12 +55,13 @@ intent creation, deterministic pairing-review projection, manual pairing
 approval into a grant, strict pairing-approval artifact parsing, strict JSON
 grant-store serialization and output-only revocation appending for
 approved/revoked local client grants, secretless route selection,
-signer-request validation, and signer-response verification. Client identity
-parsing is also exposed through the browser-safe `./client-identity` subpath;
-request-id correlation, native-message framing, and malformed-response
-rejection are public helpers. The shared native host name and native-host
-manifest builder are exported so service manifest generation, browser
-packaging checks, and browser adapters do not drift.
+signer-request validation, and signer-response verification. Browser runtime
+code uses the reviewed `./browser` subpath, while identity-only callers may use
+the smaller `./client-identity` subpath. Request-id correlation,
+native-message framing, and malformed-response rejection are public helpers.
+The shared native host name and native-host manifest builder remain exported
+from the Node-capable root so service manifest generation and packaging checks
+do not drift.
 Route selection returns metadata only; file-backed service loading, signer
 dispatch, cancellation, and native-host installation packaging remain future
 work and must not be implied by this package.

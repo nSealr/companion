@@ -1,7 +1,7 @@
 import {
   parseLocalClientIdentity,
   type LocalClientIdentity
-} from "@nsealr/client/client-identity";
+} from "@nsealr/client/browser";
 import { BROWSER_EXTENSION_NAME } from "./manifest.js";
 
 export type BrowserExtensionSenderInput = {

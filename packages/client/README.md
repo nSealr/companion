@@ -12,9 +12,11 @@ Local companion service protocol and client wrappers.
   callers.
 - Enforce explicit client identity parsing, request-id correlation, and
   deterministic malformed-response rejection.
-- Expose `@nsealr/client/client-identity` as the browser-safe subpath for
-  access surfaces that need identity parsing without importing Node-only
-  native-messaging or service helpers.
+- Expose `@nsealr/client/browser` as the reviewed browser-runtime subpath for
+  browser-provider and browser-extension code that needs local-service client
+  contracts without importing Node-only native-host manifest helpers.
+- Expose `@nsealr/client/client-identity` as the minimal identity-only subpath
+  for access surfaces that only need origin/app binding.
 
 ## Example
 

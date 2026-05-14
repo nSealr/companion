@@ -12,10 +12,10 @@ import {
   type LocalServiceRequest,
   type LocalServiceResponse,
   type LocalServiceExchange
-} from "@nsealr/client";
+} from "@nsealr/client/browser";
 import { validateRequest, validateResponse } from "@nsealr/protocol";
 
-export { NATIVE_HOST_NAME } from "@nsealr/client";
+export { NATIVE_HOST_NAME } from "@nsealr/client/browser";
 
 export type Nip07Provider = {
   getPublicKey(): Promise<string>;

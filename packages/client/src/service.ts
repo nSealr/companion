@@ -1,5 +1,4 @@
-import { createHash } from "node:crypto";
-import { verifySignedEventResponse } from "@nsealr/core";
+import { sha256Utf8Hex, verifySignedEventResponse } from "@nsealr/core";
 import {
   selectAccountRoute,
   type AccountDescriptor,
@@ -300,18 +299,16 @@ function validateServiceRequest(value: unknown): { ok: true; request: LocalServi
 }
 
 export function clientIdForIdentity(client: LocalClientIdentity): string {
-  return createHash("sha256")
-    .update(JSON.stringify({
-      surface: client.surface,
-      origin: client.origin,
-      app_name: client.app_name ?? "",
-      instance_id: client.instance_id ?? ""
-    }))
-    .digest("hex");
+  return sha256Utf8Hex(JSON.stringify({
+    surface: client.surface,
+    origin: client.origin,
+    app_name: client.app_name ?? "",
+    instance_id: client.instance_id ?? ""
+  }));
 }
 
 function pairingDigest(intent: Omit<PairingIntent, "pairing_digest">): string {
-  return createHash("sha256").update(JSON.stringify(intent)).digest("hex");
+  return sha256Utf8Hex(JSON.stringify(intent));
 }
 
 function pairingIntentDigest(intent: PairingIntent): string {

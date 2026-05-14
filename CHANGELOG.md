@@ -147,6 +147,10 @@ public npm release.
 - Browser-safe `@nsealr/client/client-identity` parser and private
   browser-extension sender boundary so browser, SDK, CLI, service, and
   native-host code use one origin/app binding rule set.
+- Browser-runtime `@nsealr/client/browser` subpath plus CI import-hygiene
+  checks that prevent packaged browser-extension entrypoints and
+  `@nsealr/browser-provider` from importing Node builtins, `Buffer`,
+  `process`, or the Node-capable client root.
 - Private browser-extension sender-aware handler that validates both the
   internal request and sender-derived page origin before provider selection.
 - `@nsealr/client` secretless JSON grant-store contract for persisting approved

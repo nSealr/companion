@@ -27,10 +27,11 @@
     "api-docs:check": "node scripts/check_api_docs.mjs",
     "api-docs:update": "node scripts/check_api_docs.mjs --write",
     "api-review:check": "node scripts/check_api_review.mjs",
+    "browser-runtime-imports:check": "node scripts/check_browser_runtime_imports.mjs",
     "public-imports:check": "node scripts/check_public_imports.mjs",
     "pack-smoke": "node scripts/pack_smoke.mjs",
     "release-artifacts": "node scripts/prepare_release_artifacts.mjs --out release-artifacts/packages",
-    "ci": "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm api-review:check && pnpm public-imports:check && pnpm pack-smoke"
+    "ci": "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm api-review:check && pnpm browser-runtime-imports:check && pnpm public-imports:check && pnpm pack-smoke"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

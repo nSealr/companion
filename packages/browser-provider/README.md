@@ -13,6 +13,8 @@ NIP-07 provider adapter for future nSealr browser-extension packaging.
 - Provide a browser native-messaging local-service client adapter over an
   explicit `sendNativeMessage` function, shared native host name, and optional
   deterministic response timeout/request cancellation.
+- Import the local-service client boundary through the reviewed
+  `@nsealr/client/browser` runtime subpath, not the Node-capable client root.
 - Verify signed responses before returning them to `window.nostr` callers.
 
 ## Example

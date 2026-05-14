@@ -30,6 +30,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.js"
+    },
     "./client-identity": {
       "types": "./dist/client-identity.d.ts",
       "import": "./dist/client-identity.js"

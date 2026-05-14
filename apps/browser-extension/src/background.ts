@@ -1,6 +1,6 @@
 import {
   type PairableLocalServiceOperation
-} from "@nsealr/client";
+} from "@nsealr/client/browser";
 import {
   type BrowserNativeMessageSender,
   type LocalServiceBrowserProviderBackendOptions

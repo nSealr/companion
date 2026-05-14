@@ -70,6 +70,11 @@ single-repository CI. Cross-repository drift remains guarded by
   browser native-messaging local-service client adaptation, shared native host
   name use, invalid native-host-name rejection, and rejection before backend
   contact when an event template contains forbidden signer-owned fields.
+  The browser-runtime import hygiene check walks packaged browser-extension
+  entrypoints plus `@nsealr/browser-provider` and fails if that runtime graph
+  imports Node builtins, uses `Buffer`/`process`, or imports the Node-capable
+  `@nsealr/client` root instead of `@nsealr/client/browser`. Run it directly
+  with `make browser-runtime-imports`.
 - Browser-extension app tests cover the private internal message parser for
   `get_public_key` and `sign_event`, including unsupported-method rejection,
   malformed-envelope rejection, and shared signer-request validation for event
@@ -197,8 +202,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - `make package-smoke` builds package artifacts, then runs the private
   `@nsealr/consumer-smoke` app. The smoke imports every public `@nsealr/*`
   package through its built package entrypoint plus the public
-  `@nsealr/client/client-identity` subpath, and exercises a minimal no-signer
-  consumer path. It also checks the `@nsealr/sdk` facade namespaces without
+  `@nsealr/client/browser` and `@nsealr/client/client-identity` subpaths, and
+  exercises a minimal no-signer consumer path. It also checks the `@nsealr/sdk`
+  facade namespaces without
   importing private signing helpers. This catches broken exports that relative
   in-package tests would miss.
 - `make examples-smoke` builds package artifacts, then runs private

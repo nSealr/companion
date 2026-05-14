@@ -1,4 +1,3 @@
-import { TextDecoder, TextEncoder } from "node:util";
 import { utf8ByteLength } from "@nsealr/protocol";
 
 export const NATIVE_MESSAGE_LENGTH_BYTES = 4;

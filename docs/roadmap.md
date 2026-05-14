@@ -276,9 +276,10 @@ and uploads checked tarball artifacts without publishing to npm.
   create digest-confirmed approval artifacts, and build explicit output
   grant-store artifacts from approval artifacts or latest-client revocations
   without default storage paths or input-file mutation. `@nsealr/client` now
-  exposes the shared local-client identity parser, including the browser-safe
-  `./client-identity` subpath, so future browser extension, SDK, desktop, CLI,
-  and native-host surfaces do not fork origin/app binding rules. Private
+  exposes the reviewed `./browser` runtime subpath plus the minimal
+  `./client-identity` identity-only subpath, so future browser extension, SDK,
+  desktop, CLI, and native-host surfaces do not fork local-service or
+  origin/app binding rules. Private
   service context loading can read explicit
   grant/account JSON files for local harnesses only. Remaining work is full
   approval UI, reviewed storage locations, cancellation, deterministic
@@ -303,8 +304,8 @@ and uploads checked tarball artifacts without publishing to npm.
   provider-backed handler that validates returned pubkeys/events before
   browser callers can trust them.
   It also derives local client identity from a sanitized sender page-origin
-  context through the browser-safe
-  `@nsealr/client/client-identity` subpath. The sender-aware handler validates
+  context through the browser-safe `@nsealr/client/browser` subpath.
+  The sender-aware handler validates
   both internal request and sender before provider selection. The extension
   scaffold can now create a native-messaging-backed provider selector that
   binds that sender-derived identity to the local-service route path and keeps

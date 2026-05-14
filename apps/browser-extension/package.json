@@ -9,6 +9,7 @@
     "@nsealr/browser-provider": "workspace:*",
     "@nsealr/client": "workspace:*",
     "@nsealr/core": "workspace:*",
+    "@nsealr/policy": "workspace:*",
     "@nsealr/protocol": "workspace:*"
   }
 }

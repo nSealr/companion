@@ -183,6 +183,12 @@ function assertRecord(value: unknown, label: string): asserts value is Record<st
   if (!isRecord(value)) throw new Error(`${label} must be an object`);
 }
 
+function assertOnlyKeys(value: Record<string, unknown>, allowedKeys: string[], label: string): void {
+  for (const key of Object.keys(value)) {
+    if (!allowedKeys.includes(key)) throw new Error(`${label} has unsupported field ${key}`);
+  }
+}
+
 function secretFieldPaths(value: unknown, prefix = ""): string[] {
   if (Array.isArray(value)) {
     return value.flatMap((item, index) => secretFieldPaths(item, prefix ? `${prefix}[${index}]` : `[${index}]`));
@@ -544,12 +550,25 @@ function routeSelectionFromAccount(account: AccountDescriptor): RouteSelection {
   };
 }
 
+export function parseRouteSelectionRequest(value: unknown): RouteSelectionRequest {
+  assertRecord(value, "route selection request");
+  assertOnlyKeys(value, ["account_id", "method", "route_type"], "route selection request");
+  const accountId = requireStringId(value.account_id, "route selection account_id");
+  const method = requireString(value.method, "route selection method");
+  const routeType = value.route_type === undefined
+    ? undefined
+    : requireRouteType(value.route_type, "route selection route_type");
+  return routeType === undefined
+    ? { account_id: accountId, method }
+    : { account_id: accountId, method, route_type: routeType };
+}
+
 export function selectAccountRoute(accounts: AccountDescriptor[], request: RouteSelectionRequest): RouteSelection {
   if (!Array.isArray(accounts)) throw new Error("route selection accounts must be an array");
-  assertRecord(request, "route selection request");
-  const accountId = requireStringId(request.account_id, "route selection account_id");
-  const method = requireString(request.method, "route selection method");
-  const routeType = request.route_type === undefined ? undefined : requireRouteType(request.route_type, "route selection route_type");
+  const parsedRequest = parseRouteSelectionRequest(request);
+  const accountId = parsedRequest.account_id;
+  const method = parsedRequest.method;
+  const routeType = parsedRequest.route_type;
   const matches = accounts.filter((account) => account.account_id === accountId);
   if (matches.length === 0) throw new Error("route selection account_id is unknown");
   if (matches.length > 1) throw new Error("route selection account_id is ambiguous");

@@ -196,6 +196,7 @@ Exports:
 - `parseAccountDescriptor`
 - `parseGrantDescriptor`
 - `parsePolicyProfile`
+- `parseRouteSelectionRequest`
 - `selectAccountRoute`
 
 ## @nsealr/protocol

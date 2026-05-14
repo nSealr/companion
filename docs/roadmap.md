@@ -363,7 +363,10 @@ and uploads checked tarball artifacts without publishing to npm.
   without adding an injection mechanism. A background browser entrypoint adapter
   now installs runtime message handling over explicit `runtime.onMessage` and
   `runtime.sendNativeMessage` dependencies without storage, grants, or signer
-  dispatch. A pure page-script injection
+  dispatch. A secretless browser-extension route-config parser now derives the
+  selected account `sign_event` route request before background listener
+  installation, using package-owned policy route-request parsing instead of an
+  app-local route-shape fork. A pure page-script injection
   helper now injects the reviewed page-script resource through explicit
   document and extension-URL resolver dependencies with duplicate-target and
   URL checks. Packaged background, content-script, and page-script entrypoint

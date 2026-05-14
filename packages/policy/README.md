@@ -8,8 +8,8 @@ Secretless account, route, grant, and policy-decision descriptors.
 - Reject embedded production private-key material.
 - Reject QR-vault automation, wildcard/decrypt/export grants, and invalid
   grant targets.
-- Select secretless account-route metadata for supported methods without
-  dispatching signer I/O.
+- Parse and select secretless account-route metadata for supported methods
+  without dispatching signer I/O.
 - Evaluate pure policy-decision vectors for conformance tests.
 
 ## Example

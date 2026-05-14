@@ -6,6 +6,7 @@ import {
   parseAccountDescriptor,
   parseGrantDescriptor,
   parsePolicyProfile,
+  parseRouteSelectionRequest,
   selectAccountRoute
 } from "./policy.js";
 
@@ -127,6 +128,22 @@ describe("identity, recovery, and policy contracts", () => {
 
   it("rejects ambiguous or unsupported route selections before signer IO", () => {
     const account = parseAccountDescriptor(loadJson(resolve(specsRoot, "vectors/accounts/raspberry-qr-nip06-account-0.json")));
+
+    expect(parseRouteSelectionRequest({
+      account_id: account.account_id,
+      method: "sign_event",
+      route_type: "raspberry_qr_vault"
+    })).toEqual({
+      account_id: account.account_id,
+      method: "sign_event",
+      route_type: "raspberry_qr_vault"
+    });
+    expect(() => parseRouteSelectionRequest({
+      account_id: account.account_id,
+      method: "sign_event",
+      route_type: "esp32_usb_nip46",
+      secret_key: "1".repeat(64)
+    })).toThrow(/unsupported field/u);
 
     expect(() => selectAccountRoute([account], undefined as never)).toThrow(/request must be an object/u);
     expect(() => selectAccountRoute([], {

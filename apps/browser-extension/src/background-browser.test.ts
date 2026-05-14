@@ -6,6 +6,7 @@ import {
   installBrowserExtensionBackgroundBrowserEntrypoint
 } from "./background-browser.js";
 import { BROWSER_EXTENSION_MESSAGE_PROTOCOL } from "./handler.js";
+import { BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT } from "./route-config.js";
 import {
   type BrowserExtensionRuntimeMessageListener,
   type BrowserExtensionRuntimeMessageResponder
@@ -159,6 +160,62 @@ describe("browser extension background browser entrypoint", () => {
       } as never,
       routeRequest
     })).toThrow(/runtime/u);
+  });
+
+  it("can derive selected route metadata from a secretless browser route config", async () => {
+    const runtime = createInjectedRuntime();
+    const responses: unknown[] = [];
+    const handle = installBrowserExtensionBackgroundBrowserEntrypoint({
+      runtime: runtime.runtime,
+      routeConfig: {
+        format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
+        account_id: routeRequest.account_id,
+        route_type: routeRequest.route_type
+      },
+      extensionId: "extension@nsealr.dev",
+      nextServiceRequestId: () => "background-browser-config-route"
+    });
+
+    expect(runtime.emit(
+      getPublicKeyRequest("background-browser-config-get-public-key"),
+      {
+        id: "extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      (response) => {
+        responses.push(response);
+      }
+    )).toBe(true);
+    await flushAsyncListeners();
+
+    expect(responses).toHaveLength(1);
+    expect(runtime.nativeMessages).toEqual([{
+      hostName: NATIVE_HOST_NAME,
+      message: expect.objectContaining({
+        request_id: "background-browser-config-route",
+        operation: "select_account_route",
+        params: expect.objectContaining({
+          route_request: routeRequest
+        })
+      })
+    }]);
+    handle.dispose();
+  });
+
+  it("rejects ambiguous route configuration before listener installation", () => {
+    const runtime = createInjectedRuntime();
+    expect(() => installBrowserExtensionBackgroundBrowserEntrypoint({
+      runtime: runtime.runtime,
+      routeRequest,
+      routeConfig: {
+        format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
+        account_id: routeRequest.account_id
+      }
+    })).toThrow(/route configuration/u);
+    expect(() => installBrowserExtensionBackgroundBrowserEntrypoint({
+      runtime: runtime.runtime
+    })).toThrow(/route configuration/u);
+    expect(runtime.listenerCount()).toBe(0);
   });
 
   it("does not call browser native messaging after request cancellation", async () => {

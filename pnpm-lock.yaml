@@ -35,6 +35,9 @@ importers:
       '@nsealr/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@nsealr/policy':
+        specifier: workspace:*
+        version: link:../../packages/policy
       '@nsealr/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol

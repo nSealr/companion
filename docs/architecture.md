@@ -268,8 +268,11 @@ The background browser entrypoint adapter is the browser-like wrapper over the
 background controller and runtime-message listener. It accepts an explicit
 runtime object with reviewed `onMessage` and `sendNativeMessage` capabilities,
 installs the runtime listener, and forwards native-messaging calls through the
-same local-service client path. It does not read global browser objects, write
-extension storage, create grants, dispatch signers, or hold key material.
+same local-service client path. It now accepts either an already parsed route
+request or a secretless `nsealr-browser-extension-route-config-v0` selected
+account config that is parsed into a `sign_event` route request before listener
+installation. It does not read global browser objects, write extension storage,
+create grants, dispatch signers, or hold key material.
 The private `@nsealr/browser-extension` app now defines the internal extension
 message boundary for `get_public_key` and `sign_event`. The parser rejects
 unsupported NIP-07/NIP-44/NIP-04-style methods, malformed request ids, extra
@@ -540,7 +543,9 @@ Route-selection vectors are also consumed through `packages/policy`. The
 selector is pure and secretless: it accepts parsed account descriptors plus a
 requested account/method and returns selected route metadata only. It does not
 open transports, create grants, approve clients, dispatch signer I/O, or claim
-route readiness.
+route readiness. Route-selection request parsing also lives in `packages/policy`
+so browser extension, local service, CLI, SDK, and future UI code do not fork
+the selected-account route-request shape.
 
 Those descriptors model the resulting signing public key and route. The
 mnemonic, BIP-39 passphrase namespace, standalone `nsec`, device slot,

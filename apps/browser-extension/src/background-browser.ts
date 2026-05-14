@@ -11,6 +11,9 @@ import {
   type BrowserExtensionRuntimeMessageEventTarget,
   type BrowserExtensionRuntimeMessageListenerHandle
 } from "./runtime-message.js";
+import {
+  parseBrowserExtensionRouteConfig
+} from "./route-config.js";
 
 export type BrowserExtensionBackgroundBrowserRuntimeApi = {
   onMessage: BrowserExtensionRuntimeMessageEventTarget;
@@ -19,7 +22,8 @@ export type BrowserExtensionBackgroundBrowserRuntimeApi = {
 
 export type BrowserExtensionBackgroundBrowserEntrypointOptions = {
   runtime: BrowserExtensionBackgroundBrowserRuntimeApi;
-  routeRequest: LocalServiceBrowserProviderBackendOptions["routeRequest"];
+  routeRequest?: LocalServiceBrowserProviderBackendOptions["routeRequest"];
+  routeConfig?: unknown;
   hostName?: string;
   extensionId?: string;
   appName?: string;
@@ -55,6 +59,15 @@ function requireBrowserRuntime(
   return value;
 }
 
+function routeRequestFromOptions(
+  options: BrowserExtensionBackgroundBrowserEntrypointOptions
+): LocalServiceBrowserProviderBackendOptions["routeRequest"] {
+  if ((options.routeRequest === undefined) === (options.routeConfig === undefined)) {
+    throw new Error("browser background route configuration is invalid");
+  }
+  return options.routeRequest ?? parseBrowserExtensionRouteConfig(options.routeConfig).route_request;
+}
+
 export function createBrowserExtensionBackgroundBrowserNativeMessageSender(
   runtime: BrowserExtensionBackgroundBrowserRuntimeApi
 ): BrowserNativeMessageSender {
@@ -71,9 +84,10 @@ export function installBrowserExtensionBackgroundBrowserEntrypoint(
   options: BrowserExtensionBackgroundBrowserEntrypointOptions
 ): BrowserExtensionBackgroundBrowserEntrypointHandle {
   const runtime = requireBrowserRuntime(options.runtime);
+  const routeRequest = routeRequestFromOptions(options);
   const controller = createBrowserExtensionBackgroundController({
     sendNativeMessage: createBrowserExtensionBackgroundBrowserNativeMessageSender(runtime),
-    routeRequest: options.routeRequest,
+    routeRequest,
     ...(options.hostName !== undefined ? { hostName: options.hostName } : {}),
     ...(options.nextServiceRequestId !== undefined ? { nextServiceRequestId: options.nextServiceRequestId } : {}),
     ...(options.nextSignerRequestId !== undefined ? { nextSignerRequestId: options.nextSignerRequestId } : {}),

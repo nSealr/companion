@@ -146,7 +146,11 @@ single-repository CI. Cross-repository drift remains guarded by
   Background browser entrypoint tests prove explicit browser-like runtime
   dependencies install runtime message handling over `runtime.onMessage`, route
   accepted requests through `runtime.sendNativeMessage`, dispose listeners, and
-  reject invalid or cancelled dependencies before native messaging.
+  reject invalid or cancelled dependencies before native messaging. Route-config
+  tests prove the selected browser account config is secretless, fixed to
+  `sign_event`, parsed through package-owned policy route-request validation,
+  and rejected before listener installation when missing, duplicated,
+  malformed, or carrying unsupported fields.
   Page-origin tests prove the browser-extension bridge accepts HTTPS page
   origins and local HTTP developer origins while rejecting non-origin URLs,
   unsupported schemes, extension URLs, and overlong values through one shared

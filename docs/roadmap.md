@@ -342,22 +342,23 @@ and uploads checked tarball artifacts without publishing to npm.
   composer now joins page-script injection and that runtime bridge over explicit
   dependencies, including cleanup if bridge setup fails. Content-runtime API
   adapters now wrap reviewed `runtime.getURL` resource resolution and
-  `runtime.sendMessage` forwarding without storage or signer dispatch. A pure
-  content-window event adapter now gates already received page messages by
-  expected source and normalized origin before forwarding nSealr page-bridge
-  envelopes, an injected content-window listener installer can register that
-  boundary on an explicit target with explicit teardown and injected response
-  posting, and a response-poster adapter now posts extension responses only to
-  reviewed `postMessage` targets and normalized page origins. The matching
-  page-window bridge exchange now posts validated page requests to the exact
-  reviewed origin, accepts only matching extension responses, and cleans up
-  listeners on response, abort, timeout, or posting failure. Pure page-script
-  bootstraps now compose the explicit-target NIP-07 provider installer with
-  either an injected bridge exchange or the injected page-window bridge,
-  without adding an injection mechanism. A pure page-script injection helper now
-  injects the reviewed page-script resource through explicit document and
-  extension-URL resolver dependencies with duplicate-target and URL checks. The
-  browser-extension manifest builder can still build a minimal MV3 manifest with
+  `runtime.sendMessage` forwarding without storage or signer dispatch. A shared
+  page-origin validator now keeps page-window and content-window origin checks
+  aligned. A pure content-window event adapter now gates already received page
+  messages by expected source and normalized origin before forwarding nSealr
+  page-bridge envelopes, an injected content-window listener installer can
+  register that boundary on an explicit target with explicit teardown and
+  injected response posting, and a response-poster adapter now posts extension
+  responses only to reviewed `postMessage` targets and normalized page origins.
+  The matching page-window bridge exchange now posts validated page requests to
+  the exact reviewed origin, accepts only matching extension responses, and
+  cleans up listeners on response, abort, timeout, or posting failure. Pure
+  page-script bootstraps now compose the explicit-target NIP-07 provider
+  installer with either an injected bridge exchange or the injected page-window
+  bridge, without adding an injection mechanism. A pure page-script injection
+  helper now injects the reviewed page-script resource through explicit
+  document and extension-URL resolver dependencies with duplicate-target and URL
+  checks. The browser-extension manifest builder can still build a minimal MV3 manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage
   permissions by default, plus an opt-in explicit-origin content-script
   manifest profile that rejects `<all_urls>`, wildcard schemes, wildcard

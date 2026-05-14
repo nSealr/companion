@@ -324,6 +324,10 @@ resource URL resolver and a runtime-message sender, reject unsafe resource
 paths before `runtime.getURL`, and reject already-cancelled sends before
 `runtime.sendMessage`. They do not read or write extension storage, register
 listeners, dispatch signers, or hold key material.
+Page-window and content-window boundaries share one page-origin validator:
+HTTPS page origins are accepted, local HTTP origins are accepted for developer
+harnesses, and path/query/fragment URLs or non-page schemes are rejected before
+use as trusted bridge origins.
 The content-window event adapter handles one already-received window message at
 a time. It accepts only messages from the expected page source and normalized
 page origin, ignores unrelated data without responding, and forwards only

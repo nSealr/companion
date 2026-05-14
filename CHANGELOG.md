@@ -119,6 +119,8 @@ public npm release.
 - Private browser-extension content-window response poster adapter that posts
   extension responses only to reviewed `postMessage` targets and normalized
   page origins.
+- Shared private browser-extension page-origin validator used by page-window
+  and content-window boundaries.
 - Private browser-extension explicit-origin content-script manifest profile
   that keeps the minimal no-content-script manifest as the default and rejects
   broad URL access, host-permission fields, storage, and duplicate matches.

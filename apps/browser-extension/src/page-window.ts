@@ -6,6 +6,10 @@ import {
   type BrowserExtensionPageBridgeRequest,
   type BrowserExtensionPageBridgeResponse
 } from "./page-bridge.js";
+import {
+  normalizeBrowserExtensionPageOrigin,
+  requireBrowserExtensionPageOrigin
+} from "./page-origin.js";
 import { type BrowserExtensionPageRequestOptions } from "./page-provider.js";
 
 export type BrowserExtensionPageWindowEvent = {
@@ -34,29 +38,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function normalizePageOrigin(value: unknown): string | undefined {
-  if (typeof value !== "string" || value.length === 0 || value.length > 256) {
-    return undefined;
-  }
-  try {
-    const url = new URL(value);
-    if (url.origin !== value) return undefined;
-    if (url.protocol === "https:") return value;
-    if (url.protocol === "http:" && (url.hostname === "localhost" || url.hostname === "127.0.0.1")) {
-      return value;
-    }
-  } catch {
-    return undefined;
-  }
-  return undefined;
-}
-
 function requireExpectedPageOrigin(value: unknown): string {
-  const origin = normalizePageOrigin(value);
-  if (origin === undefined) {
-    throw new Error("browser page-window expected origin is invalid");
-  }
-  return origin;
+  return requireBrowserExtensionPageOrigin(value, "browser page-window expected origin is invalid");
 }
 
 function requireResponseTimeoutMs(value: number | undefined): number | undefined {
@@ -135,7 +118,7 @@ export function createBrowserExtensionPageWindowBridgeExchange(
         try {
           if (!isRecord(event)) return;
           if (event.source !== options.expectedSource) return;
-          if (normalizePageOrigin(event.origin) !== expectedOrigin) return;
+          if (normalizeBrowserExtensionPageOrigin(event.origin) !== expectedOrigin) return;
           if (!responseCandidateMatches(event.data, bridgeRequest.request_id)) return;
           settleResolve(parseBrowserExtensionPageBridgeResponse(event.data, bridgeRequest.request_id));
         } catch (error) {

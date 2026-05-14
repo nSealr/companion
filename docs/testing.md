@@ -132,6 +132,10 @@ single-repository CI. Cross-repository drift remains guarded by
   are rejected before runtime contact, runtime messages are forwarded through
   injected `runtime.sendMessage`, and already-cancelled sends stop before the
   runtime API is called.
+  Page-origin tests prove the browser-extension bridge accepts HTTPS page
+  origins and local HTTP developer origins while rejecting non-origin URLs,
+  unsupported schemes, extension URLs, and overlong values through one shared
+  validator used by page-window and content-window boundaries.
   Content-window tests prove already-received page messages are source/origin
   gated, unrelated messages are ignored, and malformed nSealr envelopes fail
   before background contact without registering listeners or calling

@@ -123,6 +123,8 @@ match the shared `contract_id`.
   injection with the runtime bridge and cleans up partial installs,
   includes content-runtime API adapters that wrap reviewed `runtime.getURL`
   and `runtime.sendMessage` dependencies,
+  uses one shared page-origin validator across page-window and content-window
+  boundaries,
   and can build either the default minimal no-host-permission manifest or an
   opt-in explicit-origin content-script manifest profile. The content-script
   profile still omits host-permission fields, broad URL matches, extension

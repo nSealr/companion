@@ -30,6 +30,10 @@ describe("browser extension package-plan CLI", () => {
       all_frames: false,
       match_about_blank: false
     }]);
+    expect(plan.manifest.web_accessible_resources).toEqual([{
+      resources: ["nsealr-page-script-entrypoint.js"],
+      matches: ["https://example.com/*"]
+    }]);
   });
 
   it("renders a Firefox package plan only with an explicit extension id", () => {

@@ -384,18 +384,23 @@ and uploads checked tarball artifacts without publishing to npm.
   pre-bundling artifact, rejecting storage/host permissions or entrypoint drift
   before a bundle can be treated as reviewed. A private browser-extension
   `package-plan` script now emits that JSON to stdout only, with no output-path
-  or installer behavior. The browser-extension
+  or installer behavior. A private `package-build` script now creates an
+  explicit developer artifact in a new output directory only after successful
+  in-memory bundling, embeds a secretless static route config, and still avoids
+  native-host installation, extension storage writes, key custody, and signer
+  dispatch. The browser-extension
   manifest builder can still build a minimal
   MV3 manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage
   permissions by default, plus an opt-in explicit-origin content-script
-  manifest profile that rejects `<all_urls>`, wildcard schemes, wildcard
-  hosts, non-local `http`, duplicate matches, host-permission fields, and
-  storage. Remaining work: actual bundle generation from the package plan,
-  native-messaging installation, browser UI/storage wiring for origin
-  permission approvals, cancellation UI wiring, and real dispatch after M4.7
-  gates. No local production signing and no extension-side production key
-  storage.
+  manifest profile that exposes only the packaged page-script entrypoint to
+  those same explicit origins and rejects `<all_urls>`, wildcard schemes,
+  wildcard hosts, non-local `http`, duplicate matches, host-permission fields,
+  and storage. Remaining work: reviewed bootstrap/config UX beyond the static
+  developer route config, native-messaging installation, browser UI/storage
+  wiring for origin permission approvals, cancellation UI wiring, and real
+  dispatch after M4.7 gates. No local production signing and no extension-side
+  production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

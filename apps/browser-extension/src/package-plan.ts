@@ -138,12 +138,22 @@ export function assertBrowserExtensionPackagePlan(
       }
     }
   }
+  const pageScript = entrypointByRole(plan, "page_script");
   assertEntrypoint(
-    entrypointByRole(plan, "page_script"),
+    pageScript,
     "page_script",
     BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_SOURCE,
     BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
   );
+  if (plan.manifest.content_scripts !== undefined) {
+    const webAccessibleResources = plan.manifest.web_accessible_resources;
+    if (webAccessibleResources === undefined || webAccessibleResources.length !== 1) {
+      throw new Error("browser extension package plan must expose packaged page script for content-script injection");
+    }
+    if (webAccessibleResources[0].resources[0] !== pageScript.output) {
+      throw new Error("browser extension package plan page-script output does not match web-accessible resources");
+    }
+  }
   return plan;
 }
 

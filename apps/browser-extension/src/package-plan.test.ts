@@ -67,6 +67,10 @@ describe("browser extension package plan", () => {
       all_frames: false,
       match_about_blank: false
     }]);
+    expect(plan.manifest.web_accessible_resources).toEqual([{
+      resources: [BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE],
+      matches: ["https://example.com/*"]
+    }]);
     expect(assertBrowserExtensionPackagePlan(plan)).toBe(plan);
   });
 
@@ -124,5 +128,22 @@ describe("browser extension package plan", () => {
         }
       ]
     }))).toThrow(/page_script entrypoint/u);
+    expect(() => assertBrowserExtensionPackagePlan(tamperedPlan({
+      ...plan,
+      manifest: {
+        ...plan.manifest,
+        web_accessible_resources: undefined
+      }
+    }))).toThrow(/page script/u);
+    expect(() => assertBrowserExtensionPackagePlan(tamperedPlan({
+      ...plan,
+      manifest: {
+        ...plan.manifest,
+        web_accessible_resources: [{
+          resources: ["page-script.js"],
+          matches: ["https://example.com/*"]
+        }]
+      }
+    }))).toThrow(/web-accessible/u);
   });
 });

@@ -76,11 +76,16 @@ single-repository CI. Cross-repository drift remains guarded by
   `@nsealr/client` root instead of `@nsealr/client/browser`. Run it directly
   with `make browser-runtime-imports`. The browser-runtime bundle smoke then
   runs esbuild against the packaged background, content-script, and page-script
-  entrypoints with `platform: browser` and fails if bundled outputs contain
-  Node builtin specifiers, `Buffer`, or `process`. Run it directly with
+  entrypoints with `platform: browser` and browser-compatible IIFE output, and
+  fails if bundled outputs contain Node builtin specifiers, `Buffer`, or
+  `process`. Run it directly with
   `make browser-runtime-bundle`. This is a bundlability gate only; installable
   extension packaging still needs a reviewed packaged bootstrap/config
-  contract.
+  contract. Package-build tests cover the first private developer artifact
+  builder: it requires a new output directory and a secretless static route
+  config, writes manifest and bundled entrypoints only after successful
+  in-memory bundling, and still performs no native-host installation, browser
+  storage writes, key custody, or signer dispatch.
 - Browser-extension app tests cover the private internal message parser for
   `get_public_key` and `sign_event`, including unsupported-method rejection,
   malformed-envelope rejection, and shared signer-request validation for event
@@ -154,9 +159,10 @@ single-repository CI. Cross-repository drift remains guarded by
   custody.
   Package-plan tests prove the reviewed manifest, packaged output filenames,
   and source launcher paths stay aligned before bundle generation exists. They
-  reject storage permission, host-permission, background-output, and
-  content-script-output drift without installing native-host manifests or
-  writing extension storage. Package-plan CLI tests prove the private
+  reject storage permission, host-permission, background-output,
+  content-script-output, and page-script web-accessible-resource drift without
+  installing native-host manifests or writing extension storage. Package-plan
+  CLI tests prove the private
   browser-extension script renders deterministic JSON from explicit target and
   content-script arguments, rejects incomplete or broad-match inputs, and has no
   output-path/install behavior.

@@ -1,6 +1,7 @@
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
-  BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE
+  BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
 } from "./entrypoints.js";
 
 export const BROWSER_EXTENSION_NAME = "nSealr";
@@ -26,6 +27,11 @@ export type BrowserExtensionContentScriptManifest = {
   match_about_blank: false;
 };
 
+export type BrowserExtensionWebAccessibleResourcesManifest = {
+  resources: [typeof BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE];
+  matches: string[];
+};
+
 export type BrowserExtensionManifest = {
   manifest_version: 3;
   name: string;
@@ -40,6 +46,7 @@ export type BrowserExtensionManifest = {
     default_title: string;
   };
   content_scripts?: [BrowserExtensionContentScriptManifest];
+  web_accessible_resources?: [BrowserExtensionWebAccessibleResourcesManifest];
   browser_specific_settings?: {
     gecko: {
       id: string;
@@ -141,6 +148,10 @@ export function buildBrowserExtensionManifest(options: BrowserExtensionManifestO
       run_at: "document_start",
       all_frames: false,
       match_about_blank: false
+    }];
+    manifest.web_accessible_resources = [{
+      resources: [BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE],
+      matches: contentScriptMatches
     }];
   }
 

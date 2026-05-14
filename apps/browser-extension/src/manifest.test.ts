@@ -8,7 +8,8 @@ import {
 } from "./manifest.js";
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
-  BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE
+  BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
 } from "./entrypoints.js";
 
 describe("browser extension manifest boundary", () => {
@@ -31,6 +32,7 @@ describe("browser extension manifest boundary", () => {
     expect("host_permissions" in manifest).toBe(false);
     expect("optional_host_permissions" in manifest).toBe(false);
     expect("content_scripts" in manifest).toBe(false);
+    expect("web_accessible_resources" in manifest).toBe(false);
     expect(manifest.permissions).not.toContain("storage");
   });
 
@@ -54,6 +56,13 @@ describe("browser extension manifest boundary", () => {
       run_at: "document_start",
       all_frames: false,
       match_about_blank: false
+    }]);
+    expect(manifest.web_accessible_resources).toEqual([{
+      resources: [BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE],
+      matches: [
+        "https://example.com/*",
+        "http://localhost:5173/*"
+      ]
     }]);
     expect(manifest.permissions).not.toContain("storage");
   });

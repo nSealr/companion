@@ -6,6 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "package-build": "node --no-warnings --import tsx/esm src/package-build-cli.ts",
     "package-plan": "node --no-warnings --import tsx/esm src/package-plan-cli.ts"
   },
   "dependencies": {
@@ -16,6 +17,7 @@
     "@nsealr/protocol": "workspace:*"
   },
   "devDependencies": {
+    "esbuild": "0.27.7",
     "tsx": "4.21.0"
   }
 }

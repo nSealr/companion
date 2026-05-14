@@ -15,7 +15,7 @@ const result = await build({
   bundle: true,
   entryNames: "[name]",
   entryPoints,
-  format: "esm",
+  format: "iife",
   logLevel: "silent",
   metafile: true,
   outdir: "browser-runtime-bundle-smoke",

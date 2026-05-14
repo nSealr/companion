@@ -153,7 +153,12 @@ public npm release.
   `process`, or the Node-capable client root.
 - Browser-runtime bundle smoke that runs esbuild against the packaged
   background, content-script, and page-script entrypoints with
-  `platform: browser`, before installable extension packaging exists.
+  `platform: browser` and browser-compatible IIFE output, before installable
+  extension packaging exists.
+- Private browser-extension package-build CLI for explicit developer artifacts:
+  it writes a new output directory only after successful in-memory bundling,
+  embeds a secretless static route config, and still performs no native-host
+  installation, extension storage writes, key custody, or signer dispatch.
 - Private browser-extension sender-aware handler that validates both the
   internal request and sender-derived page origin before provider selection.
 - `@nsealr/client` secretless JSON grant-store contract for persisting approved

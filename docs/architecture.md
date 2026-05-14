@@ -67,13 +67,18 @@ packages, but it must not export test-only signing as a production path.
   over an injected bridge exchange.
   It can build a minimal MV3 manifest with `nativeMessaging` as the only
   permission, and an opt-in explicit-origin content-script manifest profile
-  that still omits host-permission fields, broad URL matches, extension
-  storage, grants, and key custody. It does not yet ship full extension
+  that exposes only the packaged page script to those explicit origins while
+  still omitting host-permission fields, broad URL matches, extension storage,
+  grants, and key custody. It does not yet ship full extension
   packaging, automatic content-script/page-script injection, packaged
   bootstrap/config loading, native-host installation, permission UI, persistent
   grants, or signer dispatch. Its packaged runtime entrypoints are checked by
   source import hygiene and an esbuild browser bundle smoke before installable
-  package generation is allowed.
+  package generation is allowed. The first package-build CLI writes an explicit
+  output directory only after successful in-memory bundling, embeds a
+  secretless static route config in the background bundle, writes no extension
+  storage, installs no native-host manifest, and remains a developer artifact
+  until a full bootstrap/config UX is reviewed.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
   central nSealr v0 implementation limit profile used by companion parsers,
@@ -470,14 +475,17 @@ provider-injection step. It does not create local-service grants, write browser
 storage, inject a provider, or contain key material.
 Its manifest builder is intentionally restrictive: the default Chromium
 manifest omits host permissions, optional host permissions, content scripts,
-and storage; Firefox manifests require an explicit reviewed extension id and
-otherwise follow the same zero-host-permission boundary. An opt-in
-content-script profile may list explicit reviewed origins such as
+web-accessible resources, and storage; Firefox manifests require an explicit
+reviewed extension id and otherwise follow the same zero-host-permission
+boundary. An opt-in content-script profile may list explicit reviewed origins such as
 `https://example.com/*` or local development origins such as
 `http://localhost:5173/*`, but it rejects `<all_urls>`, wildcard schemes,
 wildcard hosts, non-local `http`, duplicate matches, host-permission fields,
-and storage. Origin injection and durable extension metadata remain blocked on
-permission UX and reviewed storage locations.
+and storage. When content scripts are enabled, the manifest exposes only the
+packaged page-script entrypoint as a web-accessible resource for those same
+explicit matches so page injection can work without granting wider host access.
+Origin injection and durable extension metadata remain blocked on permission UX
+and reviewed storage locations.
 
 Executable SDK examples live in private app `@nsealr/sdk-examples`. They are
 not another access surface and do not own production behavior. Their role is to

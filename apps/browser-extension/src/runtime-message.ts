@@ -28,6 +28,28 @@ export type BrowserExtensionRuntimeMessageOptions = BrowserExtensionRuntimeSende
   nativeMessageAbortSignal?: AbortSignal;
 };
 
+export type BrowserExtensionRuntimeMessageResponder = (response: BrowserExtensionResponse) => void;
+
+export type BrowserExtensionRuntimeMessageListener = (
+  value: unknown,
+  runtimeSender: unknown,
+  sendResponse: BrowserExtensionRuntimeMessageResponder
+) => true;
+
+export type BrowserExtensionRuntimeMessageEventTarget = {
+  addListener(listener: BrowserExtensionRuntimeMessageListener): void;
+  removeListener(listener: BrowserExtensionRuntimeMessageListener): void;
+};
+
+export type BrowserExtensionRuntimeMessageListenerOptions = BrowserExtensionRuntimeMessageOptions & {
+  runtimeOnMessage: BrowserExtensionRuntimeMessageEventTarget;
+  onError?: (error: unknown) => void;
+};
+
+export type BrowserExtensionRuntimeMessageListenerHandle = {
+  dispose(): void;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -104,4 +126,52 @@ export async function handleBrowserExtensionRuntimeMessage(
       : {})
   };
   return options.controller.handleRequest(value, sender, requestOptions);
+}
+
+function runtimeMessageHandlerOptions(
+  options: BrowserExtensionRuntimeMessageListenerOptions
+): BrowserExtensionRuntimeMessageOptions {
+  return {
+    controller: options.controller,
+    ...(options.extensionId !== undefined ? { extensionId: options.extensionId } : {}),
+    ...(options.appName !== undefined ? { appName: options.appName } : {}),
+    ...(options.nativeMessageAbortSignal !== undefined
+      ? { nativeMessageAbortSignal: options.nativeMessageAbortSignal }
+      : {})
+  };
+}
+
+function reportRuntimeListenerError(error: unknown, onError: ((error: unknown) => void) | undefined): void {
+  if (onError === undefined) return;
+  try {
+    onError(error);
+  } catch {
+    // Listener diagnostics must not create unhandled browser promise failures.
+  }
+}
+
+export function installBrowserExtensionRuntimeMessageListener(
+  options: BrowserExtensionRuntimeMessageListenerOptions
+): BrowserExtensionRuntimeMessageListenerHandle {
+  let disposed = false;
+  const handlerOptions = runtimeMessageHandlerOptions(options);
+  const listener: BrowserExtensionRuntimeMessageListener = (value, runtimeSender, sendResponse) => {
+    void (async () => {
+      try {
+        const response = await handleBrowserExtensionRuntimeMessage(value, runtimeSender, handlerOptions);
+        if (!disposed) sendResponse(response);
+      } catch (error) {
+        reportRuntimeListenerError(error, options.onError);
+      }
+    })();
+    return true;
+  };
+  options.runtimeOnMessage.addListener(listener);
+  return Object.freeze({
+    dispose(): void {
+      if (disposed) return;
+      disposed = true;
+      options.runtimeOnMessage.removeListener(listener);
+    }
+  });
 }

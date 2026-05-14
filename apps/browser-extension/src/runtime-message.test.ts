@@ -5,7 +5,10 @@ import { createBrowserExtensionBackgroundController } from "./background.js";
 import { BROWSER_EXTENSION_MESSAGE_PROTOCOL } from "./handler.js";
 import {
   browserExtensionSenderFromRuntimeSender,
-  handleBrowserExtensionRuntimeMessage
+  handleBrowserExtensionRuntimeMessage,
+  installBrowserExtensionRuntimeMessageListener,
+  type BrowserExtensionRuntimeMessageListener,
+  type BrowserExtensionRuntimeMessageResponder
 } from "./runtime-message.js";
 
 const publicKey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
@@ -56,6 +59,38 @@ function getPublicKeyRequest(requestId: string): unknown {
     request_id: requestId,
     method: "get_public_key"
   };
+}
+
+function createInjectedRuntimeOnMessage(): {
+  runtimeOnMessage: {
+    addListener(listener: BrowserExtensionRuntimeMessageListener): void;
+    removeListener(listener: BrowserExtensionRuntimeMessageListener): void;
+  };
+  emit(value: unknown, sender: unknown, sendResponse: BrowserExtensionRuntimeMessageResponder): true | undefined;
+  listenerCount(): number;
+} {
+  const listeners = new Set<BrowserExtensionRuntimeMessageListener>();
+  return {
+    runtimeOnMessage: {
+      addListener(listener: BrowserExtensionRuntimeMessageListener): void {
+        listeners.add(listener);
+      },
+      removeListener(listener: BrowserExtensionRuntimeMessageListener): void {
+        listeners.delete(listener);
+      }
+    },
+    emit(value: unknown, sender: unknown, sendResponse: BrowserExtensionRuntimeMessageResponder): true | undefined {
+      const [listener] = listeners;
+      return listener?.(value, sender, sendResponse);
+    },
+    listenerCount(): number {
+      return listeners.size;
+    }
+  };
+}
+
+async function flushAsyncListeners(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 describe("browser extension runtime message boundary", () => {
@@ -214,5 +249,149 @@ describe("browser extension runtime message boundary", () => {
       }
     });
     expect(called).toBe(false);
+  });
+
+  it("installs an injected runtime message listener and sends accepted responses", async () => {
+    const nativeRequests: LocalServiceRequest[] = [];
+    const runtime = createInjectedRuntimeOnMessage();
+    const responses: unknown[] = [];
+    const controller = createBrowserExtensionBackgroundController({
+      sendNativeMessage: nativeResponder(nativeRequests),
+      routeRequest,
+      nextServiceRequestId: () => "runtime-listener-route"
+    });
+
+    const handle = installBrowserExtensionRuntimeMessageListener({
+      runtimeOnMessage: runtime.runtimeOnMessage,
+      controller,
+      extensionId: "extension@nsealr.dev"
+    });
+    expect(runtime.listenerCount()).toBe(1);
+
+    expect(runtime.emit(
+      getPublicKeyRequest("runtime-listener-get-public-key"),
+      {
+        id: "extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      (response) => {
+        responses.push(response);
+      }
+    )).toBe(true);
+    await flushAsyncListeners();
+
+    expect(responses).toEqual([{
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "runtime-listener-get-public-key",
+      ok: true,
+      result: {
+        pubkey: publicKey
+      }
+    }]);
+    expect(nativeRequests.map((request) => request.operation)).toEqual(["select_account_route"]);
+
+    handle.dispose();
+    expect(runtime.listenerCount()).toBe(0);
+  });
+
+  it("returns deterministic invalid-sender responses through the listener before native messaging", async () => {
+    const runtime = createInjectedRuntimeOnMessage();
+    const responses: unknown[] = [];
+    const nativeRequests: LocalServiceRequest[] = [];
+    const controller = createBrowserExtensionBackgroundController({
+      routeRequest,
+      sendNativeMessage: nativeResponder(nativeRequests)
+    });
+
+    installBrowserExtensionRuntimeMessageListener({
+      runtimeOnMessage: runtime.runtimeOnMessage,
+      controller,
+      extensionId: "extension@nsealr.dev"
+    });
+    expect(runtime.emit(
+      getPublicKeyRequest("runtime-listener-invalid-sender"),
+      {
+        id: "other-extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      (response) => {
+        responses.push(response);
+      }
+    )).toBe(true);
+    await flushAsyncListeners();
+
+    expect(responses).toEqual([{
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "runtime-listener-invalid-sender",
+      ok: false,
+      error: {
+        code: "invalid_sender",
+        message: "browser runtime sender is invalid",
+        retryable: false
+      }
+    }]);
+    expect(nativeRequests).toEqual([]);
+  });
+
+  it("does not receive runtime messages after disposal", async () => {
+    const runtime = createInjectedRuntimeOnMessage();
+    const controller = createBrowserExtensionBackgroundController({
+      routeRequest,
+      sendNativeMessage: () => {
+        throw new Error("disposed listener must not contact native messaging");
+      }
+    });
+    const handle = installBrowserExtensionRuntimeMessageListener({
+      runtimeOnMessage: runtime.runtimeOnMessage,
+      controller
+    });
+    handle.dispose();
+    expect(runtime.listenerCount()).toBe(0);
+    expect(runtime.emit(
+      getPublicKeyRequest("runtime-listener-disposed"),
+      {
+        id: "extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      () => {
+        throw new Error("disposed listener must not send responses");
+      }
+    )).toBeUndefined();
+    await flushAsyncListeners();
+  });
+
+  it("reports runtime listener response failures without unhandled rejections", async () => {
+    const runtime = createInjectedRuntimeOnMessage();
+    const errors: unknown[] = [];
+    const controller = createBrowserExtensionBackgroundController({
+      sendNativeMessage: nativeResponder([]),
+      routeRequest,
+      nextServiceRequestId: () => "runtime-listener-error-route"
+    });
+
+    installBrowserExtensionRuntimeMessageListener({
+      runtimeOnMessage: runtime.runtimeOnMessage,
+      controller,
+      onError: (error) => {
+        errors.push(error);
+      }
+    });
+    expect(runtime.emit(
+      getPublicKeyRequest("runtime-listener-response-failure"),
+      {
+        id: "extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      () => {
+        throw new Error("sendResponse failed");
+      }
+    )).toBe(true);
+    await flushAsyncListeners();
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toBeInstanceOf(Error);
+    expect((errors[0] as Error).message).toMatch(/sendResponse failed/u);
   });
 });

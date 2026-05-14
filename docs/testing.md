@@ -99,7 +99,11 @@ single-repository CI. Cross-repository drift remains guarded by
   contacted. Runtime-message tests prove raw browser sender metadata is reduced
   to the internal sender shape, invalid senders return deterministic
   `invalid_sender` responses before native messaging, and abort signals are
-  forwarded without registering runtime listeners. Page-provider tests prove
+  forwarded before native messaging. They also prove the injected runtime
+  listener installer returns `true` for asynchronous response delivery, sends
+  responses only through the injected responder, reports responder failures
+  through an injected error callback, and removes the listener through
+  `dispose()`. Page-provider tests prove
   NIP-07 `getPublicKey` and `signEvent`
   calls become validated background requests, unsafe templates fail before the
   background boundary, malformed responses are rejected, and cancellation is

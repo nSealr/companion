@@ -70,6 +70,9 @@ public npm release.
   sender metadata to the internal sender shape before background handling,
   returning deterministic invalid-sender responses without registering runtime
   listeners or calling browser APIs.
+- Private browser-extension runtime `onMessage` listener installer over an
+  injected target, with asynchronous `sendResponse` handling, explicit teardown,
+  and responder-failure diagnostics, without touching global browser APIs.
 - Private browser-extension page-provider boundary that maps NIP-07
   `getPublicKey` and `signEvent` calls to validated background requests
   and installs on an explicit target without overwriting an existing provider,

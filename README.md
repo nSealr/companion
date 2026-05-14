@@ -96,6 +96,8 @@ match the shared `contract_id`.
   response timeouts and request-scoped cancellation,
   includes a pure runtime-message adapter that maps raw browser sender metadata
   into the internal sender shape before the background controller is called,
+  includes an injected runtime `onMessage` listener installer with explicit
+  teardown and asynchronous `sendResponse` handling,
   includes a pure page-provider boundary that maps NIP-07 `getPublicKey` and
   `signEvent` calls to validated background requests and installs it only on an
   explicit target without overwriting an existing provider, includes a pure

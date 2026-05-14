@@ -318,15 +318,18 @@ and uploads checked tarball artifacts without publishing to npm.
   injecting a provider. A pure background-controller boundary now composes
   request handling, pairing-intent requests, pairing-review projection, and
   origin-permission review projection over injected native messaging without
-  using browser APIs, and can
-  use the same optional native response timeout and request-scoped
-  cancellation. A pure page-provider boundary now maps NIP-07 `getPublicKey`
-  and `signEvent` calls to validated background requests, verifies signed
-  responses, forwards cancellation signals, and installs on an explicit target
-  without overwriting an existing provider. A pure page-bridge envelope now
-  validates future page/content-script messages over an injected background
-  requester, and the matching page-side requester adapter wraps internal
-  requests into that bridge envelope before accepting validated bridge
+  using browser APIs, and can use the same optional native response timeout and
+  request-scoped cancellation. A pure runtime-message adapter now maps raw
+  browser sender metadata into the internal sender shape, returns deterministic
+  `invalid_sender` responses before native messaging, and forwards abort
+  signals to the background controller without registering runtime listeners or
+  calling browser APIs. A pure page-provider boundary now maps NIP-07
+  `getPublicKey` and `signEvent` calls to validated background requests,
+  verifies signed responses, forwards cancellation signals, and installs on an
+  explicit target without overwriting an existing provider. A pure page-bridge
+  envelope now validates future page/content-script messages over an injected
+  background requester, and the matching page-side requester adapter wraps
+  internal requests into that bridge envelope before accepting validated bridge
   responses. A pure content-script bridge handler now binds page bridge
   envelopes to an injected sender-aware background requester without adding a
   browser listener. A pure content-window event adapter now gates already

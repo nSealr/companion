@@ -96,7 +96,11 @@ single-repository CI. Cross-repository drift remains guarded by
   same injected native-messaging boundary, silent or
   cancelled native messaging can be bounded by deterministic timeout/abort
   handling, and malformed browser requests fail before native messaging is
-  contacted. Page-provider tests prove NIP-07 `getPublicKey` and `signEvent`
+  contacted. Runtime-message tests prove raw browser sender metadata is reduced
+  to the internal sender shape, invalid senders return deterministic
+  `invalid_sender` responses before native messaging, and abort signals are
+  forwarded without registering runtime listeners. Page-provider tests prove
+  NIP-07 `getPublicKey` and `signEvent`
   calls become validated background requests, unsafe templates fail before the
   background boundary, malformed responses are rejected, and cancellation is
   forwarded without content-script injection. Install tests prove the frozen

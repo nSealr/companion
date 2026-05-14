@@ -66,6 +66,10 @@ public npm release.
   sender-aware request handling, pairing-intent requests, pairing review, and
   origin permission review over injected native messaging without using
   browser APIs, storage, or signer dispatch.
+- Private browser-extension runtime-message adapter that maps raw browser
+  sender metadata to the internal sender shape before background handling,
+  returning deterministic invalid-sender responses without registering runtime
+  listeners or calling browser APIs.
 - Private browser-extension page-provider boundary that maps NIP-07
   `getPublicKey` and `signEvent` calls to validated background requests
   and installs on an explicit target without overwriting an existing provider,

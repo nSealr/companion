@@ -52,8 +52,9 @@ packages, but it must not export test-only signing as a production path.
   create origin permission approval artifacts only after explicit local pairing
   digest confirmation. It has a pure background-controller boundary over
   injected native messaging with optional response timeouts and request-scoped
-  cancellation, has a pure
-  page-provider boundary that maps NIP-07
+  cancellation, a pure runtime-message adapter that maps raw browser sender
+  metadata into the internal sender shape before background handling, and a
+  pure page-provider boundary that maps NIP-07
   `getPublicKey` and `signEvent` calls to validated background requests, and
   has a pure page-bridge envelope and page-side requester adapter for future
   page/content-script messaging. It also has a pure content-script bridge
@@ -315,6 +316,14 @@ parses the internal request, validates sender-derived identity, and only then
 asks the injected provider factory for a provider bound to that client context.
 Malformed requests and malformed senders return deterministic secretless errors
 without provider selection or signer I/O.
+The runtime-message adapter is the pure boundary a future
+`browser.runtime.onMessage` listener will call. It copies only sender id,
+origin, and URL into the internal sender shape, ignores unrelated runtime
+metadata such as tab or frame fields, validates the result through the same
+sender parser, returns deterministic `invalid_sender` responses on sender
+failure, and forwards request-scoped cancellation to the background controller.
+It does not register browser listeners, call browser runtime APIs, write
+storage, create grants, or hold key material.
 The origin permission boundary projects digest-bound local-service pairing
 reviews into page-visible NIP-07 method effects and parses them before any
 approval artifact is created. Approval requires the exact reviewed local pairing

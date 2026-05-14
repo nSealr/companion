@@ -122,7 +122,10 @@ single-repository CI. Cross-repository drift remains guarded by
   browser injection.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
-  and explicit Firefox extension ids.
+  and explicit Firefox extension ids. They also pin the opt-in explicit-origin
+  content-script manifest profile and reject broad URL access such as
+  `<all_urls>`, wildcard hosts, non-local `http`, duplicate matches, host
+  permission fields, and storage.
 - `make package-smoke` builds package artifacts, then runs the private
   `@nsealr/consumer-smoke` app. The smoke imports every public `@nsealr/*`
   package through its built package entrypoint plus the public

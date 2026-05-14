@@ -30,6 +30,30 @@ describe("browser extension manifest boundary", () => {
     expect(manifest.permissions).not.toContain("storage");
   });
 
+  it("builds an explicit-origin content-script manifest without wildcard host access", () => {
+    const manifest = buildBrowserExtensionManifest({
+      target: "chromium",
+      contentScriptMatches: [
+        "https://example.com/*",
+        "http://localhost:5173/*"
+      ]
+    });
+    expect(manifest.permissions).toEqual(["nativeMessaging"]);
+    expect("host_permissions" in manifest).toBe(false);
+    expect("optional_host_permissions" in manifest).toBe(false);
+    expect(manifest.content_scripts).toEqual([{
+      matches: [
+        "https://example.com/*",
+        "http://localhost:5173/*"
+      ],
+      js: ["content-script.js"],
+      run_at: "document_start",
+      all_frames: false,
+      match_about_blank: false
+    }]);
+    expect(manifest.permissions).not.toContain("storage");
+  });
+
   it("builds a Firefox manifest only with an explicit reviewed extension id", () => {
     const manifest = buildBrowserExtensionManifest({
       target: "firefox",
@@ -66,5 +90,29 @@ describe("browser extension manifest boundary", () => {
       target: "chromium",
       version: "0.1.0-beta"
     })).toThrow(/version/u);
+    expect(() => buildBrowserExtensionManifest({
+      target: "chromium",
+      contentScriptMatches: ["<all_urls>"]
+    })).toThrow(/content script match/u);
+    expect(() => buildBrowserExtensionManifest({
+      target: "chromium",
+      contentScriptMatches: ["https://*.example.com/*"]
+    })).toThrow(/content script match/u);
+    expect(() => buildBrowserExtensionManifest({
+      target: "chromium",
+      contentScriptMatches: ["http://example.com/*"]
+    })).toThrow(/content script match/u);
+    expect(() => buildBrowserExtensionManifest({
+      target: "chromium",
+      contentScriptMatches: ["http://localhost:0/*"]
+    })).toThrow(/content script match/u);
+    expect(() => buildBrowserExtensionManifest({
+      target: "chromium",
+      contentScriptMatches: ["http://localhost:65536/*"]
+    })).toThrow(/content script match/u);
+    expect(() => buildBrowserExtensionManifest({
+      target: "chromium",
+      contentScriptMatches: ["https://example.com/*", "https://example.com/*"]
+    })).toThrow(/duplicated/u);
   });
 });

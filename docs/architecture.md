@@ -62,9 +62,11 @@ packages, but it must not export test-only signing as a production path.
   adapter for source/origin gating before forwarding, and a pure page-script
   bootstrap that installs the provider over an injected bridge exchange.
   It can build a minimal MV3 manifest with `nativeMessaging` as the only
-  permission. It does not yet ship extension packaging, content-script
-  injection, page-script injection, native-host installation, permission UI,
-  persistent grants, or signer dispatch.
+  permission, and an opt-in explicit-origin content-script manifest profile
+  that still omits host-permission fields, broad URL matches, extension
+  storage, grants, and key custody. It does not yet ship full extension
+  packaging, automatic content-script/page-script injection, native-host
+  installation, permission UI, persistent grants, or signer dispatch.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
   central nSealr v0 implementation limit profile used by companion parsers,
@@ -330,11 +332,16 @@ approval artifact is created. Approval requires the exact reviewed local pairing
 digest, records the approved page-visible methods, and only authorizes a future
 provider-injection step. It does not create local-service grants, write browser
 storage, inject a provider, or contain key material.
-Its manifest builder is intentionally restrictive: Chromium manifests omit host
-permissions, optional host permissions, content scripts, and storage; Firefox
-manifests require an explicit reviewed extension id and otherwise follow the
-same zero-host-permission boundary. Origin injection and durable extension
-metadata remain blocked on permission UX and reviewed storage locations.
+Its manifest builder is intentionally restrictive: the default Chromium
+manifest omits host permissions, optional host permissions, content scripts,
+and storage; Firefox manifests require an explicit reviewed extension id and
+otherwise follow the same zero-host-permission boundary. An opt-in
+content-script profile may list explicit reviewed origins such as
+`https://example.com/*` or local development origins such as
+`http://localhost:5173/*`, but it rejects `<all_urls>`, wildcard schemes,
+wildcard hosts, non-local `http`, duplicate matches, host-permission fields,
+and storage. Origin injection and durable extension metadata remain blocked on
+permission UX and reviewed storage locations.
 
 Executable SDK examples live in private app `@nsealr/sdk-examples`. They are
 not another access surface and do not own production behavior. Their role is to

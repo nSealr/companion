@@ -339,11 +339,14 @@ and uploads checked tarball artifacts without publishing to npm.
   requester with the explicit-target NIP-07 provider installer without adding an
   injection mechanism. It can build a minimal MV3 manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage
-  permissions. Remaining work: extension packaging, actual
-  content-script/page-script injection, native-messaging installation, browser
-  UI/storage wiring for origin permission approvals, cancellation UI wiring,
-  and real dispatch after M4.7 gates. No local production signing and no
-  extension-side production key storage.
+  permissions by default, plus an opt-in explicit-origin content-script
+  manifest profile that rejects `<all_urls>`, wildcard schemes, wildcard
+  hosts, non-local `http`, duplicate matches, host-permission fields, and
+  storage. Remaining work: extension packaging, actual page-script injection
+  wiring, native-messaging installation, browser UI/storage wiring for origin
+  permission approvals, cancellation UI wiring, and real dispatch after M4.7
+  gates. No local production signing and no extension-side production key
+  storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

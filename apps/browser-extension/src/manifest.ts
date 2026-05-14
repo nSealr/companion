@@ -10,6 +10,15 @@ export type BrowserExtensionManifestOptions = {
   description?: string;
   version?: string;
   firefoxExtensionId?: string;
+  contentScriptMatches?: string[];
+};
+
+export type BrowserExtensionContentScriptManifest = {
+  matches: string[];
+  js: ["content-script.js"];
+  run_at: "document_start";
+  all_frames: false;
+  match_about_blank: false;
 };
 
 export type BrowserExtensionManifest = {
@@ -25,6 +34,7 @@ export type BrowserExtensionManifest = {
   action: {
     default_title: string;
   };
+  content_scripts?: [BrowserExtensionContentScriptManifest];
   browser_specific_settings?: {
     gecko: {
       id: string;
@@ -63,8 +73,48 @@ function requireFirefoxExtensionId(value: string | undefined): string {
   return value;
 }
 
+const EXPLICIT_HTTPS_CONTENT_SCRIPT_MATCH =
+  /^https:\/\/([A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.([A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*\/\*$/u;
+const LOCAL_HTTP_CONTENT_SCRIPT_MATCH =
+  /^http:\/\/(?:localhost|127\.0\.0\.1)(?::([0-9]{1,5}))?\/\*$/u;
+
+function isValidTcpPort(value: string): boolean {
+  if (!/^[1-9][0-9]{0,4}$/u.test(value)) return false;
+  return Number(value) <= 65535;
+}
+
+function isReviewedContentScriptMatch(value: string): boolean {
+  if (value === "<all_urls>" || value.includes("*://") || value.includes("://*")) {
+    return false;
+  }
+  if (EXPLICIT_HTTPS_CONTENT_SCRIPT_MATCH.test(value)) return true;
+  const localHttpMatch = LOCAL_HTTP_CONTENT_SCRIPT_MATCH.exec(value);
+  if (localHttpMatch === null) return false;
+  const port = localHttpMatch[1];
+  return port === undefined || isValidTcpPort(port);
+}
+
+function requireContentScriptMatches(value: string[] | undefined): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value) || value.length === 0 || value.length > 32) {
+    throw new Error("browser extension content script matches are invalid");
+  }
+  const matches: string[] = [];
+  for (const match of value) {
+    if (typeof match !== "string" || !isReviewedContentScriptMatch(match)) {
+      throw new Error("browser extension content script match is unsupported");
+    }
+    if (matches.includes(match)) {
+      throw new Error("browser extension content script match is duplicated");
+    }
+    matches.push(match);
+  }
+  return matches;
+}
+
 export function buildBrowserExtensionManifest(options: BrowserExtensionManifestOptions): BrowserExtensionManifest {
   const name = requireName(options.name);
+  const contentScriptMatches = requireContentScriptMatches(options.contentScriptMatches);
   const manifest: BrowserExtensionManifest = {
     manifest_version: 3,
     name,
@@ -79,6 +129,15 @@ export function buildBrowserExtensionManifest(options: BrowserExtensionManifestO
       default_title: name
     }
   };
+  if (contentScriptMatches !== undefined) {
+    manifest.content_scripts = [{
+      matches: contentScriptMatches,
+      js: ["content-script.js"],
+      run_at: "document_start",
+      all_frames: false,
+      match_about_blank: false
+    }];
+  }
 
   if (options.target === "chromium") {
     return manifest;

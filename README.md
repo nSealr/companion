@@ -105,8 +105,11 @@ match the shared `contract_id`.
   includes a pure content-window event adapter that checks page source/origin
   before that bridge handler is reached,
   has a pure page-script provider bootstrap over that injected bridge exchange,
-  and can build a minimal no-host-permission manifest. It does not package or
-  install a browser extension.
+  and can build either the default minimal no-host-permission manifest or an
+  opt-in explicit-origin content-script manifest profile. The content-script
+  profile still omits host-permission fields, broad URL matches, extension
+  storage, and provider grants. It does not package or install a browser
+  extension.
 - `@nsealr/client` exposes the shared local-client identity parser, including
   the browser-safe `@nsealr/client/client-identity` subpath, used before
   pairing, route selection, signer-request validation, and response

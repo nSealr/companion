@@ -273,6 +273,12 @@ request or a secretless `nsealr-browser-extension-route-config-v0` selected
 account config that is parsed into a `sign_event` route request before listener
 installation. It does not read global browser objects, write extension storage,
 create grants, dispatch signers, or hold key material.
+The packaged background source entrypoint
+`nsealr-background-entrypoint.ts` is a thin launcher over that reviewed adapter:
+it accepts an explicit packaged global scope, resolves an unambiguous
+`browser.runtime` or `chrome.runtime`, requires the secretless route config, and
+then installs the background listener. It still does not read extension storage,
+create grants, dispatch signers, or hold key material.
 The private `@nsealr/browser-extension` app now defines the internal extension
 message boundary for `get_public_key` and `sign_event`. The parser rejects
 unsupported NIP-07/NIP-44/NIP-04-style methods, malformed request ids, extra
@@ -335,6 +341,12 @@ delegates to the pure composer. It still does not read global browser objects,
 choose storage locations, create grants, dispatch signers, or hold key
 material. Trusted runtime sender identity remains a background/runtime-message
 boundary, not content-script metadata.
+The packaged content-script source entrypoint
+`nsealr-content-script-entrypoint.ts` is the matching launcher over that
+adapter: it resolves document, window, location, and an unambiguous
+`browser.runtime` or `chrome.runtime` from an explicit packaged global scope
+before installing the page-script injector plus runtime bridge. It does not add
+host permissions, browser storage, grants, signer dispatch, or key custody.
 The content-runtime adapters are the next browser API boundary below that
 composer. They turn an injected runtime-like object into a reviewed extension
 resource URL resolver and a runtime-message sender, reject unsafe resource
@@ -389,6 +401,11 @@ over that page-side bootstrap. It accepts an explicit page window and location,
 derives the reviewed page origin, installs NIP-07 on that explicit target, and
 uses the page-window bridge for requests. It still does not read global browser
 objects, write storage, create grants, dispatch signers, or hold key material.
+The packaged page-script source entrypoint
+`nsealr-page-script-entrypoint.ts` is the matching launcher over that adapter:
+it resolves the explicit packaged window and location scope and installs only
+the reviewed NIP-07 page-window provider. It has no extension runtime, storage,
+grants, signer dispatch, or key custody.
 The page-script injection helper is the content-script-side DOM adapter. It
 accepts only explicit document and extension-URL resolver dependencies, injects
 the reviewed packaged page-script entrypoint resource as a module script with

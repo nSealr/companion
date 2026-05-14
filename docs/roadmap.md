@@ -369,20 +369,25 @@ and uploads checked tarball artifacts without publishing to npm.
   app-local route-shape fork. A pure page-script injection
   helper now injects the reviewed page-script resource through explicit
   document and extension-URL resolver dependencies with duplicate-target and
-  URL checks. Packaged background, content-script, and page-script entrypoint
-  filenames are now distinct from the internal pure module filenames, and the
-  manifest/injection helpers use those packaged names. The browser-extension
+  URL checks. Packaged background, content-script, and page-script source
+  entrypoint modules now call the reviewed browser adapters through an explicit
+  packaged global scope, resolving only unambiguous `browser.runtime` or
+  `chrome.runtime` capabilities where runtime access is needed. They still do
+  not read extension storage, create grants, install native-host manifests,
+  dispatch signers, or hold key material. Packaged background, content-script,
+  and page-script entrypoint filenames are now distinct from the internal pure
+  module filenames, and the manifest/injection helpers use those packaged
+  names. The browser-extension
   manifest builder can still build a minimal
   MV3 manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage
   permissions by default, plus an opt-in explicit-origin content-script
   manifest profile that rejects `<all_urls>`, wildcard schemes, wildcard
   hosts, non-local `http`, duplicate matches, host-permission fields, and
-  storage. Remaining work: extension packaging, actual packaged entrypoint
-  modules that call the reviewed adapters, native-messaging installation, browser
-  UI/storage wiring for origin permission approvals, cancellation UI wiring,
-  and real dispatch after M4.7 gates. No local production signing and no
-  extension-side production key storage.
+  storage. Remaining work: extension packaging, native-messaging installation,
+  browser UI/storage wiring for origin permission approvals, cancellation UI
+  wiring, and real dispatch after M4.7 gates. No local production signing and
+  no extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

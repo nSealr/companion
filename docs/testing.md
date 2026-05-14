@@ -123,7 +123,11 @@ single-repository CI. Cross-repository drift remains guarded by
   response. Content-script bootstrap tests prove the injected window listener,
   runtime-message sender, and response poster can be composed behind one
   install/dispose handle while still ignoring unrelated messages and reporting
-  malformed accepted page envelopes.
+  malformed accepted page envelopes. Content-script entrypoint tests prove the
+  page-script injection helper and runtime bridge can be installed as one
+  pre-packaging unit, forward accepted page requests to runtime messaging, clean
+  up both resources through one dispose handle, and remove the injected script
+  if bridge listener setup fails.
   Content-window tests prove already-received page messages are source/origin
   gated, unrelated messages are ignored, and malformed nSealr envelopes fail
   before background contact without registering listeners or calling

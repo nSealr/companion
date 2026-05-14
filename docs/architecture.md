@@ -310,6 +310,14 @@ origin, explicit sender metadata, injected runtime-message sender, injected
 response poster, cancellation, and diagnostics into one install/dispose handle
 without touching global browser APIs, storage, grants, signer dispatch, or key
 material.
+The content-script entrypoint composer is the pre-packaging adapter for the
+future browser content script. It injects the reviewed page script through
+explicit document and extension-URL dependencies, installs the runtime bridge
+through explicit window/runtime/poster dependencies, disposes both pieces
+together, and removes the injected page script if bridge installation fails.
+It still does not call global `document`, `window`, `browser`, or `chrome`
+APIs directly and does not write storage, create grants, dispatch signers, or
+hold key material.
 The content-window event adapter handles one already-received window message at
 a time. It accepts only messages from the expected page source and normalized
 page origin, ignores unrelated data without responding, and forwards only

@@ -338,9 +338,11 @@ and uploads checked tarball artifacts without publishing to npm.
   validated internal requests through an injected runtime-message sender with
   cancellation propagation. A content-script runtime bridge bootstrap now
   composes the injected window listener, runtime-message sender, and response
-  poster behind one install/dispose handle. A pure content-window event adapter
-  now gates already received page messages by expected source and normalized
-  origin before
+  poster behind one install/dispose handle. A content-script entrypoint
+  composer now joins page-script injection and that runtime bridge over explicit
+  dependencies, including cleanup if bridge setup fails. A pure content-window
+  event adapter now gates already received page messages by expected source and
+  normalized origin before
   forwarding nSealr page-bridge envelopes, and an injected content-window
   listener installer can register that boundary on an explicit target with
   explicit teardown and injected response posting. The matching page-window
@@ -357,11 +359,11 @@ and uploads checked tarball artifacts without publishing to npm.
   permissions by default, plus an opt-in explicit-origin content-script
   manifest profile that rejects `<all_urls>`, wildcard schemes, wildcard
   hosts, non-local `http`, duplicate matches, host-permission fields, and
-  storage. Remaining work: extension packaging, packaged entrypoint wiring for
-  the injection helper, native-messaging installation, browser UI/storage
-  wiring for origin permission approvals, cancellation UI wiring, and real
-  dispatch after M4.7 gates. No local production signing and no extension-side
-  production key storage.
+  storage. Remaining work: extension packaging, browser-global entrypoint
+  adapters around the pure composers, native-messaging installation, browser
+  UI/storage wiring for origin permission approvals, cancellation UI wiring,
+  and real dispatch after M4.7 gates. No local production signing and no
+  extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

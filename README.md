@@ -117,6 +117,8 @@ match the shared `contract_id`.
   exchange or the injected page-window bridge,
   includes a pure page-script injection helper over explicit document and
   extension-URL resolver dependencies,
+  includes a pure content-script entrypoint composer that joins page-script
+  injection with the runtime bridge and cleans up partial installs,
   and can build either the default minimal no-host-permission manifest or an
   opt-in explicit-origin content-script manifest profile. The content-script
   profile still omits host-permission fields, broad URL matches, extension

@@ -110,6 +110,9 @@ public npm release.
 - Private browser-extension page-script injection helper over explicit document
   and extension-URL resolver dependencies, with duplicate-target, script-file,
   URL-protocol, URL-path, and teardown checks.
+- Private browser-extension content-script entrypoint composer that injects the
+  reviewed page script and installs the runtime bridge with cleanup if listener
+  setup fails.
 - Private browser-extension explicit-origin content-script manifest profile
   that keeps the minimal no-content-script manifest as the default and rejects
   broad URL access, host-permission fields, storage, and duplicate matches.

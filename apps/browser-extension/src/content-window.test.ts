@@ -192,7 +192,7 @@ describe("browser extension content-window bridge boundary", () => {
       data: {
         protocol: BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL,
         version: 1,
-        direction: "extension_to_page",
+        direction: "unsupported_direction",
         request_id: "content-window-wrong-direction",
         request: {
           protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
@@ -293,7 +293,7 @@ describe("browser extension content-window bridge boundary", () => {
     expect(injectedWindow.listenerCount()).toBe(0);
   });
 
-  it("ignores unrelated listener messages and reports malformed nSealr envelopes", async () => {
+  it("ignores unrelated listener messages and extension responses", async () => {
     const pageWindow = {};
     const injectedWindow = createInjectedWindowTarget();
     const responses: unknown[] = [];
@@ -327,6 +327,53 @@ describe("browser extension content-window bridge boundary", () => {
         protocol: BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL,
         version: 1,
         direction: "extension_to_page",
+        request_id: "content-window-listener-response",
+        response: {
+          protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+          version: 1,
+          request_id: "content-window-listener-response",
+          ok: true,
+          result: {
+            pubkey: publicKey
+          }
+        }
+      }
+    });
+    await flushAsyncListeners();
+
+    expect(responses).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+
+  it("reports malformed incoming nSealr envelopes", async () => {
+    const pageWindow = {};
+    const injectedWindow = createInjectedWindowTarget();
+    const responses: unknown[] = [];
+    const errors: unknown[] = [];
+
+    installBrowserExtensionContentWindowBridgeListener({
+      target: injectedWindow.target,
+      expectedSource: pageWindow,
+      expectedOrigin: "https://example.com",
+      sender,
+      requestBackground: () => {
+        throw new Error("background must not be contacted");
+      },
+      postResponse: (response) => {
+        responses.push(response);
+      },
+      onError: (error) => {
+        errors.push(error);
+      }
+    });
+
+    injectedWindow.dispatch({
+      source: pageWindow,
+      origin: "https://example.com",
+      data: {
+        protocol: BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL,
+        version: 1,
+        direction: "unsupported_direction",
         request_id: "content-window-listener-malformed",
         request: {
           protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,

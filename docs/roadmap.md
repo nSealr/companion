@@ -338,7 +338,10 @@ and uploads checked tarball artifacts without publishing to npm.
   received page messages by expected source and normalized origin before
   forwarding nSealr page-bridge envelopes, and an injected content-window
   listener installer can register that boundary on an explicit target with
-  explicit teardown and injected response posting. A pure page-script bootstrap
+  explicit teardown and injected response posting. The matching page-window
+  bridge exchange now posts validated page requests to the exact reviewed
+  origin, accepts only matching extension responses, and cleans up listeners on
+  response, abort, timeout, or posting failure. A pure page-script bootstrap
   now composes that requester with the explicit-target NIP-07 provider
   installer without adding an injection mechanism. It can build a minimal MV3
   manifest with

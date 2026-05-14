@@ -77,8 +77,11 @@ function requireExpectedPageOrigin(value: unknown): string {
   return origin;
 }
 
-function isPageBridgeEnvelope(value: unknown): boolean {
-  return isRecord(value) && value.protocol === BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL;
+function isIncomingPageBridgeEnvelope(value: unknown): boolean {
+  if (isRecord(value) && value.protocol === BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL) {
+    return value.direction !== "extension_to_page";
+  }
+  return false;
 }
 
 export async function handleBrowserExtensionContentWindowBridgeEvent(
@@ -89,7 +92,7 @@ export async function handleBrowserExtensionContentWindowBridgeEvent(
   if (event.source !== options.expectedSource) return undefined;
   const expectedOrigin = requireExpectedPageOrigin(options.expectedOrigin);
   if (normalizePageOrigin(event.origin) !== expectedOrigin) return undefined;
-  if (!isPageBridgeEnvelope(event.data)) return undefined;
+  if (!isIncomingPageBridgeEnvelope(event.data)) return undefined;
   return handleBrowserExtensionContentScriptBridgeMessage(event.data, {
     sender: options.sender,
     requestBackground: options.requestBackground,

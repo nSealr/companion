@@ -311,6 +311,14 @@ through an injected response poster, and reports malformed nSealr envelopes
 through an injected error callback. It still does not touch global `window`,
 browser runtime APIs, extension storage, grants, provider injection, signer
 dispatch, or key material.
+The page-window bridge exchange is the matching page-side adapter over an
+injected window-like target. For each request it registers a temporary
+`message` listener, posts the validated `page_to_extension` envelope only to
+the exact reviewed page origin, ignores unrelated sources, origins, request
+ids, and outbound envelopes, accepts only the matching `extension_to_page`
+response, and removes the listener on response, abort, timeout, or posting
+failure. It does not touch global `window`, browser runtime APIs, storage,
+grants, signer dispatch, or key material.
 The page-script bootstrap composes that requester with the NIP-07 page
 provider and explicit-target installer. It gives the future injected page
 script a single pure entrypoint while still requiring an injected bridge

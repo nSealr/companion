@@ -123,10 +123,13 @@ single-repository CI. Cross-repository drift remains guarded by
   `postMessage`. They also prove the injected listener installer registers
   only on an explicit target, posts accepted responses only through an injected
   poster, reports malformed nSealr envelopes through an injected error callback,
-  and removes the listener through `dispose()`. Page-script
-  bootstrap tests prove the explicit-target NIP-07 provider can be installed
-  over that bridge exchange without overwriting an existing provider or adding
-  browser injection.
+  and removes the listener through `dispose()`. Page-window
+  bridge-exchange tests prove the page side posts only to the exact reviewed
+  origin, accepts only matching extension responses, ignores unrelated
+  messages, and cleans up listeners on response, abort, timeout, and
+  `postMessage` failure. Page-script bootstrap tests prove the explicit-target
+  NIP-07 provider can be installed over that bridge exchange without
+  overwriting an existing provider or adding browser injection.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids. They also pin the opt-in explicit-origin

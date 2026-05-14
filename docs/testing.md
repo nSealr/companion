@@ -141,6 +141,11 @@ single-repository CI. Cross-repository drift remains guarded by
   `chrome.runtime`, reject ambiguous runtime globals before listener/script
   installation, and continue to avoid storage, grants, signer dispatch, and key
   custody.
+  Package-plan tests prove the reviewed manifest, packaged output filenames,
+  and source launcher paths stay aligned before bundle generation exists. They
+  reject storage permission, host-permission, background-output, and
+  content-script-output drift without installing native-host manifests or
+  writing extension storage.
   Content-script browser entrypoint tests prove explicit browser-like
   document/window/location/runtime dependencies compose into page-script
   injection, runtime messaging, response posting, and teardown without reading

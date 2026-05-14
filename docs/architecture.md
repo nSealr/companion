@@ -423,6 +423,10 @@ drift such as storage permission, host permissions, mismatched background
 output, or mismatched content-script output. It deliberately does not build an
 installable extension, install native-host manifests, write browser storage,
 dispatch signers, or hold key material.
+The private `@nsealr/browser-extension` app exposes this boundary through
+`pnpm --filter @nsealr/browser-extension package-plan -- --target ...`, which
+prints JSON to stdout only. The command has no output-path option and performs
+no filesystem install or browser-storage mutation.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

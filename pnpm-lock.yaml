@@ -41,6 +41,10 @@ importers:
       '@nsealr/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
+    devDependencies:
+      tsx:
+        specifier: 4.21.0
+        version: 4.21.0
 
   apps/cli:
     dependencies:

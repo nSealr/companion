@@ -380,7 +380,9 @@ and uploads checked tarball artifacts without publishing to npm.
   names. A deterministic package-plan boundary now binds the reviewed manifest,
   packaged output filenames, and source launcher paths into a checked
   pre-bundling artifact, rejecting storage/host permissions or entrypoint drift
-  before a bundle can be treated as reviewed. The browser-extension
+  before a bundle can be treated as reviewed. A private browser-extension
+  `package-plan` script now emits that JSON to stdout only, with no output-path
+  or installer behavior. The browser-extension
   manifest builder can still build a minimal
   MV3 manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage

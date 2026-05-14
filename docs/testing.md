@@ -145,7 +145,10 @@ single-repository CI. Cross-repository drift remains guarded by
   and source launcher paths stay aligned before bundle generation exists. They
   reject storage permission, host-permission, background-output, and
   content-script-output drift without installing native-host manifests or
-  writing extension storage.
+  writing extension storage. Package-plan CLI tests prove the private
+  browser-extension script renders deterministic JSON from explicit target and
+  content-script arguments, rejects incomplete or broad-match inputs, and has no
+  output-path/install behavior.
   Content-script browser entrypoint tests prove explicit browser-like
   document/window/location/runtime dependencies compose into page-script
   injection, runtime messaging, response posting, and teardown without reading

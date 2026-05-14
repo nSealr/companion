@@ -50,6 +50,9 @@ match the shared `contract_id`.
   public packages through their built entrypoints and exercises request/QR,
   local-service, browser-provider, and already-decrypted NIP-46 flows without
   importing test-only signing helpers.
+- Public package production-source imports are checked in CI so `@nsealr/*`
+  imports stay on reviewed public entrypoints/subpaths and cannot drift into
+  private apps or test-only signer packages.
 - `@nsealr/client` defines the first local companion service protocol and
   native-messaging frame codec plus the high-level local-service client used by
   future browser, SDK, desktop, and CLI callers. The implemented operations are

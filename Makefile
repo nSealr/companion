@@ -1,7 +1,7 @@
 PNPM_VERSION := 10.33.4
 PNPM ?= $(shell command -v pnpm >/dev/null 2>&1 && printf '%s' pnpm || printf '%s' 'npm exec --yes --package=pnpm@$(PNPM_VERSION) -- pnpm')
 
-.PHONY: setup build test package-smoke examples-smoke readme-examples api-docs api-docs-update api-review pack-smoke release-artifacts lint audit docs ci
+.PHONY: setup build test package-smoke examples-smoke readme-examples api-docs api-docs-update api-review public-imports pack-smoke release-artifacts lint audit docs ci
 
 setup:
 	$(PNPM) install
@@ -37,6 +37,10 @@ api-review:
 	python3 scripts/verify_repo.py
 	$(PNPM) api-review:check
 
+public-imports:
+	python3 scripts/verify_repo.py
+	$(PNPM) public-imports:check
+
 pack-smoke: build
 	python3 scripts/verify_repo.py
 	$(PNPM) pack-smoke
@@ -58,4 +62,4 @@ docs:
 	$(PNPM) api-docs:check
 	$(PNPM) api-review:check
 
-ci: setup build test package-smoke examples-smoke readme-examples api-docs api-review pack-smoke lint audit docs
+ci: setup build test package-smoke examples-smoke readme-examples api-docs api-review public-imports pack-smoke lint audit docs

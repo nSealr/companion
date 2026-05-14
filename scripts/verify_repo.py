@@ -116,12 +116,14 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("package.json must expose API documentation regeneration")
     elif scripts.get("api-review:check") != "node scripts/check_api_review.mjs":
         errors.append("package.json must expose API review drift checks")
+    elif scripts.get("public-imports:check") != "node scripts/check_public_imports.mjs":
+        errors.append("package.json must expose public import-hygiene checks")
     elif scripts.get("pack-smoke") != "node scripts/pack_smoke.mjs":
         errors.append("package.json must expose the packed tarball smoke script")
     elif scripts.get("release-artifacts") != "node scripts/prepare_release_artifacts.mjs --out release-artifacts/packages":
         errors.append("package.json must expose release-artifacts preparation")
-    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm api-review:check && pnpm pack-smoke":
-        errors.append("package.json ci must build package artifacts and API review checks")
+    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm api-review:check && pnpm public-imports:check && pnpm pack-smoke":
+        errors.append("package.json ci must build package artifacts, API review, and import-hygiene checks")
 
     makefile = makefile_path.read_text(encoding="utf-8")
     if "PNPM_VERSION := 10.33.4" not in makefile:
@@ -142,6 +144,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile must expose API documentation regeneration")
     if "api-review:" not in makefile or "$(PNPM) api-review:check" not in makefile:
         errors.append("Makefile must run the API review drift check")
+    if "public-imports:" not in makefile or "$(PNPM) public-imports:check" not in makefile:
+        errors.append("Makefile must run the public import-hygiene check")
     if "pack-smoke:" not in makefile or "$(PNPM) pack-smoke" not in makefile:
         errors.append("Makefile must run the packed tarball smoke")
     if "release-artifacts:" not in makefile or "$(PNPM) release-artifacts" not in makefile:

@@ -23,6 +23,9 @@ public npm release.
   against built package entrypoints in CI.
 - Digest-bound public API review for every publishable package before npm alpha
   work.
+- Public package import-hygiene gate that checks production source imports stay
+  inside reviewed public package entrypoints/subpaths and never depend on
+  private apps or test-only signer packages.
 - `@nsealr/sdk` platform-neutral facade over curated public namespaces for app,
   browser-extension, and companion integrations without importing private
   signing helpers, Node-only fixtures, or host transport adapters.

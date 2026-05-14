@@ -201,6 +201,10 @@ single-repository CI. Cross-repository drift remains guarded by
   `docs/api.md` digest and includes a review section for every publishable
   package. Intentional export changes must update both API docs and the API
   review before CI can pass.
+- `make public-imports` verifies that production source for public packages
+  imports other `@nsealr/*` packages only through reviewed public
+  entrypoints/subpaths, keeps relative imports inside the package `src`
+  boundary, and never imports private apps or the test-only signer package.
 - `make pack-smoke` packs public `@nsealr/*` tarballs, verifies they contain
   only `dist`, README, and package metadata, verifies `workspace:*` dependency
   protocols were rewritten, installs the tarballs into a temporary npm consumer

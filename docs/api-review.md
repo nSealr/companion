@@ -12,6 +12,10 @@ Source: `docs/api.md`
 
 - Public packages must import through package entrypoints, not deep source
   paths.
+- Public package production source must pass the import-hygiene gate: relative
+  imports stay inside the package `src` boundary, `@nsealr/*` imports use
+  reviewed public entrypoints/subpaths, and private apps or test-only packages
+  stay out of production code.
 - Public packages must remain secretless. They must not generate, import,
   persist, export, or custody production private keys, mnemonics, passphrases,
   `nsec` values, or decrypted signing material.

@@ -443,6 +443,11 @@ prove that a consumer can use the built public package entrypoints for request
 validation, QR envelopes, local-service calls, browser-provider integration,
 and already-decrypted NIP-46 decisions without importing private test-only
 signing code or storing secrets.
+The public package import-hygiene gate checks production source separately from
+package manifests and tarball contents. It rejects `@nsealr/*` imports that do
+not resolve to reviewed public packages or exported subpaths, rejects relative
+imports that escape the package `src` boundary, and keeps private apps plus the
+test-only signer package out of production package code.
 
 ## Current CLI Flow
 

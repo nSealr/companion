@@ -389,10 +389,12 @@ and uploads checked tarball artifacts without publishing to npm.
   Executable SDK examples now import every publishable public package at least
   once without importing `@nsealr/dev-signer`. Public package README snippets
   are marked and executed through `make readme-examples`. The public API review
-  is digest-bound to generated API docs. Changelog and release policy are
-  present. A manual release rehearsal workflow prepares checked tarball
-  artifacts without npm publication. Actual npm trusted publishing/provenance
-  activation remains pending.
+  is digest-bound to generated API docs. Public package import hygiene is now
+  checked so production source cannot drift into private apps, unreviewed
+  `@nsealr/*` subpaths, or the test-only signer package. Changelog and release
+  policy are present. A manual release rehearsal workflow prepares checked
+  tarball artifacts without npm publication. Actual npm trusted
+  publishing/provenance activation remains pending.
 - M5 full NIP-46/Nostr Connect relay session integration.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and

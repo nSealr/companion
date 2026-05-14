@@ -103,7 +103,9 @@ match the shared `contract_id`.
   page/content-script messaging, includes a pure content-script bridge handler
   that binds page envelopes to an injected sender-aware background requester,
   includes a pure content-window event adapter that checks page source/origin
-  before that bridge handler is reached,
+  before that bridge handler is reached, includes an injected content-window
+  message-listener installer with explicit teardown and injected response
+  posting,
   has a pure page-script provider bootstrap over that injected bridge exchange,
   and can build either the default minimal no-host-permission manifest or an
   opt-in explicit-origin content-script manifest profile. The content-script

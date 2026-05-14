@@ -116,7 +116,10 @@ single-repository CI. Cross-repository drift remains guarded by
   Content-window tests prove already-received page messages are source/origin
   gated, unrelated messages are ignored, and malformed nSealr envelopes fail
   before background contact without registering listeners or calling
-  `postMessage`. Page-script
+  `postMessage`. They also prove the injected listener installer registers
+  only on an explicit target, posts accepted responses only through an injected
+  poster, reports malformed nSealr envelopes through an injected error callback,
+  and removes the listener through `dispose()`. Page-script
   bootstrap tests prove the explicit-target NIP-07 provider can be installed
   over that bridge exchange without overwriting an existing provider or adding
   browser injection.

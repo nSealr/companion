@@ -5,7 +5,11 @@ import {
   createBrowserExtensionBackgroundController,
   type BrowserExtensionBackgroundRequestOptions
 } from "./background.js";
-import { handleBrowserExtensionContentWindowBridgeEvent } from "./content-window.js";
+import {
+  handleBrowserExtensionContentWindowBridgeEvent,
+  installBrowserExtensionContentWindowBridgeListener,
+  type BrowserExtensionContentWindowMessageListener
+} from "./content-window.js";
 import { BROWSER_EXTENSION_MESSAGE_PROTOCOL } from "./handler.js";
 import { type BrowserExtensionRequest } from "./messages.js";
 import { BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL } from "./page-bridge.js";
@@ -68,6 +72,41 @@ function pageBridgeRequest(requestId: string): unknown {
       method: "get_public_key"
     }
   };
+}
+
+function createInjectedWindowTarget(): {
+  target: {
+    addEventListener(type: "message", listener: BrowserExtensionContentWindowMessageListener): void;
+    removeEventListener(type: "message", listener: BrowserExtensionContentWindowMessageListener): void;
+  };
+  dispatch(event: unknown): void;
+  listenerCount(): number;
+} {
+  const listeners = new Set<BrowserExtensionContentWindowMessageListener>();
+  return {
+    target: {
+      addEventListener(type: "message", listener: BrowserExtensionContentWindowMessageListener): void {
+        expect(type).toBe("message");
+        listeners.add(listener);
+      },
+      removeEventListener(type: "message", listener: BrowserExtensionContentWindowMessageListener): void {
+        expect(type).toBe("message");
+        listeners.delete(listener);
+      }
+    },
+    dispatch(event: unknown): void {
+      for (const listener of listeners) {
+        listener(event);
+      }
+    },
+    listenerCount(): number {
+      return listeners.size;
+    }
+  };
+}
+
+async function flushAsyncListeners(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 describe("browser extension content-window bridge boundary", () => {
@@ -195,5 +234,139 @@ describe("browser extension content-window bridge boundary", () => {
       sender,
       requestBackground: () => ({})
     })).rejects.toThrow(/expected origin/u);
+  });
+
+  it("installs an injected window listener and posts accepted bridge responses", async () => {
+    const nativeRequests: LocalServiceRequest[] = [];
+    const pageWindow = {};
+    const injectedWindow = createInjectedWindowTarget();
+    const responses: unknown[] = [];
+    const controller = createBrowserExtensionBackgroundController({
+      sendNativeMessage: nativeResponder(nativeRequests),
+      routeRequest,
+      nextServiceRequestId: () => "content-window-listener-route"
+    });
+
+    const handle = installBrowserExtensionContentWindowBridgeListener({
+      target: injectedWindow.target,
+      expectedSource: pageWindow,
+      expectedOrigin: "https://example.com",
+      sender,
+      requestBackground: (request, requestSender, options) => controller.handleRequest(request, requestSender, options),
+      postResponse: (response, target) => {
+        responses.push({ response, target });
+      }
+    });
+    expect(injectedWindow.listenerCount()).toBe(1);
+
+    injectedWindow.dispatch({
+      source: pageWindow,
+      origin: "https://example.com",
+      data: pageBridgeRequest("content-window-listener")
+    });
+    await flushAsyncListeners();
+
+    expect(responses).toEqual([{
+      response: {
+        protocol: BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL,
+        version: 1,
+        direction: "extension_to_page",
+        request_id: "content-window-listener",
+        response: {
+          protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+          version: 1,
+          request_id: "content-window-listener",
+          ok: true,
+          result: {
+            pubkey: publicKey
+          }
+        }
+      },
+      target: {
+        source: pageWindow,
+        origin: "https://example.com"
+      }
+    }]);
+    expect(nativeRequests.map((request) => request.operation)).toEqual(["select_account_route"]);
+
+    handle.dispose();
+    expect(injectedWindow.listenerCount()).toBe(0);
+  });
+
+  it("ignores unrelated listener messages and reports malformed nSealr envelopes", async () => {
+    const pageWindow = {};
+    const injectedWindow = createInjectedWindowTarget();
+    const responses: unknown[] = [];
+    const errors: unknown[] = [];
+
+    installBrowserExtensionContentWindowBridgeListener({
+      target: injectedWindow.target,
+      expectedSource: pageWindow,
+      expectedOrigin: "https://example.com",
+      sender,
+      requestBackground: () => {
+        throw new Error("background must not be contacted");
+      },
+      postResponse: (response) => {
+        responses.push(response);
+      },
+      onError: (error) => {
+        errors.push(error);
+      }
+    });
+
+    injectedWindow.dispatch({
+      source: {},
+      origin: "https://example.com",
+      data: pageBridgeRequest("content-window-listener-wrong-source")
+    });
+    injectedWindow.dispatch({
+      source: pageWindow,
+      origin: "https://example.com",
+      data: {
+        protocol: BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL,
+        version: 1,
+        direction: "extension_to_page",
+        request_id: "content-window-listener-malformed",
+        request: {
+          protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+          version: 1,
+          request_id: "content-window-listener-malformed",
+          method: "get_public_key"
+        }
+      }
+    });
+    await flushAsyncListeners();
+
+    expect(responses).toEqual([]);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toBeInstanceOf(Error);
+    expect((errors[0] as Error).message).toMatch(/direction/u);
+  });
+
+  it("does not receive events after disposal", async () => {
+    const injectedWindow = createInjectedWindowTarget();
+    const pageWindow = {};
+    const handle = installBrowserExtensionContentWindowBridgeListener({
+      target: injectedWindow.target,
+      expectedSource: pageWindow,
+      expectedOrigin: "https://example.com",
+      sender,
+      requestBackground: () => {
+        throw new Error("disposed listener must not be called");
+      },
+      postResponse: () => {
+        throw new Error("disposed listener must not post");
+      }
+    });
+    handle.dispose();
+    expect(injectedWindow.listenerCount()).toBe(0);
+
+    injectedWindow.dispatch({
+      source: pageWindow,
+      origin: "https://example.com",
+      data: pageBridgeRequest("content-window-disposed")
+    });
+    await flushAsyncListeners();
   });
 });

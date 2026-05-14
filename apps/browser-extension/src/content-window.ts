@@ -21,6 +21,33 @@ export type BrowserExtensionContentWindowBridgeOptions = {
   abortSignal?: AbortSignal;
 };
 
+export type BrowserExtensionContentWindowMessageListener = (event: unknown) => void;
+
+export type BrowserExtensionContentWindowEventTarget = {
+  addEventListener(type: "message", listener: BrowserExtensionContentWindowMessageListener): void;
+  removeEventListener(type: "message", listener: BrowserExtensionContentWindowMessageListener): void;
+};
+
+export type BrowserExtensionContentWindowResponseTarget = {
+  source: unknown;
+  origin: string;
+};
+
+export type BrowserExtensionContentWindowResponsePoster = (
+  response: BrowserExtensionPageBridgeResponse,
+  target: BrowserExtensionContentWindowResponseTarget
+) => Promise<void> | void;
+
+export type BrowserExtensionContentWindowListenerOptions = BrowserExtensionContentWindowBridgeOptions & {
+  target: BrowserExtensionContentWindowEventTarget;
+  postResponse: BrowserExtensionContentWindowResponsePoster;
+  onError?: (error: unknown) => void;
+};
+
+export type BrowserExtensionContentWindowListenerHandle = {
+  dispose(): void;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -67,5 +94,56 @@ export async function handleBrowserExtensionContentWindowBridgeEvent(
     sender: options.sender,
     requestBackground: options.requestBackground,
     ...(options.abortSignal !== undefined ? { abortSignal: options.abortSignal } : {})
+  });
+}
+
+function requireResponseTarget(event: unknown): BrowserExtensionContentWindowResponseTarget {
+  if (!isRecord(event) || typeof event.origin !== "string") {
+    throw new Error("browser content-window response target is invalid");
+  }
+  return {
+    source: event.source,
+    origin: event.origin
+  };
+}
+
+function reportListenerError(error: unknown, onError: ((error: unknown) => void) | undefined): void {
+  if (onError === undefined) return;
+  try {
+    onError(error);
+  } catch {
+    // Listener diagnostics must not create unhandled browser promise failures.
+  }
+}
+
+export function installBrowserExtensionContentWindowBridgeListener(
+  options: BrowserExtensionContentWindowListenerOptions
+): BrowserExtensionContentWindowListenerHandle {
+  let disposed = false;
+  const bridgeOptions: BrowserExtensionContentWindowBridgeOptions = {
+    expectedOrigin: options.expectedOrigin,
+    expectedSource: options.expectedSource,
+    sender: options.sender,
+    requestBackground: options.requestBackground,
+    ...(options.abortSignal !== undefined ? { abortSignal: options.abortSignal } : {})
+  };
+  const listener: BrowserExtensionContentWindowMessageListener = (event) => {
+    void (async () => {
+      try {
+        const response = await handleBrowserExtensionContentWindowBridgeEvent(event, bridgeOptions);
+        if (response === undefined || disposed) return;
+        await options.postResponse(response, requireResponseTarget(event));
+      } catch (error) {
+        reportListenerError(error, options.onError);
+      }
+    })();
+  };
+  options.target.addEventListener("message", listener);
+  return Object.freeze({
+    dispose(): void {
+      if (disposed) return;
+      disposed = true;
+      options.target.removeEventListener("message", listener);
+    }
   });
 }

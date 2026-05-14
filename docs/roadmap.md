@@ -334,19 +334,21 @@ and uploads checked tarball artifacts without publishing to npm.
   envelopes to an injected sender-aware background requester without adding a
   browser listener. A pure content-window event adapter now gates already
   received page messages by expected source and normalized origin before
-  forwarding nSealr page-bridge envelopes, still without registering listeners
-  or calling `postMessage`. A pure page-script bootstrap now composes that
-  requester with the explicit-target NIP-07 provider installer without adding an
-  injection mechanism. It can build a minimal MV3 manifest with
+  forwarding nSealr page-bridge envelopes, and an injected content-window
+  listener installer can register that boundary on an explicit target with
+  explicit teardown and injected response posting. A pure page-script bootstrap
+  now composes that requester with the explicit-target NIP-07 provider
+  installer without adding an injection mechanism. It can build a minimal MV3
+  manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage
   permissions by default, plus an opt-in explicit-origin content-script
   manifest profile that rejects `<all_urls>`, wildcard schemes, wildcard
   hosts, non-local `http`, duplicate matches, host-permission fields, and
   storage. Remaining work: extension packaging, actual page-script injection
   wiring, native-messaging installation, browser UI/storage wiring for origin
-  permission approvals, cancellation UI wiring, and real dispatch after M4.7
-  gates. No local production signing and no extension-side production key
-  storage.
+  permission approvals, runtime listener registration, cancellation UI wiring,
+  and real dispatch after M4.7 gates. No local production signing and no
+  extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

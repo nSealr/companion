@@ -59,8 +59,10 @@ packages, but it must not export test-only signing as a production path.
   has a pure page-bridge envelope and page-side requester adapter for future
   page/content-script messaging. It also has a pure content-script bridge
   handler for sender-bound background forwarding, a pure content-window event
-  adapter for source/origin gating before forwarding, and a pure page-script
-  bootstrap that installs the provider over an injected bridge exchange.
+  adapter for source/origin gating before forwarding, an injected
+  content-window message-listener installer with explicit teardown and injected
+  response posting, and a pure page-script bootstrap that installs the provider
+  over an injected bridge exchange.
   It can build a minimal MV3 manifest with `nativeMessaging` as the only
   permission, and an opt-in explicit-origin content-script manifest profile
   that still omits host-permission fields, broad URL matches, extension
@@ -300,6 +302,13 @@ page origin, ignores unrelated data without responding, and forwards only
 nSealr page-bridge envelopes to the content-script bridge handler. It still
 does not register a `postMessage` listener, call `window.postMessage`, use
 browser runtime APIs, write storage, create grants, or hold key material.
+The content-window listener installer is the next thin adapter around that
+event handler. It registers a `message` listener only on an injected target,
+returns an explicit `dispose()` handle, posts accepted bridge responses only
+through an injected response poster, and reports malformed nSealr envelopes
+through an injected error callback. It still does not touch global `window`,
+browser runtime APIs, extension storage, grants, provider injection, signer
+dispatch, or key material.
 The page-script bootstrap composes that requester with the NIP-07 page
 provider and explicit-target installer. It gives the future injected page
 script a single pure entrypoint while still requiring an injected bridge

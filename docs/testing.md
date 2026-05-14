@@ -74,7 +74,13 @@ single-repository CI. Cross-repository drift remains guarded by
   entrypoints plus `@nsealr/browser-provider` and fails if that runtime graph
   imports Node builtins, uses `Buffer`/`process`, or imports the Node-capable
   `@nsealr/client` root instead of `@nsealr/client/browser`. Run it directly
-  with `make browser-runtime-imports`.
+  with `make browser-runtime-imports`. The browser-runtime bundle smoke then
+  runs esbuild against the packaged background, content-script, and page-script
+  entrypoints with `platform: browser` and fails if bundled outputs contain
+  Node builtin specifiers, `Buffer`, or `process`. Run it directly with
+  `make browser-runtime-bundle`. This is a bundlability gate only; installable
+  extension packaging still needs a reviewed packaged bootstrap/config
+  contract.
 - Browser-extension app tests cover the private internal message parser for
   `get_public_key` and `sign_event`, including unsupported-method rejection,
   malformed-envelope rejection, and shared signer-request validation for event

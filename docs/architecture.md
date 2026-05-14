@@ -69,8 +69,11 @@ packages, but it must not export test-only signing as a production path.
   permission, and an opt-in explicit-origin content-script manifest profile
   that still omits host-permission fields, broad URL matches, extension
   storage, grants, and key custody. It does not yet ship full extension
-  packaging, automatic content-script/page-script injection, native-host
-  installation, permission UI, persistent grants, or signer dispatch.
+  packaging, automatic content-script/page-script injection, packaged
+  bootstrap/config loading, native-host installation, permission UI, persistent
+  grants, or signer dispatch. Its packaged runtime entrypoints are checked by
+  source import hygiene and an esbuild browser bundle smoke before installable
+  package generation is allowed.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
   central nSealr v0 implementation limit profile used by companion parsers,

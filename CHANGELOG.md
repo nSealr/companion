@@ -151,6 +151,9 @@ public npm release.
   checks that prevent packaged browser-extension entrypoints and
   `@nsealr/browser-provider` from importing Node builtins, `Buffer`,
   `process`, or the Node-capable client root.
+- Browser-runtime bundle smoke that runs esbuild against the packaged
+  background, content-script, and page-script entrypoints with
+  `platform: browser`, before installable extension packaging exists.
 - Private browser-extension sender-aware handler that validates both the
   internal request and sender-derived page origin before provider selection.
 - `@nsealr/client` secretless JSON grant-store contract for persisting approved

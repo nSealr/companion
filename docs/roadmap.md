@@ -358,16 +358,19 @@ and uploads checked tarball artifacts without publishing to npm.
   cleans up listeners on response, abort, timeout, or posting failure. Pure
   page-script bootstraps now compose the explicit-target NIP-07 provider
   installer with either an injected bridge exchange or the injected page-window
-  bridge, without adding an injection mechanism. A pure page-script injection
+  bridge, and a page-script browser provider entrypoint adapter now composes
+  explicit window/location dependencies over that page-window bootstrap,
+  without adding an injection mechanism. A pure page-script injection
   helper now injects the reviewed page-script resource through explicit
-  document and extension-URL resolver dependencies with duplicate-target and URL
-  checks. The browser-extension manifest builder can still build a minimal MV3 manifest with
+  document and extension-URL resolver dependencies with duplicate-target and
+  URL checks. The browser-extension manifest builder can still build a minimal
+  MV3 manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage
   permissions by default, plus an opt-in explicit-origin content-script
   manifest profile that rejects `<all_urls>`, wildcard schemes, wildcard
   hosts, non-local `http`, duplicate matches, host-permission fields, and
-  storage. Remaining work: extension packaging, browser-global entrypoint
-  adapters around the pure composers, native-messaging installation, browser
+  storage. Remaining work: extension packaging, packaged entrypoint files that
+  call the reviewed adapters, native-messaging installation, browser
   UI/storage wiring for origin permission approvals, cancellation UI wiring,
   and real dispatch after M4.7 gates. No local production signing and no
   extension-side production key storage.

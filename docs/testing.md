@@ -136,6 +136,10 @@ single-repository CI. Cross-repository drift remains guarded by
   document/window/location/runtime dependencies compose into page-script
   injection, runtime messaging, response posting, and teardown without reading
   global browser objects or injecting after invalid dependency validation.
+  Page-script browser provider entrypoint tests prove explicit browser-like
+  window/location dependencies install NIP-07 over the page-window bridge,
+  reject invalid dependencies before provider injection, and avoid global
+  browser reads.
   Page-origin tests prove the browser-extension bridge accepts HTTPS page
   origins and local HTTP developer origins while rejecting non-origin URLs,
   unsupported schemes, extension URLs, and overlong values through one shared

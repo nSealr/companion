@@ -375,6 +375,11 @@ installs the NIP-07 provider on an explicit target, posts through the injected
 window-like bridge target, enforces exact origin and source filtering through
 that exchange, and still contains no direct browser API dependency, storage,
 grants, or key material.
+The page-script browser provider entrypoint adapter is the browser-like wrapper
+over that page-side bootstrap. It accepts an explicit page window and location,
+derives the reviewed page origin, installs NIP-07 on that explicit target, and
+uses the page-window bridge for requests. It still does not read global browser
+objects, write storage, create grants, dispatch signers, or hold key material.
 The page-script injection helper is the content-script-side DOM adapter. It
 accepts only explicit document and extension-URL resolver dependencies, injects
 the reviewed `page-script.js` resource as a module script with a stable element

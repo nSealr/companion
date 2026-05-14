@@ -123,6 +123,8 @@ match the shared `contract_id`.
   injection with the runtime bridge and cleans up partial installs,
   includes a content-script browser entrypoint adapter over explicit
   document/window/location/runtime dependencies,
+  includes a page-script browser provider entrypoint adapter over explicit
+  window/location dependencies,
   includes content-runtime API adapters that wrap reviewed `runtime.getURL`
   and `runtime.sendMessage` dependencies,
   uses one shared page-origin validator across page-window and content-window

@@ -124,6 +124,9 @@ public npm release.
 - Private browser-extension content-script browser entrypoint adapter that
   composes explicit browser-like document/window/location/runtime dependencies
   without reading globals or adding storage/signer dispatch.
+- Private browser-extension page-script browser provider entrypoint adapter that
+  installs NIP-07 over explicit browser-like window/location dependencies
+  without reading globals or adding storage/grants.
 - Private browser-extension explicit-origin content-script manifest profile
   that keeps the minimal no-content-script manifest as the default and rejects
   broad URL access, host-permission fields, storage, and duplicate matches.

@@ -86,6 +86,9 @@ public npm release.
 - Private browser-extension content-script bridge handler that binds validated
   page bridge envelopes to an injected sender-aware background requester
   without adding browser listeners, runtime APIs, storage, or grants.
+- Private browser-extension content-script runtime requester over an injected
+  runtime-message sender, with abort propagation and no direct browser API
+  dependency.
 - Private browser-extension content-window event adapter that source/origin
   gates already-received page messages before forwarding nSealr page-bridge
   envelopes, without registering listeners or calling `postMessage`.

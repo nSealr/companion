@@ -104,6 +104,8 @@ match the shared `contract_id`.
   page-bridge envelope plus page-side requester adapter for future
   page/content-script messaging, includes a pure content-script bridge handler
   that binds page envelopes to an injected sender-aware background requester,
+  includes a content-script runtime requester over an injected runtime-message
+  sender with request cancellation,
   includes a pure content-window event adapter that checks page source/origin
   before that bridge handler is reached, includes an injected content-window
   message-listener installer with explicit teardown and injected response

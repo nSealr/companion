@@ -298,6 +298,12 @@ forwards cancellation as a background request option, and rejects malformed or
 already-cancelled page messages before the background is contacted. It has no
 `postMessage` listener, no browser runtime dependency, no storage, no grants,
 and no key custody.
+The content-script runtime requester is a thin adapter for the real
+content-script-to-background hop. It accepts an injected runtime-message sender,
+forwards the validated internal request, combines bootstrap and per-request
+abort signals, and rejects already-cancelled or in-flight-cancelled requests
+without relying on global `browser`/`chrome` APIs. It still performs no
+storage, grants, signer dispatch, or key custody.
 The content-window event adapter handles one already-received window message at
 a time. It accepts only messages from the expected page source and normalized
 page origin, ignores unrelated data without responding, and forwards only

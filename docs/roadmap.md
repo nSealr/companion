@@ -334,7 +334,9 @@ and uploads checked tarball artifacts without publishing to npm.
   internal requests into that bridge envelope before accepting validated bridge
   responses. A pure content-script bridge handler now binds page bridge
   envelopes to an injected sender-aware background requester without adding a
-  browser listener. A pure content-window event adapter now gates already
+  browser listener, and a content-script runtime requester now forwards those
+  validated internal requests through an injected runtime-message sender with
+  cancellation propagation. A pure content-window event adapter now gates already
   received page messages by expected source and normalized origin before
   forwarding nSealr page-bridge envelopes, and an injected content-window
   listener installer can register that boundary on an explicit target with

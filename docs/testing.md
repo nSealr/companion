@@ -116,7 +116,11 @@ single-repository CI. Cross-repository drift remains guarded by
   Page-side requester tests also prove bridge-envelope wrapping and
   cancellation forwarding through an injected bridge exchange. Content-script
   bridge tests prove accepted page envelopes are bound to an explicit sender
-  and injected background requester without adding browser listeners.
+  and injected background requester without adding browser listeners. They also
+  prove the runtime requester forwards validated internal requests through an
+  injected runtime-message sender, forwards cancellation, and rejects
+  already-cancelled or in-flight-cancelled requests before trusting a runtime
+  response.
   Content-window tests prove already-received page messages are source/origin
   gated, unrelated messages are ignored, and malformed nSealr envelopes fail
   before background contact without registering listeners or calling

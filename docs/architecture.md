@@ -150,7 +150,8 @@ packages, but it must not export test-only signing as a production path.
   one stdio session, accepts explicit in-memory authorization context in tests,
   can load explicit read-only secretless grant/account JSON context files for
   developer and integration harnesses, returns deterministic native-frame
-  errors, and can print validated Chromium/Firefox native-host manifest JSON.
+  errors, and can print validated Chromium/Firefox native-host manifest JSON
+  through the shared `@nsealr/client` manifest builder.
   It is intentionally secretless and does not yet install manifest files, write
   grant/account storage, perform production grant persistence, open relays, or
   dispatch signer transports.
@@ -239,12 +240,14 @@ The private `@nsealr/service` app now runs a tested multi-message native-host
 stdio loop, so a future browser extension can keep one native-messaging port
 open and receive one deterministic response per length-prefixed service
 request. It can also generate validated Chromium/Firefox native-host manifest
-JSON with explicit host path and extension id inputs. `@nsealr/client` also
-defines the persistent grant-store JSON contract used to serialize approved and
-revoked local client grants without secret material. The private service app
-can now load explicit read-only grant/account context files for local harnesses,
-but this still does not add manifest installation, default storage locations,
-file writes, signer dispatch, relay sessions, or browser packaging.
+JSON with explicit host path and extension id inputs through the shared
+`@nsealr/client` manifest builder; the service app only owns CLI argument
+parsing and stdout rendering for that contract. `@nsealr/client` also defines
+the persistent grant-store JSON contract used to serialize approved and revoked
+local client grants without secret material. The private service app can now
+load explicit read-only grant/account context files for local harnesses, but
+this still does not add manifest installation, default storage locations, file
+writes, signer dispatch, relay sessions, or browser packaging.
 
 The browser-provider package is intentionally one layer above this service
 boundary. Each provider instance is bound to a client identity so the future
@@ -261,8 +264,8 @@ The package also includes a browser native-messaging local-service client
 adapter over an explicit `sendNativeMessage(hostName, message)` function. This
 keeps browser API integration thin while reusing `LocalServiceClient` response
 validation, optional deterministic response timeouts, request cancellation, and
-the shared native host name used by the private service manifest generator. It
-does not install native-host manifests, persist grants, or open signer
+the shared native host name and manifest contract exported by `@nsealr/client`.
+It does not install native-host manifests, persist grants, or open signer
 transports.
 The background browser entrypoint adapter is the browser-like wrapper over the
 background controller and runtime-message listener. It accepts an explicit

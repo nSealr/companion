@@ -6,8 +6,8 @@ Private native-messaging host scaffold for the nSealr local companion service.
 
 - Run the length-prefixed native-messaging stdio loop used by browser hosts.
 - Return deterministic malformed-frame errors instead of unstructured output.
-- Generate validated Chromium and Firefox native-host manifest JSON for future
-  installer work.
+- Render validated Chromium and Firefox native-host manifest JSON from the
+  shared `@nsealr/client` manifest contract for future installer work.
 
 ## Manifest Example
 

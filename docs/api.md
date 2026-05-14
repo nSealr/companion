@@ -41,6 +41,8 @@ Secretless local companion service and native-messaging client boundary for nSea
 Source entrypoint: `packages/client/src/index.ts`
 
 Exports:
+- `ChromiumNativeHostManifest`
+- `FirefoxNativeHostManifest`
 - `LOCAL_CLIENT_SURFACES`
 - `LOCAL_GRANT_STORE_FORMAT`
 - `LOCAL_PAIRING_APPROVAL_FORMAT`
@@ -71,8 +73,12 @@ Exports:
 - `MAX_LOCAL_GRANT_STORE_JSON_BYTES`
 - `MAX_NATIVE_MESSAGE_BYTES`
 - `MAX_SERVICE_JSON_BYTES`
+- `NATIVE_HOST_DESCRIPTION`
 - `NATIVE_HOST_NAME`
 - `NATIVE_MESSAGE_LENGTH_BYTES`
+- `NativeHostBrowser`
+- `NativeHostManifest`
+- `NativeHostManifestOptions`
 - `NativeMessageFrameExchange`
 - `NativeMessagingLocalServiceClientOptions`
 - `PairableLocalServiceOperation`
@@ -80,6 +86,7 @@ Exports:
 - `appendLocalGrant`
 - `appendLocalGrantRevocation`
 - `approvePairingIntent`
+- `buildNativeHostManifest`
 - `clientIdForIdentity`
 - `createLocalGrantStore`
 - `createNativeMessagingLocalServiceClient`

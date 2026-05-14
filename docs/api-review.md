@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:1a688282e7b8a8a1aca707ba0498f4c6618468c1ebd42abaabf58c5763b0815f`
+API surface digest: `sha256:4fcd15c9f654fe0bb5ae95ac1bf801655efa5d6b624fb06c24f49e1380fb002a`
 
 Source: `docs/api.md`
 
@@ -58,8 +58,9 @@ approved/revoked local client grants, secretless route selection,
 signer-request validation, and signer-response verification. Client identity
 parsing is also exposed through the browser-safe `./client-identity` subpath;
 request-id correlation, native-message framing, and malformed-response
-rejection are public helpers. The shared native host name is exported so the
-service manifest generator and browser adapter do not drift.
+rejection are public helpers. The shared native host name and native-host
+manifest builder are exported so service manifest generation, browser
+packaging checks, and browser adapters do not drift.
 Route selection returns metadata only; file-backed service loading, signer
 dispatch, cancellation, and native-host installation packaging remain future
 work and must not be implied by this package.

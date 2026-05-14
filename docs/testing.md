@@ -413,9 +413,10 @@ single-repository CI. Cross-repository drift remains guarded by
   exist. The current test suite already covers pairing intent generation,
   deterministic pairing-review projection, strict grant-store
   serialization/revocation, explicit read-only context loading, selected
-  account route, malformed native-message rejection, multi-message native-host
-  stdio behavior, and validated Chromium/Firefox native-host manifest
-  generation.
+  account route, malformed native-message rejection, shared
+  Chromium/Firefox native-host manifest building in `@nsealr/client`,
+  multi-message native-host stdio behavior, and the private service CLI
+  wrapper that renders those manifests without installing them.
 - Browser extension provider tests over a fake companion for origin permission,
   revocation, cancel, malformed companion response, native-host disconnects,
   and no key material in extension storage. Current package tests cover the

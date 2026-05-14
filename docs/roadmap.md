@@ -268,10 +268,11 @@ and uploads checked tarball artifacts without publishing to npm.
   types before browser, SDK, desktop, or CLI code can trust them. Pure
   package-level route selection and the
   local-service route-selection operation are implemented, and the private
-  service app now has a tested multi-message native-host stdio loop plus
-  validated Chromium/Firefox native-host manifest generation. `@nsealr/client`
-  now also defines the strict secretless JSON grant-store contract for approved
-  and revoked local client grants. The CLI can render pairing-review metadata,
+  service app now has a tested multi-message native-host stdio loop.
+  `@nsealr/client` now owns validated Chromium/Firefox native-host manifest
+  generation plus the strict secretless JSON grant-store contract for approved
+  and revoked local client grants; the private service app only parses manifest
+  CLI arguments and renders JSON to stdout. The CLI can render pairing-review metadata,
   create digest-confirmed approval artifacts, and build explicit output
   grant-store artifacts from approval artifacts or latest-client revocations
   without default storage paths or input-file mutation. `@nsealr/client` now

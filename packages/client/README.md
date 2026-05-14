@@ -5,6 +5,8 @@ Local companion service protocol and client wrappers.
 ## Purpose
 
 - Encode and decode native-messaging frames.
+- Build validated Chromium and Firefox native-host manifest objects from
+  explicit host path and extension-id inputs.
 - Validate local service requests and responses.
 - Provide a high-level client wrapper for future browser, SDK, desktop, and CLI
   callers.
@@ -20,8 +22,10 @@ Local companion service protocol and client wrappers.
 import assert from "node:assert/strict";
 import {
   LocalServiceClient,
+  NATIVE_HOST_NAME,
   appendLocalGrantRevocation,
   approvePairingIntent,
+  buildNativeHostManifest,
   createLocalGrantStore,
   handleLocalServiceRequest,
   parseLocalClientIdentity,
@@ -39,8 +43,14 @@ const client = new LocalServiceClient({
 
 const status = await client.serviceStatus("readme-client-status");
 const pairing = await client.requestPairing(identity, ["validate_signer_request"], "readme-client-pair");
+const nativeHostManifest = buildNativeHostManifest({
+  browser: "firefox",
+  hostPath: "/Applications/nSealr/nsealr-service",
+  extensionIds: ["extension@nsealr.dev"]
+});
 
 assert.equal(status.ok, true);
+assert.equal(nativeHostManifest.name, NATIVE_HOST_NAME);
 if (pairing.ok !== true || !("pairing_intent" in pairing.result)) {
   throw new Error("pairing intent missing");
 }
@@ -73,3 +83,5 @@ approved/revoked local client grants without destructive history edits.
 It does not store production keys, open relays, or dispatch to real signer
 transports. A host app still has to own the actual file location, backup
 policy, and user approval UX.
+The package can build native-host manifest objects, but it does not install
+them or choose a host file location.

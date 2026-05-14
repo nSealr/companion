@@ -343,6 +343,13 @@ installs the NIP-07 provider on an explicit target, posts through the injected
 window-like bridge target, enforces exact origin and source filtering through
 that exchange, and still contains no direct browser API dependency, storage,
 grants, or key material.
+The page-script injection helper is the content-script-side DOM adapter. It
+accepts only explicit document and extension-URL resolver dependencies, injects
+the reviewed `page-script.js` resource as a module script with a stable element
+id, rejects duplicate targets, unsafe script filenames, unsupported URL
+protocols, wrong URL paths, and missing parents, and exposes explicit teardown.
+It does not call global `document`, `window`, `browser`, or `chrome` APIs
+directly.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

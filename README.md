@@ -115,6 +115,8 @@ match the shared `contract_id`.
   target,
   has pure page-script provider bootstraps over either an injected bridge
   exchange or the injected page-window bridge,
+  includes a pure page-script injection helper over explicit document and
+  extension-URL resolver dependencies,
   and can build either the default minimal no-host-permission manifest or an
   opt-in explicit-origin content-script manifest profile. The content-script
   profile still omits host-permission fields, broad URL matches, extension

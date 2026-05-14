@@ -137,7 +137,10 @@ single-repository CI. Cross-repository drift remains guarded by
   `postMessage` failure. Page-script bootstrap tests prove the explicit-target
   NIP-07 provider can be installed over either an injected bridge exchange or
   the injected page-window bridge without overwriting an existing provider or
-  adding browser injection.
+  adding browser injection. Page-script injection tests prove the content-side
+  DOM adapter rejects duplicate targets, unsafe script files, unsupported URL
+  protocols, wrong URL paths, and missing parents while exposing explicit
+  teardown.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, no host permission fields, no content scripts, no storage permission,
   and explicit Firefox extension ids. They also pin the opt-in explicit-origin

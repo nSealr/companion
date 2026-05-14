@@ -5,6 +5,7 @@ import {
   createBrowserExtensionContentRuntimeUrlResolver,
   type BrowserExtensionContentRuntimeApi
 } from "./content-runtime.js";
+import { BROWSER_EXTENSION_PAGE_SCRIPT_FILE } from "./page-injection.js";
 import { type BrowserExtensionRequest } from "./messages.js";
 
 function getPublicKeyRequest(requestId: string): BrowserExtensionRequest {
@@ -52,8 +53,10 @@ describe("browser extension content runtime API adapters", () => {
     const runtimeApi = createRuntimeApi();
     const resolveUrl = createBrowserExtensionContentRuntimeUrlResolver(runtimeApi.runtime);
 
-    expect(resolveUrl("page-script.js")).toBe("chrome-extension://extension-id/page-script.js");
-    expect(runtimeApi.resolvedPaths).toEqual(["page-script.js"]);
+    expect(resolveUrl(BROWSER_EXTENSION_PAGE_SCRIPT_FILE)).toBe(
+      `chrome-extension://extension-id/${BROWSER_EXTENSION_PAGE_SCRIPT_FILE}`
+    );
+    expect(runtimeApi.resolvedPaths).toEqual([BROWSER_EXTENSION_PAGE_SCRIPT_FILE]);
   });
 
   it("rejects unsafe extension resource paths before runtime.getURL", () => {
@@ -100,7 +103,7 @@ describe("browser extension content runtime API adapters", () => {
       sendMessage: () => undefined
     } as unknown as BrowserExtensionContentRuntimeApi)).toThrow(/getURL/u);
     expect(() => createBrowserExtensionContentRuntimeMessageSender({
-      getURL: () => "chrome-extension://extension-id/page-script.js",
+      getURL: () => `chrome-extension://extension-id/${BROWSER_EXTENSION_PAGE_SCRIPT_FILE}`,
       sendMessage: "missing"
     } as unknown as BrowserExtensionContentRuntimeApi)).toThrow(/sendMessage/u);
   });

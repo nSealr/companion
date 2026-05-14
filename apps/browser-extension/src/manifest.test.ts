@@ -6,6 +6,10 @@ import {
   browserExtensionManifestJson,
   buildBrowserExtensionManifest
 } from "./manifest.js";
+import {
+  BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE
+} from "./entrypoints.js";
 
 describe("browser extension manifest boundary", () => {
   it("builds a minimal Chromium manifest without page or storage permissions", () => {
@@ -17,7 +21,7 @@ describe("browser extension manifest boundary", () => {
       version: BROWSER_EXTENSION_VERSION,
       permissions: ["nativeMessaging"],
       background: {
-        service_worker: "background.js",
+        service_worker: BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
         type: "module"
       },
       action: {
@@ -46,7 +50,7 @@ describe("browser extension manifest boundary", () => {
         "https://example.com/*",
         "http://localhost:5173/*"
       ],
-      js: ["content-script.js"],
+      js: [BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE],
       run_at: "document_start",
       all_frames: false,
       match_about_blank: false

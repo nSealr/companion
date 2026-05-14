@@ -388,11 +388,14 @@ uses the page-window bridge for requests. It still does not read global browser
 objects, write storage, create grants, dispatch signers, or hold key material.
 The page-script injection helper is the content-script-side DOM adapter. It
 accepts only explicit document and extension-URL resolver dependencies, injects
-the reviewed `page-script.js` resource as a module script with a stable element
-id, rejects duplicate targets, unsafe script filenames, unsupported URL
-protocols, wrong URL paths, and missing parents, and exposes explicit teardown.
-It does not call global `document`, `window`, `browser`, or `chrome` APIs
-directly.
+the reviewed packaged page-script entrypoint resource as a module script with
+a stable element id, rejects duplicate targets, unsafe script filenames,
+unsupported URL protocols, wrong URL paths, and missing parents, and exposes
+explicit teardown. Packaged extension filenames are intentionally distinct from
+the internal pure modules such as `background.js`, `content-script.js`, and
+`page-script.js`, so a future bundle cannot accidentally point the manifest or
+page injection at a module that only exports helpers. It does not call global
+`document`, `window`, `browser`, or `chrome` APIs directly.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

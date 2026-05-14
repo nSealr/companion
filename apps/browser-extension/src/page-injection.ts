@@ -1,4 +1,6 @@
-export const BROWSER_EXTENSION_PAGE_SCRIPT_FILE = "page-script.js";
+import { BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE } from "./entrypoints.js";
+
+export const BROWSER_EXTENSION_PAGE_SCRIPT_FILE = BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE;
 export const BROWSER_EXTENSION_PAGE_SCRIPT_ELEMENT_ID = "nsealr-page-script";
 
 export type BrowserExtensionInjectedPageScriptElement = {

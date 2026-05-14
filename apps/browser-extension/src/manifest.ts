@@ -1,3 +1,8 @@
+import {
+  BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE
+} from "./entrypoints.js";
+
 export const BROWSER_EXTENSION_NAME = "nSealr";
 export const BROWSER_EXTENSION_DESCRIPTION = "nSealr browser bridge for external Nostr signers";
 export const BROWSER_EXTENSION_VERSION = "0.1.0";
@@ -15,7 +20,7 @@ export type BrowserExtensionManifestOptions = {
 
 export type BrowserExtensionContentScriptManifest = {
   matches: string[];
-  js: ["content-script.js"];
+  js: [typeof BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE];
   run_at: "document_start";
   all_frames: false;
   match_about_blank: false;
@@ -28,7 +33,7 @@ export type BrowserExtensionManifest = {
   version: string;
   permissions: ["nativeMessaging"];
   background: {
-    service_worker: "background.js";
+    service_worker: typeof BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE;
     type: "module";
   };
   action: {
@@ -122,7 +127,7 @@ export function buildBrowserExtensionManifest(options: BrowserExtensionManifestO
     version: requireVersion(options.version),
     permissions: ["nativeMessaging"],
     background: {
-      service_worker: "background.js",
+      service_worker: BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
       type: "module"
     },
     action: {
@@ -132,7 +137,7 @@ export function buildBrowserExtensionManifest(options: BrowserExtensionManifestO
   if (contentScriptMatches !== undefined) {
     manifest.content_scripts = [{
       matches: contentScriptMatches,
-      js: ["content-script.js"],
+      js: [BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE],
       run_at: "document_start",
       all_frames: false,
       match_about_blank: false

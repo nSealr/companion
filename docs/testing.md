@@ -132,6 +132,9 @@ single-repository CI. Cross-repository drift remains guarded by
   are rejected before runtime contact, runtime messages are forwarded through
   injected `runtime.sendMessage`, and already-cancelled sends stop before the
   runtime API is called.
+  Packaged-entrypoint filename tests prove the manifest and page-injection
+  defaults use filenames reserved for future packaged entrypoint modules,
+  distinct from internal pure modules that only export helper functions.
   Content-script browser entrypoint tests prove explicit browser-like
   document/window/location/runtime dependencies compose into page-script
   injection, runtime messaging, response posting, and teardown without reading

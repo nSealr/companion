@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:269da75795f9240d7cf4b84e9e68557494feb475a9bf3bc25575cffef5c40cc4`
+API surface digest: `sha256:058ccf36a25da4f84ab786facf4b9d43794842599ff1474f9b7fefd2c6b79afa`
 
 Source: `docs/api.md`
 
@@ -55,9 +55,9 @@ The local-service surface is secretless and limited to service status, pairing
 intent creation, deterministic pairing-review projection, manual pairing
 approval into a grant, strict pairing-approval artifact parsing, strict JSON
 grant-store serialization and output-only revocation appending for
-approved/revoked local client grants, digest-bound storage-location review
-metadata for explicit grant/account/route-driver paths, secretless route
-selection, signer-request validation, grant-gated dispatch through an
+approved/revoked local client grants, digest-bound storage-location review and
+approval artifacts for explicit grant/account/route-driver paths, secretless
+route selection, signer-request validation, grant-gated dispatch through an
 explicitly injected dispatcher, and signer-response verification. Browser
 runtime code uses the reviewed `./browser` subpath, while identity-only callers
 may use the smaller `./client-identity` subpath. Request-id correlation,

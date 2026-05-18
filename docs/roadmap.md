@@ -322,8 +322,9 @@ and uploads checked tarball artifacts without publishing to npm.
   integration. Route-driver dispatch now maps serial-line open, timeout,
   protocol, I/O, close, and fallback failures to deterministic local-service
   transport error codes. `@nsealr/client` now also owns digest-bound
-  storage-location review metadata for explicit grant/account/route-driver
-  paths, and the CLI exposes it as `nsealr local review-storage` without
+  storage-location review and approval artifacts for explicit
+  grant/account/route-driver paths, and the CLI exposes them as
+  `nsealr local review-storage` and `nsealr local approve-storage` without
   choosing defaults, writing storage, approving clients, or dispatching signers.
   Remaining work is full approval UI, production storage writes, production
   driver acceptance, and native-host installation packaging.

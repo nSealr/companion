@@ -408,10 +408,12 @@ single-repository CI. Cross-repository drift remains guarded by
   `nsealr local approve-pairing`, including explicit reviewed-digest
   confirmation, expiry handling, and refusal to write approval artifacts when
   the digest does not match.
-- CLI local storage-review tests covering
-  `nsealr local review-storage`, including digest-bound metadata for explicit
-  grant/account/route-driver locations, no creation of reviewed storage files,
-  and refusal to write review metadata for ambiguous relative paths.
+- CLI local storage-review and approval tests covering
+  `nsealr local review-storage` and `nsealr local approve-storage`, including
+  digest-bound metadata for explicit grant/account/route-driver locations, no
+  creation of reviewed storage files, digest-confirmed approval artifacts, and
+  refusal to write review or approval metadata for ambiguous paths or mismatched
+  digests.
 - CLI local grant-store artifact tests covering
   `nsealr local grant-store append-approval`, including new-store creation,
   explicit input-store extension without input-file mutation, and malformed
@@ -448,9 +450,9 @@ single-repository CI. Cross-repository drift remains guarded by
   built-package consumer tests after explicit policy gates exist. The current
   test suite already covers pairing intent generation,
   deterministic pairing-review projection, digest-bound storage-location
-  review metadata, strict grant-store serialization/revocation, explicit
-  read-only context loading, selected account route, malformed native-message
-  rejection, shared
+  review and approval artifacts, strict grant-store serialization/revocation,
+  explicit read-only context loading, selected account route, malformed
+  native-message rejection, shared
   Chromium/Firefox native-host manifest building in `@nsealr/client`,
   multi-message native-host stdio behavior, and the private service CLI
   wrapper that renders those manifests without installing them. Current service

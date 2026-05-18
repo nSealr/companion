@@ -1,6 +1,7 @@
 import { sha256Utf8Hex } from "@nsealr/core";
 
 export const LOCAL_STORAGE_REVIEW_FORMAT = "nsealr-local-storage-review-v0";
+export const LOCAL_STORAGE_APPROVAL_FORMAT = "nsealr-local-storage-approval-v0";
 
 export const LOCAL_STORAGE_PURPOSES = [
   "grant_store",
@@ -28,6 +29,14 @@ export type LocalStorageReview = {
   storage_digest: string;
   entries: LocalStorageReviewEntry[];
   requires_user_approval: true;
+  stores_production_secrets: false;
+};
+
+export type LocalStorageApproval = {
+  format: typeof LOCAL_STORAGE_APPROVAL_FORMAT;
+  storage_digest: string;
+  approved_at: number;
+  review: LocalStorageReview;
   stores_production_secrets: false;
 };
 
@@ -80,6 +89,13 @@ function normalizeStoragePath(value: unknown): string {
 
 function storageReviewDigest(review: LocalStorageReviewWithoutDigest): string {
   return sha256Utf8Hex(JSON.stringify(review));
+}
+
+function requireNonNegativeInteger(value: unknown, label: string): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new Error(`${label} must be a non-negative integer`);
+  }
+  return value;
 }
 
 export function parseLocalStorageReviewEntry(value: unknown): LocalStorageReviewEntry {
@@ -154,4 +170,53 @@ export function parseLocalStorageReview(value: unknown): LocalStorageReview {
     throw new Error("local storage review digest mismatch");
   }
   return review;
+}
+
+export function approveLocalStorageReview(
+  review: unknown,
+  options: { approvedAt: number }
+): LocalStorageApproval {
+  const parsedReview = parseLocalStorageReview(review);
+  const approvedAt = requireNonNegativeInteger(options.approvedAt, "approvedAt");
+  return {
+    format: LOCAL_STORAGE_APPROVAL_FORMAT,
+    storage_digest: parsedReview.storage_digest,
+    approved_at: approvedAt,
+    review: parsedReview,
+    stores_production_secrets: false
+  };
+}
+
+export function parseLocalStorageApproval(value: unknown): LocalStorageApproval {
+  if (!isRecord(value)) throw new Error("local storage approval must be an object");
+  if (!hasOnlyKeys(value, [
+    "format",
+    "storage_digest",
+    "approved_at",
+    "review",
+    "stores_production_secrets"
+  ])) {
+    throw new Error("local storage approval has unsupported fields");
+  }
+  if (value.format !== LOCAL_STORAGE_APPROVAL_FORMAT) {
+    throw new Error("local storage approval format is unsupported");
+  }
+  if (typeof value.storage_digest !== "string" || !/^[0-9a-f]{64}$/u.test(value.storage_digest)) {
+    throw new Error("local storage approval digest is invalid");
+  }
+  const approvedAt = requireNonNegativeInteger(value.approved_at, "local storage approval approved_at");
+  const review = parseLocalStorageReview(value.review);
+  if (review.storage_digest !== value.storage_digest) {
+    throw new Error("local storage approval digest mismatch");
+  }
+  if (value.stores_production_secrets !== false) {
+    throw new Error("local storage approval must not store production secrets");
+  }
+  return {
+    format: LOCAL_STORAGE_APPROVAL_FORMAT,
+    storage_digest: value.storage_digest,
+    approved_at: approvedAt,
+    review,
+    stores_production_secrets: false
+  };
 }

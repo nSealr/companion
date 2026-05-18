@@ -9,6 +9,7 @@ import {
   handleLocalServiceRequest,
   LOCAL_GRANT_STORE_FORMAT,
   parseLocalGrantStore,
+  parseLocalStorageApproval,
   parseLocalStorageReview,
   reviewPairingIntent,
   serializeLocalGrantStore,
@@ -926,6 +927,69 @@ describe("nsealr CLI", () => {
       ])
     ).rejects.toThrow(/absolute/u);
     expect(existsSync(reviewPath)).toBe(false);
+  });
+
+  it("creates local-service storage approval artifacts only after explicit digest confirmation", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-storage-approve-"));
+    const reviewPath = join(tempRoot, "storage-review.json");
+    const approvalPath = join(tempRoot, "storage-approval.json");
+    const review = createLocalStorageReview([{
+      purpose: "grant_store",
+      path: join(tempRoot, "local-grants.json"),
+      access: "write_new",
+      contains_secret_material: false
+    }]);
+
+    writeFileSync(reviewPath, `${JSON.stringify(review, null, 2)}\n`, "utf8");
+    await runCli([
+      "local",
+      "approve-storage",
+      "--review",
+      reviewPath,
+      "--reviewed-storage-digest",
+      review.storage_digest,
+      "--approved-at",
+      "1900000000",
+      "--out",
+      approvalPath
+    ]);
+
+    expect(parseLocalStorageApproval(loadJson(approvalPath))).toEqual({
+      format: "nsealr-local-storage-approval-v0",
+      storage_digest: review.storage_digest,
+      approved_at: 1_900_000_000,
+      review,
+      stores_production_secrets: false
+    });
+  });
+
+  it("rejects local-service storage approval when the reviewed digest does not match", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-storage-approve-mismatch-"));
+    const reviewPath = join(tempRoot, "storage-review.json");
+    const approvalPath = join(tempRoot, "storage-approval.json");
+    const review = createLocalStorageReview([{
+      purpose: "grant_store",
+      path: join(tempRoot, "local-grants.json"),
+      access: "write_new",
+      contains_secret_material: false
+    }]);
+
+    writeFileSync(reviewPath, `${JSON.stringify(review, null, 2)}\n`, "utf8");
+    await expect(
+      runCli([
+        "local",
+        "approve-storage",
+        "--review",
+        reviewPath,
+        "--reviewed-storage-digest",
+        "0".repeat(64),
+        "--approved-at",
+        "1900000000",
+        "--out",
+        approvalPath
+      ])
+    ).rejects.toThrow(/reviewed storage digest does not match review/u);
+    expect(existsSync(approvalPath)).toBe(false);
   });
 
   it("creates explicit local grant-store artifacts from pairing approvals", async () => {

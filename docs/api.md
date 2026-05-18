@@ -52,6 +52,7 @@ Exports:
 - `LOCAL_SERVICE_OPERATIONS`
 - `LOCAL_SERVICE_PROTOCOL`
 - `LOCAL_STORAGE_ACCESS_MODES`
+- `LOCAL_STORAGE_APPROVAL_FORMAT`
 - `LOCAL_STORAGE_PURPOSES`
 - `LOCAL_STORAGE_REVIEW_FORMAT`
 - `LocalClientGrant`
@@ -74,6 +75,7 @@ Exports:
 - `LocalServiceRequest`
 - `LocalServiceResponse`
 - `LocalStorageAccessMode`
+- `LocalStorageApproval`
 - `LocalStoragePurpose`
 - `LocalStorageReview`
 - `LocalStorageReviewEntry`
@@ -100,6 +102,7 @@ Exports:
 - `SignerTransportErrorCode`
 - `appendLocalGrant`
 - `appendLocalGrantRevocation`
+- `approveLocalStorageReview`
 - `approvePairingIntent`
 - `buildNativeHostManifest`
 - `clientIdForIdentity`
@@ -115,6 +118,7 @@ Exports:
 - `parseLocalGrant`
 - `parseLocalGrantStore`
 - `parseLocalPairingApproval`
+- `parseLocalStorageApproval`
 - `parseLocalStorageReview`
 - `parseLocalStorageReviewEntry`
 - `parsePairingIntent`

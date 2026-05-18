@@ -59,14 +59,15 @@ match the shared `contract_id`.
   intentionally secretless: service status, pairing intent generation,
   deterministic pairing-review projection, digest-bound manual approval into a
   grant, a strict secretless JSON grant-store contract for local
-  approvals/revocations, digest-bound storage-location review metadata,
-  secretless route selection, signer-request validation, signer-response
-  verification, and a signer-dispatch boundary that is unavailable unless a host
-  explicitly injects a dispatcher. Route selection, validation, dispatch, and
-  verification require an explicit client grant; unpaired, revoked, expired, or
-  operation-scoped clients are rejected before signer payload handling. Dispatch
-  validates the request, selects the route, calls only the injected route
-  dispatcher, and verifies the signer response before returning it. The
+  approvals/revocations, digest-bound storage-location review and approval
+  artifacts, secretless route selection, signer-request validation,
+  signer-response verification, and a signer-dispatch boundary that is
+  unavailable unless a host explicitly injects a dispatcher. Route selection,
+  validation, dispatch, and verification require an explicit client grant;
+  unpaired, revoked, expired, or operation-scoped clients are rejected before
+  signer payload handling. Dispatch validates the request, selects the route,
+  calls only the injected route dispatcher, and verifies the signer response
+  before returning it. The
   high-level client also binds each operation to its expected result type, so a
   native-messaging host cannot satisfy
   `request_pairing` with an unrelated valid service result.
@@ -79,6 +80,9 @@ match the shared `contract_id`.
 - `nsealr local review-storage` renders digest-bound storage-location review
   metadata for explicit grant/account/route-driver paths. It does not choose
   default paths, write storage files, approve clients, or contact signers.
+- `nsealr local approve-storage` creates a storage-location approval artifact
+  only when the caller supplies the reviewed storage digest. It still does not
+  create, move, or activate storage files.
 - `nsealr local grant-store append-approval` writes a new explicit secretless
   grant-store artifact from a pairing approval. It may extend a caller-supplied
   input store, but it never chooses a default path or mutates the input file.
@@ -347,6 +351,7 @@ pnpm nsealr review-request --request request.qr --request-format qr --detail-pag
 pnpm nsealr local review-pairing --intent pairing-intent.json --out pairing-review.json
 pnpm nsealr local approve-pairing --intent pairing-intent.json --reviewed-pairing-digest <digest-hex> --approved-at 1900000000 --out pairing-approval.json
 pnpm nsealr local review-storage --grant-store "$PWD/local-grants.json" --grant-store-output "$PWD/local-grants-next.json" --out storage-review.json
+pnpm nsealr local approve-storage --review storage-review.json --reviewed-storage-digest <digest-hex> --approved-at 1900000000 --out storage-approval.json
 pnpm nsealr local grant-store append-approval --approval pairing-approval.json --updated-at 1900000001 --out local-grants.json
 pnpm nsealr local grant-store revoke-client --grant-store local-grants.json --client-id <client-id-hex> --origin extension:nsealr --surface browser_extension --revoked-at 1900000020 --out local-grants-revoked.json
 pnpm nsealr nip46 decide --message nip46-message.json --permissions sign_event:1 --out decision.json

@@ -134,8 +134,8 @@ packages, but it must not export test-only signing as a production path.
   shared local-client identity parsing, deterministic pairing-review
   projection, grant enforcement, a strict
   secretless JSON grant-store contract, digest-bound storage-location review
-  metadata, secretless account-route selection, signer-request validation,
-  grant-gated signer-request dispatch through an explicitly injected
+  and approval artifacts, secretless account-route selection, signer-request
+  validation, grant-gated signer-request dispatch through an explicitly injected
   dispatcher, signer-response verification, response validation, and a
   high-level client wrapper. The wrapper checks request-id correlation,
   malformed responses, and operation-specific result types before callers can
@@ -260,10 +260,12 @@ a new output grant-store artifact. Revocation is selected by
 deterministically if no matching grant exists or if the latest matching grant
 is already revoked.
 `nsealr local review-storage` renders digest-bound review metadata for explicit
-grant/account/route-driver store paths. It requires absolute, expanded,
-non-relative paths and records read-only versus new-output access intent, but it
-does not choose default paths, create files, approve clients, dispatch signers,
-or turn reviewed paths into production storage.
+grant/account/route-driver store paths. `nsealr local approve-storage` then
+creates an approval artifact only after the caller supplies the reviewed storage
+digest. These commands require absolute, expanded, non-relative paths and
+record read-only versus new-output access intent, but they do not choose default
+paths, create files, approve clients, dispatch signers, or turn reviewed paths
+into production storage.
 The private `@nsealr/service` app now runs a tested multi-message native-host
 stdio loop, so a future browser extension can keep one native-messaging port
 open and receive one deterministic response per length-prefixed service

@@ -36,6 +36,7 @@ import {
   LocalServiceClient,
   NATIVE_HOST_NAME,
   appendLocalGrantRevocation,
+  approveLocalStorageReview,
   approvePairingIntent,
   buildNativeHostManifest,
   createLocalGrantStore,
@@ -82,8 +83,12 @@ const storageReview = createLocalStorageReview([{
   access: "write_new",
   contains_secret_material: false
 }]);
+const storageApproval = approveLocalStorageReview(storageReview, {
+  approvedAt: 1_710_000_000
+});
 assert.equal(grantStore.contains_secret_material, false);
 assert.equal(storageReview.requires_user_approval, true);
+assert.equal(storageApproval.storage_digest, storageReview.storage_digest);
 assert.equal(appendLocalGrantRevocation(grantStore, {
   clientId: approval.grant.client_id,
   origin: approval.grant.origin,
@@ -101,9 +106,9 @@ approval into a grant, request validation, secretless route selection, response
 verification, a dispatcher boundary that is unavailable by default, and a
 strict JSON grant-store contract for persisting approved/revoked local client
 grants without destructive history edits. It also owns digest-bound
-storage-location review metadata for explicit grant/account/route-driver paths;
-that review does not choose defaults, write files, approve clients, or open
-signer transports.
+storage-location review and approval artifacts for explicit grant, account, and
+route-driver paths; those artifacts do not choose defaults, write files,
+approve clients, or open signer transports.
 `LocalServiceClient` owns response validation, request-id correlation, optional
 deterministic response timeout, and optional cancellation for any injected
 exchange. Browser adapters forward an `AbortSignal` into their injected

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  approveLocalStorageReview,
   createLocalStorageReview,
+  LOCAL_STORAGE_APPROVAL_FORMAT,
   LOCAL_STORAGE_REVIEW_FORMAT,
+  parseLocalStorageApproval,
   parseLocalStorageReview,
   parseLocalStorageReviewEntry
 } from "./storage-review.js";
@@ -90,5 +93,39 @@ describe("local storage review", () => {
         path: "/Users/example/Library/Application Support/nSealr/other-grants.json"
       }]
     })).toThrow(/digest mismatch/u);
+  });
+
+  it("creates approval artifacts only for an exact reviewed storage digest", () => {
+    const review = createLocalStorageReview([{
+      purpose: "grant_store",
+      path: "/Users/example/Library/Application Support/nSealr/local-grants.json",
+      access: "write_new",
+      contains_secret_material: false
+    }]);
+    const approval = approveLocalStorageReview(review, { approvedAt: 1_900_000_000 });
+
+    expect(approval).toEqual({
+      format: LOCAL_STORAGE_APPROVAL_FORMAT,
+      storage_digest: review.storage_digest,
+      approved_at: 1_900_000_000,
+      review,
+      stores_production_secrets: false
+    });
+    expect(parseLocalStorageApproval(approval)).toEqual(approval);
+    expect(() => parseLocalStorageApproval({
+      ...approval,
+      review: {
+        ...review,
+        entries: [{
+          ...review.entries[0],
+          path: "/Users/example/Library/Application Support/nSealr/other-grants.json"
+        }]
+      }
+    })).toThrow(/digest mismatch/u);
+    expect(() => parseLocalStorageApproval({
+      ...approval,
+      stores_production_secrets: true
+    })).toThrow(/production secrets/u);
+    expect(() => approveLocalStorageReview(review, { approvedAt: -1 })).toThrow(/approvedAt/u);
   });
 });

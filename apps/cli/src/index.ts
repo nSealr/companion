@@ -5,12 +5,14 @@ import { SerialPort } from "serialport";
 import {
   appendLocalGrant,
   appendLocalGrantRevocation,
+  approveLocalStorageReview,
   approvePairingIntent,
   createLocalGrantStore,
   createLocalStorageReview,
   LOCAL_CLIENT_SURFACES,
   parseLocalGrantStore,
   parseLocalPairingApproval,
+  parseLocalStorageReview,
   reviewPairingIntent,
   serializeLocalGrantStore,
   type LocalStorageAccessMode,
@@ -828,6 +830,32 @@ export function buildCli(options: BuildCliOptions = {}): Command {
       addLocalStorageEntry(entries, "account_store", "read_only", options.accountStore);
       addLocalStorageEntry(entries, "route_driver_store", "read_only", options.routeDriverStore);
       writeJson(options.out, createLocalStorageReview(entries));
+    });
+
+  local
+    .command("approve-storage")
+    .requiredOption("--review <path>", "Read a local-service storage review JSON file")
+    .requiredOption("--reviewed-storage-digest <hex>", "Storage digest the user reviewed and approved")
+    .requiredOption("--approved-at <timestamp>", "Approval timestamp as a non-negative integer")
+    .requiredOption("--out <path>", "Write the storage approval artifact JSON")
+    .description("Create a storage-location approval artifact after explicit digest confirmation")
+    .action((options: {
+      review: string;
+      reviewedStorageDigest: string;
+      approvedAt: string;
+      out: string;
+    }) => {
+      const review = parseLocalStorageReview(readJson(options.review));
+      const reviewedStorageDigest = lowerHex64Option(
+        options.reviewedStorageDigest,
+        "--reviewed-storage-digest"
+      );
+      if (reviewedStorageDigest !== review.storage_digest) {
+        throw new Error("reviewed storage digest does not match review");
+      }
+      writeJson(options.out, approveLocalStorageReview(review, {
+        approvedAt: nonNegativeIntegerOption(options.approvedAt, "--approved-at")
+      }));
     });
 
   const localGrantStore = local

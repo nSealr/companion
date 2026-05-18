@@ -7,11 +7,14 @@ import {
   appendLocalGrantRevocation,
   approvePairingIntent,
   createLocalGrantStore,
+  createLocalStorageReview,
   LOCAL_CLIENT_SURFACES,
   parseLocalGrantStore,
   parseLocalPairingApproval,
   reviewPairingIntent,
   serializeLocalGrantStore,
+  type LocalStorageAccessMode,
+  type LocalStoragePurpose,
   type LocalClientSurface
 } from "@nsealr/client";
 import { verifySignedEventResponse, type SignEventRequest } from "@nsealr/core";
@@ -133,6 +136,21 @@ function localClientSurfaceOption(value: string, optionName: string): LocalClien
     throw new Error(`${optionName} is unsupported`);
   }
   return value as LocalClientSurface;
+}
+
+function addLocalStorageEntry(
+  entries: unknown[],
+  purpose: LocalStoragePurpose,
+  access: LocalStorageAccessMode,
+  path: string | undefined
+): void {
+  if (path === undefined) return;
+  entries.push({
+    purpose,
+    path,
+    access,
+    contains_secret_material: false
+  });
 }
 
 function reviewDetailPageLimitsFromOptions(options: {
@@ -787,6 +805,29 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         approvedAt,
         ...(expiresAt !== undefined ? { expiresAt } : {})
       }));
+    });
+
+  local
+    .command("review-storage")
+    .option("--grant-store <path>", "Review an existing local grant-store path for read-only service loading")
+    .option("--grant-store-output <path>", "Review a new local grant-store output path")
+    .option("--account-store <path>", "Review an existing service account-store path for read-only service loading")
+    .option("--route-driver-store <path>", "Review an existing service route-driver-store path for read-only service loading")
+    .requiredOption("--out <path>", "Write deterministic storage-review metadata JSON")
+    .description("Render local-service storage-location review metadata without choosing or writing storage")
+    .action((options: {
+      grantStore?: string;
+      grantStoreOutput?: string;
+      accountStore?: string;
+      routeDriverStore?: string;
+      out: string;
+    }) => {
+      const entries: unknown[] = [];
+      addLocalStorageEntry(entries, "grant_store", "read_only", options.grantStore);
+      addLocalStorageEntry(entries, "grant_store", "write_new", options.grantStoreOutput);
+      addLocalStorageEntry(entries, "account_store", "read_only", options.accountStore);
+      addLocalStorageEntry(entries, "route_driver_store", "read_only", options.routeDriverStore);
+      writeJson(options.out, createLocalStorageReview(entries));
     });
 
   const localGrantStore = local

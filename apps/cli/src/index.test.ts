@@ -5,9 +5,11 @@ import { describe, expect, it } from "vitest";
 import {
   approvePairingIntent,
   createLocalGrantStore,
+  createLocalStorageReview,
   handleLocalServiceRequest,
   LOCAL_GRANT_STORE_FORMAT,
   parseLocalGrantStore,
+  parseLocalStorageReview,
   reviewPairingIntent,
   serializeLocalGrantStore,
   type LocalClientIdentity,
@@ -852,6 +854,78 @@ describe("nsealr CLI", () => {
       ])
     ).rejects.toThrow(/reviewed pairing digest does not match intent/u);
     expect(existsSync(approvalPath)).toBe(false);
+  });
+
+  it("renders local-service storage review metadata without creating storage files", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-storage-review-"));
+    const grantStorePath = join(tempRoot, "local-grants.json");
+    const grantStoreOutputPath = join(tempRoot, "local-grants-next.json");
+    const accountStorePath = join(tempRoot, "accounts.json");
+    const routeDriverStorePath = join(tempRoot, "route-drivers.json");
+    const reviewPath = join(tempRoot, "storage-review.json");
+
+    await runCli([
+      "local",
+      "review-storage",
+      "--grant-store",
+      grantStorePath,
+      "--grant-store-output",
+      grantStoreOutputPath,
+      "--account-store",
+      accountStorePath,
+      "--route-driver-store",
+      routeDriverStorePath,
+      "--out",
+      reviewPath
+    ]);
+
+    expect(parseLocalStorageReview(loadJson(reviewPath))).toEqual(createLocalStorageReview([
+      {
+        purpose: "grant_store",
+        path: grantStorePath,
+        access: "read_only",
+        contains_secret_material: false
+      },
+      {
+        purpose: "grant_store",
+        path: grantStoreOutputPath,
+        access: "write_new",
+        contains_secret_material: false
+      },
+      {
+        purpose: "account_store",
+        path: accountStorePath,
+        access: "read_only",
+        contains_secret_material: false
+      },
+      {
+        purpose: "route_driver_store",
+        path: routeDriverStorePath,
+        access: "read_only",
+        contains_secret_material: false
+      }
+    ]));
+    expect(existsSync(grantStorePath)).toBe(false);
+    expect(existsSync(grantStoreOutputPath)).toBe(false);
+    expect(existsSync(accountStorePath)).toBe(false);
+    expect(existsSync(routeDriverStorePath)).toBe(false);
+  });
+
+  it("rejects ambiguous local-service storage paths before writing review metadata", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-storage-review-invalid-"));
+    const reviewPath = join(tempRoot, "storage-review.json");
+
+    await expect(
+      runCli([
+        "local",
+        "review-storage",
+        "--grant-store-output",
+        "relative/local-grants.json",
+        "--out",
+        reviewPath
+      ])
+    ).rejects.toThrow(/absolute/u);
+    expect(existsSync(reviewPath)).toBe(false);
   });
 
   it("creates explicit local grant-store artifacts from pairing approvals", async () => {

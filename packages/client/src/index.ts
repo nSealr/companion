@@ -5,3 +5,4 @@ export * from "./native-host-manifest.js";
 export * from "./native-messaging.js";
 export * from "./pairing-review.js";
 export * from "./service.js";
+export * from "./storage-review.js";

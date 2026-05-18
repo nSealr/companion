@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:7718678eb56cd012b3d603f1f1ea41e711d8b523610c781abc7d55c5bc136e64`
+API surface digest: `sha256:269da75795f9240d7cf4b84e9e68557494feb475a9bf3bc25575cffef5c40cc4`
 
 Source: `docs/api.md`
 
@@ -55,11 +55,12 @@ The local-service surface is secretless and limited to service status, pairing
 intent creation, deterministic pairing-review projection, manual pairing
 approval into a grant, strict pairing-approval artifact parsing, strict JSON
 grant-store serialization and output-only revocation appending for
-approved/revoked local client grants, secretless route selection,
-signer-request validation, grant-gated dispatch through an explicitly injected
-dispatcher, and signer-response verification. Browser runtime code uses the
-reviewed `./browser` subpath, while identity-only callers may use the smaller
-`./client-identity` subpath. Request-id correlation,
+approved/revoked local client grants, digest-bound storage-location review
+metadata for explicit grant/account/route-driver paths, secretless route
+selection, signer-request validation, grant-gated dispatch through an
+explicitly injected dispatcher, and signer-response verification. Browser
+runtime code uses the reviewed `./browser` subpath, while identity-only callers
+may use the smaller `./client-identity` subpath. Request-id correlation,
 native-message framing, and malformed-response rejection are public helpers.
 `LocalServiceClient` also owns optional deterministic response timeouts,
 request cancellation, and `AbortSignal` forwarding into injected exchanges so
@@ -79,8 +80,9 @@ and rejects ambiguous handler configuration without opening a signer transport.
 The async local-service handler is only an awaitable form of the same reviewed
 dispatch boundary for future host-owned I/O drivers; the synchronous handler
 rejects async dispatchers deterministically. File-backed service loading,
-route-specific signer transport wiring, and native-host installation packaging
-remain future work and must not be implied by this package.
+route-specific signer transport wiring, production storage writes, and
+native-host installation packaging remain future work and must not be implied by
+this package.
 
 ## @nsealr/core
 

@@ -172,7 +172,7 @@ Status note, 2026-05-13: the private `@nsealr/service` app now has explicit
 read-only context loading for secretless local grant-store and account-store
 JSON files. This is a developer and integration harness only: it chooses no
 default path, writes no files, approves no clients, opens no transports, and
-does not change the production approval UI or storage-location review gates.
+does not change the production approval UI or storage-write gates.
 
 Status note, 2026-05-13: the CLI now exposes `nsealr local review-pairing` for
 deterministic review metadata from a local-service pairing intent. The command
@@ -321,9 +321,12 @@ and uploads checked tarball artifacts without publishing to npm.
   explicit secretless account/route/USB serial-line driver store for developer
   integration. Route-driver dispatch now maps serial-line open, timeout,
   protocol, I/O, close, and fallback failures to deterministic local-service
-  transport error codes. Remaining work is full approval UI, reviewed storage
-  locations, production driver acceptance, and native-host installation
-  packaging.
+  transport error codes. `@nsealr/client` now also owns digest-bound
+  storage-location review metadata for explicit grant/account/route-driver
+  paths, and the CLI exposes it as `nsealr local review-storage` without
+  choosing defaults, writing storage, approving clients, or dispatching signers.
+  Remaining work is full approval UI, production storage writes, production
+  driver acceptance, and native-host installation packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are

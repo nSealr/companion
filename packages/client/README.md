@@ -39,6 +39,7 @@ import {
   approvePairingIntent,
   buildNativeHostManifest,
   createLocalGrantStore,
+  createLocalStorageReview,
   handleLocalServiceRequest,
   parseLocalClientIdentity,
   reviewPairingIntent
@@ -75,7 +76,14 @@ assert.equal(approval.stores_production_secrets, false);
 const grantStore = createLocalGrantStore([approval.grant], {
   updatedAt: 1_710_000_000
 });
+const storageReview = createLocalStorageReview([{
+  purpose: "grant_store",
+  path: "/Applications/nSealr/local-grants.json",
+  access: "write_new",
+  contains_secret_material: false
+}]);
 assert.equal(grantStore.contains_secret_material, false);
+assert.equal(storageReview.requires_user_approval, true);
 assert.equal(appendLocalGrantRevocation(grantStore, {
   clientId: approval.grant.client_id,
   origin: approval.grant.origin,
@@ -92,7 +100,10 @@ intent generation, deterministic pairing-review projection, explicit manual
 approval into a grant, request validation, secretless route selection, response
 verification, a dispatcher boundary that is unavailable by default, and a
 strict JSON grant-store contract for persisting approved/revoked local client
-grants without destructive history edits.
+grants without destructive history edits. It also owns digest-bound
+storage-location review metadata for explicit grant/account/route-driver paths;
+that review does not choose defaults, write files, approve clients, or open
+signer transports.
 `LocalServiceClient` owns response validation, request-id correlation, optional
 deterministic response timeout, and optional cancellation for any injected
 exchange. Browser adapters forward an `AbortSignal` into their injected
@@ -108,7 +119,7 @@ when a reviewed signer driver needs asynchronous I/O; the synchronous handler
 rejects async dispatchers deterministically instead of treating promises as
 signer responses.
 It does not store production keys, open relays, or include real signer
-transport drivers. A host app still has to own the actual file location, backup
-policy, signer transport wiring, and user approval UX.
+transport drivers. A host app still has to own backup policy, signer transport
+wiring, production storage writes, and user approval UX.
 The package can build native-host manifest objects, but it does not install
 them or choose a host file location.

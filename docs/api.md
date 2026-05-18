@@ -51,6 +51,9 @@ Exports:
 - `LOCAL_SERVICE_NAME`
 - `LOCAL_SERVICE_OPERATIONS`
 - `LOCAL_SERVICE_PROTOCOL`
+- `LOCAL_STORAGE_ACCESS_MODES`
+- `LOCAL_STORAGE_PURPOSES`
+- `LOCAL_STORAGE_REVIEW_FORMAT`
 - `LocalClientGrant`
 - `LocalClientIdentity`
 - `LocalClientSurface`
@@ -70,6 +73,10 @@ Exports:
 - `LocalServiceOperation`
 - `LocalServiceRequest`
 - `LocalServiceResponse`
+- `LocalStorageAccessMode`
+- `LocalStoragePurpose`
+- `LocalStorageReview`
+- `LocalStorageReviewEntry`
 - `MAX_LOCAL_GRANT_STORE_GRANTS`
 - `MAX_LOCAL_GRANT_STORE_JSON_BYTES`
 - `MAX_NATIVE_MESSAGE_BYTES`
@@ -97,6 +104,7 @@ Exports:
 - `buildNativeHostManifest`
 - `clientIdForIdentity`
 - `createLocalGrantStore`
+- `createLocalStorageReview`
 - `createNativeMessagingLocalServiceClient`
 - `createRouteDispatcher`
 - `decodeNativeMessage`
@@ -107,6 +115,8 @@ Exports:
 - `parseLocalGrant`
 - `parseLocalGrantStore`
 - `parseLocalPairingApproval`
+- `parseLocalStorageReview`
+- `parseLocalStorageReviewEntry`
 - `parsePairingIntent`
 - `reviewPairingIntent`
 - `revokeLocalGrant`

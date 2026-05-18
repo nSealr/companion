@@ -133,15 +133,16 @@ packages, but it must not export test-only signing as a production path.
   native-messaging frame codec, service status, pairing intent generation,
   shared local-client identity parsing, deterministic pairing-review
   projection, grant enforcement, a strict
-  secretless JSON grant-store contract, secretless account-route selection,
-  signer-request validation, grant-gated signer-request dispatch through an
-  explicitly injected dispatcher, signer-response verification, response
-  validation, and a high-level client wrapper. The wrapper checks request-id
-  correlation, malformed responses, and operation-specific result types before
-  callers can trust native-messaging responses. The dispatch operation remains
-  unavailable by default and adds no real transport driver by itself. The
-  package also exposes a route-aware dispatcher registry helper so host apps
-  can attach multiple explicit account/route/transport handlers without putting
+  secretless JSON grant-store contract, digest-bound storage-location review
+  metadata, secretless account-route selection, signer-request validation,
+  grant-gated signer-request dispatch through an explicitly injected
+  dispatcher, signer-response verification, response validation, and a
+  high-level client wrapper. The wrapper checks request-id correlation,
+  malformed responses, and operation-specific result types before callers can
+  trust native-messaging responses. The dispatch operation remains unavailable
+  by default and adds no real transport driver by itself. The package also
+  exposes a route-aware dispatcher registry helper so host apps can attach
+  multiple explicit account/route/transport handlers without putting
   route-selection conditionals in browser, SDK, or CLI access surfaces. This is
   the shared client/service boundary for future browser extension, SDK, and
   desktop work. The async service handler is the reviewed path for future
@@ -258,6 +259,11 @@ a new output grant-store artifact. Revocation is selected by
 `client_id + origin + surface`, keeps prior grants in the history, and fails
 deterministically if no matching grant exists or if the latest matching grant
 is already revoked.
+`nsealr local review-storage` renders digest-bound review metadata for explicit
+grant/account/route-driver store paths. It requires absolute, expanded,
+non-relative paths and records read-only versus new-output access intent, but it
+does not choose default paths, create files, approve clients, dispatch signers,
+or turn reviewed paths into production storage.
 The private `@nsealr/service` app now runs a tested multi-message native-host
 stdio loop, so a future browser extension can keep one native-messaging port
 open and receive one deterministic response per length-prefixed service
@@ -506,7 +512,7 @@ and storage. When content scripts are enabled, the manifest exposes only the
 packaged page-script entrypoint as a web-accessible resource for those same
 explicit matches so page injection can work without granting wider host access.
 Origin injection and durable extension metadata remain blocked on permission UX
-and reviewed storage locations.
+and reviewed browser-storage policy.
 
 Executable SDK examples live in private app `@nsealr/sdk-examples`. They are
 not another access surface and do not own production behavior. Their role is to

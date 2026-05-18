@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:67a50d8002dfada27a6b9b53b593a46a16b0315241b1743e232b40781764d8dc`
+API surface digest: `sha256:3ee52a5fd0ed608efe9ff8b9d4932dcd5158fcad4faa2368b4769e2b7103963f`
 
 Source: `docs/api.md`
 
@@ -67,9 +67,10 @@ and malformed-response rejection are public helpers.
 request cancellation, and `AbortSignal` forwarding into injected exchanges so
 browser-provider, SDK, extension, and future desktop code do not fork stalled
 local-service behavior.
-The shared native host name, native-host manifest builder, and dry-run
-install-plan builder remain exported from the Node-capable root so service
-manifest/plan generation and packaging checks do not drift.
+The shared native host name, native-host manifest builder, digest-bound dry-run
+install-plan builder/parser, and install-approval artifact helpers remain
+exported from the Node-capable root so service manifest/plan/approval
+generation and packaging checks do not drift.
 `SignerTransportError` is the public typed error host-owned dispatchers should
 throw when a transport failure needs to cross the local-service boundary with a
 deterministic code instead of a generic dispatch failure.
@@ -80,10 +81,11 @@ account/route/transport handler, reports missing route handlers as unavailable,
 and rejects ambiguous handler configuration without opening a signer transport.
 The async local-service handler is only an awaitable form of the same reviewed
 dispatch boundary for future host-owned I/O drivers; the synchronous handler
-rejects async dispatchers deterministically. File-backed service loading,
-route-specific signer transport wiring, production storage writes, and
-native-host installation packaging remain future work and must not be implied by
-this package.
+rejects async dispatchers deterministically. File-backed service loading is now
+storage-approval gated, and native-host install approvals remain artifact-only
+with `writes_files=false`. Route-specific signer transport wiring, production
+storage writes, and native-host installation execution remain future work and
+must not be implied by this package.
 
 ## @nsealr/core
 

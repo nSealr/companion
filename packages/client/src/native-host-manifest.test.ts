@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  NATIVE_HOST_INSTALL_APPROVAL_FORMAT,
   NATIVE_HOST_DESCRIPTION,
   NATIVE_HOST_INSTALL_PLAN_FORMAT,
   NATIVE_HOST_NAME,
+  approveNativeHostInstallPlan,
   buildNativeHostInstallPlan,
-  buildNativeHostManifest
+  buildNativeHostManifest,
+  parseNativeHostInstallApproval,
+  parseNativeHostInstallPlan
 } from "./index.js";
 
 const chromiumExtensionId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -65,13 +69,16 @@ describe("native host manifest contract", () => {
       extensionIds: [chromiumExtensionId]
     });
 
-    expect(buildNativeHostInstallPlan({
+    const plan = buildNativeHostInstallPlan({
       browser: "chromium",
       hostPath,
       extensionIds: [chromiumExtensionId],
       manifestPath
-    })).toEqual({
+    });
+
+    expect(plan).toEqual({
       format: NATIVE_HOST_INSTALL_PLAN_FORMAT,
+      install_digest: expect.stringMatching(/^[0-9a-f]{64}$/u),
       browser: "chromium",
       manifest_path: manifestPath,
       manifest,
@@ -85,6 +92,7 @@ describe("native host manifest contract", () => {
       writes_files: false,
       stores_production_secrets: false
     });
+    expect(parseNativeHostInstallPlan(plan)).toEqual(plan);
   });
 
   it("rejects unsafe native-host install plan paths", () => {
@@ -112,5 +120,72 @@ describe("native host manifest contract", () => {
       extensionIds: [chromiumExtensionId],
       manifestPath: "/Users/example/NativeMessagingHosts/dev.nsealr.companion.txt"
     })).toThrow(/must end with .json/u);
+  });
+
+  it("rejects native-host install plan tampering", () => {
+    const plan = buildNativeHostInstallPlan({
+      browser: "chromium",
+      hostPath,
+      extensionIds: [chromiumExtensionId],
+      manifestPath
+    });
+
+    expect(() => parseNativeHostInstallPlan({
+      ...plan,
+      writes_files: true
+    })).toThrow(/must not write/u);
+    expect(() => parseNativeHostInstallPlan({
+      ...plan,
+      manifest: {
+        ...plan.manifest,
+        description: "tampered native host"
+      }
+    })).toThrow(/digest mismatch/u);
+    expect(() => parseNativeHostInstallPlan({
+      ...plan,
+      would_write_files: [{
+        ...plan.would_write_files[0],
+        access: "overwrite"
+      }]
+    })).toThrow(/write intent/u);
+  });
+
+  it("creates native-host install approval artifacts only after digest confirmation", () => {
+    const plan = buildNativeHostInstallPlan({
+      browser: "chromium",
+      hostPath,
+      extensionIds: [chromiumExtensionId],
+      manifestPath
+    });
+    const approval = approveNativeHostInstallPlan(plan, {
+      reviewedInstallDigest: plan.install_digest,
+      approvedAt: 1_900_000_000
+    });
+
+    expect(approval).toEqual({
+      format: NATIVE_HOST_INSTALL_APPROVAL_FORMAT,
+      install_digest: plan.install_digest,
+      approved_at: 1_900_000_000,
+      plan,
+      requires_user_approval: true,
+      writes_files: false,
+      stores_production_secrets: false
+    });
+    expect(parseNativeHostInstallApproval(approval)).toEqual(approval);
+    expect(() => approveNativeHostInstallPlan(plan, {
+      reviewedInstallDigest: "0".repeat(64),
+      approvedAt: 1_900_000_000
+    })).toThrow(/digest does not match/u);
+    expect(() => approveNativeHostInstallPlan(plan, {
+      reviewedInstallDigest: plan.install_digest,
+      approvedAt: Number.MAX_SAFE_INTEGER + 1
+    })).toThrow(/approvedAt/u);
+    expect(() => parseNativeHostInstallApproval({
+      ...approval,
+      plan: {
+        ...plan,
+        install_digest: "0".repeat(64)
+      }
+    })).toThrow(/digest mismatch/u);
   });
 });

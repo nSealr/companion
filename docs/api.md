@@ -85,10 +85,13 @@ Exports:
 - `MAX_NATIVE_MESSAGE_BYTES`
 - `MAX_SERVICE_JSON_BYTES`
 - `NATIVE_HOST_DESCRIPTION`
+- `NATIVE_HOST_INSTALL_APPROVAL_FORMAT`
 - `NATIVE_HOST_INSTALL_PLAN_FORMAT`
 - `NATIVE_HOST_NAME`
 - `NATIVE_MESSAGE_LENGTH_BYTES`
 - `NativeHostBrowser`
+- `NativeHostInstallApproval`
+- `NativeHostInstallApprovalOptions`
 - `NativeHostInstallPlan`
 - `NativeHostInstallPlanOptions`
 - `NativeHostManifest`
@@ -107,6 +110,7 @@ Exports:
 - `appendLocalGrant`
 - `appendLocalGrantRevocation`
 - `approveLocalStorageReview`
+- `approveNativeHostInstallPlan`
 - `approvePairingIntent`
 - `buildNativeHostInstallPlan`
 - `buildNativeHostManifest`
@@ -126,6 +130,8 @@ Exports:
 - `parseLocalStorageApproval`
 - `parseLocalStorageReview`
 - `parseLocalStorageReviewEntry`
+- `parseNativeHostInstallApproval`
+- `parseNativeHostInstallPlan`
 - `parsePairingIntent`
 - `requireLocalStorageApprovalEntry`
 - `reviewPairingIntent`

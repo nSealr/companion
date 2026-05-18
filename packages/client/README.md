@@ -7,6 +7,8 @@ Local companion service protocol and client wrappers.
 - Encode and decode native-messaging frames.
 - Build validated Chromium and Firefox native-host manifest objects from
   explicit host path and extension-id inputs.
+- Build digest-bound native-host install plans and approval artifacts without
+  installing manifest files.
 - Validate local service requests and responses.
 - Route signer requests through an explicit injected dispatcher only after
   client authorization, request validation, route selection, and response
@@ -36,8 +38,10 @@ import {
   LocalServiceClient,
   NATIVE_HOST_NAME,
   appendLocalGrantRevocation,
+  approveNativeHostInstallPlan,
   approveLocalStorageReview,
   approvePairingIntent,
+  buildNativeHostInstallPlan,
   buildNativeHostManifest,
   createLocalGrantStore,
   createLocalStorageReview,
@@ -62,9 +66,16 @@ const nativeHostManifest = buildNativeHostManifest({
   hostPath: "/Applications/nSealr/nsealr-service",
   extensionIds: ["extension@nsealr.dev"]
 });
+const nativeHostInstallPlan = buildNativeHostInstallPlan({
+  browser: "firefox",
+  hostPath: "/Applications/nSealr/nsealr-service",
+  extensionIds: ["extension@nsealr.dev"],
+  manifestPath: "/Users/example/Library/Application Support/Mozilla/NativeMessagingHosts/dev.nsealr.companion.json"
+});
 
 assert.equal(status.ok, true);
 assert.equal(nativeHostManifest.name, NATIVE_HOST_NAME);
+assert.equal(nativeHostInstallPlan.writes_files, false);
 if (pairing.ok !== true || !("pairing_intent" in pairing.result)) {
   throw new Error("pairing intent missing");
 }
@@ -86,9 +97,14 @@ const storageReview = createLocalStorageReview([{
 const storageApproval = approveLocalStorageReview(storageReview, {
   approvedAt: 1_710_000_000
 });
+const nativeHostInstallApproval = approveNativeHostInstallPlan(nativeHostInstallPlan, {
+  reviewedInstallDigest: nativeHostInstallPlan.install_digest,
+  approvedAt: 1_710_000_000
+});
 assert.equal(grantStore.contains_secret_material, false);
 assert.equal(storageReview.requires_user_approval, true);
 assert.equal(storageApproval.storage_digest, storageReview.storage_digest);
+assert.equal(nativeHostInstallApproval.install_digest, nativeHostInstallPlan.install_digest);
 assert.equal(appendLocalGrantRevocation(grantStore, {
   clientId: approval.grant.client_id,
   origin: approval.grant.origin,
@@ -127,6 +143,6 @@ signer responses.
 It does not store production keys, open relays, or include real signer
 transport drivers. A host app still has to own backup policy, signer transport
 wiring, production storage writes, and user approval UX.
-The package can build native-host manifest objects and dry-run install plans
-for an explicit manifest path, but it does not install them or choose a host
-file location.
+The package can build native-host manifest objects, digest-bound dry-run install
+plans, and digest-confirmed install approval artifacts for an explicit manifest
+path, but it does not install them or choose a host file location.

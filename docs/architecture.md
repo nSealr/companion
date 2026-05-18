@@ -173,8 +173,8 @@ packages, but it must not export test-only signing as a production path.
   storage-approved secretless route-driver stores for exact account/route/USB
   serial-line developer dispatch, returns deterministic native-frame errors,
   and can print validated Chromium/Firefox native-host manifest JSON plus
-  dry-run install-plan JSON through the shared `@nsealr/client` manifest
-  builder.
+  digest-bound dry-run install-plan and install-approval JSON through the
+  shared `@nsealr/client` manifest builder.
   It is intentionally secretless and does not yet install manifest files, write
   grant/account storage, perform production grant persistence, open relays, or
   include default or production signer transport drivers.
@@ -276,10 +276,11 @@ The private `@nsealr/service` app now runs a tested multi-message native-host
 stdio loop, so a future browser extension can keep one native-messaging port
 open and receive one deterministic response per length-prefixed service
 request. It can also generate validated Chromium/Firefox native-host manifest
-JSON and dry-run install-plan JSON with explicit host path, manifest path, and
-extension id inputs through the shared `@nsealr/client` manifest builder; the
-service app only owns CLI argument parsing and stdout rendering for that
-contract. `@nsealr/client` also defines
+JSON, digest-bound dry-run install-plan JSON, and digest-confirmed
+install-approval JSON with explicit host path, manifest path, extension id,
+and reviewed install digest inputs through the shared `@nsealr/client`
+manifest builder; the service app only owns CLI argument parsing and stdout
+rendering for that contract. `@nsealr/client` also defines
 the persistent grant-store JSON contract used to serialize approved and revoked
 local client grants without secret material. The private service app can now
 load explicit read-only grant/account context files for local harnesses only
@@ -291,8 +292,9 @@ contain keys, does not approve clients, does not choose default paths, and does
 not make QR vaults connected signers. Serial-line open, timeout, protocol, I/O,
 close, and fallback failures are normalized into deterministic local-service
 transport error codes before they cross the service boundary.
-Manifest installation, default storage locations, file writes, relay sessions,
-browser packaging, and production driver acceptance remain separate gates.
+Install approvals still keep `writes_files=false`; manifest installation,
+default storage locations, file writes, relay sessions, browser packaging, and
+production driver acceptance remain separate gates.
 
 The browser-provider package is intentionally one layer above this service
 boundary. Each provider instance is bound to a client identity so the future

@@ -170,10 +170,10 @@ match the shared `contract_id`.
   storage-approved read-only secretless grant/account and route-driver JSON
   files for developer and integration harnesses, and print validated
   Chromium/Firefox native-host manifest JSON for installer work. It can also
-  print a dry-run native-host install plan that includes the caller-supplied
-  manifest path without writing files. It does not open relays, store keys,
-  write grant/account files, install native-host manifests, or contact signer
-  transports by default.
+  print a digest-bound dry-run native-host install plan and digest-confirmed
+  install approval JSON for the caller-supplied manifest path without writing
+  files. It does not open relays, store keys, write grant/account files,
+  install native-host manifests, or contact signer transports by default.
 - `nsealr review-request` renders deterministic review JSON, digest-bound
   screen-review pages, or complete constrained-display detail pages from a
   signing request for untrusted host-side previews and test harnesses.
@@ -299,8 +299,9 @@ match the shared `contract_id`.
   CLI pairing-review and digest-confirmed approval-artifact commands, a strict
   persistent grant-store contract, a multi-message native-messaging host loop,
   validated native-host manifest generation, explicit storage-approved
-  read-only service context loading, and grant-gated
-  `dispatch_signer_request` operation are in place.
+  read-only service context loading, digest-bound native-host install
+  approval artifacts, and grant-gated `dispatch_signer_request` operation are
+  in place.
   Full approval UI, default production storage activation, production signer
   transport drivers, and localhost APIs need separate threat-model and
   implementation passes.

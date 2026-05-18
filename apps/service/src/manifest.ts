@@ -1,19 +1,29 @@
+import { readFileSync } from "node:fs";
 import {
+  approveNativeHostInstallPlan,
   buildNativeHostInstallPlan,
   buildNativeHostManifest,
+  parseNativeHostInstallPlan,
   type NativeHostInstallPlan,
+  type NativeHostInstallApproval,
   type NativeHostBrowser,
   type NativeHostManifest
 } from "@nsealr/client";
 
 export {
+  NATIVE_HOST_INSTALL_APPROVAL_FORMAT,
   NATIVE_HOST_DESCRIPTION,
   NATIVE_HOST_NAME,
   NATIVE_HOST_INSTALL_PLAN_FORMAT,
+  approveNativeHostInstallPlan,
   buildNativeHostInstallPlan,
   buildNativeHostManifest,
+  parseNativeHostInstallApproval,
+  parseNativeHostInstallPlan,
   type ChromiumNativeHostManifest,
   type FirefoxNativeHostManifest,
+  type NativeHostInstallApproval,
+  type NativeHostInstallApprovalOptions,
   type NativeHostInstallPlan,
   type NativeHostInstallPlanOptions,
   type NativeHostBrowser,
@@ -138,4 +148,68 @@ export function nativeHostInstallPlanFromArgs(args: string[]): NativeHostInstall
 
 export function nativeHostInstallPlanJsonFromArgs(args: string[]): string {
   return `${JSON.stringify(nativeHostInstallPlanFromArgs(args), null, 2)}\n`;
+}
+
+function readJsonFile(path: string, label: string): unknown {
+  const contents = readFileSync(path, "utf8");
+  try {
+    return JSON.parse(contents);
+  } catch (error) {
+    throw new Error(`${label} JSON is invalid: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function requireNonNegativeSafeInteger(value: string, option: string): number {
+  if (!/^(0|[1-9]\d*)$/u.test(value)) {
+    throw new Error(`${option} must be a non-negative safe integer`);
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed)) {
+    throw new Error(`${option} must be a non-negative safe integer`);
+  }
+  return parsed;
+}
+
+function requireLowerHex64(value: string, option: string): string {
+  if (!/^[0-9a-f]{64}$/u.test(value)) {
+    throw new Error(`${option} must be 32-byte lowercase hex`);
+  }
+  return value;
+}
+
+export function nativeHostInstallApprovalFromArgs(args: string[]): NativeHostInstallApproval {
+  const normalizedArgs = args[0] === "--" ? args.slice(1) : args;
+  let planPath: string | undefined;
+  let reviewedInstallDigest: string | undefined;
+  let approvedAt: number | undefined;
+
+  for (let index = 0; index < normalizedArgs.length; index += 1) {
+    const arg = normalizedArgs[index];
+    if (arg === "--native-host-install-approval") {
+      planPath = takeOptionValue(normalizedArgs, index, arg);
+      index += 1;
+    } else if (arg === "--reviewed-install-digest") {
+      reviewedInstallDigest = requireLowerHex64(takeOptionValue(normalizedArgs, index, arg), arg);
+      index += 1;
+    } else if (arg === "--approved-at") {
+      approvedAt = requireNonNegativeSafeInteger(takeOptionValue(normalizedArgs, index, arg), arg);
+      index += 1;
+    } else {
+      throw new Error(`unsupported service option: ${arg}`);
+    }
+  }
+
+  if (planPath === undefined) throw new Error("--native-host-install-approval is required");
+  if (reviewedInstallDigest === undefined) throw new Error("--reviewed-install-digest is required");
+  if (approvedAt === undefined) throw new Error("--approved-at is required");
+  return approveNativeHostInstallPlan(parseNativeHostInstallPlan(
+    readJsonFile(planPath, "native host install plan")
+  ), {
+    reviewedInstallDigest,
+    approvedAt
+  });
+}
+
+export function nativeHostInstallApprovalJsonFromArgs(args: string[]): string {
+  return `${JSON.stringify(nativeHostInstallApprovalFromArgs(args), null, 2)}\n`;
 }

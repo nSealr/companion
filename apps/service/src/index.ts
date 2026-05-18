@@ -13,6 +13,7 @@ import {
 import { SerialLineStreamPort, type SerialLinePort } from "@nsealr/transport";
 import { contextArgsFromCliArgs, loadServiceContextFromFiles } from "./context.js";
 import {
+  nativeHostInstallApprovalJsonFromArgs,
   nativeHostInstallPlanJsonFromArgs,
   nativeHostManifestJsonFromArgs
 } from "./manifest.js";
@@ -217,6 +218,10 @@ export async function runServiceCli(args: string[]): Promise<void> {
     }
     if (normalizedArgs.includes("--native-host-install-plan")) {
       writeSync(1, nativeHostInstallPlanJsonFromArgs(args));
+      return;
+    }
+    if (normalizedArgs.includes("--native-host-install-approval")) {
+      writeSync(1, nativeHostInstallApprovalJsonFromArgs(args));
       return;
     }
     await runServiceStdioAsync({

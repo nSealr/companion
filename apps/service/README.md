@@ -19,6 +19,8 @@ Private native-messaging host scaffold for the nSealr local companion service.
   fallback failures into deterministic local-service transport error codes.
 - Render validated Chromium and Firefox native-host manifest JSON from the
   shared `@nsealr/client` manifest contract for future installer work.
+- Render digest-bound native-host install approval JSON from a reviewed install
+  plan without installing manifest files.
 
 ## Manifest Example
 
@@ -31,6 +33,10 @@ pnpm --filter @nsealr/service service -- --native-host-install-plan chromium \
   --host-path /Applications/nSealr/nsealr-service \
   --manifest-path "$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts/dev.nsealr.companion.json" \
   --extension-id aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+pnpm --filter @nsealr/service service -- --native-host-install-approval ./native-host-install-plan.json \
+  --reviewed-install-digest <digest-hex> \
+  --approved-at 1900000000
 ```
 
 ## Explicit Context Example
@@ -88,7 +94,9 @@ or injected dispatcher. The serial-line route driver opens only the exact path
 provided in an explicit route-driver store and still relies on the device to
 own trusted review, approval, and signing refusal or signing behavior. Manifest
 generation and install-plan generation only print JSON; they do not install
-files into browser native-messaging directories. File-backed context loading is
-an explicit storage-approved read-only developer and integration harness until
-approval UX, native-host installation execution, and production driver
-acceptance are specified.
+files into browser native-messaging directories. Install approvals are also
+JSON-only and keep `writes_files=false`; actual native-host installation
+execution is a later gate. File-backed context loading is an explicit
+storage-approved read-only developer and integration harness until approval UX,
+native-host installation execution, and production driver acceptance are
+specified.

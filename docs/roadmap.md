@@ -249,6 +249,12 @@ by grant-store writes, while still avoiding default storage locations,
 production persistence, relay sessions, browser installation, or production
 signer-driver acceptance.
 
+Status note, 2026-05-18: native-host install plans are now digest-bound, and
+the private `@nsealr/service` app can render native-host install approval JSON
+only after the caller supplies the reviewed install digest. The approval remains
+artifact-only with `writes_files=false`; actual native-host manifest writing is
+still a separate installation-execution gate.
+
 Status note, 2026-05-11: the companion identity/policy boundary now follows
 the official account model. Account metadata is per resulting public key and
 route; key sources such as mnemonics, passphrase namespaces, standalone
@@ -319,10 +325,11 @@ and uploads checked tarball artifacts without publishing to npm.
   local-service route-selection operation are implemented, and the private
   service app now has a tested multi-message native-host stdio loop.
   `@nsealr/client` now owns validated Chromium/Firefox native-host manifest
-  generation and dry-run install-plan generation plus the strict secretless JSON
-  grant-store contract for approved and revoked local client grants; the
-  private service app only parses manifest/install-plan CLI arguments and
-  renders JSON to stdout. The CLI can render pairing-review metadata,
+  generation, digest-bound dry-run install-plan generation, install-approval
+  artifact generation, plus the strict secretless JSON grant-store contract for
+  approved and revoked local client grants; the private service app only parses
+  manifest/install-plan/install-approval CLI arguments and renders JSON to
+  stdout. The CLI can render pairing-review metadata,
   create digest-confirmed approval artifacts, and build explicit output
   grant-store artifacts from approval artifacts or latest-client revocations
   without default storage paths or input-file mutation. `@nsealr/client` now

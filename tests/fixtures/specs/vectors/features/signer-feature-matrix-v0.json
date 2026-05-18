@@ -345,9 +345,9 @@
         },
         "seedqr_session_import": {
           "target": "required",
-          "current": "planned",
+          "current": "partial",
           "contract_id": "seedsigner-seedqr-session-import-v0",
-          "notes": "The final ESP32 QR vault must match Raspberry SeedQR/CompactSeedQR RAM-only import behavior once camera and seed-entry UX exist."
+          "notes": "Host-core decodes SeedSigner Standard SeedQR and CompactSeedQR into checked BIP-39 word indexes against the shared vector. Camera QR input, BIP-39 wordlist display, NIP-06 derivation, session keyring wiring, local import review, response QR output, and signing remain pending."
         },
         "nip19_nsec_session_import": {
           "target": "required",

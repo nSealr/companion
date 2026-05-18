@@ -168,12 +168,13 @@ packages, but it must not export test-only signing as a production path.
 - `apps/service`: private native-messaging host scaffold over
   `packages/client`. It processes multiple length-prefixed service messages on
   one stdio session, accepts explicit in-memory authorization context in tests,
-  can load explicit read-only secretless grant/account JSON context files for
-  developer and integration harnesses, can load explicit secretless route-driver
-  stores for exact account/route/USB serial-line developer dispatch, returns
-  deterministic native-frame errors, and can print validated Chromium/Firefox
-  native-host manifest JSON plus dry-run install-plan JSON through the shared
-  `@nsealr/client` manifest builder.
+  can load explicit storage-approved read-only secretless grant/account JSON
+  context files for developer and integration harnesses, can load explicit
+  storage-approved secretless route-driver stores for exact account/route/USB
+  serial-line developer dispatch, returns deterministic native-frame errors,
+  and can print validated Chromium/Firefox native-host manifest JSON plus
+  dry-run install-plan JSON through the shared `@nsealr/client` manifest
+  builder.
   It is intentionally secretless and does not yet install manifest files, write
   grant/account storage, perform production grant persistence, open relays, or
   include default or production signer transport drivers.
@@ -281,13 +282,15 @@ service app only owns CLI argument parsing and stdout rendering for that
 contract. `@nsealr/client` also defines
 the persistent grant-store JSON contract used to serialize approved and revoked
 local client grants without secret material. The private service app can now
-load explicit read-only grant/account context files for local harnesses. It can
-also load an explicit secretless route-driver store for exact account/route/USB
-serial-line dispatch through the async local-service boundary. That driver store
-does not contain keys, does not approve clients, does not choose default paths,
-and does not make QR vaults connected signers. Serial-line open, timeout,
-protocol, I/O, close, and fallback failures are normalized into deterministic
-local-service transport error codes before they cross the service boundary.
+load explicit read-only grant/account context files for local harnesses only
+when a digest-bound storage approval artifact covers those paths. It can also
+load an explicit secretless route-driver store for exact account/route/USB
+serial-line dispatch through the async local-service boundary only when the
+same storage approval covers the driver-store path. That driver store does not
+contain keys, does not approve clients, does not choose default paths, and does
+not make QR vaults connected signers. Serial-line open, timeout, protocol, I/O,
+close, and fallback failures are normalized into deterministic local-service
+transport error codes before they cross the service boundary.
 Manifest installation, default storage locations, file writes, relay sessions,
 browser packaging, and production driver acceptance remain separate gates.
 

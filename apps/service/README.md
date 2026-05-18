@@ -12,8 +12,9 @@ Private native-messaging host scaffold for the nSealr local companion service.
 - Await package-owned async local-service dispatch so future reviewed signer
   drivers can use asynchronous I/O without changing the native-messaging
   framing contract.
-- Load explicit secretless route-driver stores for reviewed host-owned drivers.
-  The first supported driver is exact account/route/USB serial-line dispatch.
+- Load explicit storage-approved secretless route-driver stores for reviewed
+  host-owned drivers. The first supported driver is exact account/route/USB
+  serial-line dispatch.
 - Normalize serial-line driver open, timeout, protocol, I/O, close, and
   fallback failures into deterministic local-service transport error codes.
 - Render validated Chromium and Firefox native-host manifest JSON from the
@@ -36,13 +37,16 @@ pnpm --filter @nsealr/service service -- --native-host-install-plan chromium \
 
 ```sh
 pnpm --filter @nsealr/service service -- \
-  --grant-store ./local-grants.json \
-  --account-store ./local-accounts.json \
-  --route-driver-store ./local-route-drivers.json
+  --grant-store "$PWD/local-grants.json" \
+  --account-store "$PWD/local-accounts.json" \
+  --route-driver-store "$PWD/local-route-drivers.json" \
+  --storage-approval "$PWD/local-storage-approval.json"
 ```
 
-Context files are loaded only from explicit paths. The service validates the
-secretless grant-store and account-store formats before entering the stdio loop.
+Context files are loaded only from explicit paths covered by a storage approval
+artifact. The service validates the storage approval, secretless grant-store,
+account-store, and route-driver formats before entering the stdio loop. The
+reviewed paths must be absolute and already expanded before use.
 They may authorize route selection, request validation, response verification,
 or dispatch. Route-driver stores must also be explicit, secretless, and exact:
 each serial-line driver names `account_id`, `route_type`, `transport: "usb"`,
@@ -85,6 +89,6 @@ provided in an explicit route-driver store and still relies on the device to
 own trusted review, approval, and signing refusal or signing behavior. Manifest
 generation and install-plan generation only print JSON; they do not install
 files into browser native-messaging directories. File-backed context loading is
-an explicit read-only developer and integration harness until approval UX,
-storage location review, native-host installation execution, and production
-driver acceptance are specified.
+an explicit storage-approved read-only developer and integration harness until
+approval UX, native-host installation execution, and production driver
+acceptance are specified.

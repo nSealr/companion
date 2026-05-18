@@ -262,9 +262,10 @@ single-repository CI. Cross-repository drift remains guarded by
 - Service app tests prove the private native-messaging host scaffold stays a
   thin wrapper around `@nsealr/client`, passes injected in-memory authorization
   context to the local service, loads explicit read-only secretless
-  grant/account JSON files for local harnesses, rejects secret-bearing or
-  malformed account-store files, parses explicit secretless route-driver stores,
-  rejects empty, duplicate, broad, secret-bearing, non-USB, and QR-vault driver
+  grant/account JSON files for local harnesses only when a storage approval
+  covers the paths, rejects secret-bearing or malformed account-store files,
+  parses explicit storage-approved secretless route-driver stores, rejects
+  empty, duplicate, broad, secret-bearing, non-USB, and QR-vault driver
   mappings, dispatches matching developer serial-line requests only through an
   injected opener or explicit route-driver file, maps serial-line open,
   timeout, protocol, I/O, and close failures to deterministic transport error
@@ -453,7 +454,8 @@ single-repository CI. Cross-repository drift remains guarded by
   test suite already covers pairing intent generation,
   deterministic pairing-review projection, digest-bound storage-location
   review and approval artifacts, strict grant-store serialization/revocation,
-  explicit read-only context loading, selected account route, malformed
+  explicit storage-approved read-only context loading, selected account route,
+  malformed
   native-message rejection, shared
   Chromium/Firefox native-host manifest and dry-run install-plan building in
   `@nsealr/client`, multi-message native-host stdio behavior, and the private

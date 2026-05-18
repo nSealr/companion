@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import {
   parseLocalGrantStore,
+  parseLocalStorageApproval,
+  requireLocalStorageApprovalEntry,
   type LocalGrantStore,
   type LocalServiceContext
 } from "@nsealr/client";
@@ -23,6 +25,7 @@ export type ServiceContextFileOptions = {
   grantStorePath?: string;
   accountStorePath?: string;
   routeDriverStorePath?: string;
+  storageApprovalPath?: string;
   openSerialLinePort?: SerialLinePortOpener;
   now?: number;
 };
@@ -52,6 +55,43 @@ function readJsonFile(path: string, label: string): unknown {
     return JSON.parse(contents);
   } catch (error) {
     throw new Error(`${label} JSON is invalid: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function hasContextFilePath(options: ServiceContextFileOptions): boolean {
+  return (
+    options.grantStorePath !== undefined ||
+    options.accountStorePath !== undefined ||
+    options.routeDriverStorePath !== undefined
+  );
+}
+
+function requireContextStorageApproval(options: ServiceContextFileOptions): void {
+  if (!hasContextFilePath(options)) return;
+  if (options.storageApprovalPath === undefined) {
+    throw new Error("service context files require --storage-approval");
+  }
+  const approval = parseLocalStorageApproval(readJsonFile(options.storageApprovalPath, "local storage approval"));
+  if (options.grantStorePath !== undefined) {
+    requireLocalStorageApprovalEntry(approval, {
+      purpose: "grant_store",
+      path: options.grantStorePath,
+      access: "read_only"
+    });
+  }
+  if (options.accountStorePath !== undefined) {
+    requireLocalStorageApprovalEntry(approval, {
+      purpose: "account_store",
+      path: options.accountStorePath,
+      access: "read_only"
+    });
+  }
+  if (options.routeDriverStorePath !== undefined) {
+    requireLocalStorageApprovalEntry(approval, {
+      purpose: "route_driver_store",
+      path: options.routeDriverStorePath,
+      access: "read_only"
+    });
   }
 }
 
@@ -101,6 +141,7 @@ export function parseServiceAccountStore(value: unknown): ServiceAccountStore {
 }
 
 export function loadServiceContextFromFiles(options: ServiceContextFileOptions): LocalServiceContext {
+  requireContextStorageApproval(options);
   const grantStore: LocalGrantStore | undefined = options.grantStorePath === undefined
     ? undefined
     : parseLocalGrantStore(readJsonFile(options.grantStorePath, "local grant store"));
@@ -144,6 +185,10 @@ export function contextArgsFromCliArgs(args: string[]): ServiceContextFileOption
     } else if (arg === "--route-driver-store") {
       if (options.routeDriverStorePath !== undefined) throw new Error("--route-driver-store is duplicated");
       options.routeDriverStorePath = takeOptionValue(normalizedArgs, index, arg);
+      index += 1;
+    } else if (arg === "--storage-approval") {
+      if (options.storageApprovalPath !== undefined) throw new Error("--storage-approval is duplicated");
+      options.storageApprovalPath = takeOptionValue(normalizedArgs, index, arg);
       index += 1;
     } else if (arg === "--now") {
       if (options.now !== undefined) throw new Error("--now is duplicated");

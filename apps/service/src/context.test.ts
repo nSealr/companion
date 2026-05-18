@@ -5,8 +5,10 @@ import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "@nsealr/fixtures";
 import { encodeSerialFrame } from "@nsealr/framing";
 import {
+  approveLocalStorageReview,
   clientIdForIdentity,
   createLocalGrantStore,
+  createLocalStorageReview,
   decodeNativeMessage,
   encodeNativeMessage,
   serializeLocalGrantStore,
@@ -92,6 +94,22 @@ function withTempFiles(files: Record<string, string>, fn: (paths: Record<string,
   }
 }
 
+function writeStorageApproval(
+  path: string,
+  entries: Array<{
+    purpose: "grant_store" | "account_store" | "route_driver_store";
+    path: string;
+  }>
+): void {
+  const review = createLocalStorageReview(entries.map((entry) => ({
+    ...entry,
+    access: "read_only",
+    contains_secret_material: false
+  })));
+  const approval = approveLocalStorageReview(review, { approvedAt: 1_900_000_000 });
+  writeFileSync(path, `${JSON.stringify(approval, null, 2)}\n`, "utf8");
+}
+
 async function withTempFilesAsync(
   files: Record<string, string>,
   fn: (paths: Record<string, string>) => Promise<void>
@@ -115,9 +133,15 @@ describe("service context loading", () => {
       "grants.json": serializeLocalGrantStore(createLocalGrantStore([grant], { updatedAt: 1_900_000_000 })),
       "accounts.json": `${JSON.stringify(accountStore(), null, 2)}\n`
     }, (paths) => {
+      const storageApprovalPath = join(paths["grants.json"], "..", "storage-approval.json");
+      writeStorageApproval(storageApprovalPath, [
+        { purpose: "grant_store", path: paths["grants.json"] },
+        { purpose: "account_store", path: paths["accounts.json"] }
+      ]);
       const context = loadServiceContextFromFiles({
         grantStorePath: paths["grants.json"],
         accountStorePath: paths["accounts.json"],
+        storageApprovalPath,
         now: 1_900_000_000
       });
 
@@ -151,8 +175,13 @@ describe("service context loading", () => {
     withTempFiles({
       "grants.json": serializeLocalGrantStore(createLocalGrantStore([grant], { updatedAt: 1_900_000_000 }))
     }, (paths) => {
+      const storageApprovalPath = join(paths["grants.json"], "..", "storage-approval.json");
+      writeStorageApproval(storageApprovalPath, [
+        { purpose: "grant_store", path: paths["grants.json"] }
+      ]);
       const context = loadServiceContextFromFiles({
         grantStorePath: paths["grants.json"],
+        storageApprovalPath,
         now: 1_900_000_000
       });
 
@@ -181,9 +210,15 @@ describe("service context loading", () => {
       "grants.json": serializeLocalGrantStore(createLocalGrantStore([dispatchGrant], { updatedAt: 1_900_000_000 })),
       "accounts.json": `${JSON.stringify(accountStore(), null, 2)}\n`
     }, (paths) => {
+      const storageApprovalPath = join(paths["grants.json"], "..", "storage-approval.json");
+      writeStorageApproval(storageApprovalPath, [
+        { purpose: "grant_store", path: paths["grants.json"] },
+        { purpose: "account_store", path: paths["accounts.json"] }
+      ]);
       const context = loadServiceContextFromFiles({
         grantStorePath: paths["grants.json"],
         accountStorePath: paths["accounts.json"],
+        storageApprovalPath,
         now: 1_900_000_000
       });
 
@@ -219,10 +254,17 @@ describe("service context loading", () => {
       "accounts.json": `${JSON.stringify(accountStore([esp32Account]), null, 2)}\n`,
       "drivers.json": `${JSON.stringify(routeDriverStore(), null, 2)}\n`
     }, async (paths) => {
+      const storageApprovalPath = join(paths["grants.json"], "..", "storage-approval.json");
+      writeStorageApproval(storageApprovalPath, [
+        { purpose: "grant_store", path: paths["grants.json"] },
+        { purpose: "account_store", path: paths["accounts.json"] },
+        { purpose: "route_driver_store", path: paths["drivers.json"] }
+      ]);
       expect(() => loadServiceContextFromFiles({
         grantStorePath: paths["grants.json"],
         accountStorePath: paths["accounts.json"],
         routeDriverStorePath: paths["drivers.json"],
+        storageApprovalPath,
         now: 1_900_000_000
       })).toThrow(/requires an explicit serial-line opener/u);
 
@@ -230,6 +272,7 @@ describe("service context loading", () => {
         grantStorePath: paths["grants.json"],
         accountStorePath: paths["accounts.json"],
         routeDriverStorePath: paths["drivers.json"],
+        storageApprovalPath,
         now: 1_900_000_000,
         openSerialLinePort: (path) => {
           expect(path).toBe("/dev/cu.usbmodem-test");
@@ -296,6 +339,30 @@ describe("service context loading", () => {
     );
   });
 
+  it("requires storage approval before loading file-backed service context", () => {
+    withTempFiles({
+      "grants.json": serializeLocalGrantStore(createLocalGrantStore([grant], { updatedAt: 1_900_000_000 })),
+      "accounts.json": `${JSON.stringify(accountStore(), null, 2)}\n`
+    }, (paths) => {
+      expect(() => loadServiceContextFromFiles({
+        grantStorePath: paths["grants.json"],
+        accountStorePath: paths["accounts.json"],
+        now: 1_900_000_000
+      })).toThrow(/storage-approval/u);
+
+      const storageApprovalPath = join(paths["grants.json"], "..", "storage-approval.json");
+      writeStorageApproval(storageApprovalPath, [
+        { purpose: "grant_store", path: paths["grants.json"] }
+      ]);
+      expect(() => loadServiceContextFromFiles({
+        grantStorePath: paths["grants.json"],
+        accountStorePath: paths["accounts.json"],
+        storageApprovalPath,
+        now: 1_900_000_000
+      })).toThrow(/does not cover/u);
+    });
+  });
+
   it("parses explicit context CLI args without accepting implicit defaults", () => {
     expect(contextArgsFromCliArgs([
       "--",
@@ -305,12 +372,15 @@ describe("service context loading", () => {
       "/tmp/accounts.json",
       "--route-driver-store",
       "/tmp/drivers.json",
+      "--storage-approval",
+      "/tmp/storage-approval.json",
       "--now",
       "1900000000"
     ])).toEqual({
       grantStorePath: "/tmp/grants.json",
       accountStorePath: "/tmp/accounts.json",
       routeDriverStorePath: "/tmp/drivers.json",
+      storageApprovalPath: "/tmp/storage-approval.json",
       now: 1_900_000_000
     });
 
@@ -328,6 +398,12 @@ describe("service context loading", () => {
       "--route-driver-store",
       "/tmp/two.json"
     ])).toThrow(/--route-driver-store is duplicated/u);
+    expect(() => contextArgsFromCliArgs([
+      "--storage-approval",
+      "/tmp/one.json",
+      "--storage-approval",
+      "/tmp/two.json"
+    ])).toThrow(/--storage-approval is duplicated/u);
     expect(() => contextArgsFromCliArgs(["--unknown"])).toThrow(/unsupported service option/u);
   });
 });

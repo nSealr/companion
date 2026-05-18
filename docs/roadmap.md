@@ -170,9 +170,11 @@ any signer transport or production service storage exists.
 
 Status note, 2026-05-13: the private `@nsealr/service` app now has explicit
 read-only context loading for secretless local grant-store and account-store
-JSON files. This is a developer and integration harness only: it chooses no
-default path, writes no files, approves no clients, opens no transports, and
-does not change the production approval UI or storage-write gates.
+JSON files. As of the 2026-05-18 storage-approval gate below, those file-backed
+paths require digest-bound storage approval before loading. This remains a
+developer and integration harness only: it chooses no default path, writes no
+files, approves no clients, opens no transports, and does not change the
+production approval UI or storage-write gates.
 
 Status note, 2026-05-13: the CLI now exposes `nsealr local review-pairing` for
 deterministic review metadata from a local-service pairing intent. The command
@@ -230,12 +232,22 @@ from file-backed context and still stores no production secrets.
 
 Status note, 2026-05-18: the private `@nsealr/service` app can now load an
 explicit secretless route-driver store for exact account/route/USB serial-line
-dispatch. The store rejects secret fields, broad or duplicate route mappings,
-QR-vault routes, non-USB transports, empty route sets, and unsupported fields;
-it opens only the configured local serial path through the package-owned
-serial-line exchange boundary. This is developer/integration driver wiring
-only: it does not choose default paths, persist routes, approve clients, hold
-keys, make QR vaults connected signers, or claim production signer readiness.
+dispatch. As of the storage-approval gate below, the route-driver path also
+requires digest-bound storage approval before loading. The store rejects secret
+fields, broad or duplicate route mappings, QR-vault routes, non-USB transports,
+empty route sets, and unsupported fields; it opens only the configured local
+serial path through the package-owned serial-line exchange boundary. This is
+developer/integration driver wiring only: it does not choose default paths,
+persist routes, approve clients, hold keys, make QR vaults connected signers,
+or claim production signer readiness.
+
+Status note, 2026-05-18: file-backed service context loading now requires a
+digest-bound storage approval artifact before the private service reads
+explicit grant-store, account-store, or route-driver-store paths. This keeps
+developer harness context loading behind the same reviewed path contract used
+by grant-store writes, while still avoiding default storage locations,
+production persistence, relay sessions, browser installation, or production
+signer-driver acceptance.
 
 Status note, 2026-05-11: the companion identity/policy boundary now follows
 the official account model. Account metadata is per resulting public key and
@@ -320,7 +332,8 @@ and uploads checked tarball artifacts without publishing to npm.
   origin/app binding rules. Private service context loading can read explicit
   grant/account JSON files for local harnesses only, and it can now opt into an
   explicit secretless account/route/USB serial-line driver store for developer
-  integration. Route-driver dispatch now maps serial-line open, timeout,
+  integration, only when a storage approval artifact covers every file-backed
+  context path. Route-driver dispatch now maps serial-line open, timeout,
   protocol, I/O, close, and fallback failures to deterministic local-service
   transport error codes. `@nsealr/client` now also owns digest-bound
   storage-location review and approval artifacts for explicit

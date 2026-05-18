@@ -25,6 +25,11 @@ Private native-messaging host scaffold for the nSealr local companion service.
 pnpm --filter @nsealr/service service -- --native-host-manifest chromium \
   --host-path /Applications/nSealr/nsealr-service \
   --extension-id aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+pnpm --filter @nsealr/service service -- --native-host-install-plan chromium \
+  --host-path /Applications/nSealr/nsealr-service \
+  --manifest-path "$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts/dev.nsealr.companion.json" \
+  --extension-id aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ```
 
 ## Explicit Context Example
@@ -78,8 +83,8 @@ signing material. Its async stdio path only awaits an explicitly configured
 or injected dispatcher. The serial-line route driver opens only the exact path
 provided in an explicit route-driver store and still relies on the device to
 own trusted review, approval, and signing refusal or signing behavior. Manifest
-generation only prints JSON; it does not install files into browser
-native-messaging directories. File-backed context loading is an explicit
-read-only developer and integration harness until approval UX, storage
-location review, native-host installation, and production driver acceptance are
-specified.
+generation and install-plan generation only print JSON; they do not install
+files into browser native-messaging directories. File-backed context loading is
+an explicit read-only developer and integration harness until approval UX,
+storage location review, native-host installation execution, and production
+driver acceptance are specified.

@@ -307,9 +307,10 @@ and uploads checked tarball artifacts without publishing to npm.
   local-service route-selection operation are implemented, and the private
   service app now has a tested multi-message native-host stdio loop.
   `@nsealr/client` now owns validated Chromium/Firefox native-host manifest
-  generation plus the strict secretless JSON grant-store contract for approved
-  and revoked local client grants; the private service app only parses manifest
-  CLI arguments and renders JSON to stdout. The CLI can render pairing-review metadata,
+  generation and dry-run install-plan generation plus the strict secretless JSON
+  grant-store contract for approved and revoked local client grants; the
+  private service app only parses manifest/install-plan CLI arguments and
+  renders JSON to stdout. The CLI can render pairing-review metadata,
   create digest-confirmed approval artifacts, and build explicit output
   grant-store artifacts from approval artifacts or latest-client revocations
   without default storage paths or input-file mutation. `@nsealr/client` now
@@ -329,7 +330,7 @@ and uploads checked tarball artifacts without publishing to npm.
   artifact builders now require those approvals to cover their input/output
   paths before writing, and they refuse existing output files.
   Remaining work is full approval UI, default production storage activation,
-  production driver acceptance, and native-host installation packaging.
+  production driver acceptance, and native-host installation execution.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are

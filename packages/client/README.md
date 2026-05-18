@@ -127,5 +127,6 @@ signer responses.
 It does not store production keys, open relays, or include real signer
 transport drivers. A host app still has to own backup policy, signer transport
 wiring, production storage writes, and user approval UX.
-The package can build native-host manifest objects, but it does not install
-them or choose a host file location.
+The package can build native-host manifest objects and dry-run install plans
+for an explicit manifest path, but it does not install them or choose a host
+file location.

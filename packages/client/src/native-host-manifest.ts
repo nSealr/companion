@@ -2,6 +2,7 @@ import { isAbsolute } from "node:path";
 import { NATIVE_HOST_NAME } from "./service.js";
 
 export const NATIVE_HOST_DESCRIPTION = "nSealr companion native messaging host";
+export const NATIVE_HOST_INSTALL_PLAN_FORMAT = "nsealr-native-host-install-plan-v0";
 
 export type NativeHostBrowser = "chromium" | "firefox";
 
@@ -31,6 +32,26 @@ export type NativeHostManifestOptions = {
   description?: string;
 };
 
+export type NativeHostInstallPlanOptions = NativeHostManifestOptions & {
+  manifestPath: string;
+};
+
+export type NativeHostInstallPlan = {
+  format: typeof NATIVE_HOST_INSTALL_PLAN_FORMAT;
+  browser: NativeHostBrowser;
+  manifest_path: string;
+  manifest: NativeHostManifest;
+  would_write_files: [{
+    purpose: "native_host_manifest";
+    path: string;
+    access: "write_new";
+    contains_secret_material: false;
+  }];
+  requires_user_approval: true;
+  writes_files: false;
+  stores_production_secrets: false;
+};
+
 function requireHostName(value: string | undefined): string {
   const name = value ?? NATIVE_HOST_NAME;
   if (!/^[a-z0-9_]+(?:\.[a-z0-9_]+)*$/u.test(name) || name.length > 128) {
@@ -50,6 +71,32 @@ function requireDescription(value: string | undefined): string {
 function requireHostPath(value: string): string {
   if (value.length === 0 || !isAbsolute(value)) {
     throw new Error("native host path must be absolute");
+  }
+  return value;
+}
+
+function requireManifestPath(value: string): string {
+  if (value.length === 0) {
+    throw new Error("native host manifest path must not be empty");
+  }
+  if (value.length > 4096) {
+    throw new Error("native host manifest path exceeds max length");
+  }
+  if (value.startsWith("~")) {
+    throw new Error("native host manifest path must be expanded before planning");
+  }
+  if (!isAbsolute(value)) {
+    throw new Error("native host manifest path must be absolute");
+  }
+  if (/[\0\r\n]/u.test(value)) {
+    throw new Error("native host manifest path contains unsupported control characters");
+  }
+  const segments = value.split(/[\\/]+/u).filter((segment) => segment.length > 0);
+  if (segments.some((segment) => segment === "." || segment === "..")) {
+    throw new Error("native host manifest path must not contain relative segments");
+  }
+  if (!value.endsWith(".json")) {
+    throw new Error("native host manifest path must end with .json");
   }
   return value;
 }
@@ -97,4 +144,24 @@ export function buildNativeHostManifest(options: NativeHostManifestOptions): Nat
     };
   }
   throw new Error("native host browser is unsupported");
+}
+
+export function buildNativeHostInstallPlan(options: NativeHostInstallPlanOptions): NativeHostInstallPlan {
+  const manifest = buildNativeHostManifest(options);
+  const manifestPath = requireManifestPath(options.manifestPath);
+  return {
+    format: NATIVE_HOST_INSTALL_PLAN_FORMAT,
+    browser: options.browser,
+    manifest_path: manifestPath,
+    manifest,
+    would_write_files: [{
+      purpose: "native_host_manifest",
+      path: manifestPath,
+      access: "write_new",
+      contains_secret_material: false
+    }],
+    requires_user_approval: true,
+    writes_files: false,
+    stores_production_secrets: false
+  };
 }

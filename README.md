@@ -169,8 +169,10 @@ match the shared `contract_id`.
   explicit in-memory authorization context in tests. It can also load explicit
   read-only secretless grant/account JSON files for developer and integration
   harnesses, and print validated Chromium/Firefox native-host manifest JSON for
-  installer work. It does not open relays, store keys, write grant/account
-  files, or contact signer transports.
+  installer work. It can also print a dry-run native-host install plan that
+  includes the caller-supplied manifest path without writing files. It does not
+  open relays, store keys, write grant/account files, install native-host
+  manifests, or contact signer transports.
 - `nsealr review-request` renders deterministic review JSON, digest-bound
   screen-review pages, or complete constrained-display detail pages from a
   signing request for untrusted host-side previews and test harnesses.

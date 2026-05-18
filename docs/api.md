@@ -85,9 +85,12 @@ Exports:
 - `MAX_NATIVE_MESSAGE_BYTES`
 - `MAX_SERVICE_JSON_BYTES`
 - `NATIVE_HOST_DESCRIPTION`
+- `NATIVE_HOST_INSTALL_PLAN_FORMAT`
 - `NATIVE_HOST_NAME`
 - `NATIVE_MESSAGE_LENGTH_BYTES`
 - `NativeHostBrowser`
+- `NativeHostInstallPlan`
+- `NativeHostInstallPlanOptions`
 - `NativeHostManifest`
 - `NativeHostManifestOptions`
 - `NativeMessageFrameExchange`
@@ -105,6 +108,7 @@ Exports:
 - `appendLocalGrantRevocation`
 - `approveLocalStorageReview`
 - `approvePairingIntent`
+- `buildNativeHostInstallPlan`
 - `buildNativeHostManifest`
 - `clientIdForIdentity`
 - `createLocalGrantStore`

@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:1e57d6833504186071fef784ee03af048962031a42d8adf810920d9e816cd7f9`
+API surface digest: `sha256:67a50d8002dfada27a6b9b53b593a46a16b0315241b1743e232b40781764d8dc`
 
 Source: `docs/api.md`
 
@@ -67,9 +67,9 @@ and malformed-response rejection are public helpers.
 request cancellation, and `AbortSignal` forwarding into injected exchanges so
 browser-provider, SDK, extension, and future desktop code do not fork stalled
 local-service behavior.
-The shared native host name and native-host manifest builder remain exported
-from the Node-capable root so service manifest generation and packaging checks
-do not drift.
+The shared native host name, native-host manifest builder, and dry-run
+install-plan builder remain exported from the Node-capable root so service
+manifest/plan generation and packaging checks do not drift.
 `SignerTransportError` is the public typed error host-owned dispatchers should
 throw when a transport failure needs to cross the local-service boundary with a
 deterministic code instead of a generic dispatch failure.

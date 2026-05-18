@@ -455,12 +455,12 @@ single-repository CI. Cross-repository drift remains guarded by
   review and approval artifacts, strict grant-store serialization/revocation,
   explicit read-only context loading, selected account route, malformed
   native-message rejection, shared
-  Chromium/Firefox native-host manifest building in `@nsealr/client`,
-  multi-message native-host stdio behavior, and the private service CLI
-  wrapper that renders those manifests without installing them. Current service
-  route-driver tests cover the developer serial-line dispatch boundary through
-  fake ports only; hardware serial smoke remains a later gate before production
-  driver acceptance.
+  Chromium/Firefox native-host manifest and dry-run install-plan building in
+  `@nsealr/client`, multi-message native-host stdio behavior, and the private
+  service CLI wrapper that renders those manifests/plans without installing
+  them. Current service route-driver tests cover the developer serial-line
+  dispatch boundary through fake ports only; hardware serial smoke remains a
+  later gate before production driver acceptance.
 - Browser extension provider tests over a fake companion for origin permission,
   revocation, cancel, malformed companion response, native-host disconnects,
   and no key material in extension storage. Current package tests cover the

@@ -12,7 +12,10 @@ import {
 } from "@nsealr/client";
 import { SerialLineStreamPort, type SerialLinePort } from "@nsealr/transport";
 import { contextArgsFromCliArgs, loadServiceContextFromFiles } from "./context.js";
-import { nativeHostManifestJsonFromArgs } from "./manifest.js";
+import {
+  nativeHostInstallPlanJsonFromArgs,
+  nativeHostManifestJsonFromArgs
+} from "./manifest.js";
 
 function nativeMessageError(message: string): LocalServiceResponse {
   return {
@@ -210,6 +213,10 @@ export async function runServiceCli(args: string[]): Promise<void> {
     const normalizedArgs = args[0] === "--" ? args.slice(1) : args;
     if (normalizedArgs.includes("--native-host-manifest")) {
       writeSync(1, nativeHostManifestJsonFromArgs(args));
+      return;
+    }
+    if (normalizedArgs.includes("--native-host-install-plan")) {
+      writeSync(1, nativeHostInstallPlanJsonFromArgs(args));
       return;
     }
     await runServiceStdioAsync({

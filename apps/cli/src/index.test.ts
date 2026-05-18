@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  approveLocalStorageReview,
   approvePairingIntent,
   createLocalGrantStore,
   createLocalStorageReview,
@@ -50,6 +51,36 @@ async function collectCliOutput(args: string[]): Promise<string[]> {
 
 function fixtureCountLabel(count: number, singular: string, plural = `${singular}s`): string {
   return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function writeGrantStoreStorageApproval(
+  path: string,
+  options: {
+    inputPath?: string;
+    outputPath: string;
+    approvedAt?: number;
+  }
+): void {
+  const entries: unknown[] = [];
+  if (options.inputPath !== undefined) {
+    entries.push({
+      purpose: "grant_store",
+      path: options.inputPath,
+      access: "read_only",
+      contains_secret_material: false
+    });
+  }
+  entries.push({
+    purpose: "grant_store",
+    path: options.outputPath,
+    access: "write_new",
+    contains_secret_material: false
+  });
+  const review = createLocalStorageReview(entries);
+  const approval = approveLocalStorageReview(review, {
+    approvedAt: options.approvedAt ?? 1_900_000_000
+  });
+  writeFileSync(path, `${JSON.stringify(approval, null, 2)}\n`, "utf8");
 }
 
 describe("nsealr CLI", () => {
@@ -995,6 +1026,7 @@ describe("nsealr CLI", () => {
   it("creates explicit local grant-store artifacts from pairing approvals", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-grant-store-"));
     const approvalPath = join(tempRoot, "pairing-approval.json");
+    const storageApprovalPath = join(tempRoot, "storage-approval.json");
     const grantStorePath = join(tempRoot, "local-grants.json");
     const response = handleLocalServiceRequest({
       version: 1,
@@ -1017,12 +1049,15 @@ describe("nsealr CLI", () => {
     });
 
     writeFileSync(approvalPath, `${JSON.stringify(approval, null, 2)}\n`, "utf8");
+    writeGrantStoreStorageApproval(storageApprovalPath, { outputPath: grantStorePath });
     await runCli([
       "local",
       "grant-store",
       "append-approval",
       "--approval",
       approvalPath,
+      "--storage-approval",
+      storageApprovalPath,
       "--updated-at",
       "1900000001",
       "--out",
@@ -1040,6 +1075,7 @@ describe("nsealr CLI", () => {
   it("extends explicit local grant-store inputs without mutating them", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-grant-store-extend-"));
     const approvalPath = join(tempRoot, "pairing-approval.json");
+    const storageApprovalPath = join(tempRoot, "storage-approval.json");
     const inputStorePath = join(tempRoot, "local-grants-input.json");
     const outputStorePath = join(tempRoot, "local-grants-output.json");
     const firstResponse = handleLocalServiceRequest({
@@ -1082,6 +1118,10 @@ describe("nsealr CLI", () => {
 
     writeFileSync(inputStorePath, serializeLocalGrantStore(inputStore), "utf8");
     writeFileSync(approvalPath, `${JSON.stringify(secondApproval, null, 2)}\n`, "utf8");
+    writeGrantStoreStorageApproval(storageApprovalPath, {
+      inputPath: inputStorePath,
+      outputPath: outputStorePath
+    });
     const originalInput = readFileSync(inputStorePath, "utf8");
 
     await runCli([
@@ -1092,6 +1132,8 @@ describe("nsealr CLI", () => {
       approvalPath,
       "--grant-store",
       inputStorePath,
+      "--storage-approval",
+      storageApprovalPath,
       "--updated-at",
       "1900000011",
       "--out",
@@ -1109,6 +1151,7 @@ describe("nsealr CLI", () => {
   it("rejects malformed pairing approval artifacts before writing grant stores", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-grant-store-invalid-"));
     const approvalPath = join(tempRoot, "pairing-approval.json");
+    const storageApprovalPath = join(tempRoot, "storage-approval.json");
     const grantStorePath = join(tempRoot, "local-grants.json");
     const response = handleLocalServiceRequest({
       version: 1,
@@ -1136,6 +1179,7 @@ describe("nsealr CLI", () => {
         approved_at: 1_900_000_001
       }
     }, null, 2)}\n`, "utf8");
+    writeGrantStoreStorageApproval(storageApprovalPath, { outputPath: grantStorePath });
 
     await expect(
       runCli([
@@ -1144,6 +1188,8 @@ describe("nsealr CLI", () => {
         "append-approval",
         "--approval",
         approvalPath,
+        "--storage-approval",
+        storageApprovalPath,
         "--updated-at",
         "1900000002",
         "--out",
@@ -1153,8 +1199,100 @@ describe("nsealr CLI", () => {
     expect(existsSync(grantStorePath)).toBe(false);
   });
 
+  it("rejects grant-store writes when storage approval does not cover the output path", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-grant-store-storage-mismatch-"));
+    const approvalPath = join(tempRoot, "pairing-approval.json");
+    const storageApprovalPath = join(tempRoot, "storage-approval.json");
+    const grantStorePath = join(tempRoot, "local-grants.json");
+    const response = handleLocalServiceRequest({
+      version: 1,
+      request_id: "cli-grant-store-storage-mismatch-1",
+      operation: "request_pairing",
+      params: {
+        client: {
+          surface: "browser_extension",
+          origin: "extension:nsealr-cli-grant-store-storage-mismatch"
+        },
+        requested_operations: ["select_account_route"]
+      }
+    });
+    if (response.ok !== true || !("pairing_intent" in response.result)) {
+      throw new Error("test setup did not return a pairing intent");
+    }
+    const approval = approvePairingIntent(response.result.pairing_intent, {
+      approvedAt: 1_900_000_000
+    });
+
+    writeFileSync(approvalPath, `${JSON.stringify(approval, null, 2)}\n`, "utf8");
+    writeGrantStoreStorageApproval(storageApprovalPath, {
+      outputPath: join(tempRoot, "other-local-grants.json")
+    });
+    await expect(
+      runCli([
+        "local",
+        "grant-store",
+        "append-approval",
+        "--approval",
+        approvalPath,
+        "--storage-approval",
+        storageApprovalPath,
+        "--updated-at",
+        "1900000002",
+        "--out",
+        grantStorePath
+      ])
+    ).rejects.toThrow(/does not cover/u);
+    expect(existsSync(grantStorePath)).toBe(false);
+  });
+
+  it("rejects grant-store writes before replacing an existing output path", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-grant-store-existing-output-"));
+    const approvalPath = join(tempRoot, "pairing-approval.json");
+    const storageApprovalPath = join(tempRoot, "storage-approval.json");
+    const grantStorePath = join(tempRoot, "local-grants.json");
+    const response = handleLocalServiceRequest({
+      version: 1,
+      request_id: "cli-grant-store-existing-output-1",
+      operation: "request_pairing",
+      params: {
+        client: {
+          surface: "browser_extension",
+          origin: "extension:nsealr-cli-grant-store-existing-output"
+        },
+        requested_operations: ["select_account_route"]
+      }
+    });
+    if (response.ok !== true || !("pairing_intent" in response.result)) {
+      throw new Error("test setup did not return a pairing intent");
+    }
+    const approval = approvePairingIntent(response.result.pairing_intent, {
+      approvedAt: 1_900_000_000
+    });
+
+    writeFileSync(approvalPath, `${JSON.stringify(approval, null, 2)}\n`, "utf8");
+    writeGrantStoreStorageApproval(storageApprovalPath, { outputPath: grantStorePath });
+    writeFileSync(grantStorePath, "existing\n", "utf8");
+    await expect(
+      runCli([
+        "local",
+        "grant-store",
+        "append-approval",
+        "--approval",
+        approvalPath,
+        "--storage-approval",
+        storageApprovalPath,
+        "--updated-at",
+        "1900000002",
+        "--out",
+        grantStorePath
+      ])
+    ).rejects.toThrow(/already exists/u);
+    expect(readFileSync(grantStorePath, "utf8")).toBe("existing\n");
+  });
+
   it("appends explicit local grant-store revocations without mutating inputs", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-grant-store-revoke-"));
+    const storageApprovalPath = join(tempRoot, "storage-approval.json");
     const inputStorePath = join(tempRoot, "local-grants-input.json");
     const outputStorePath = join(tempRoot, "local-grants-output.json");
     const response = handleLocalServiceRequest({
@@ -1178,6 +1316,10 @@ describe("nsealr CLI", () => {
     const inputStore = createLocalGrantStore([approval.grant], { updatedAt: 1_900_000_001 });
 
     writeFileSync(inputStorePath, serializeLocalGrantStore(inputStore), "utf8");
+    writeGrantStoreStorageApproval(storageApprovalPath, {
+      inputPath: inputStorePath,
+      outputPath: outputStorePath
+    });
     const originalInput = readFileSync(inputStorePath, "utf8");
 
     await runCli([
@@ -1186,6 +1328,8 @@ describe("nsealr CLI", () => {
       "revoke-client",
       "--grant-store",
       inputStorePath,
+      "--storage-approval",
+      storageApprovalPath,
       "--client-id",
       approval.grant.client_id,
       "--origin",
@@ -1246,11 +1390,16 @@ describe("nsealr CLI", () => {
 
   it("rejects local grant-store revocations when no matching grant exists", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-local-grant-store-revoke-missing-"));
+    const storageApprovalPath = join(tempRoot, "storage-approval.json");
     const inputStorePath = join(tempRoot, "local-grants-input.json");
     const outputStorePath = join(tempRoot, "local-grants-output.json");
     const store = createLocalGrantStore([], { updatedAt: 1_900_000_000 });
 
     writeFileSync(inputStorePath, serializeLocalGrantStore(store), "utf8");
+    writeGrantStoreStorageApproval(storageApprovalPath, {
+      inputPath: inputStorePath,
+      outputPath: outputStorePath
+    });
 
     await expect(
       runCli([
@@ -1259,6 +1408,8 @@ describe("nsealr CLI", () => {
         "revoke-client",
         "--grant-store",
         inputStorePath,
+        "--storage-approval",
+        storageApprovalPath,
         "--client-id",
         "0".repeat(64),
         "--origin",

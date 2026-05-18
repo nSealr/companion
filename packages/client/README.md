@@ -107,8 +107,9 @@ verification, a dispatcher boundary that is unavailable by default, and a
 strict JSON grant-store contract for persisting approved/revoked local client
 grants without destructive history edits. It also owns digest-bound
 storage-location review and approval artifacts for explicit grant, account, and
-route-driver paths; those artifacts do not choose defaults, write files,
-approve clients, or open signer transports.
+route-driver paths. Grant-store artifact builders can require those approvals
+before writing a new output path, while the artifacts themselves do not choose
+defaults, approve clients, or open signer transports.
 `LocalServiceClient` owns response validation, request-id correlation, optional
 deterministic response timeout, and optional cancellation for any injected
 exchange. Browser adapters forward an `AbortSignal` into their injected

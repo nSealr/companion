@@ -76,6 +76,7 @@ Exports:
 - `LocalServiceResponse`
 - `LocalStorageAccessMode`
 - `LocalStorageApproval`
+- `LocalStorageApprovalRequirement`
 - `LocalStoragePurpose`
 - `LocalStorageReview`
 - `LocalStorageReviewEntry`
@@ -122,6 +123,7 @@ Exports:
 - `parseLocalStorageReview`
 - `parseLocalStorageReviewEntry`
 - `parsePairingIntent`
+- `requireLocalStorageApprovalEntry`
 - `reviewPairingIntent`
 - `revokeLocalGrant`
 - `serializeLocalGrantStore`

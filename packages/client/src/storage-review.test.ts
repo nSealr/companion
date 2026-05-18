@@ -6,7 +6,8 @@ import {
   LOCAL_STORAGE_REVIEW_FORMAT,
   parseLocalStorageApproval,
   parseLocalStorageReview,
-  parseLocalStorageReviewEntry
+  parseLocalStorageReviewEntry,
+  requireLocalStorageApprovalEntry
 } from "./storage-review.js";
 
 describe("local storage review", () => {
@@ -127,5 +128,39 @@ describe("local storage review", () => {
       stores_production_secrets: true
     })).toThrow(/production secrets/u);
     expect(() => approveLocalStorageReview(review, { approvedAt: -1 })).toThrow(/approvedAt/u);
+  });
+
+  it("requires approved entries before local storage writes can use a path", () => {
+    const review = createLocalStorageReview([
+      {
+        purpose: "grant_store",
+        path: "/Users/example/Library/Application Support/nSealr/local-grants-input.json",
+        access: "read_only",
+        contains_secret_material: false
+      },
+      {
+        purpose: "grant_store",
+        path: "/Users/example/Library/Application Support/nSealr/local-grants-output.json",
+        access: "write_new",
+        contains_secret_material: false
+      }
+    ]);
+    const approval = approveLocalStorageReview(review, { approvedAt: 1_900_000_000 });
+
+    expect(requireLocalStorageApprovalEntry(approval, {
+      purpose: "grant_store",
+      path: "/Users/example/Library/Application Support/nSealr/local-grants-output.json",
+      access: "write_new"
+    })).toEqual(approval);
+    expect(() => requireLocalStorageApprovalEntry(approval, {
+      purpose: "grant_store",
+      path: "/Users/example/Library/Application Support/nSealr/other-grants.json",
+      access: "write_new"
+    })).toThrow(/does not cover/u);
+    expect(() => requireLocalStorageApprovalEntry(approval, {
+      purpose: "account_store",
+      path: "/Users/example/Library/Application Support/nSealr/local-grants-output.json",
+      access: "write_new"
+    })).toThrow(/does not cover/u);
   });
 });

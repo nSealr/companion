@@ -84,11 +84,15 @@ match the shared `contract_id`.
   only when the caller supplies the reviewed storage digest. It still does not
   create, move, or activate storage files.
 - `nsealr local grant-store append-approval` writes a new explicit secretless
-  grant-store artifact from a pairing approval. It may extend a caller-supplied
-  input store, but it never chooses a default path or mutates the input file.
+  grant-store artifact from a pairing approval only when a storage approval
+  covers the requested read-only input path, if any, and new output path. It may
+  extend a caller-supplied input store, but it never chooses a default path,
+  overwrites an existing output file, or mutates the input file.
 - `nsealr local grant-store revoke-client` writes a new explicit grant-store
-  artifact with a latest-client revocation appended. It keeps grant history
-  intact and never mutates the input file.
+  artifact with a latest-client revocation appended only when a storage
+  approval covers the requested read-only input path and new output path. It
+  keeps grant history intact, never overwrites an existing output file, and
+  never mutates the input file.
 - `@nsealr/browser-provider` defines the first NIP-07 provider adapter over an
   injected companion backend and explicit client identity. It validates
   `getPublicKey` and `signEvent` boundaries, converts event templates into
@@ -352,8 +356,10 @@ pnpm nsealr local review-pairing --intent pairing-intent.json --out pairing-revi
 pnpm nsealr local approve-pairing --intent pairing-intent.json --reviewed-pairing-digest <digest-hex> --approved-at 1900000000 --out pairing-approval.json
 pnpm nsealr local review-storage --grant-store "$PWD/local-grants.json" --grant-store-output "$PWD/local-grants-next.json" --out storage-review.json
 pnpm nsealr local approve-storage --review storage-review.json --reviewed-storage-digest <digest-hex> --approved-at 1900000000 --out storage-approval.json
-pnpm nsealr local grant-store append-approval --approval pairing-approval.json --updated-at 1900000001 --out local-grants.json
-pnpm nsealr local grant-store revoke-client --grant-store local-grants.json --client-id <client-id-hex> --origin extension:nsealr --surface browser_extension --revoked-at 1900000020 --out local-grants-revoked.json
+pnpm nsealr local grant-store append-approval --approval pairing-approval.json --grant-store "$PWD/local-grants.json" --storage-approval storage-approval.json --updated-at 1900000001 --out "$PWD/local-grants-next.json"
+pnpm nsealr local review-storage --grant-store "$PWD/local-grants-next.json" --grant-store-output "$PWD/local-grants-revoked.json" --out storage-revoke-review.json
+pnpm nsealr local approve-storage --review storage-revoke-review.json --reviewed-storage-digest <digest-hex> --approved-at 1900000010 --out storage-revoke-approval.json
+pnpm nsealr local grant-store revoke-client --grant-store "$PWD/local-grants-next.json" --storage-approval storage-revoke-approval.json --client-id <client-id-hex> --origin extension:nsealr --surface browser_extension --revoked-at 1900000020 --out "$PWD/local-grants-revoked.json"
 pnpm nsealr nip46 decide --message nip46-message.json --permissions sign_event:1 --out decision.json
 pnpm nsealr nip46 decide --message nip46-message.json --policy-file policy.json --out decision.json
 pnpm nsealr nip46 review-connect --message nip46-connect.json --out connect-review.json

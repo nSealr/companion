@@ -325,9 +325,11 @@ and uploads checked tarball artifacts without publishing to npm.
   storage-location review and approval artifacts for explicit
   grant/account/route-driver paths, and the CLI exposes them as
   `nsealr local review-storage` and `nsealr local approve-storage` without
-  choosing defaults, writing storage, approving clients, or dispatching signers.
-  Remaining work is full approval UI, production storage writes, production
-  driver acceptance, and native-host installation packaging.
+  choosing defaults, approving clients, or dispatching signers. Grant-store
+  artifact builders now require those approvals to cover their input/output
+  paths before writing, and they refuse existing output files.
+  Remaining work is full approval UI, default production storage activation,
+  production driver acceptance, and native-host installation packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are

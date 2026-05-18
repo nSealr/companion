@@ -251,21 +251,26 @@ transports.
 `nsealr local grant-store append-approval` is the first explicit grant-store
 artifact builder. It validates a pairing approval artifact through
 `@nsealr/client`, creates or extends a caller-supplied secretless grant-store
-JSON object, and writes only the requested output path. It never chooses a
-default storage location, mutates the input store, approves clients by itself,
-or contacts signer transports.
+JSON object, and writes only a requested output path already covered by a
+storage approval artifact. If an input grant store is supplied, the same storage
+approval must cover that input as read-only. It never chooses a default storage
+location, overwrites an existing output file, mutates the input store, approves
+clients by itself, or contacts signer transports.
 `nsealr local grant-store revoke-client` appends a latest-client revocation to
 a new output grant-store artifact. Revocation is selected by
 `client_id + origin + surface`, keeps prior grants in the history, and fails
-deterministically if no matching grant exists or if the latest matching grant
-is already revoked.
+deterministically if the storage approval does not cover the read-only input
+and new output paths, if no matching grant exists, or if the latest matching
+grant is already revoked.
 `nsealr local review-storage` renders digest-bound review metadata for explicit
 grant/account/route-driver store paths. `nsealr local approve-storage` then
 creates an approval artifact only after the caller supplies the reviewed storage
 digest. These commands require absolute, expanded, non-relative paths and
 record read-only versus new-output access intent, but they do not choose default
-paths, create files, approve clients, dispatch signers, or turn reviewed paths
-into production storage.
+paths, approve clients, dispatch signers, or turn reviewed paths into
+production storage. Grant-store artifact builders consume those approvals before
+writing requested output paths, and still refuse to replace existing output
+files.
 The private `@nsealr/service` app now runs a tested multi-message native-host
 stdio loop, so a future browser extension can keep one native-messaging port
 open and receive one deterministic response per length-prefixed service

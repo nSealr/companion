@@ -416,12 +416,14 @@ single-repository CI. Cross-repository drift remains guarded by
   digests.
 - CLI local grant-store artifact tests covering
   `nsealr local grant-store append-approval`, including new-store creation,
-  explicit input-store extension without input-file mutation, and malformed
-  approval rejection before output files are written.
+  explicit input-store extension without input-file mutation, required
+  storage-approval coverage for grant-store input/output paths, existing-output
+  refusal, and malformed approval rejection before output files are written.
 - CLI local grant-store revocation tests covering
   `nsealr local grant-store revoke-client`, including output-only revocation
-  appending, input-file immutability, deterministic authorization denial after
-  revocation, and no-match rejection before output files are written.
+  appending behind storage-approval coverage, input-file immutability,
+  deterministic authorization denial after revocation, and no-match rejection
+  before output files are written.
 - Policy package tests cover secretless account descriptors, manual-only QR
   vault policy, scoped grants for persistent routes, wildcard/decrypt/export
   rejection, rejection of stateless QR-vault grant targets, and deterministic

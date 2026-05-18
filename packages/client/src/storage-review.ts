@@ -40,6 +40,12 @@ export type LocalStorageApproval = {
   stores_production_secrets: false;
 };
 
+export type LocalStorageApprovalRequirement = {
+  purpose: LocalStoragePurpose;
+  path: string;
+  access: LocalStorageAccessMode;
+};
+
 type LocalStorageReviewWithoutDigest = Omit<LocalStorageReview, "storage_digest">;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -219,4 +225,24 @@ export function parseLocalStorageApproval(value: unknown): LocalStorageApproval 
     review,
     stores_production_secrets: false
   };
+}
+
+export function requireLocalStorageApprovalEntry(
+  approval: unknown,
+  requirement: LocalStorageApprovalRequirement
+): LocalStorageApproval {
+  const parsedApproval = parseLocalStorageApproval(approval);
+  const requiredEntry = parseLocalStorageReviewEntry({
+    ...requirement,
+    contains_secret_material: false
+  });
+  const matches = parsedApproval.review.entries.some((entry) => (
+    entry.purpose === requiredEntry.purpose &&
+    entry.access === requiredEntry.access &&
+    entry.path === requiredEntry.path
+  ));
+  if (!matches) {
+    throw new Error("local storage approval does not cover requested location");
+  }
+  return parsedApproval;
 }

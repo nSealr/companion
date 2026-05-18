@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { Command } from "commander";
 import { SerialPort } from "serialport";
 import {
@@ -12,8 +12,10 @@ import {
   LOCAL_CLIENT_SURFACES,
   parseLocalGrantStore,
   parseLocalPairingApproval,
+  parseLocalStorageApproval,
   parseLocalStorageReview,
   reviewPairingIntent,
+  requireLocalStorageApprovalEntry,
   serializeLocalGrantStore,
   type LocalStorageAccessMode,
   type LocalStoragePurpose,
@@ -95,6 +97,11 @@ function writeJson(path: string, value: unknown): void {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
+function writeNewText(path: string, contents: string): void {
+  if (existsSync(path)) throw new Error("output path already exists");
+  writeFileSync(path, contents, { encoding: "utf8", flag: "wx" });
+}
+
 function assertFormat(format: string): asserts format is DataFormat {
   if (format !== "json" && format !== "qr" && format !== "qr-animated") {
     throw new Error(`unsupported format: ${format}`);
@@ -153,6 +160,26 @@ function addLocalStorageEntry(
     access,
     contains_secret_material: false
   });
+}
+
+function requireGrantStoreStorageApproval(options: {
+  storageApproval: string;
+  out: string;
+  grantStore?: string;
+}): void {
+  const approval = parseLocalStorageApproval(readJson(options.storageApproval));
+  requireLocalStorageApprovalEntry(approval, {
+    purpose: "grant_store",
+    path: options.out,
+    access: "write_new"
+  });
+  if (options.grantStore !== undefined) {
+    requireLocalStorageApprovalEntry(approval, {
+      purpose: "grant_store",
+      path: options.grantStore,
+      access: "read_only"
+    });
+  }
 }
 
 function reviewDetailPageLimitsFromOptions(options: {
@@ -866,41 +893,47 @@ export function buildCli(options: BuildCliOptions = {}): Command {
     .command("append-approval")
     .requiredOption("--approval <path>", "Read a local-service pairing approval artifact JSON file")
     .option("--grant-store <path>", "Optional existing local grant-store JSON file to extend")
+    .requiredOption("--storage-approval <path>", "Read a storage approval covering the input/output grant-store paths")
     .requiredOption("--updated-at <timestamp>", "Grant-store update timestamp as a non-negative integer")
     .requiredOption("--out <path>", "Write a new local grant-store JSON file")
-    .description("Append a pairing approval artifact to a new output grant store")
+    .description("Append a pairing approval artifact to a storage-approved new output grant store")
     .action((options: {
       approval: string;
       grantStore?: string;
+      storageApproval: string;
       updatedAt: string;
       out: string;
     }) => {
+      requireGrantStoreStorageApproval(options);
       const updatedAt = nonNegativeIntegerOption(options.updatedAt, "--updated-at");
       const approval = parseLocalPairingApproval(readJson(options.approval));
       const currentStore = options.grantStore === undefined
         ? createLocalGrantStore([], { updatedAt })
         : parseLocalGrantStore(readJson(options.grantStore));
       const nextStore = appendLocalGrant(currentStore, approval.grant, { updatedAt });
-      writeFileSync(options.out, serializeLocalGrantStore(nextStore), "utf8");
+      writeNewText(options.out, serializeLocalGrantStore(nextStore));
     });
 
   localGrantStore
     .command("revoke-client")
     .requiredOption("--grant-store <path>", "Read an existing local grant-store JSON file")
+    .requiredOption("--storage-approval <path>", "Read a storage approval covering the input/output grant-store paths")
     .requiredOption("--client-id <hex>", "Client id to revoke")
     .requiredOption("--origin <origin>", "Client origin recorded in the grant")
     .requiredOption("--surface <surface>", "Client surface recorded in the grant")
     .requiredOption("--revoked-at <timestamp>", "Revocation timestamp as a non-negative integer")
     .requiredOption("--out <path>", "Write a new local grant-store JSON file")
-    .description("Append a client revocation to a new output grant store")
+    .description("Append a client revocation to a storage-approved new output grant store")
     .action((options: {
       grantStore: string;
+      storageApproval: string;
       clientId: string;
       origin: string;
       surface: string;
       revokedAt: string;
       out: string;
     }) => {
+      requireGrantStoreStorageApproval(options);
       const revokedAt = nonNegativeIntegerOption(options.revokedAt, "--revoked-at");
       const currentStore = parseLocalGrantStore(readJson(options.grantStore));
       const nextStore = appendLocalGrantRevocation(currentStore, {
@@ -908,7 +941,7 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         origin: options.origin,
         surface: localClientSurfaceOption(options.surface, "--surface")
       }, { revokedAt });
-      writeFileSync(options.out, serializeLocalGrantStore(nextStore), "utf8");
+      writeNewText(options.out, serializeLocalGrantStore(nextStore));
     });
 
   program

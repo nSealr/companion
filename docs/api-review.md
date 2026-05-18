@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:058ccf36a25da4f84ab786facf4b9d43794842599ff1474f9b7fefd2c6b79afa`
+API surface digest: `sha256:1e57d6833504186071fef784ee03af048962031a42d8adf810920d9e816cd7f9`
 
 Source: `docs/api.md`
 
@@ -56,12 +56,13 @@ intent creation, deterministic pairing-review projection, manual pairing
 approval into a grant, strict pairing-approval artifact parsing, strict JSON
 grant-store serialization and output-only revocation appending for
 approved/revoked local client grants, digest-bound storage-location review and
-approval artifacts for explicit grant/account/route-driver paths, secretless
-route selection, signer-request validation, grant-gated dispatch through an
-explicitly injected dispatcher, and signer-response verification. Browser
-runtime code uses the reviewed `./browser` subpath, while identity-only callers
-may use the smaller `./client-identity` subpath. Request-id correlation,
-native-message framing, and malformed-response rejection are public helpers.
+approval artifacts for explicit grant/account/route-driver paths, approval
+coverage checks before grant-store output writes, secretless route selection,
+signer-request validation, grant-gated dispatch through an explicitly injected
+dispatcher, and signer-response verification. Browser runtime code uses the
+reviewed `./browser` subpath, while identity-only callers may use the smaller
+`./client-identity` subpath. Request-id correlation, native-message framing,
+and malformed-response rejection are public helpers.
 `LocalServiceClient` also owns optional deterministic response timeouts,
 request cancellation, and `AbortSignal` forwarding into injected exchanges so
 browser-provider, SDK, extension, and future desktop code do not fork stalled

@@ -455,7 +455,8 @@ and uploads checked tarball artifacts without publishing to npm.
   `package-plan` script now emits that JSON to stdout only, with no output-path
   or installer behavior. A private `package-build` script now creates an
   explicit developer artifact in a new output directory only after successful
-  in-memory bundling, embeds a secretless static route config, and still avoids
+  in-memory bundling, embeds a secretless static route config, returns a
+  package digest plus per-file byte counts and SHA-256 hashes, and still avoids
   native-host installation, extension storage writes, key custody, and signer
   dispatch. The browser-extension
   manifest builder can still build a minimal

@@ -39,11 +39,27 @@ describe("browser extension package-build CLI", () => {
         format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
         target: "chromium",
         out_dir: temp.outDir,
+        package_digest: expect.stringMatching(/^[0-9a-f]{64}$/u),
         installs_native_host_manifest: false,
         writes_extension_storage: false,
         stores_production_secrets: false,
         dispatches_signers: false
       });
+      expect(result.files).toEqual([
+        expect.objectContaining({ path: "manifest.json", sha256: expect.stringMatching(/^[0-9a-f]{64}$/u) }),
+        expect.objectContaining({
+          path: "nsealr-background-entrypoint.js",
+          sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
+        }),
+        expect.objectContaining({
+          path: "nsealr-content-script-entrypoint.js",
+          sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
+        }),
+        expect.objectContaining({
+          path: "nsealr-page-script-entrypoint.js",
+          sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
+        })
+      ]);
       expect(existsSync(join(temp.outDir, "manifest.json"))).toBe(true);
     } finally {
       temp.cleanup();

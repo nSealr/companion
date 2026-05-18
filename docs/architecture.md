@@ -76,7 +76,8 @@ packages, but it must not export test-only signing as a production path.
   source import hygiene and an esbuild browser bundle smoke before installable
   package generation is allowed. The first package-build CLI writes an explicit
   output directory only after successful in-memory bundling, embeds a
-  secretless static route config in the background bundle, writes no extension
+  secretless static route config in the background bundle, returns a package
+  digest plus per-file byte counts and SHA-256 hashes, writes no extension
   storage, installs no native-host manifest, and remains a developer artifact
   until a full bootstrap/config UX is reviewed.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
@@ -480,6 +481,13 @@ The private `@nsealr/browser-extension` app exposes this boundary through
 `pnpm --filter @nsealr/browser-extension package-plan -- --target ...`, which
 prints JSON to stdout only. The command has no output-path option and performs
 no filesystem install or browser-storage mutation.
+Its `package-build` command writes only a reviewed developer artifact to a new
+explicit output directory after in-memory bundling succeeds. The returned
+`nsealr-browser-extension-package-build-v0` result includes a package digest
+and per-file byte counts plus SHA-256 hashes so lab integration can verify the
+files that were actually written. It still installs no native-host manifest,
+writes no extension storage, creates no grants, dispatches no signers, and
+holds no key material.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

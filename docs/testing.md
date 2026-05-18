@@ -90,7 +90,8 @@ single-repository CI. Cross-repository drift remains guarded by
   contract. Package-build tests cover the first private developer artifact
   builder: it requires a new output directory and a secretless static route
   config, writes manifest and bundled entrypoints only after successful
-  in-memory bundling, and still performs no native-host installation, browser
+  in-memory bundling, returns a package digest plus per-file byte counts and
+  SHA-256 hashes, and still performs no native-host installation, browser
   storage writes, key custody, or signer dispatch.
 - Browser-extension app tests cover the private internal message parser for
   `get_public_key` and `sign_event`, including unsupported-method rejection,

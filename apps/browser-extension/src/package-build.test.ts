@@ -1,4 +1,5 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { sha256Utf8Hex } from "@nsealr/core";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -45,11 +46,21 @@ describe("browser extension package build", () => {
         format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
         target: "chromium",
         out_dir: temp.outDir,
+        package_digest: expect.stringMatching(/^[0-9a-f]{64}$/u),
         files: [
-          "manifest.json",
-          BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
-          BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
-          BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
+          expect.objectContaining({ path: "manifest.json", sha256: expect.stringMatching(/^[0-9a-f]{64}$/u) }),
+          expect.objectContaining({
+            path: BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
+            sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
+          }),
+          expect.objectContaining({
+            path: BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
+            sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
+          }),
+          expect.objectContaining({
+            path: BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE,
+            sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
+          })
         ],
         installs_native_host_manifest: false,
         writes_extension_storage: false,
@@ -57,8 +68,17 @@ describe("browser extension package build", () => {
         dispatches_signers: false
       });
       for (const file of result.files) {
-        expect(existsSync(join(temp.outDir, file))).toBe(true);
+        const path = join(temp.outDir, file.path);
+        expect(existsSync(path)).toBe(true);
+        const source = readFileSync(path, "utf8");
+        expect(file.bytes).toBe(new TextEncoder().encode(source).byteLength);
+        expect(file.sha256).toBe(sha256Utf8Hex(source));
       }
+      expect(result.package_digest).toBe(sha256Utf8Hex(JSON.stringify({
+        format: "nsealr-browser-extension-package-digest-v0",
+        target: "chromium",
+        files: result.files
+      })));
 
       const manifest = JSON.parse(readFileSync(join(temp.outDir, "manifest.json"), "utf8"));
       expect(manifest.permissions).toEqual(["nativeMessaging"]);

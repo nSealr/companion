@@ -1,6 +1,7 @@
 import { mkdir, stat, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { sha256Utf8Hex } from "@nsealr/core";
 import { build as esbuild, type Plugin } from "esbuild";
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
@@ -25,15 +26,26 @@ export type BrowserExtensionPackageBuildOptions = BrowserExtensionManifestOption
   routeConfig: unknown;
 };
 
+export type BrowserExtensionPackageBuildFile = {
+  path:
+    "manifest.json" |
+    typeof BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE |
+    typeof BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE |
+    typeof BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE;
+  bytes: number;
+  sha256: string;
+};
+
 export type BrowserExtensionPackageBuildResult = {
   format: typeof BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT;
   target: BrowserExtensionManifestOptions["target"];
   out_dir: string;
+  package_digest: string;
   files: readonly [
-    "manifest.json",
-    typeof BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
-    typeof BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
-    typeof BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
+    BrowserExtensionPackageBuildFile,
+    BrowserExtensionPackageBuildFile,
+    BrowserExtensionPackageBuildFile,
+    BrowserExtensionPackageBuildFile
   ];
   installs_native_host_manifest: false;
   writes_extension_storage: false;
@@ -43,6 +55,7 @@ export type BrowserExtensionPackageBuildResult = {
 
 const PACKAGE_OUTPUT_DIR = "browser-extension-package";
 const COMPANION_ROOT = fileURLToPath(new URL("../../..", import.meta.url));
+const PACKAGE_DIGEST_INPUT_FORMAT = "nsealr-browser-extension-package-digest-v0";
 const nodeBufferReference = /(?:\bBuffer\s*(?:\.|\[)|new\s+Buffer\b|typeof\s+Buffer|globalThis\.Buffer)/u;
 const nodeProcessReference = /(?:\bprocess\s*(?:\.|\[)|typeof\s+process|globalThis\.process)/u;
 const textEncoder = new TextEncoder();
@@ -149,6 +162,42 @@ function assertBundleOutputs(bundles: Map<string, Uint8Array>, plan: BrowserExte
   }
 }
 
+function packageFile(path: BrowserExtensionPackageBuildFile["path"], source: string): BrowserExtensionPackageBuildFile {
+  return Object.freeze({
+    path,
+    bytes: textEncoder.encode(source).byteLength,
+    sha256: sha256Utf8Hex(source)
+  });
+}
+
+function buildPackageFileManifest(
+  manifestJson: string,
+  bundles: Map<string, Uint8Array>
+): BrowserExtensionPackageBuildResult["files"] {
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  function bundleFile(path: BrowserExtensionPackageBuildFile["path"]): BrowserExtensionPackageBuildFile {
+    const contents = bundles.get(path);
+    if (contents === undefined) {
+      throw new Error(`browser extension package build missing ${path}`);
+    }
+    return packageFile(path, decoder.decode(contents));
+  }
+  return Object.freeze([
+    packageFile("manifest.json", manifestJson),
+    bundleFile(BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE),
+    bundleFile(BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE),
+    bundleFile(BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE)
+  ]);
+}
+
+function packageDigest(target: BrowserExtensionManifestOptions["target"], files: BrowserExtensionPackageBuildResult["files"]): string {
+  return sha256Utf8Hex(JSON.stringify({
+    format: PACKAGE_DIGEST_INPUT_FORMAT,
+    target,
+    files
+  }));
+}
+
 export async function buildBrowserExtensionPackage(
   options: BrowserExtensionPackageBuildOptions
 ): Promise<BrowserExtensionPackageBuildResult> {
@@ -182,6 +231,7 @@ export async function buildBrowserExtensionPackage(
   assertBundleOutputs(bundles, plan);
 
   const manifestJson = `${JSON.stringify(plan.manifest, null, 2)}\n`;
+  const files = buildPackageFileManifest(manifestJson, bundles);
   await mkdir(outDir);
   await writeFile(join(outDir, "manifest.json"), manifestJson);
   for (const entrypoint of plan.entrypoints) {
@@ -192,14 +242,7 @@ export async function buildBrowserExtensionPackage(
     await writeFile(join(outDir, entrypoint.output), contents);
   }
 
-  const files = [
-    "manifest.json",
-    BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
-    BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
-    BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
-  ] as const;
-  const totalBytes = textEncoder.encode(manifestJson).byteLength +
-    [...bundles.values()].reduce((sum, output) => sum + output.byteLength, 0);
+  const totalBytes = files.reduce((sum, file) => sum + file.bytes, 0);
   if (totalBytes <= 0) {
     throw new Error("browser extension package build produced empty output");
   }
@@ -208,6 +251,7 @@ export async function buildBrowserExtensionPackage(
     format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
     target: plan.target,
     out_dir: outDir,
+    package_digest: packageDigest(plan.target, files),
     files,
     installs_native_host_manifest: false,
     writes_extension_storage: false,

@@ -293,6 +293,46 @@ describe("local service client", () => {
     ).rejects.toThrow(/service_status returned unexpected local service result/u);
   });
 
+  it("bounds local service exchanges with deterministic timeout and cancellation", async () => {
+    expect(() => new LocalServiceClient({
+      timeoutMs: 0,
+      exchange: (message) => handleLocalServiceRequest(message)
+    })).toThrow(/timeout/u);
+
+    const timeoutClient = new LocalServiceClient({
+      timeoutMs: 1,
+      exchange: () => new Promise(() => undefined)
+    });
+    await expect(timeoutClient.serviceStatus("client-timeout")).rejects.toThrow(/response timed out/u);
+
+    const alreadyCancelled = new AbortController();
+    alreadyCancelled.abort();
+    let called = false;
+    const alreadyCancelledClient = new LocalServiceClient({
+      abortSignal: alreadyCancelled.signal,
+      exchange: () => {
+        called = true;
+        return {};
+      }
+    });
+    await expect(alreadyCancelledClient.serviceStatus("client-already-cancelled")).rejects.toThrow(/cancelled/u);
+    expect(called).toBe(false);
+
+    const inFlightAbort = new AbortController();
+    const seenSignals: AbortSignal[] = [];
+    const inFlightClient = new LocalServiceClient({
+      abortSignal: inFlightAbort.signal,
+      exchange: (_message, options) => {
+        if (options?.abortSignal !== undefined) seenSignals.push(options.abortSignal);
+        return new Promise(() => undefined);
+      }
+    });
+    const requestPromise = inFlightClient.serviceStatus("client-in-flight-cancelled");
+    inFlightAbort.abort();
+    await expect(requestPromise).rejects.toThrow(/cancelled/u);
+    expect(seenSignals).toEqual([inFlightAbort.signal]);
+  });
+
   it("wraps native-messaging frame exchanges without exposing signer IO", async () => {
     const service = createNativeMessagingLocalServiceClient({
       exchange: (frame) => encodeNativeMessage(handleLocalServiceRequest(decodeNativeMessage(frame)))

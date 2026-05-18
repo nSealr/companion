@@ -80,52 +80,6 @@ function assertNativeHostName(value: string): void {
   }
 }
 
-function assertTimeoutMs(value: number): void {
-  if (!Number.isInteger(value) || value <= 0 || value > 300_000) {
-    throw new Error("native messaging timeout must be a positive integer not greater than 300000");
-  }
-}
-
-type NativeMessageBounds = {
-  timeoutMs?: number;
-  abortSignal?: AbortSignal;
-};
-
-async function withNativeMessageBounds<T>(operation: Promise<T>, bounds: NativeMessageBounds): Promise<T> {
-  const timeoutMs = bounds.timeoutMs;
-  const abortSignal = bounds.abortSignal;
-  if (timeoutMs === undefined && abortSignal === undefined) return operation;
-  if (timeoutMs !== undefined) assertTimeoutMs(timeoutMs);
-  if (abortSignal?.aborted === true) {
-    throw new Error("browser native messaging request was cancelled");
-  }
-
-  let timeout: ReturnType<typeof setTimeout> | undefined;
-  let abortListener: (() => void) | undefined;
-  const racers: Promise<T>[] = [operation];
-  if (timeoutMs !== undefined) {
-    racers.push(new Promise<T>((_resolve, reject) => {
-      timeout = setTimeout(() => {
-        reject(new Error("browser native messaging response timed out"));
-      }, timeoutMs);
-    }));
-  }
-  if (abortSignal !== undefined) {
-    racers.push(new Promise<T>((_resolve, reject) => {
-      abortListener = () => reject(new Error("browser native messaging request was cancelled"));
-      abortSignal.addEventListener("abort", abortListener, { once: true });
-    }));
-  }
-  try {
-    return await Promise.race(racers);
-  } finally {
-    if (timeout !== undefined) clearTimeout(timeout);
-    if (abortListener !== undefined) {
-      abortSignal?.removeEventListener("abort", abortListener);
-    }
-  }
-}
-
 function signerRequestForTemplate(requestId: string, eventTemplate: EventTemplate): SignEventRequest {
   const request: SignEventRequest = {
     version: 1,
@@ -204,24 +158,16 @@ export function createBrowserNativeMessagingLocalServiceClient(
 ): LocalServiceClient {
   const hostName = options.hostName ?? NATIVE_HOST_NAME;
   assertNativeHostName(hostName);
-  if (options.timeoutMs !== undefined) assertTimeoutMs(options.timeoutMs);
-  const exchange: LocalServiceExchange = (request) => {
-    if (options.abortSignal?.aborted === true) {
-      throw new Error("browser native messaging request was cancelled");
-    }
-    return withNativeMessageBounds(
-      Promise.resolve(options.sendNativeMessage(hostName, request, {
-        ...(options.abortSignal !== undefined ? { abortSignal: options.abortSignal } : {})
-      })),
-      {
-        ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}),
-        ...(options.abortSignal !== undefined ? { abortSignal: options.abortSignal } : {})
-      }
-    );
+  const exchange: LocalServiceExchange = (request, exchangeOptions) => {
+    return options.sendNativeMessage(hostName, request, {
+      ...(exchangeOptions?.abortSignal !== undefined ? { abortSignal: exchangeOptions.abortSignal } : {})
+    });
   };
   return new LocalServiceClient({
     exchange,
-    ...(options.nextRequestId !== undefined ? { nextRequestId: options.nextRequestId } : {})
+    ...(options.nextRequestId !== undefined ? { nextRequestId: options.nextRequestId } : {}),
+    ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}),
+    ...(options.abortSignal !== undefined ? { abortSignal: options.abortSignal } : {})
   });
 }
 

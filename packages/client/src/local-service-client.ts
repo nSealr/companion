@@ -19,16 +19,27 @@ import {
   type LocalClientIdentity
 } from "./client-identity.js";
 
-export type LocalServiceExchange = (request: LocalServiceRequest) => Promise<unknown> | unknown;
+export type LocalServiceExchangeOptions = {
+  abortSignal?: AbortSignal;
+};
+
+export type LocalServiceExchange = (
+  request: LocalServiceRequest,
+  options?: LocalServiceExchangeOptions
+) => Promise<unknown> | unknown;
 
 export type LocalServiceClientOptions = {
   exchange: LocalServiceExchange;
   nextRequestId?: () => string;
+  timeoutMs?: number;
+  abortSignal?: AbortSignal;
 };
 
 export type NativeMessagingLocalServiceClientOptions = {
   exchange: NativeMessageFrameExchange;
   nextRequestId?: () => string;
+  timeoutMs?: number;
+  abortSignal?: AbortSignal;
 };
 
 type RequestParams = Extract<LocalServiceRequest, { params: unknown }>["params"];
@@ -100,6 +111,52 @@ function defaultRequestIdFactory(): () => string {
     sequence += 1;
     return `local-client-${sequence}`;
   };
+}
+
+function assertTimeoutMs(value: number): void {
+  if (!Number.isInteger(value) || value <= 0 || value > 300_000) {
+    throw new Error("local service timeout must be a positive integer not greater than 300000");
+  }
+}
+
+type LocalServiceBounds = {
+  timeoutMs?: number;
+  abortSignal?: AbortSignal;
+};
+
+async function withLocalServiceBounds<T>(operation: Promise<T>, bounds: LocalServiceBounds): Promise<T> {
+  const timeoutMs = bounds.timeoutMs;
+  const abortSignal = bounds.abortSignal;
+  if (timeoutMs === undefined && abortSignal === undefined) return operation;
+  if (timeoutMs !== undefined) assertTimeoutMs(timeoutMs);
+  if (abortSignal?.aborted === true) {
+    throw new Error("local service request was cancelled");
+  }
+
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  let abortListener: (() => void) | undefined;
+  const racers: Promise<T>[] = [operation];
+  if (timeoutMs !== undefined) {
+    racers.push(new Promise<T>((_resolve, reject) => {
+      timeout = setTimeout(() => {
+        reject(new Error("local service response timed out"));
+      }, timeoutMs);
+    }));
+  }
+  if (abortSignal !== undefined) {
+    racers.push(new Promise<T>((_resolve, reject) => {
+      abortListener = () => reject(new Error("local service request was cancelled"));
+      abortSignal.addEventListener("abort", abortListener, { once: true });
+    }));
+  }
+  try {
+    return await Promise.race(racers);
+  } finally {
+    if (timeout !== undefined) clearTimeout(timeout);
+    if (abortListener !== undefined) {
+      abortSignal?.removeEventListener("abort", abortListener);
+    }
+  }
 }
 
 function validateRequestId(value: unknown, expectedRequestId: string): string | undefined {
@@ -296,10 +353,15 @@ function requireResultType(
 export class LocalServiceClient {
   private readonly exchange: LocalServiceExchange;
   private readonly nextRequestId: () => string;
+  private readonly timeoutMs: number | undefined;
+  private readonly abortSignal: AbortSignal | undefined;
 
   constructor(options: LocalServiceClientOptions) {
+    if (options.timeoutMs !== undefined) assertTimeoutMs(options.timeoutMs);
     this.exchange = options.exchange;
     this.nextRequestId = options.nextRequestId ?? defaultRequestIdFactory();
+    this.timeoutMs = options.timeoutMs;
+    this.abortSignal = options.abortSignal;
   }
 
   serviceStatus(requestId = this.nextRequestId()): Promise<LocalServiceResponse> {
@@ -370,7 +432,19 @@ export class LocalServiceClient {
   }
 
   private async send(request: LocalServiceRequest): Promise<LocalServiceResponse> {
-    const response = await this.exchange(request);
+    const bounds = {
+      ...(this.timeoutMs !== undefined ? { timeoutMs: this.timeoutMs } : {}),
+      ...(this.abortSignal !== undefined ? { abortSignal: this.abortSignal } : {})
+    };
+    if (this.abortSignal?.aborted === true) {
+      throw new Error("local service request was cancelled");
+    }
+    const response = await withLocalServiceBounds(
+      Promise.resolve(this.exchange(request, {
+        ...(this.abortSignal !== undefined ? { abortSignal: this.abortSignal } : {})
+      })),
+      bounds
+    );
     return validateLocalServiceResponse(response, request.request_id);
   }
 
@@ -393,6 +467,8 @@ export function createNativeMessagingLocalServiceClient(
 ): LocalServiceClient {
   return new LocalServiceClient({
     nextRequestId: options.nextRequestId,
+    ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}),
+    ...(options.abortSignal !== undefined ? { abortSignal: options.abortSignal } : {}),
     exchange: async (request) => decodeNativeMessage(await options.exchange(encodeNativeMessage(request)))
   });
 }

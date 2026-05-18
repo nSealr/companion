@@ -19,6 +19,7 @@ export {
   createNativeMessagingLocalServiceClient,
   type LocalServiceClientOptions,
   type LocalServiceExchange,
+  type LocalServiceExchangeOptions,
   type NativeMessagingLocalServiceClientOptions
 } from "./local-service-client.js";
 export {

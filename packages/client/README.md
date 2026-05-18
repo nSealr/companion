@@ -19,6 +19,9 @@ Local companion service protocol and client wrappers.
   callers.
 - Enforce explicit client identity parsing, request-id correlation, and
   deterministic malformed-response rejection.
+- Bound local-service exchanges with shared optional timeout and
+  `AbortSignal` cancellation handling so browser, SDK, desktop, and extension
+  callers do not fork stalled-request behavior.
 - Expose `@nsealr/client/browser` as the reviewed browser-runtime subpath for
   browser-provider and browser-extension code that needs local-service client
   contracts without importing Node-only native-host manifest helpers.
@@ -90,6 +93,10 @@ approval into a grant, request validation, secretless route selection, response
 verification, a dispatcher boundary that is unavailable by default, and a
 strict JSON grant-store contract for persisting approved/revoked local client
 grants without destructive history edits.
+`LocalServiceClient` owns response validation, request-id correlation, optional
+deterministic response timeout, and optional cancellation for any injected
+exchange. Browser adapters forward an `AbortSignal` into their injected
+transport but do not reimplement this boundary.
 `createRouteDispatcher` is only a registry helper for host-owned dispatch
 functions; it selects an explicitly configured route handler and otherwise
 returns the same unavailable or configuration-error boundary.

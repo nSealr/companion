@@ -66,6 +66,7 @@ Exports:
 - `LocalServiceClientOptions`
 - `LocalServiceContext`
 - `LocalServiceExchange`
+- `LocalServiceExchangeOptions`
 - `LocalServiceOperation`
 - `LocalServiceRequest`
 - `LocalServiceResponse`
@@ -110,7 +111,7 @@ Exports:
 - `validateLocalServiceResponse`
 
 Additional package subpaths:
-- `@nsealr/client/browser`: `LOCAL_CLIENT_SURFACES`, `LOCAL_PAIRING_INTENT_FORMAT`, `LOCAL_SERVICE_NAME`, `LOCAL_SERVICE_OPERATIONS`, `LOCAL_SERVICE_PROTOCOL`, `LocalClientGrant`, `LocalClientIdentity`, `LocalClientSurface`, `LocalPairingReview`, `LocalServiceClient`, `LocalServiceClientOptions`, `LocalServiceExchange`, `LocalServiceOperation`, `LocalServiceRequest`, `LocalServiceResponse`, `MAX_NATIVE_MESSAGE_BYTES`, `MAX_SERVICE_JSON_BYTES`, `NATIVE_HOST_NAME`, `NATIVE_MESSAGE_LENGTH_BYTES`, `NativeMessageFrameExchange`, `NativeMessagingLocalServiceClientOptions`, `PairableLocalServiceOperation`, `PairingIntent`, `clientIdForIdentity`, `createNativeMessagingLocalServiceClient`, `decodeNativeMessage`, `encodeNativeMessage`, `parseLocalClientIdentity`, `reviewPairingIntent`
+- `@nsealr/client/browser`: `LOCAL_CLIENT_SURFACES`, `LOCAL_PAIRING_INTENT_FORMAT`, `LOCAL_SERVICE_NAME`, `LOCAL_SERVICE_OPERATIONS`, `LOCAL_SERVICE_PROTOCOL`, `LocalClientGrant`, `LocalClientIdentity`, `LocalClientSurface`, `LocalPairingReview`, `LocalServiceClient`, `LocalServiceClientOptions`, `LocalServiceExchange`, `LocalServiceExchangeOptions`, `LocalServiceOperation`, `LocalServiceRequest`, `LocalServiceResponse`, `MAX_NATIVE_MESSAGE_BYTES`, `MAX_SERVICE_JSON_BYTES`, `NATIVE_HOST_NAME`, `NATIVE_MESSAGE_LENGTH_BYTES`, `NativeMessageFrameExchange`, `NativeMessagingLocalServiceClientOptions`, `PairableLocalServiceOperation`, `PairingIntent`, `clientIdForIdentity`, `createNativeMessagingLocalServiceClient`, `decodeNativeMessage`, `encodeNativeMessage`, `parseLocalClientIdentity`, `reviewPairingIntent`
 - `@nsealr/client/client-identity`: `LOCAL_CLIENT_SURFACES`, `LocalClientIdentity`, `LocalClientSurface`, `parseLocalClientIdentity`
 
 ## @nsealr/core

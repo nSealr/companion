@@ -116,9 +116,10 @@ single-repository CI. Cross-repository drift remains guarded by
   Background-controller tests prove request handling, pairing-intent requests,
   pairing-review projection, and origin-permission review projection share the
   same injected native-messaging boundary, silent or
-  cancelled native messaging can be bounded by deterministic timeout/abort
-  handling, and malformed browser requests fail before native messaging is
-  contacted. Runtime-message tests prove raw browser sender metadata is reduced
+  cancelled native messaging can be bounded by the shared local-service
+  timeout/abort handling in `@nsealr/client`, and malformed browser requests
+  fail before native messaging is contacted. Runtime-message tests prove raw
+  browser sender metadata is reduced
   to the internal sender shape, invalid senders return deterministic
   `invalid_sender` responses before native messaging, and abort signals are
   forwarded before native messaging. They also prove the injected runtime
@@ -455,7 +456,9 @@ single-repository CI. Cross-repository drift remains guarded by
   local-service backend adapter for authorized selected-account public-key
   lookup, `signEvent` routing through local-service dispatch, explicit
   dispatcher success, and deterministic signer-unavailable responses before a
-  real signer transport driver exists.
+  real signer transport driver exists. Local-service client tests now own the
+  timeout/abort contract directly, including already-cancelled requests,
+  in-flight cancellation, and `AbortSignal` forwarding into injected exchanges.
 - Package consumer smoke currently runs against built JS/declaration artifacts,
   packed tarballs, and executable examples importing every publishable public
   package. README snippets for every publishable package are now executed from

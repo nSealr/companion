@@ -154,9 +154,11 @@ packages, but it must not export test-only signing as a production path.
   production keys. Its local-service backend adapter can read the selected
   account public key through authorized route selection and routes `signEvent`
   through local-service dispatch, returning deterministic signer-unavailable
-  responses until an explicit signer route dispatcher is configured. Its browser native-messaging adapter can bound silent or
-  cancelled exchanges with optional deterministic response timeouts and
-  `AbortSignal` handling.
+  responses until an explicit signer route dispatcher is configured. Its
+  browser native-messaging adapter is intentionally thin: it validates the
+  native-host name, calls an injected `sendNativeMessage`, and relies on
+  `@nsealr/client` for shared local-service response validation, deterministic
+  timeouts, cancellation, and request-id correlation.
 - `packages/sdk`: public namespace facade for app, browser-extension, and
   companion integrations. It excludes private test signing from the public
   package surface, but browser runtime code must use reviewed browser-facing
@@ -287,8 +289,11 @@ injects a reviewed signer route dispatcher.
 The package also includes a browser native-messaging local-service client
 adapter over an explicit `sendNativeMessage(hostName, message)` function. This
 keeps browser API integration thin while reusing `LocalServiceClient` response
-validation, optional deterministic response timeouts, request cancellation, and
-the shared native host name and manifest contract exported by `@nsealr/client`.
+validation, optional deterministic response timeouts, request cancellation,
+request-id correlation, and the shared native host name and manifest contract
+exported by `@nsealr/client`. Timeout and cancellation behavior lives in the
+client package so SDK, browser extension, and future desktop callers cannot fork
+that boundary.
 It does not install native-host manifests, persist grants, or open signer
 transports.
 The background browser entrypoint adapter is the browser-like wrapper over the

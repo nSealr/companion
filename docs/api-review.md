@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:eb8f4f4fd65776cbaa750f3427c4e8f59e81ea8f0e51a43a0df45135ed68d97f`
+API surface digest: `sha256:750b9e36d1e4e3697e28f5bf8d6e3b17585f39d499a8b3cc41868857f771c8f4`
 
 Source: `docs/api.md`
 
@@ -39,9 +39,9 @@ selected account public key through authorized route selection and routes
 `signEvent` through the local-service dispatch operation, which returns
 deterministic signer-unavailable responses until an explicit signer route
 dispatcher is configured. The native-messaging adapter only wraps an explicit
-`sendNativeMessage` function, validates the host name, and can bound silent or
-cancelled native exchanges with optional deterministic response timeout and
-`AbortSignal` handling; it does not install a native host or persist grants.
+`sendNativeMessage` function, validates the host name, and delegates silent or
+cancelled exchange bounds to `@nsealr/client`; it does not install a native
+host or persist grants.
 `signEvent` validates the generated nSealr request and verifies successful
 responses before returning a Nostr event. Keep future extension storage,
 native-host installation, origin grants, NIP-04, and NIP-44 outside this
@@ -61,6 +61,10 @@ dispatcher, and signer-response verification. Browser runtime code uses the
 reviewed `./browser` subpath, while identity-only callers may use the smaller
 `./client-identity` subpath. Request-id correlation,
 native-message framing, and malformed-response rejection are public helpers.
+`LocalServiceClient` also owns optional deterministic response timeouts,
+request cancellation, and `AbortSignal` forwarding into injected exchanges so
+browser-provider, SDK, extension, and future desktop code do not fork stalled
+local-service behavior.
 The shared native host name and native-host manifest builder remain exported
 from the Node-capable root so service manifest generation and packaging checks
 do not drift.
@@ -72,9 +76,8 @@ and rejects ambiguous handler configuration without opening a signer transport.
 The async local-service handler is only an awaitable form of the same reviewed
 dispatch boundary for future host-owned I/O drivers; the synchronous handler
 rejects async dispatchers deterministically. File-backed service loading,
-route-specific signer transport wiring, cancellation, and native-host
-installation packaging remain future work and must not be implied by this
-package.
+route-specific signer transport wiring, and native-host installation packaging
+remain future work and must not be implied by this package.
 
 ## @nsealr/core
 

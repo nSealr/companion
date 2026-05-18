@@ -337,8 +337,9 @@ and uploads checked tarball artifacts without publishing to npm.
   while no real dispatcher is configured. It also has a browser
   native-messaging client adapter that wraps an explicit `sendNativeMessage`
   function with the shared native host name while reusing local-service
-  response validation, optional deterministic response timeouts, and request
-  cancellation. The private `@nsealr/browser-extension` scaffold now parses
+  response validation, optional deterministic response timeouts, request
+  cancellation, and request-id correlation from `@nsealr/client`. The private
+  `@nsealr/browser-extension` scaffold now parses
   only internal `get_public_key` and `sign_event` messages and has a
   provider-backed handler that validates returned pubkeys/events before
   browser callers can trust them.

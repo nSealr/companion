@@ -341,19 +341,19 @@
           "target": "required",
           "current": "partial",
           "contract_id": "stateless-session-custody-v0",
-          "notes": "Host-core now has a bounded RAM-only session keyring model for already parsed nsec and BIP-39 key sources. Camera/import UX, device lifecycle wipe tests, hardware reset behavior, local import review, NIP-06 derivation wiring, response QR output, and real signing remain pending."
+          "notes": "Host-core now has a bounded RAM-only session keyring model for already parsed nsec and BIP-39 key sources plus secret-hidden import review summaries with deterministic fingerprints. Camera/import UX, device lifecycle wipe tests, hardware reset behavior, hardware review acceptance, NIP-06 derivation wiring, response QR output, and real signing remain pending."
         },
         "seedqr_session_import": {
           "target": "required",
           "current": "partial",
           "contract_id": "seedsigner-seedqr-session-import-v0",
-          "notes": "Host-core decodes SeedSigner Standard SeedQR and CompactSeedQR into checked BIP-39 word indexes against the shared vector and can render those checked indexes back to mnemonic words. Camera QR input, NIP-06 derivation, import review screens, response QR output, and signing remain pending."
+          "notes": "Host-core decodes SeedSigner Standard SeedQR and CompactSeedQR into checked BIP-39 word indexes against the shared vector, can render those checked indexes back to mnemonic words, and can build a secret-hidden import review summary. Camera QR input, NIP-06 derivation, hardware import-review acceptance, response QR output, and signing remain pending."
         },
         "nip19_nsec_session_import": {
           "target": "required",
           "current": "partial",
           "contract_id": "nip19-nsec-session-import-v0",
-          "notes": "Host-core decodes canonical NIP-19 nsec payloads against the shared vector and the bounded session keyring can hold parsed nsec material. Camera QR input, import review screens, response QR output, and signing remain pending."
+          "notes": "Host-core decodes canonical NIP-19 nsec payloads against the shared vector, the bounded session keyring can hold parsed nsec material, and secret-hidden import review summaries avoid exposing raw private-key bytes. Camera QR input, hardware import-review acceptance, response QR output, and signing remain pending."
         },
         "manual_only_policy": {
           "target": "required",

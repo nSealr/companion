@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:4b452717669e5d7c0f1dad8674d0d3d41ddd05f2e7c592334f9de84bf7c7b33a`
+API surface digest: `sha256:eb8f4f4fd65776cbaa750f3427c4e8f59e81ea8f0e51a43a0df45135ed68d97f`
 
 Source: `docs/api.md`
 
@@ -69,9 +69,12 @@ does not include real transport drivers. The route-aware dispatcher registry is
 only a secretless host-wiring helper: it selects the most specific configured
 account/route/transport handler, reports missing route handlers as unavailable,
 and rejects ambiguous handler configuration without opening a signer transport.
-File-backed service loading, async signer transport wiring, cancellation, and
-native-host installation packaging remain future work and must not be implied
-by this package.
+The async local-service handler is only an awaitable form of the same reviewed
+dispatch boundary for future host-owned I/O drivers; the synchronous handler
+rejects async dispatchers deterministically. File-backed service loading,
+route-specific signer transport wiring, cancellation, and native-host
+installation packaging remain future work and must not be implied by this
+package.
 
 ## @nsealr/core
 

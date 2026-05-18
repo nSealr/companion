@@ -6,6 +6,7 @@ import {
   approvePairingIntent,
   clientIdForIdentity,
   createRouteDispatcher,
+  handleLocalServiceRequestAsync,
   handleLocalServiceRequest,
   LOCAL_SERVICE_OPERATIONS,
   LOCAL_SERVICE_PROTOCOL,
@@ -596,6 +597,58 @@ describe("local service boundary", () => {
       error: {
         code: "signer_dispatch_failed",
         message: "ambiguous signer dispatcher for route esp32_usb_nip46"
+      }
+    });
+  });
+
+  it("awaits async signer dispatchers through the async service boundary", async () => {
+    const result = await handleLocalServiceRequestAsync({
+      version: 1,
+      request_id: "svc-dispatch-async",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: async (dispatchRequest) => {
+        expect(dispatchRequest.route_selection.route_type).toBe("esp32_usb_nip46");
+        return response;
+      }
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      result: {
+        signer_response: response
+      }
+    });
+  });
+
+  it("keeps async signer dispatchers out of the synchronous service boundary", () => {
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-dispatch-async-sync-boundary",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: async () => response
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "signer_dispatch_failed",
+        message: "async signer dispatcher requires handleLocalServiceRequestAsync"
       }
     });
   });

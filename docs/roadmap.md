@@ -221,6 +221,13 @@ handler, reports missing route handlers as `signer_route_unavailable`, reports
 ambiguous handler configuration as a dispatch failure, and still opens no
 transport by itself.
 
+Status note, 2026-05-18: `@nsealr/client` now also exposes
+`handleLocalServiceRequestAsync` for future host-owned signer drivers that need
+asynchronous transport I/O, while the synchronous handler rejects async
+dispatchers deterministically. The private service app now runs its CLI/native
+stdio loop through that async boundary, but still configures no signer driver
+from file-backed context and still stores no production secrets.
+
 Status note, 2026-05-11: the companion identity/policy boundary now follows
 the official account model. Account metadata is per resulting public key and
 route; key sources such as mnemonics, passphrase namespaces, standalone
@@ -280,7 +287,10 @@ and uploads checked tarball artifacts without publishing to npm.
   validation, dispatcher-bound signer-request dispatch, and signer-response
   verification.
   A route-aware dispatcher registry helper now keeps future multi-route host
-  wiring out of browser, SDK, and CLI access surfaces.
+  wiring out of browser, SDK, and CLI access surfaces. Async local-service
+  dispatch is implemented at the package and private native-host loop boundary
+  so future reviewed drivers can await transport I/O without changing browser,
+  SDK, or CLI access surfaces.
   The first high-level client wrapper validates request-id
   correlation, malformed service responses, and operation-specific result
   types before browser, SDK, desktop, or CLI code can trust them. Pure
@@ -301,8 +311,8 @@ and uploads checked tarball artifacts without publishing to npm.
   service context loading can read explicit
   grant/account JSON files for local harnesses only. Remaining work is full
   approval UI, reviewed storage locations, cancellation, deterministic
-  transport errors, real signer transport driver wiring, async host dispatch,
-  and native-host installation packaging.
+  transport errors, real signer transport driver wiring, and native-host
+  installation packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are

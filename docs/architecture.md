@@ -144,7 +144,9 @@ packages, but it must not export test-only signing as a production path.
   can attach multiple explicit account/route/transport handlers without putting
   route-selection conditionals in browser, SDK, or CLI access surfaces. This is
   the shared client/service boundary for future browser extension, SDK, and
-  desktop work.
+  desktop work. The async service handler is the reviewed path for future
+  host-owned signer drivers that need asynchronous transport I/O; the
+  synchronous handler rejects async dispatchers deterministically.
 - `packages/browser-provider`: NIP-07 provider adapter for browser-extension
   packaging. It accepts an injected companion backend plus explicit client
   identity, validates public keys, converts `signEvent` inputs into nSealr

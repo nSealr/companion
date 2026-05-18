@@ -56,7 +56,7 @@ export type SignerDispatchRequest = {
   request: unknown;
 };
 
-export type SignerRequestDispatcher = (request: SignerDispatchRequest) => unknown;
+export type SignerRequestDispatcher = (request: SignerDispatchRequest) => unknown | Promise<unknown>;
 
 export class SignerRouteUnavailableError extends Error {
   constructor(message = "signer route is not configured") {
@@ -193,6 +193,17 @@ export type LocalServiceResponse =
       };
     };
 
+type PreparedSignerDispatch =
+  | {
+      ok: true;
+      dispatcher: SignerRequestDispatcher;
+      dispatchRequest: SignerDispatchRequest;
+    }
+  | {
+      ok: false;
+      response: LocalServiceResponse;
+    };
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -232,6 +243,10 @@ function errorResponse(request: unknown, code: string, message: string): LocalSe
 
 function validationResult(valid: boolean, error?: string): { validation: { valid: boolean; error?: string } } {
   return error === undefined ? { validation: { valid } } : { validation: { valid, error } };
+}
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return isRecord(value) && typeof value.then === "function";
 }
 
 function routeDispatchSpecificity(entry: RouteDispatchEntry): number {
@@ -624,6 +639,20 @@ export function handleLocalServiceRequest(value: unknown, context: LocalServiceC
   return verifySignerResponse(request);
 }
 
+export async function handleLocalServiceRequestAsync(
+  value: unknown,
+  context: LocalServiceContext = {}
+): Promise<LocalServiceResponse> {
+  const serviceRequest = validateServiceRequest(value);
+  if (!serviceRequest.ok) {
+    return errorResponse(value, "invalid_service_request", serviceRequest.error);
+  }
+  if (serviceRequest.request.operation !== "dispatch_signer_request") {
+    return handleLocalServiceRequest(value, context);
+  }
+  return dispatchSignerRequestAsync(serviceRequest.request, context);
+}
+
 function verifySignerResponsePayload(
   signerRequestPayload: unknown,
   signerResponsePayload: unknown
@@ -667,62 +696,88 @@ function verifySignerResponse(request: Extract<LocalServiceRequest, { operation:
   };
 }
 
-function dispatchSignerRequest(
+function prepareSignerDispatch(
   request: Extract<LocalServiceRequest, { operation: "dispatch_signer_request" }>,
   context: LocalServiceContext
-): LocalServiceResponse {
+): PreparedSignerDispatch {
   const signerRequest = validateRequest(request.params.request);
   if (!signerRequest.ok) {
-    return errorResponse(request, "invalid_signer_request", signerRequest.error ?? "signer request is invalid");
+    return {
+      ok: false,
+      response: errorResponse(request, "invalid_signer_request", signerRequest.error ?? "signer request is invalid")
+    };
   }
 
   let routeRequest: RouteSelectionRequest;
   try {
     routeRequest = parseRouteSelectionRequest(request.params.route_request);
   } catch (error) {
-    return errorResponse(
-      request,
-      "route_selection_failed",
-      error instanceof Error ? error.message : "route selection request is invalid"
-    );
+    return {
+      ok: false,
+      response: errorResponse(
+        request,
+        "route_selection_failed",
+        error instanceof Error ? error.message : "route selection request is invalid"
+      )
+    };
   }
   if (isRecord(request.params.request) && routeRequest.method !== request.params.request.method) {
-    return errorResponse(request, "route_selection_failed", "route selection method does not match signer request");
+    return {
+      ok: false,
+      response: errorResponse(request, "route_selection_failed", "route selection method does not match signer request")
+    };
   }
 
   let routeSelection: RouteSelection;
   try {
     routeSelection = selectAccountRoute(context.accounts ?? [], routeRequest);
   } catch (error) {
-    return errorResponse(
-      request,
-      "route_selection_failed",
-      error instanceof Error ? error.message : "route selection failed"
-    );
+    return {
+      ok: false,
+      response: errorResponse(
+        request,
+        "route_selection_failed",
+        error instanceof Error ? error.message : "route selection failed"
+      )
+    };
   }
 
   if (context.signerDispatcher === undefined) {
-    return errorResponse(request, "signer_route_unavailable", "signer dispatch is not configured");
+    return {
+      ok: false,
+      response: errorResponse(request, "signer_route_unavailable", "signer dispatch is not configured")
+    };
   }
 
-  let signerResponse: unknown;
-  try {
-    signerResponse = context.signerDispatcher({
+  return {
+    ok: true,
+    dispatcher: context.signerDispatcher,
+    dispatchRequest: {
       client: request.params.client,
       route_selection: routeSelection,
       request: request.params.request
-    });
-  } catch (error) {
-    if (error instanceof SignerRouteUnavailableError) {
-      return errorResponse(request, "signer_route_unavailable", error.message);
     }
-    return errorResponse(
-      request,
-      "signer_dispatch_failed",
-      error instanceof Error ? error.message : "signer dispatch failed"
-    );
-  }
+  };
+}
 
+function dispatchFailureResponse(
+  request: Extract<LocalServiceRequest, { operation: "dispatch_signer_request" }>,
+  error: unknown
+): LocalServiceResponse {
+  if (error instanceof SignerRouteUnavailableError) {
+    return errorResponse(request, "signer_route_unavailable", error.message);
+  }
+  return errorResponse(
+    request,
+    "signer_dispatch_failed",
+    error instanceof Error ? error.message : "signer dispatch failed"
+  );
+}
+
+function dispatchSuccessResponse(
+  request: Extract<LocalServiceRequest, { operation: "dispatch_signer_request" }>,
+  signerResponse: unknown
+): LocalServiceResponse {
   const verification = verifySignerResponsePayload(request.params.request, signerResponse);
   if (!verification.ok) {
     return errorResponse(request, "invalid_signer_response", verification.error);
@@ -735,4 +790,45 @@ function dispatchSignerRequest(
       signer_response: signerResponse
     }
   };
+}
+
+function dispatchSignerRequest(
+  request: Extract<LocalServiceRequest, { operation: "dispatch_signer_request" }>,
+  context: LocalServiceContext
+): LocalServiceResponse {
+  const prepared = prepareSignerDispatch(request, context);
+  if (!prepared.ok) return prepared.response;
+
+  let signerResponse: unknown;
+  try {
+    signerResponse = prepared.dispatcher(prepared.dispatchRequest);
+  } catch (error) {
+    return dispatchFailureResponse(request, error);
+  }
+
+  if (isPromiseLike(signerResponse)) {
+    signerResponse.then(undefined, () => undefined);
+    return errorResponse(
+      request,
+      "signer_dispatch_failed",
+      "async signer dispatcher requires handleLocalServiceRequestAsync"
+    );
+  }
+  return dispatchSuccessResponse(request, signerResponse);
+}
+
+async function dispatchSignerRequestAsync(
+  request: Extract<LocalServiceRequest, { operation: "dispatch_signer_request" }>,
+  context: LocalServiceContext
+): Promise<LocalServiceResponse> {
+  const prepared = prepareSignerDispatch(request, context);
+  if (!prepared.ok) return prepared.response;
+
+  let signerResponse: unknown;
+  try {
+    signerResponse = await prepared.dispatcher(prepared.dispatchRequest);
+  } catch (error) {
+    return dispatchFailureResponse(request, error);
+  }
+  return dispatchSuccessResponse(request, signerResponse);
 }

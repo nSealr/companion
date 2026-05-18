@@ -11,13 +11,21 @@ import {
   type LocalClientGrant,
   type LocalClientIdentity
 } from "@nsealr/client";
-import { runServiceFrames, runServiceOnce, runServiceStdio } from "./index.js";
+import {
+  runServiceFrames,
+  runServiceFramesAsync,
+  runServiceOnce,
+  runServiceOnceAsync,
+  runServiceStdio,
+  runServiceStdioAsync
+} from "./index.js";
 
 const specsRoot = resolveSpecsRoot();
 const fixtures = loadSpecsFixtures(specsRoot);
 const routeVector = fixtures.routeSelections.find((selection) => selection.name === "esp32-usb-sign-event-slot-0");
 if (!routeVector) throw new Error("route selection fixture is missing");
 const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
+const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
 const client: LocalClientIdentity = {
   surface: "native_host_test",
   origin: "app:nsealr-service-test",
@@ -119,6 +127,33 @@ describe("local companion service app", () => {
     });
   });
 
+  it("awaits async dispatch through the native-message service helper", async () => {
+    const output = await runServiceOnceAsync(encodeNativeMessage({
+      version: 1,
+      request_id: "svc-dispatch-async",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request
+      }
+    }), {
+      accounts: fixtures.accounts,
+      grants: [dispatchGrant],
+      now: 1_900_000_000,
+      signerDispatcher: async () => response
+    });
+
+    expect(decodeNativeMessage(output)).toMatchObject({
+      version: 1,
+      request_id: "svc-dispatch-async",
+      ok: true,
+      result: {
+        signer_response: expect.objectContaining({ request_id: request.request_id })
+      }
+    });
+  });
+
   it("returns deterministic native-message errors for malformed frames", () => {
     const output = runServiceOnce(new Uint8Array([1, 0, 0, 0]));
 
@@ -159,6 +194,37 @@ describe("local companion service app", () => {
       }),
       expect.objectContaining({
         request_id: "svc-stream-validate",
+        ok: true,
+        result: { validation: { valid: true } }
+      })
+    ]);
+  });
+
+  it("handles async multiple native-messaging frames in one service stream", async () => {
+    const input = Buffer.concat([
+      Buffer.from(encodeNativeMessage({
+        version: 1,
+        request_id: "svc-async-stream-status",
+        operation: "service_status"
+      })),
+      Buffer.from(encodeNativeMessage({
+        version: 1,
+        request_id: "svc-async-stream-validate",
+        operation: "validate_signer_request",
+        params: { client, request }
+      }))
+    ]);
+
+    expect(decodeFrames(await runServiceFramesAsync(input, {
+      grants: [grant],
+      now: 1_900_000_000
+    }))).toEqual([
+      expect.objectContaining({
+        request_id: "svc-async-stream-status",
+        ok: true
+      }),
+      expect.objectContaining({
+        request_id: "svc-async-stream-validate",
         ok: true,
         result: { validation: { valid: true } }
       })
@@ -221,6 +287,55 @@ describe("local companion service app", () => {
       }),
       expect.objectContaining({
         request_id: "svc-fd-validate",
+        ok: true,
+        result: { validation: { valid: true } }
+      })
+    ]);
+  });
+
+  it("runs the async native-messaging stdio loop over file descriptors", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "nsealr-service-async-"));
+    const inputPath = join(dir, "input.bin");
+    const outputPath = join(dir, "output.bin");
+    writeFileSync(inputPath, Buffer.concat([
+      Buffer.from(encodeNativeMessage({
+        version: 1,
+        request_id: "svc-async-fd-status",
+        operation: "service_status"
+      })),
+      Buffer.from(encodeNativeMessage({
+        version: 1,
+        request_id: "svc-async-fd-validate",
+        operation: "validate_signer_request",
+        params: { client, request }
+      }))
+    ]));
+    const inputFd = openSync(inputPath, "r");
+    const outputFd = openSync(outputPath, "w");
+    try {
+      await runServiceStdioAsync({
+        inputFd,
+        outputFd,
+        context: {
+          grants: [grant],
+          now: 1_900_000_000
+        }
+      });
+    } finally {
+      closeSync(inputFd);
+      closeSync(outputFd);
+    }
+
+    const output = readFileSync(outputPath);
+    rmSync(dir, { recursive: true, force: true });
+
+    expect(decodeFrames(output)).toEqual([
+      expect.objectContaining({
+        request_id: "svc-async-fd-status",
+        ok: true
+      }),
+      expect.objectContaining({
+        request_id: "svc-async-fd-validate",
         ok: true,
         result: { validation: { valid: true } }
       })

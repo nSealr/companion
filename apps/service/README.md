@@ -9,6 +9,9 @@ Private native-messaging host scaffold for the nSealr local companion service.
 - Carry grant-gated local-service requests, including deterministic
   `signer_route_unavailable` dispatch refusal when no reviewed signer driver is
   configured.
+- Await package-owned async local-service dispatch so future reviewed signer
+  drivers can use asynchronous I/O without changing the native-messaging
+  framing contract.
 - Render validated Chromium and Firefox native-host manifest JSON from the
   shared `@nsealr/client` manifest contract for future installer work.
 
@@ -38,9 +41,11 @@ client by loading a file.
 ## Boundary
 
 This app is private and secretless. It does not persist grants, write account
-stores, open relays, contact signer transports, configure signer drivers, or
-hold production signing material. Manifest generation only prints JSON; it does
-not install files into browser native-messaging directories. File-backed
-context loading is an explicit read-only developer and integration harness
-until approval UX, storage location review, native-host installation, and
-route-specific signer drivers are specified.
+stores, open relays, configure signer drivers by default, or hold production
+signing material. Its async stdio path only awaits an explicitly injected
+dispatcher; no driver is configured by file-backed context loading. Manifest
+generation only prints JSON; it does not install files into browser
+native-messaging directories. File-backed context loading is an explicit
+read-only developer and integration harness until approval UX, storage
+location review, native-host installation, and route-specific signer drivers
+are specified.

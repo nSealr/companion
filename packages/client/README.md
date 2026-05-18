@@ -13,6 +13,8 @@ Local companion service protocol and client wrappers.
   verification.
 - Compose route-aware dispatcher registries for host apps that support multiple
   signer routes, without opening transport drivers by default.
+- Await asynchronous host-owned dispatchers through the async local-service
+  boundary while keeping the synchronous boundary deterministic.
 - Provide a high-level client wrapper for future browser, SDK, desktop, and CLI
   callers.
 - Enforce explicit client identity parsing, request-id correlation, and
@@ -91,6 +93,10 @@ grants without destructive history edits.
 `createRouteDispatcher` is only a registry helper for host-owned dispatch
 functions; it selects an explicitly configured route handler and otherwise
 returns the same unavailable or configuration-error boundary.
+`handleLocalServiceRequestAsync` is the boundary future native hosts should use
+when a reviewed signer driver needs asynchronous I/O; the synchronous handler
+rejects async dispatchers deterministically instead of treating promises as
+signer responses.
 It does not store production keys, open relays, or include real signer
 transport drivers. A host app still has to own the actual file location, backup
 policy, signer transport wiring, and user approval UX.

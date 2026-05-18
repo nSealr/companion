@@ -98,6 +98,7 @@ Exports:
 - `decodeNativeMessage`
 - `encodeNativeMessage`
 - `handleLocalServiceRequest`
+- `handleLocalServiceRequestAsync`
 - `parseLocalClientIdentity`
 - `parseLocalGrant`
 - `parseLocalGrantStore`

@@ -65,7 +65,9 @@ single-repository CI. Cross-repository drift remains guarded by
   pairing digest mismatch, grant-gated signer-request dispatch through an
   explicitly injected dispatcher, deterministic `signer_route_unavailable`
   behavior when no dispatcher is configured, route-aware dispatcher registry
-  selection, missing-route refusal, ambiguous-handler rejection, malformed
+  selection, missing-route refusal, ambiguous-handler rejection, async dispatch
+  through `handleLocalServiceRequestAsync`, deterministic refusal when async
+  dispatch is accidentally used through the synchronous handler, malformed
   dispatch response rejection, and native-messaging exchange wrapping before
   any real signer transport driver exists.
 - Browser-provider package tests cover NIP-07 `getPublicKey` validation,
@@ -261,8 +263,9 @@ single-repository CI. Cross-repository drift remains guarded by
   context to the local service, loads explicit read-only secretless
   grant/account JSON files for local harnesses, rejects secret-bearing or
   malformed account-store files, returns deterministic `signer_route_unavailable`
-  for authorized dispatch without a configured driver, and returns deterministic
-  errors for malformed native-message frames.
+  for authorized dispatch without a configured driver, awaits async dispatchers
+  through the async native-message helpers, and returns deterministic errors
+  for malformed native-message frames.
 - Local service tests cover deterministic pairing intent creation, digest-bound
   pairing-review projection, manual approval into a grant, strict secretless
   JSON grant-store parsing, serialization, persistent revocation history,

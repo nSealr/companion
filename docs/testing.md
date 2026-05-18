@@ -259,8 +259,9 @@ single-repository CI. Cross-repository drift remains guarded by
   thin wrapper around `@nsealr/client`, passes injected in-memory authorization
   context to the local service, loads explicit read-only secretless
   grant/account JSON files for local harnesses, rejects secret-bearing or
-  malformed account-store files, and returns deterministic errors for malformed
-  native-message frames.
+  malformed account-store files, returns deterministic `signer_route_unavailable`
+  for authorized dispatch without a configured driver, and returns deterministic
+  errors for malformed native-message frames.
 - Local service tests cover deterministic pairing intent creation, digest-bound
   pairing-review projection, manual approval into a grant, strict secretless
   JSON grant-store parsing, serialization, persistent revocation history,

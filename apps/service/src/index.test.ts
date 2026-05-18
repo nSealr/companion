@@ -2,7 +2,7 @@ import { closeSync, mkdtempSync, openSync, readFileSync, rmSync, writeFileSync }
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { resolveSpecsRoot } from "@nsealr/fixtures";
+import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
 import {
   NATIVE_MESSAGE_LENGTH_BYTES,
   clientIdForIdentity,
@@ -14,6 +14,9 @@ import {
 import { runServiceFrames, runServiceOnce, runServiceStdio } from "./index.js";
 
 const specsRoot = resolveSpecsRoot();
+const fixtures = loadSpecsFixtures(specsRoot);
+const routeVector = fixtures.routeSelections.find((selection) => selection.name === "esp32-usb-sign-event-slot-0");
+if (!routeVector) throw new Error("route selection fixture is missing");
 const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
 const client: LocalClientIdentity = {
   surface: "native_host_test",
@@ -27,6 +30,10 @@ const grant: LocalClientGrant = {
   allowed_operations: ["validate_signer_request"],
   approved_at: 1_900_000_000,
   expires_at: 2_000_000_000
+};
+const dispatchGrant: LocalClientGrant = {
+  ...grant,
+  allowed_operations: ["dispatch_signer_request"]
 };
 
 function decodeFrames(frames: Uint8Array): unknown[] {
@@ -80,6 +87,34 @@ describe("local companion service app", () => {
       ok: true,
       result: {
         validation: { valid: true }
+      }
+    });
+  });
+
+  it("returns signer-route unavailable for authorized dispatch without a driver", () => {
+    const output = runServiceOnce(encodeNativeMessage({
+      version: 1,
+      request_id: "svc-dispatch-unavailable",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request
+      }
+    }), {
+      accounts: fixtures.accounts,
+      grants: [dispatchGrant],
+      now: 1_900_000_000
+    });
+
+    expect(decodeNativeMessage(output)).toMatchObject({
+      version: 1,
+      request_id: "svc-dispatch-unavailable",
+      ok: false,
+      error: {
+        code: "signer_route_unavailable",
+        message: "signer dispatch is not configured",
+        retryable: false
       }
     });
   });

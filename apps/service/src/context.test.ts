@@ -39,6 +39,10 @@ const grant: LocalClientGrant = {
   approved_at: 1_900_000_000,
   expires_at: 2_000_000_000
 };
+const dispatchGrant: LocalClientGrant = {
+  ...grant,
+  allowed_operations: ["dispatch_signer_request"]
+};
 
 function accountStore(accounts = [account]): Record<string, unknown> {
   return {
@@ -125,6 +129,42 @@ describe("service context loading", () => {
         ok: true,
         result: {
           validation: { valid: true }
+        }
+      });
+    });
+  });
+
+  it("keeps loaded context secretless when dispatch is authorized but unavailable", () => {
+    withTempFiles({
+      "grants.json": serializeLocalGrantStore(createLocalGrantStore([dispatchGrant], { updatedAt: 1_900_000_000 })),
+      "accounts.json": `${JSON.stringify(accountStore(), null, 2)}\n`
+    }, (paths) => {
+      const context = loadServiceContextFromFiles({
+        grantStorePath: paths["grants.json"],
+        accountStorePath: paths["accounts.json"],
+        now: 1_900_000_000
+      });
+
+      const output = runServiceOnce(encodeNativeMessage({
+        version: 1,
+        request_id: "ctx-dispatch-unavailable",
+        operation: "dispatch_signer_request",
+        params: {
+          client,
+          route_request: {
+            account_id: "acct-raspberry-qr-nip06-account-0",
+            method: "sign_event"
+          },
+          request
+        }
+      }), context);
+
+      expect(decodeNativeMessage(output)).toMatchObject({
+        request_id: "ctx-dispatch-unavailable",
+        ok: false,
+        error: {
+          code: "signer_route_unavailable",
+          message: "signer dispatch is not configured"
         }
       });
     });

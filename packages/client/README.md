@@ -11,6 +11,8 @@ Local companion service protocol and client wrappers.
 - Route signer requests through an explicit injected dispatcher only after
   client authorization, request validation, route selection, and response
   verification.
+- Compose route-aware dispatcher registries for host apps that support multiple
+  signer routes, without opening transport drivers by default.
 - Provide a high-level client wrapper for future browser, SDK, desktop, and CLI
   callers.
 - Enforce explicit client identity parsing, request-id correlation, and
@@ -86,6 +88,9 @@ approval into a grant, request validation, secretless route selection, response
 verification, a dispatcher boundary that is unavailable by default, and a
 strict JSON grant-store contract for persisting approved/revoked local client
 grants without destructive history edits.
+`createRouteDispatcher` is only a registry helper for host-owned dispatch
+functions; it selects an explicitly configured route handler and otherwise
+returns the same unavailable or configuration-error boundary.
 It does not store production keys, open relays, or include real signer
 transport drivers. A host app still has to own the actual file location, backup
 policy, signer transport wiring, and user approval UX.

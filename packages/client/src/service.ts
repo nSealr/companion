@@ -58,6 +58,20 @@ export type SignerDispatchRequest = {
 
 export type SignerRequestDispatcher = (request: SignerDispatchRequest) => unknown;
 
+export class SignerRouteUnavailableError extends Error {
+  constructor(message = "signer route is not configured") {
+    super(message);
+    this.name = "SignerRouteUnavailableError";
+  }
+}
+
+export type RouteDispatchEntry = {
+  account_id?: RouteSelection["account_id"];
+  route_type?: RouteSelection["route_type"];
+  transport?: RouteSelection["transport"];
+  dispatch: SignerRequestDispatcher;
+};
+
 export type LocalServiceContext = {
   accounts?: AccountDescriptor[];
   grants?: LocalClientGrant[];
@@ -218,6 +232,36 @@ function errorResponse(request: unknown, code: string, message: string): LocalSe
 
 function validationResult(valid: boolean, error?: string): { validation: { valid: boolean; error?: string } } {
   return error === undefined ? { validation: { valid } } : { validation: { valid, error } };
+}
+
+function routeDispatchSpecificity(entry: RouteDispatchEntry): number {
+  return Number(entry.account_id !== undefined) + Number(entry.route_type !== undefined) + Number(entry.transport !== undefined);
+}
+
+function routeDispatchEntryMatches(entry: RouteDispatchEntry, request: SignerDispatchRequest): boolean {
+  const route = request.route_selection;
+  return (
+    (entry.account_id === undefined || entry.account_id === route.account_id) &&
+    (entry.route_type === undefined || entry.route_type === route.route_type) &&
+    (entry.transport === undefined || entry.transport === route.transport)
+  );
+}
+
+export function createRouteDispatcher(entries: RouteDispatchEntry[]): SignerRequestDispatcher {
+  if (entries.length === 0) throw new Error("route dispatcher requires at least one entry");
+  const registry = [...entries];
+  return (request) => {
+    const matches = registry.filter((entry) => routeDispatchEntryMatches(entry, request));
+    if (matches.length === 0) {
+      throw new SignerRouteUnavailableError(`no signer dispatcher for route ${request.route_selection.route_type}`);
+    }
+    const bestSpecificity = Math.max(...matches.map(routeDispatchSpecificity));
+    const bestMatches = matches.filter((entry) => routeDispatchSpecificity(entry) === bestSpecificity);
+    if (bestMatches.length !== 1) {
+      throw new Error(`ambiguous signer dispatcher for route ${request.route_selection.route_type}`);
+    }
+    return bestMatches[0].dispatch(request);
+  };
 }
 
 function validateClientIdentity(value: unknown): { ok: true; client: LocalClientIdentity } | { ok: false; error: string } {
@@ -669,6 +713,9 @@ function dispatchSignerRequest(
       request: request.params.request
     });
   } catch (error) {
+    if (error instanceof SignerRouteUnavailableError) {
+      return errorResponse(request, "signer_route_unavailable", error.message);
+    }
     return errorResponse(
       request,
       "signer_dispatch_failed",

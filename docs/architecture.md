@@ -139,8 +139,12 @@ packages, but it must not export test-only signing as a production path.
   validation, and a high-level client wrapper. The wrapper checks request-id
   correlation, malformed responses, and operation-specific result types before
   callers can trust native-messaging responses. The dispatch operation remains
-  unavailable by default and adds no real transport driver by itself. This is the shared
-  client/service boundary for future browser extension, SDK, and desktop work.
+  unavailable by default and adds no real transport driver by itself. The
+  package also exposes a route-aware dispatcher registry helper so host apps
+  can attach multiple explicit account/route/transport handlers without putting
+  route-selection conditionals in browser, SDK, or CLI access surfaces. This is
+  the shared client/service boundary for future browser extension, SDK, and
+  desktop work.
 - `packages/browser-provider`: NIP-07 provider adapter for browser-extension
   packaging. It accepts an injected companion backend plus explicit client
   identity, validates public keys, converts `signEvent` inputs into nSealr

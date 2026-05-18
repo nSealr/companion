@@ -64,9 +64,10 @@ single-repository CI. Cross-repository drift remains guarded by
   client request-id correlation, malformed service-response rejection including
   pairing digest mismatch, grant-gated signer-request dispatch through an
   explicitly injected dispatcher, deterministic `signer_route_unavailable`
-  behavior when no dispatcher is configured, malformed dispatch response
-  rejection, and native-messaging exchange wrapping before any real signer
-  transport driver exists.
+  behavior when no dispatcher is configured, route-aware dispatcher registry
+  selection, missing-route refusal, ambiguous-handler rejection, malformed
+  dispatch response rejection, and native-messaging exchange wrapping before
+  any real signer transport driver exists.
 - Browser-provider package tests cover NIP-07 `getPublicKey` validation,
   `signEvent` conversion into nSealr signer requests, signed-response
   verification, explicit client identity forwarding, signer refusal propagation,

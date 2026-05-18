@@ -215,6 +215,12 @@ real signer transport driver, no key custody, and no production signing claim.
 `@nsealr/browser-provider` now uses this service operation for NIP-07
 `signEvent` instead of duplicating validate/select/unavailable behavior.
 
+Status note, 2026-05-18: `@nsealr/client` now includes a route-aware dispatcher
+registry helper. It chooses the most specific configured account/route/transport
+handler, reports missing route handlers as `signer_route_unavailable`, reports
+ambiguous handler configuration as a dispatch failure, and still opens no
+transport by itself.
+
 Status note, 2026-05-11: the companion identity/policy boundary now follows
 the official account model. Account metadata is per resulting public key and
 route; key sources such as mnemonics, passphrase namespaces, standalone
@@ -273,6 +279,8 @@ and uploads checked tarball artifacts without publishing to npm.
   approval conversion from pairing intent to a grant, signer-request
   validation, dispatcher-bound signer-request dispatch, and signer-response
   verification.
+  A route-aware dispatcher registry helper now keeps future multi-route host
+  wiring out of browser, SDK, and CLI access surfaces.
   The first high-level client wrapper validates request-id
   correlation, malformed service responses, and operation-specific result
   types before browser, SDK, desktop, or CLI code can trust them. Pure

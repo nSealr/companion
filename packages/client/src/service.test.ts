@@ -5,6 +5,7 @@ import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
 import {
   approvePairingIntent,
   clientIdForIdentity,
+  createRouteDispatcher,
   handleLocalServiceRequest,
   LOCAL_SERVICE_OPERATIONS,
   LOCAL_SERVICE_PROTOCOL,
@@ -489,6 +490,114 @@ describe("local service boundary", () => {
       route_selection: routeVector.selection,
       request
     }]);
+  });
+
+  it("builds route-aware dispatchers without opening real transports", () => {
+    const calls: string[] = [];
+    const dispatcher = createRouteDispatcher([
+      {
+        route_type: "raspberry_qr_vault",
+        dispatch: () => {
+          calls.push("wrong-route");
+          return response;
+        }
+      },
+      {
+        route_type: routeVector.selection.route_type,
+        dispatch: () => {
+          calls.push("route-type");
+          return response;
+        }
+      },
+      {
+        account_id: routeVector.selection.account_id,
+        route_type: routeVector.selection.route_type,
+        dispatch: () => {
+          calls.push("account-specific");
+          return response;
+        }
+      }
+    ]);
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-dispatch-registry",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: dispatcher
+    })).toMatchObject({
+      ok: true,
+      result: {
+        signer_response: response
+      }
+    });
+    expect(calls).toEqual(["account-specific"]);
+  });
+
+  it("reports unavailable or ambiguous route dispatcher registry matches deterministically", () => {
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-dispatch-registry-missing",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: createRouteDispatcher([{
+        route_type: "raspberry_qr_vault",
+        dispatch: () => response
+      }])
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "signer_route_unavailable",
+        message: "no signer dispatcher for route esp32_usb_nip46"
+      }
+    });
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-dispatch-registry-ambiguous",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: createRouteDispatcher([
+        {
+          route_type: routeVector.selection.route_type,
+          dispatch: () => response
+        },
+        {
+          route_type: routeVector.selection.route_type,
+          dispatch: () => response
+        }
+      ])
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "signer_dispatch_failed",
+        message: "ambiguous signer dispatcher for route esp32_usb_nip46"
+      }
+    });
   });
 
   it("rejects unsafe dispatch input before route dispatch", () => {

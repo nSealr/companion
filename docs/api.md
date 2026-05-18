@@ -83,8 +83,10 @@ Exports:
 - `NativeMessagingLocalServiceClientOptions`
 - `PairableLocalServiceOperation`
 - `PairingIntent`
+- `RouteDispatchEntry`
 - `SignerDispatchRequest`
 - `SignerRequestDispatcher`
+- `SignerRouteUnavailableError`
 - `appendLocalGrant`
 - `appendLocalGrantRevocation`
 - `approvePairingIntent`
@@ -92,6 +94,7 @@ Exports:
 - `clientIdForIdentity`
 - `createLocalGrantStore`
 - `createNativeMessagingLocalServiceClient`
+- `createRouteDispatcher`
 - `decodeNativeMessage`
 - `encodeNativeMessage`
 - `handleLocalServiceRequest`

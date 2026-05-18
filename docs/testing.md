@@ -88,11 +88,13 @@ single-repository CI. Cross-repository drift remains guarded by
   `make browser-runtime-bundle`. This is a bundlability gate only; installable
   extension packaging still needs a reviewed packaged bootstrap/config
   contract. Package-build tests cover the first private developer artifact
-  builder: it requires a new output directory and a secretless static route
-  config, writes manifest and bundled entrypoints only after successful
-  in-memory bundling, returns a package digest plus per-file byte counts and
-  SHA-256 hashes, and still performs no native-host installation, browser
-  storage writes, key custody, or signer dispatch.
+  builder: route-config tests require digest-bound review and approval for the
+  secretless selected route; package-build requires that approval before
+  embedding the route config, requires a new output directory, writes manifest
+  and bundled entrypoints only after successful in-memory bundling, returns a
+  package digest plus per-file byte counts and SHA-256 hashes, and still
+  performs no native-host installation, browser storage writes, key custody, or
+  signer dispatch.
 - Browser-extension app tests cover the private internal message parser for
   `get_public_key` and `sign_event`, including unsupported-method rejection,
   malformed-envelope rejection, and shared signer-request validation for event

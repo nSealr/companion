@@ -8,6 +8,10 @@ import {
   buildBrowserExtensionPackage
 } from "./package-build.js";
 import {
+  approveBrowserExtensionRouteConfigReview,
+  createBrowserExtensionRouteConfigReview
+} from "./route-config.js";
+import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
   BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
   BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
@@ -30,6 +34,11 @@ const routeConfig = {
   account_id: "esp32-usb-slot-0",
   route_type: "esp32_usb_nip46"
 };
+const routeConfigReview = createBrowserExtensionRouteConfigReview(routeConfig);
+const routeConfigApproval = approveBrowserExtensionRouteConfigReview(routeConfigReview, {
+  reviewedRouteConfigDigest: routeConfigReview.route_config_digest,
+  approvedAt: 1_900_000_000
+});
 
 describe("browser extension package build", () => {
   it("writes a deterministic secretless package artifact to a new output directory", async () => {
@@ -39,6 +48,7 @@ describe("browser extension package build", () => {
         target: "chromium",
         outDir: temp.outDir,
         routeConfig,
+        routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"]
       });
 
@@ -105,12 +115,14 @@ describe("browser extension package build", () => {
       await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: existing.outDir,
-        routeConfig
+        routeConfig,
+        routeConfigApproval
       });
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: existing.outDir,
-        routeConfig
+        routeConfig,
+        routeConfigApproval
       })).rejects.toThrow(/already exists/u);
 
       await expect(buildBrowserExtensionPackage({
@@ -119,8 +131,19 @@ describe("browser extension package build", () => {
         routeConfig: {
           format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
           account_id: "bad account id"
-        }
+        },
+        routeConfigApproval
       })).rejects.toThrow(/account_id/u);
+      expect(existsSync(invalidRoute.outDir)).toBe(false);
+      await expect(buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: invalidRoute.outDir,
+        routeConfig,
+        routeConfigApproval: {
+          ...routeConfigApproval,
+          route_config_digest: "0".repeat(64)
+        }
+      })).rejects.toThrow(/digest mismatch/u);
       expect(existsSync(invalidRoute.outDir)).toBe(false);
     } finally {
       existing.cleanup();

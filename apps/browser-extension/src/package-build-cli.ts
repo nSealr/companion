@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { writeSync } from "node:fs";
+import { readFileSync, writeSync } from "node:fs";
 import {
   BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
   buildBrowserExtensionPackage
@@ -19,6 +19,7 @@ type PackageBuildCliOptions = {
   contentScriptMatches: string[];
   routeAccountId?: string;
   routeType?: string;
+  routeConfigApprovalPath?: string;
 };
 
 function takeOptionValue(args: string[], index: number, option: string): string {
@@ -62,6 +63,12 @@ function parsePackageBuildArgs(args: string[]): PackageBuildCliOptions {
       if (options.routeType !== undefined) throw new Error("--route-type must be specified only once");
       options.routeType = takeOptionValue(normalizedArgs, index, arg);
       index += 1;
+    } else if (arg === "--route-config-approval") {
+      if (options.routeConfigApprovalPath !== undefined) {
+        throw new Error("--route-config-approval must be specified only once");
+      }
+      options.routeConfigApprovalPath = takeOptionValue(normalizedArgs, index, arg);
+      index += 1;
     } else {
       throw new Error(`unsupported browser-extension package-build option: ${arg}`);
     }
@@ -91,13 +98,24 @@ function routeConfigFromCli(options: PackageBuildCliOptions): unknown {
   };
 }
 
+function readJsonFile(path: string, label: string): unknown {
+  const contents = readFileSync(path, "utf8");
+  try {
+    return JSON.parse(contents);
+  } catch (error) {
+    throw new Error(`${label} JSON is invalid: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 export async function browserExtensionPackageBuildJsonFromArgs(args: string[]): Promise<string> {
   const options = parsePackageBuildArgs(args);
   if (options.outDir === undefined) throw new Error("--out-dir is required");
+  if (options.routeConfigApprovalPath === undefined) throw new Error("--route-config-approval is required");
   const result = await buildBrowserExtensionPackage({
     ...manifestOptionsFromCli(options),
     outDir: options.outDir,
-    routeConfig: routeConfigFromCli(options)
+    routeConfig: routeConfigFromCli(options),
+    routeConfigApproval: readJsonFile(options.routeConfigApprovalPath, "browser extension route config approval")
   });
   return `${JSON.stringify(result, null, 2)}\n`;
 }

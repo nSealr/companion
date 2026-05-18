@@ -15,6 +15,8 @@ import {
 } from "./package-plan.js";
 import {
   BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
+  browserExtensionRouteConfigDigest,
+  parseBrowserExtensionRouteConfigApproval,
   parseBrowserExtensionRouteConfig
 } from "./route-config.js";
 import { type BrowserExtensionManifestOptions } from "./manifest.js";
@@ -24,6 +26,7 @@ export const BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT = "nsealr-browser-extension-
 export type BrowserExtensionPackageBuildOptions = BrowserExtensionManifestOptions & {
   outDir: string;
   routeConfig: unknown;
+  routeConfigApproval: unknown;
 };
 
 export type BrowserExtensionPackageBuildFile = {
@@ -94,6 +97,17 @@ function normalizedRouteConfig(value: unknown): {
     account_id: parsed.route_request.account_id,
     ...(parsed.route_request.route_type !== undefined ? { route_type: parsed.route_request.route_type } : {})
   };
+}
+
+function requireApprovedRouteConfig(routeConfig: unknown, approval: unknown): void {
+  const routeConfigDigest = browserExtensionRouteConfigDigest(routeConfig);
+  const parsedApproval = parseBrowserExtensionRouteConfigApproval(approval);
+  if (parsedApproval.route_config_digest !== routeConfigDigest) {
+    throw new Error("browser extension package route config approval digest mismatch");
+  }
+  if (parsedApproval.review.route_config_digest !== routeConfigDigest) {
+    throw new Error("browser extension package route config review digest mismatch");
+  }
 }
 
 function virtualEntrypointPlugin(routeConfig: unknown): Plugin {
@@ -206,6 +220,7 @@ export async function buildBrowserExtensionPackage(
     throw new Error("browser extension package out-dir already exists");
   }
   const routeConfig = normalizedRouteConfig(options.routeConfig);
+  requireApprovedRouteConfig(routeConfig, options.routeConfigApproval);
   const plan = assertBrowserExtensionPackagePlan(buildBrowserExtensionPackagePlan(options));
   const buildResult = await esbuild({
     absWorkingDir: COMPANION_ROOT,

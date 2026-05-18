@@ -453,10 +453,13 @@ and uploads checked tarball artifacts without publishing to npm.
   pre-bundling artifact, rejecting storage/host permissions or entrypoint drift
   before a bundle can be treated as reviewed. A private browser-extension
   `package-plan` script now emits that JSON to stdout only, with no output-path
-  or installer behavior. A private `package-build` script now creates an
-  explicit developer artifact in a new output directory only after successful
-  in-memory bundling, embeds a secretless static route config, returns a
-  package digest plus per-file byte counts and SHA-256 hashes, and still avoids
+  or installer behavior. Private `route-config-review` and
+  `route-config-approve` scripts now create digest-bound approval artifacts for
+  the secretless selected route before package build. A private `package-build`
+  script now creates an explicit developer artifact in a new output directory
+  only after successful in-memory bundling, embeds that approved secretless
+  static route config, returns a package digest plus per-file byte counts and
+  SHA-256 hashes, and still avoids
   native-host installation, extension storage writes, key custody, and signer
   dispatch. The browser-extension
   manifest builder can still build a minimal

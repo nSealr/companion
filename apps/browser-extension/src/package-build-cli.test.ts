@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -6,6 +6,11 @@ import {
   browserExtensionPackageBuildJsonFromArgs
 } from "./package-build-cli.js";
 import { BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT } from "./package-build.js";
+import {
+  BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
+  approveBrowserExtensionRouteConfigReview,
+  createBrowserExtensionRouteConfigReview
+} from "./route-config.js";
 
 function tempBuildRoot(): { root: string; outDir: string; cleanup(): void } {
   const root = mkdtempSync(join(tmpdir(), "nsealr-browser-extension-cli-"));
@@ -18,10 +23,25 @@ function tempBuildRoot(): { root: string; outDir: string; cleanup(): void } {
   };
 }
 
+function writeRouteConfigApproval(path: string): void {
+  const review = createBrowserExtensionRouteConfigReview({
+    format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
+    account_id: "esp32-usb-slot-0",
+    route_type: "esp32_usb_nip46"
+  });
+  const approval = approveBrowserExtensionRouteConfigReview(review, {
+    reviewedRouteConfigDigest: review.route_config_digest,
+    approvedAt: 1_900_000_000
+  });
+  writeFileSync(path, `${JSON.stringify(approval, null, 2)}\n`, "utf8");
+}
+
 describe("browser extension package-build CLI", () => {
   it("writes a Chromium package build from explicit args", async () => {
     const temp = tempBuildRoot();
     try {
+      const approvalPath = join(temp.root, "route-config-approval.json");
+      writeRouteConfigApproval(approvalPath);
       const result = JSON.parse(await browserExtensionPackageBuildJsonFromArgs([
         "--target",
         "chromium",
@@ -31,6 +51,8 @@ describe("browser extension package-build CLI", () => {
         "esp32-usb-slot-0",
         "--route-type",
         "esp32_usb_nip46",
+        "--route-config-approval",
+        approvalPath,
         "--content-script-match",
         "https://example.com/*"
       ]));
@@ -67,6 +89,7 @@ describe("browser extension package-build CLI", () => {
   });
 
   it("rejects unsupported or incomplete package-build args before output", async () => {
+    const temp = tempBuildRoot();
     await expect(browserExtensionPackageBuildJsonFromArgs([])).rejects.toThrow(/out-dir is required|target is required/u);
     await expect(browserExtensionPackageBuildJsonFromArgs([
       "--target",
@@ -78,22 +101,42 @@ describe("browser extension package-build CLI", () => {
     await expect(browserExtensionPackageBuildJsonFromArgs([
       "--target",
       "chromium",
-      "--target",
-      "firefox",
       "--out-dir",
       "/tmp/nsealr-unused",
       "--route-account-id",
       "esp32-usb-slot-0"
-    ])).rejects.toThrow(/specified only once/u);
-    await expect(browserExtensionPackageBuildJsonFromArgs([
-      "--target",
-      "chromium",
-      "--out-dir",
-      "/tmp/nsealr-unused",
-      "--route-account-id",
-      "esp32-usb-slot-0",
-      "--content-script-match",
-      "<all_urls>"
-    ])).rejects.toThrow(/content script match/u);
+    ])).rejects.toThrow(/route-config-approval/u);
+    try {
+      const approvalPath = join(temp.root, "route-config-approval.json");
+      writeRouteConfigApproval(approvalPath);
+      await expect(browserExtensionPackageBuildJsonFromArgs([
+        "--target",
+        "chromium",
+        "--target",
+        "firefox",
+        "--out-dir",
+        temp.outDir,
+        "--route-account-id",
+        "esp32-usb-slot-0",
+        "--route-config-approval",
+        approvalPath
+      ])).rejects.toThrow(/specified only once/u);
+      await expect(browserExtensionPackageBuildJsonFromArgs([
+        "--target",
+        "chromium",
+        "--out-dir",
+        temp.outDir,
+        "--route-account-id",
+        "esp32-usb-slot-0",
+        "--route-type",
+        "esp32_usb_nip46",
+        "--route-config-approval",
+        approvalPath,
+        "--content-script-match",
+        "<all_urls>"
+      ])).rejects.toThrow(/content script match/u);
+    } finally {
+      temp.cleanup();
+    }
   });
 });

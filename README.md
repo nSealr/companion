@@ -153,8 +153,10 @@ match the shared `contract_id`.
   and can build either the default minimal no-host-permission manifest or an
   opt-in explicit-origin content-script manifest profile. The content-script
   profile still omits host-permission fields, broad URL matches, extension
-  storage, and provider grants. It does not package or install a browser
-  extension.
+  storage, and provider grants. It can build an explicit developer package
+  artifact only after route-config review/approval, but it does not install a
+  browser extension, write extension storage, create grants, dispatch signers,
+  or hold key material.
 - `@nsealr/client` exposes the shared local-client identity parser, including
   the browser-safe `@nsealr/client/client-identity` subpath, used before
   pairing, route selection, signer-request validation, and response

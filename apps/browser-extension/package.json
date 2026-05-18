@@ -7,7 +7,9 @@
   "type": "module",
   "scripts": {
     "package-build": "node --no-warnings --import tsx/esm src/package-build-cli.ts",
-    "package-plan": "node --no-warnings --import tsx/esm src/package-plan-cli.ts"
+    "package-plan": "node --no-warnings --import tsx/esm src/package-plan-cli.ts",
+    "route-config-approve": "node --no-warnings --import tsx/esm src/route-config-cli.ts approve",
+    "route-config-review": "node --no-warnings --import tsx/esm src/route-config-cli.ts review"
   },
   "dependencies": {
     "@nsealr/browser-provider": "workspace:*",

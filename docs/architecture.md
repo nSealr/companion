@@ -271,9 +271,11 @@ load explicit read-only grant/account context files for local harnesses. It can
 also load an explicit secretless route-driver store for exact account/route/USB
 serial-line dispatch through the async local-service boundary. That driver store
 does not contain keys, does not approve clients, does not choose default paths,
-and does not make QR vaults connected signers. Manifest installation, default
-storage locations, file writes, relay sessions, browser packaging, and
-production driver acceptance remain separate gates.
+and does not make QR vaults connected signers. Serial-line open, timeout,
+protocol, I/O, close, and fallback failures are normalized into deterministic
+local-service transport error codes before they cross the service boundary.
+Manifest installation, default storage locations, file writes, relay sessions,
+browser packaging, and production driver acceptance remain separate gates.
 
 The browser-provider package is intentionally one layer above this service
 boundary. Each provider instance is bound to a client identity so the future

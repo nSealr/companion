@@ -65,6 +65,27 @@ export class SignerRouteUnavailableError extends Error {
   }
 }
 
+export const SIGNER_TRANSPORT_ERROR_CODES = [
+  "signer_transport_open_failed",
+  "signer_transport_timeout",
+  "signer_transport_protocol_error",
+  "signer_transport_io_failed",
+  "signer_transport_close_failed",
+  "signer_transport_failed"
+] as const;
+
+export type SignerTransportErrorCode = (typeof SIGNER_TRANSPORT_ERROR_CODES)[number];
+
+export class SignerTransportError extends Error {
+  readonly code: SignerTransportErrorCode;
+
+  constructor(code: SignerTransportErrorCode, message: string) {
+    super(message);
+    this.name = "SignerTransportError";
+    this.code = code;
+  }
+}
+
 export type RouteDispatchEntry = {
   account_id?: RouteSelection["account_id"];
   route_type?: RouteSelection["route_type"];
@@ -766,6 +787,9 @@ function dispatchFailureResponse(
 ): LocalServiceResponse {
   if (error instanceof SignerRouteUnavailableError) {
     return errorResponse(request, "signer_route_unavailable", error.message);
+  }
+  if (error instanceof SignerTransportError) {
+    return errorResponse(request, error.code, error.message);
   }
   return errorResponse(
     request,

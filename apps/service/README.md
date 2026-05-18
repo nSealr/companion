@@ -14,6 +14,8 @@ Private native-messaging host scaffold for the nSealr local companion service.
   framing contract.
 - Load explicit secretless route-driver stores for reviewed host-owned drivers.
   The first supported driver is exact account/route/USB serial-line dispatch.
+- Normalize serial-line driver open, timeout, protocol, I/O, close, and
+  fallback failures into deterministic local-service transport error codes.
 - Render validated Chromium and Firefox native-host manifest JSON from the
   shared `@nsealr/client` manifest contract for future installer work.
 

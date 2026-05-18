@@ -100,6 +100,9 @@ transport but do not reimplement this boundary.
 `createRouteDispatcher` is only a registry helper for host-owned dispatch
 functions; it selects an explicitly configured route handler and otherwise
 returns the same unavailable or configuration-error boundary.
+`SignerTransportError` is the typed boundary for host-owned signer transports
+to return deterministic local-service error codes for open, timeout, protocol,
+I/O, close, or fallback transport failures.
 `handleLocalServiceRequestAsync` is the boundary future native hosts should use
 when a reviewed signer driver needs asynchronous I/O; the synchronous handler
 rejects async dispatchers deterministically instead of treating promises as

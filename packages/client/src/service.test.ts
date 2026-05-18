@@ -10,6 +10,7 @@ import {
   handleLocalServiceRequest,
   LOCAL_SERVICE_OPERATIONS,
   LOCAL_SERVICE_PROTOCOL,
+  SignerTransportError,
   type LocalClientGrant,
   type LocalClientIdentity
 } from "./service.js";
@@ -597,6 +598,35 @@ describe("local service boundary", () => {
       error: {
         code: "signer_dispatch_failed",
         message: "ambiguous signer dispatcher for route esp32_usb_nip46"
+      }
+    });
+  });
+
+  it("reports signer transport failures with deterministic transport codes", () => {
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-dispatch-transport-timeout",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: () => {
+        throw new SignerTransportError(
+          "signer_transport_timeout",
+          "serial line transport timed out before response after 1000ms"
+        );
+      }
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "signer_transport_timeout",
+        message: "serial line transport timed out before response after 1000ms"
       }
     });
   });

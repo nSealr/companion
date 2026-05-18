@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:750b9e36d1e4e3697e28f5bf8d6e3b17585f39d499a8b3cc41868857f771c8f4`
+API surface digest: `sha256:7718678eb56cd012b3d603f1f1ea41e711d8b523610c781abc7d55c5bc136e64`
 
 Source: `docs/api.md`
 
@@ -68,6 +68,9 @@ local-service behavior.
 The shared native host name and native-host manifest builder remain exported
 from the Node-capable root so service manifest generation and packaging checks
 do not drift.
+`SignerTransportError` is the public typed error host-owned dispatchers should
+throw when a transport failure needs to cross the local-service boundary with a
+deterministic code instead of a generic dispatch failure.
 Route selection returns metadata only; dispatch is unavailable by default and
 does not include real transport drivers. The route-aware dispatcher registry is
 only a secretless host-wiring helper: it selects the most specific configured

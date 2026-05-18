@@ -319,9 +319,11 @@ and uploads checked tarball artifacts without publishing to npm.
   origin/app binding rules. Private service context loading can read explicit
   grant/account JSON files for local harnesses only, and it can now opt into an
   explicit secretless account/route/USB serial-line driver store for developer
-  integration. Remaining work is full approval UI, reviewed storage locations,
-  production transport-error taxonomy, production driver acceptance, and
-  native-host installation packaging.
+  integration. Route-driver dispatch now maps serial-line open, timeout,
+  protocol, I/O, close, and fallback failures to deterministic local-service
+  transport error codes. Remaining work is full approval UI, reviewed storage
+  locations, production driver acceptance, and native-host installation
+  packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are

@@ -1,10 +1,12 @@
 import {
   createRouteDispatcher,
+  SignerTransportError,
   type RouteDispatchEntry,
-  type SignerRequestDispatcher
+  type SignerRequestDispatcher,
+  type SignerTransportErrorCode
 } from "@nsealr/client";
 import { type RouteType } from "@nsealr/policy";
-import { exchangeSerialLineRequest, type SerialLinePortOpener } from "@nsealr/transport";
+import { SerialLineTransport, type SerialLinePort, type SerialLinePortOpener } from "@nsealr/transport";
 
 export const SERVICE_ROUTE_DRIVER_STORE_FORMAT = "nsealr-service-route-driver-store-v0";
 export const MAX_SERVICE_ROUTE_DRIVER_STORE_JSON_BYTES = 64 * 1024;
@@ -156,6 +158,75 @@ function parseRouteDriver(value: unknown, index: number): ServiceRouteDriver {
   return parseSerialLineRouteDriver(value, index);
 }
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function classifySerialLineExchangeError(error: unknown): SignerTransportError {
+  const message = errorMessage(error);
+  let code: SignerTransportErrorCode = "signer_transport_failed";
+  if (/timed out/u.test(message)) {
+    code = "signer_transport_timeout";
+  } else if (
+    /protocol frame|serial frame|request_id|response.*invalid|expected response|end of input|checksum|length prefix|UTF-8|JSON/u.test(message)
+  ) {
+    code = "signer_transport_protocol_error";
+  } else if (/write|read|buffer|input|output|E[A-Z]+/u.test(message)) {
+    code = "signer_transport_io_failed";
+  }
+  return new SignerTransportError(code, message);
+}
+
+async function closeSerialLinePort(port: SerialLinePort): Promise<void> {
+  try {
+    await port.close?.();
+  } catch (error) {
+    throw new SignerTransportError("signer_transport_close_failed", errorMessage(error));
+  }
+}
+
+async function openSerialLinePort(
+  route: ServiceSerialLineRouteDriver,
+  openPort: SerialLinePortOpener
+): Promise<SerialLinePort> {
+  try {
+    return await openPort(route.serial_line.path);
+  } catch (error) {
+    throw new SignerTransportError("signer_transport_open_failed", errorMessage(error));
+  }
+}
+
+async function dispatchSerialLineRoute(
+  route: ServiceSerialLineRouteDriver,
+  request: unknown,
+  openPort: SerialLinePortOpener
+): Promise<unknown> {
+  const port = await openSerialLinePort(route, openPort);
+  let exchangeFailed = false;
+  try {
+    const transport = new SerialLineTransport({
+      port,
+      maxIgnoredLines: route.serial_line.max_ignored_lines,
+      responseTimeoutMs: route.serial_line.response_timeout_ms
+    });
+    return await transport.exchange(request);
+  } catch (error) {
+    exchangeFailed = true;
+    throw error instanceof SignerTransportError ? error : classifySerialLineExchangeError(error);
+  } finally {
+    if (exchangeFailed) {
+      try {
+        await port.close?.();
+      } catch {
+        // Preserve the primary transport failure. Close failures after a failed
+        // exchange are cleanup diagnostics, not the dispatch result.
+      }
+    } else {
+      await closeSerialLinePort(port);
+    }
+  }
+}
+
 function rejectDuplicateRoutes(routes: ServiceRouteDriver[]): void {
   const seen = new Set<string>();
   for (const route of routes) {
@@ -209,13 +280,7 @@ export function createServiceRouteDispatcher(
     account_id: route.account_id,
     route_type: route.route_type,
     transport: route.transport,
-    dispatch: async (request) => exchangeSerialLineRequest({
-      path: route.serial_line.path,
-      request: request.request,
-      openPort: options.openSerialLinePort,
-      maxIgnoredLines: route.serial_line.max_ignored_lines,
-      responseTimeoutMs: route.serial_line.response_timeout_ms
-    })
+    dispatch: async (request) => dispatchSerialLineRoute(route, request.request, options.openSerialLinePort)
   }));
   return createRouteDispatcher(entries);
 }

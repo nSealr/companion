@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { type SignerDispatchRequest } from "@nsealr/client";
 import { resolveSpecsRoot } from "@nsealr/fixtures";
 import { encodeSerialFrame } from "@nsealr/framing";
 import {
@@ -12,6 +13,30 @@ import {
 const specsRoot = resolveSpecsRoot();
 const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
 const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
+const dispatchRequest: SignerDispatchRequest = {
+  client: {
+    surface: "native_host_test",
+    origin: "app:nsealr-service-test",
+    app_name: "nSealr service test"
+  },
+  route_selection: {
+    format: "nsealr-route-selection-v0",
+    account_id: "acct-esp32-usb-slot-0",
+    public_key: "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+    route_type: "esp32_usb_nip46",
+    repository: "esp32",
+    transport: "usb",
+    custody: "device_persistent",
+    trusted_review: "device_display",
+    policy_support: "scoped_automation",
+    policy_profile_id: "policy-scoped-automation-daily-use",
+    physical_review: true,
+    physical_approval: true,
+    persistent_grants: true,
+    contains_secret_material: false
+  },
+  request
+};
 
 function routeDriver(route: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -106,31 +131,75 @@ describe("service route drivers", () => {
       }
     });
 
-    await expect(dispatcher({
-      client: {
-        surface: "native_host_test",
-        origin: "app:nsealr-service-test",
-        app_name: "nSealr service test"
-      },
-      route_selection: {
-        format: "nsealr-route-selection-v0",
-        account_id: "acct-esp32-usb-slot-0",
-        public_key: "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
-        route_type: "esp32_usb_nip46",
-        repository: "esp32",
-        transport: "usb",
-        custody: "device_persistent",
-        trusted_review: "device_display",
-        policy_support: "scoped_automation",
-        policy_profile_id: "policy-scoped-automation-daily-use",
-        physical_review: true,
-        physical_approval: true,
-        persistent_grants: true,
-        contains_secret_material: false
-      },
-      request
-    })).resolves.toEqual(response);
+    await expect(dispatcher(dispatchRequest)).resolves.toEqual(response);
     expect(written[0]).toMatch(/^nsealr1f:request:/u);
     expect(written.at(-1)).toBe("closed");
+  });
+
+  it("maps serial-line route failures to deterministic transport error codes", async () => {
+    const store = parseServiceRouteDriverStore(routeDriverStore({
+      serial_line: {
+        path: "/dev/cu.usbmodem-test",
+        max_ignored_lines: 1,
+        response_timeout_ms: 5
+      }
+    }));
+
+    const openFailed = createServiceRouteDispatcher(store, {
+      openSerialLinePort: () => {
+        throw new Error("EACCES: permission denied");
+      }
+    });
+    await expect(openFailed(dispatchRequest)).rejects.toMatchObject({
+      code: "signer_transport_open_failed",
+      message: "EACCES: permission denied"
+    });
+
+    const timedOut = createServiceRouteDispatcher(store, {
+      openSerialLinePort: () => ({
+        writeLine: async () => {},
+        readLine: async () => new Promise<string | null>(() => {})
+      })
+    });
+    await expect(timedOut(dispatchRequest)).rejects.toMatchObject({
+      code: "signer_transport_timeout"
+    });
+
+    const protocolFailed = createServiceRouteDispatcher(store, {
+      openSerialLinePort: () => ({
+        writeLine: async () => {},
+        readLine: async () => "I boot log without protocol frame\n"
+      })
+    });
+    await expect(protocolFailed(dispatchRequest)).rejects.toMatchObject({
+      code: "signer_transport_protocol_error"
+    });
+
+    const ioFailed = createServiceRouteDispatcher(store, {
+      openSerialLinePort: () => ({
+        writeLine: async () => {
+          throw new Error("write failed");
+        },
+        readLine: async () => encodeSerialFrame({ type: "response", payload: response })
+      })
+    });
+    await expect(ioFailed(dispatchRequest)).rejects.toMatchObject({
+      code: "signer_transport_io_failed",
+      message: "write failed"
+    });
+
+    const closeFailed = createServiceRouteDispatcher(store, {
+      openSerialLinePort: () => ({
+        writeLine: async () => {},
+        readLine: async () => encodeSerialFrame({ type: "response", payload: response }),
+        close: async () => {
+          throw new Error("close failed");
+        }
+      })
+    });
+    await expect(closeFailed(dispatchRequest)).rejects.toMatchObject({
+      code: "signer_transport_close_failed",
+      message: "close failed"
+    });
   });
 });

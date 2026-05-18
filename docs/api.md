@@ -85,9 +85,12 @@ Exports:
 - `PairableLocalServiceOperation`
 - `PairingIntent`
 - `RouteDispatchEntry`
+- `SIGNER_TRANSPORT_ERROR_CODES`
 - `SignerDispatchRequest`
 - `SignerRequestDispatcher`
 - `SignerRouteUnavailableError`
+- `SignerTransportError`
+- `SignerTransportErrorCode`
 - `appendLocalGrant`
 - `appendLocalGrantRevocation`
 - `approvePairingIntent`

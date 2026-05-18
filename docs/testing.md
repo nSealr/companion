@@ -266,10 +266,12 @@ single-repository CI. Cross-repository drift remains guarded by
   malformed account-store files, parses explicit secretless route-driver stores,
   rejects empty, duplicate, broad, secret-bearing, non-USB, and QR-vault driver
   mappings, dispatches matching developer serial-line requests only through an
-  injected opener or explicit route-driver file, returns deterministic
-  `signer_route_unavailable` for authorized dispatch without a configured
-  driver, awaits async dispatchers through the async native-message helpers, and
-  returns deterministic errors for malformed native-message frames.
+  injected opener or explicit route-driver file, maps serial-line open,
+  timeout, protocol, I/O, and close failures to deterministic transport error
+  codes, returns deterministic `signer_route_unavailable` for authorized
+  dispatch without a configured driver, awaits async dispatchers through the
+  async native-message helpers, and returns deterministic errors for malformed
+  native-message frames.
 - Local service tests cover deterministic pairing intent creation, digest-bound
   pairing-review projection, manual approval into a grant, strict secretless
   JSON grant-store parsing, serialization, persistent revocation history,
@@ -438,9 +440,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - Package release workflow tests should eventually add trusted-publishing dry
   run or npm provenance verification once npm organization settings exist.
 - Local companion service tests with a fake extension/app client: user approval
-  UX, reviewed storage locations, deterministic transport errors, signer
-  dispatch, and additional built-package consumer tests after explicit policy
-  gates exist. The current test suite already covers pairing intent generation,
+  UX, reviewed storage locations, production signer dispatch, and additional
+  built-package consumer tests after explicit policy gates exist. The current
+  test suite already covers pairing intent generation,
   deterministic pairing-review projection, strict grant-store
   serialization/revocation, explicit read-only context loading, selected
   account route, malformed native-message rejection, shared

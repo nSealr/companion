@@ -36,7 +36,7 @@ const localServiceGrant: LocalClientGrant = {
   client_id: clientIdForIdentity(client),
   origin: client.origin,
   surface: client.surface,
-  allowed_operations: ["select_account_route", "validate_signer_request"],
+  allowed_operations: ["select_account_route", "dispatch_signer_request"],
   approved_at: 1_900_000_000,
   expires_at: 2_000_000_000
 };
@@ -144,6 +144,36 @@ describe("NIP-07 browser provider boundary", () => {
 
     await expect(provider.getPublicKey()).resolves.toBe(routeVector.selection.public_key);
     await expect(provider.signEvent(request.params.event_template)).rejects.toThrow(/Signer dispatch is not configured/u);
+  });
+
+  it("can back NIP-07 signEvent with an explicit local-service signer dispatcher", async () => {
+    const dispatched: unknown[] = [];
+    const service = new LocalServiceClient({
+      exchange: (message) => handleLocalServiceRequest(message, {
+        accounts: fixtures.accounts,
+        grants: [localServiceGrant],
+        now: 1_900_000_000,
+        signerDispatcher: (dispatchRequest) => {
+          dispatched.push(dispatchRequest);
+          return response;
+        }
+      })
+    });
+    const provider = createNip07Provider({
+      backend: createLocalServiceBrowserProviderBackend({
+        service,
+        routeRequest: routeVector.request
+      }),
+      client,
+      nextRequestId: () => "req-kind-1-basic"
+    });
+
+    await expect(provider.signEvent(request.params.event_template)).resolves.toEqual(response.result.event);
+    expect(dispatched).toEqual([{
+      client,
+      route_selection: routeVector.selection,
+      request
+    }]);
   });
 
   it("creates browser native-messaging local-service clients over explicit senders", async () => {

@@ -17,7 +17,7 @@ import { BROWSER_EXTENSION_NAME } from "./manifest.js";
 
 export const BROWSER_EXTENSION_DEFAULT_PAIRING_OPERATIONS = [
   "select_account_route",
-  "validate_signer_request"
+  "dispatch_signer_request"
 ] as const satisfies readonly PairableLocalServiceOperation[];
 export const BROWSER_EXTENSION_ORIGIN_PERMISSION_REVIEW_FORMAT = "nsealr-browser-origin-permission-review-v0";
 export const BROWSER_EXTENSION_ORIGIN_PERMISSION_APPROVAL_FORMAT = "nsealr-browser-origin-permission-approval-v0";
@@ -206,7 +206,7 @@ function originPermissionMethods(review: LocalPairingReview): BrowserExtensionOr
       ...BROWSER_EXTENSION_METHOD_REVIEWS.get_public_key
     });
   }
-  if (operations.has("validate_signer_request")) {
+  if (operations.has("dispatch_signer_request")) {
     methods.push({
       method: "sign_event",
       ...BROWSER_EXTENSION_METHOD_REVIEWS.sign_event

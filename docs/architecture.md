@@ -134,19 +134,21 @@ packages, but it must not export test-only signing as a production path.
   shared local-client identity parsing, deterministic pairing-review
   projection, grant enforcement, a strict
   secretless JSON grant-store contract, secretless account-route selection,
-  signer-request validation, signer-response verification, response
+  signer-request validation, grant-gated signer-request dispatch through an
+  explicitly injected dispatcher, signer-response verification, response
   validation, and a high-level client wrapper. The wrapper checks request-id
   correlation, malformed responses, and operation-specific result types before
-  callers can trust native-messaging responses. This is the shared
+  callers can trust native-messaging responses. The dispatch operation remains
+  unavailable by default and adds no real transport driver by itself. This is the shared
   client/service boundary for future browser extension, SDK, and desktop work.
 - `packages/browser-provider`: NIP-07 provider adapter for browser-extension
   packaging. It accepts an injected companion backend plus explicit client
   identity, validates public keys, converts `signEvent` inputs into nSealr
   signer requests, verifies signed responses, and stores no browser-side
   production keys. Its local-service backend adapter can read the selected
-  account public key through authorized route selection and returns
-  deterministic signer-unavailable responses until signer dispatch is
-  implemented. Its browser native-messaging adapter can bound silent or
+  account public key through authorized route selection and routes `signEvent`
+  through local-service dispatch, returning deterministic signer-unavailable
+  responses until an explicit signer route dispatcher is configured. Its browser native-messaging adapter can bound silent or
   cancelled exchanges with optional deterministic response timeouts and
   `AbortSignal` handling.
 - `packages/sdk`: public namespace facade for app, browser-extension, and
@@ -163,7 +165,7 @@ packages, but it must not export test-only signing as a production path.
   through the shared `@nsealr/client` manifest builder.
   It is intentionally secretless and does not yet install manifest files, write
   grant/account storage, perform production grant persistence, open relays, or
-  dispatch signer transports.
+  include real signer transport drivers.
 
 Each reusable package has its own `package.json`, source `src/index.ts`
 entrypoint, and built `dist` JS/declaration export. Cross-package source imports
@@ -205,8 +207,8 @@ reuse the same local-service semantics rather than defining a separate security
 model.
 
 The first native-messaging scaffold accepts `service_status`,
-`request_pairing`, `select_account_route`, `validate_signer_request`, and
-`verify_signer_response`.
+`request_pairing`, `select_account_route`, `validate_signer_request`,
+`dispatch_signer_request`, and `verify_signer_response`.
 `@nsealr/client/browser` owns the browser-runtime local-service client
 boundary, and `@nsealr/client/client-identity` remains the minimal
 identity-only subpath. Browser extension, SDK, desktop, CLI, and native-host
@@ -267,9 +269,9 @@ extension manifest, native-host install flow, permission UI, account routing,
 persistent grants, NIP-04, NIP-44, or relay sessions. It is the package-level
 contract that a future extension will expose as `window.nostr`.
 The first local-service backend adapter uses the same local-service route
-selection and signer-request validation operations, but it still returns
-deterministic signer-unavailable responses for `signEvent` because route
-dispatch is not implemented yet.
+selection and dispatch operations. It still returns deterministic
+signer-unavailable responses for `signEvent` unless the local service host
+injects a reviewed signer route dispatcher.
 The package also includes a browser native-messaging local-service client
 adapter over an explicit `sendNativeMessage(hostName, message)` function. This
 keeps browser API integration thin while reusing `LocalServiceClient` response

@@ -29,7 +29,7 @@ const grant: LocalClientGrant = {
   client_id: clientIdForIdentity(client),
   origin: client.origin,
   surface: client.surface,
-  allowed_operations: ["validate_signer_request", "verify_signer_response"],
+  allowed_operations: ["validate_signer_request", "dispatch_signer_request", "verify_signer_response"],
   expires_at: 2_000_000_000
 };
 const routeGrant: LocalClientGrant = {
@@ -437,6 +437,127 @@ describe("local service boundary", () => {
     }, { grants: [grant], now: 1_900_000_000 })).toMatchObject({
       ok: true,
       result: { validation: { valid: false, error: "response request_id does not match request" } }
+    });
+  });
+
+  it("dispatches signer requests only through an explicit route dispatcher", () => {
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-dispatch-unavailable",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request
+      }
+    }, { accounts: fixtures.accounts, grants: [grant], now: 1_900_000_000 })).toMatchObject({
+      ok: false,
+      error: {
+        code: "signer_route_unavailable",
+        message: "signer dispatch is not configured"
+      }
+    });
+
+    const dispatched: unknown[] = [];
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-dispatch-1",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: (dispatchRequest) => {
+        dispatched.push(dispatchRequest);
+        return response;
+      }
+    })).toEqual({
+      version: 1,
+      request_id: "svc-dispatch-1",
+      ok: true,
+      result: {
+        signer_response: response
+      }
+    });
+    expect(dispatched).toEqual([{
+      client,
+      route_selection: routeVector.selection,
+      request
+    }]);
+  });
+
+  it("rejects unsafe dispatch input before route dispatch", () => {
+    let called = false;
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-dispatch-unsafe",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request: { ...request, request_id: "bad request id" }
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: () => {
+        called = true;
+        return response;
+      }
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_signer_request",
+        message: "request_id is invalid"
+      }
+    });
+    expect(called).toBe(false);
+  });
+
+  it("rejects route/request mismatches and malformed dispatch responses", () => {
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-dispatch-method-mismatch",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: { ...routeVector.request, method: "get_public_key" },
+        request
+      }
+    }, { accounts: fixtures.accounts, grants: [grant], now: 1_900_000_000 })).toMatchObject({
+      ok: false,
+      error: {
+        code: "route_selection_failed",
+        message: "route selection method does not match signer request"
+      }
+    });
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-dispatch-bad-response",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: () => ({ ...response, request_id: "other-request" })
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_signer_response",
+        message: "response request_id does not match request"
+      }
     });
   });
 

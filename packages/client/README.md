@@ -8,6 +8,9 @@ Local companion service protocol and client wrappers.
 - Build validated Chromium and Firefox native-host manifest objects from
   explicit host path and extension-id inputs.
 - Validate local service requests and responses.
+- Route signer requests through an explicit injected dispatcher only after
+  client authorization, request validation, route selection, and response
+  verification.
 - Provide a high-level client wrapper for future browser, SDK, desktop, and CLI
   callers.
 - Enforce explicit client identity parsing, request-id correlation, and
@@ -80,10 +83,11 @@ assert.equal(appendLocalGrantRevocation(grantStore, {
 The local service boundary is secretless. It currently supports status, pairing
 intent generation, deterministic pairing-review projection, explicit manual
 approval into a grant, request validation, secretless route selection, response
-verification, and a strict JSON grant-store contract for persisting
-approved/revoked local client grants without destructive history edits.
-It does not store production keys, open relays, or dispatch to real signer
-transports. A host app still has to own the actual file location, backup
-policy, and user approval UX.
+verification, a dispatcher boundary that is unavailable by default, and a
+strict JSON grant-store contract for persisting approved/revoked local client
+grants without destructive history edits.
+It does not store production keys, open relays, or include real signer
+transport drivers. A host app still has to own the actual file location, backup
+policy, signer transport wiring, and user approval UX.
 The package can build native-host manifest objects, but it does not install
 them or choose a host file location.

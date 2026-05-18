@@ -1,3 +1,4 @@
+import { validateResponse } from "@nsealr/protocol";
 import {
   decodeNativeMessage,
   encodeNativeMessage,
@@ -31,7 +32,7 @@ export type NativeMessagingLocalServiceClientOptions = {
 };
 
 type RequestParams = Extract<LocalServiceRequest, { params: unknown }>["params"];
-type LocalServiceResultKey = "service" | "pairing_intent" | "route_selection" | "validation";
+type LocalServiceResultKey = "service" | "pairing_intent" | "route_selection" | "validation" | "signer_response";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -174,9 +175,14 @@ function validateRouteSelection(value: unknown): string | undefined {
   return undefined;
 }
 
+function validateSignerResponseResult(value: unknown): string | undefined {
+  const validation = validateResponse(value);
+  return validation.ok ? undefined : `local service signer response is invalid: ${validation.error}`;
+}
+
 function validateServiceResult(value: unknown): string | undefined {
   if (!isRecord(value)) return "local service result must be an object";
-  const resultTypes = ["service", "pairing_intent", "route_selection", "validation"].filter((key) => key in value);
+  const resultTypes = ["service", "pairing_intent", "route_selection", "validation", "signer_response"].filter((key) => key in value);
   if (resultTypes.length !== 1 || !hasOnlyKeys(value, resultTypes)) {
     return "local service result type is unsupported";
   }
@@ -245,6 +251,9 @@ function validateServiceResult(value: unknown): string | undefined {
       return "local service validation error is invalid";
     }
     return undefined;
+  }
+  if ("signer_response" in value) {
+    return validateSignerResponseResult(value.signer_response);
   }
   return "local service result type is unsupported";
 }
@@ -345,6 +354,19 @@ export class LocalServiceClient {
       client,
       route_request: routeRequest
     }, requestId).then((response) => requireResultType(response, "route_selection", "select_account_route"));
+  }
+
+  dispatchSignerRequest(
+    client: LocalClientIdentity,
+    routeRequest: Extract<LocalServiceRequest, { operation: "dispatch_signer_request" }>["params"]["route_request"],
+    request: unknown,
+    requestId = this.nextRequestId()
+  ): Promise<LocalServiceResponse> {
+    return this.sendWithParams("dispatch_signer_request", {
+      client,
+      route_request: routeRequest,
+      request
+    }, requestId).then((response) => requireResultType(response, "signer_response", "dispatch_signer_request"));
   }
 
   private async send(request: LocalServiceRequest): Promise<LocalServiceResponse> {

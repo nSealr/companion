@@ -1,5 +1,6 @@
 import { sha256Utf8Hex, verifySignedEventResponse } from "@nsealr/core";
 import {
+  parseRouteSelectionRequest,
   selectAccountRoute,
   type AccountDescriptor,
   type RouteSelection,
@@ -31,6 +32,7 @@ export const LOCAL_SERVICE_OPERATIONS = [
   "request_pairing",
   "select_account_route",
   "validate_signer_request",
+  "dispatch_signer_request",
   "verify_signer_response"
 ] as const;
 
@@ -48,10 +50,19 @@ export type LocalClientGrant = {
   expires_at?: number;
 };
 
+export type SignerDispatchRequest = {
+  client: LocalClientIdentity;
+  route_selection: RouteSelection;
+  request: unknown;
+};
+
+export type SignerRequestDispatcher = (request: SignerDispatchRequest) => unknown;
+
 export type LocalServiceContext = {
   accounts?: AccountDescriptor[];
   grants?: LocalClientGrant[];
   now?: number;
+  signerDispatcher?: SignerRequestDispatcher;
 };
 
 export type PairingIntent = {
@@ -108,6 +119,16 @@ export type LocalServiceRequest =
   | {
       version: 1;
       request_id: string;
+      operation: "dispatch_signer_request";
+      params: {
+        client: LocalClientIdentity;
+        route_request: RouteSelectionRequest;
+        request: unknown;
+      };
+    }
+  | {
+      version: 1;
+      request_id: string;
       operation: "verify_signer_response";
       params: {
         client: LocalClientIdentity;
@@ -142,6 +163,9 @@ export type LocalServiceResponse =
               valid: boolean;
               error?: string;
             };
+          }
+        | {
+            signer_response: unknown;
           };
     }
   | {
@@ -276,6 +300,21 @@ function validateServiceRequest(value: unknown): { ok: true; request: LocalServi
         params: {
           client: client.client,
           route_request: value.params.route_request as RouteSelectionRequest
+        }
+      }
+    };
+  }
+  if (value.operation === "dispatch_signer_request" && "route_request" in value.params && "request" in value.params) {
+    return {
+      ok: true,
+      request: {
+        version: 1,
+        request_id: value.request_id,
+        operation: "dispatch_signer_request",
+        params: {
+          client: client.client,
+          route_request: value.params.route_request as RouteSelectionRequest,
+          request: value.params.request
         }
       }
     };
@@ -534,61 +573,119 @@ export function handleLocalServiceRequest(value: unknown, context: LocalServiceC
       );
     }
   }
+  if (request.operation === "dispatch_signer_request") {
+    return dispatchSignerRequest(request, context);
+  }
 
   return verifySignerResponse(request);
 }
 
+function verifySignerResponsePayload(
+  signerRequestPayload: unknown,
+  signerResponsePayload: unknown
+): { ok: true } | { ok: false; error: string } {
+  const signerRequest = validateRequest(signerRequestPayload);
+  if (!signerRequest.ok) {
+    return { ok: false, error: signerRequest.error ?? "signer request is invalid" };
+  }
+  const signerResponse = validateResponse(signerResponsePayload);
+  if (!signerResponse.ok) {
+    return { ok: false, error: signerResponse.error ?? "signer response is invalid" };
+  }
+  if (
+    isRecord(signerRequestPayload) &&
+    isRecord(signerResponsePayload) &&
+    signerRequestPayload.request_id !== signerResponsePayload.request_id
+  ) {
+    return { ok: false, error: "response request_id does not match request" };
+  }
+  if (
+    isRecord(signerRequestPayload) &&
+    signerRequestPayload.method === "sign_event" &&
+    isRecord(signerResponsePayload) &&
+    signerResponsePayload.ok === true
+  ) {
+    const verification = verifySignedEventResponse(signerRequestPayload, signerResponsePayload);
+    if (!verification.ok) {
+      return { ok: false, error: verification.error ?? "signer response verification failed" };
+    }
+  }
+  return { ok: true };
+}
+
 function verifySignerResponse(request: Extract<LocalServiceRequest, { operation: "verify_signer_response" }>): LocalServiceResponse {
+  const verification = verifySignerResponsePayload(request.params.request, request.params.response);
+  return {
+    version: 1,
+    request_id: request.request_id,
+    ok: true,
+    result: validationResult(verification.ok, verification.ok ? undefined : verification.error)
+  };
+}
+
+function dispatchSignerRequest(
+  request: Extract<LocalServiceRequest, { operation: "dispatch_signer_request" }>,
+  context: LocalServiceContext
+): LocalServiceResponse {
   const signerRequest = validateRequest(request.params.request);
   if (!signerRequest.ok) {
-    return {
-      version: 1,
-      request_id: request.request_id,
-      ok: true,
-      result: validationResult(false, signerRequest.error)
-    };
+    return errorResponse(request, "invalid_signer_request", signerRequest.error ?? "signer request is invalid");
   }
-  const signerResponse = validateResponse(request.params.response);
-  if (!signerResponse.ok) {
-    return {
-      version: 1,
-      request_id: request.request_id,
-      ok: true,
-      result: validationResult(false, signerResponse.error)
-    };
+
+  let routeRequest: RouteSelectionRequest;
+  try {
+    routeRequest = parseRouteSelectionRequest(request.params.route_request);
+  } catch (error) {
+    return errorResponse(
+      request,
+      "route_selection_failed",
+      error instanceof Error ? error.message : "route selection request is invalid"
+    );
   }
-  if (
-    isRecord(request.params.request) &&
-    isRecord(request.params.response) &&
-    request.params.request.request_id !== request.params.response.request_id
-  ) {
-    return {
-      version: 1,
-      request_id: request.request_id,
-      ok: true,
-      result: validationResult(false, "response request_id does not match request")
-    };
+  if (isRecord(request.params.request) && routeRequest.method !== request.params.request.method) {
+    return errorResponse(request, "route_selection_failed", "route selection method does not match signer request");
   }
-  if (
-    isRecord(request.params.request) &&
-    request.params.request.method === "sign_event" &&
-    isRecord(request.params.response) &&
-    request.params.response.ok === true
-  ) {
-    const verification = verifySignedEventResponse(request.params.request, request.params.response);
-    if (!verification.ok) {
-      return {
-        version: 1,
-        request_id: request.request_id,
-        ok: true,
-        result: validationResult(false, verification.error)
-      };
-    }
+
+  let routeSelection: RouteSelection;
+  try {
+    routeSelection = selectAccountRoute(context.accounts ?? [], routeRequest);
+  } catch (error) {
+    return errorResponse(
+      request,
+      "route_selection_failed",
+      error instanceof Error ? error.message : "route selection failed"
+    );
+  }
+
+  if (context.signerDispatcher === undefined) {
+    return errorResponse(request, "signer_route_unavailable", "signer dispatch is not configured");
+  }
+
+  let signerResponse: unknown;
+  try {
+    signerResponse = context.signerDispatcher({
+      client: request.params.client,
+      route_selection: routeSelection,
+      request: request.params.request
+    });
+  } catch (error) {
+    return errorResponse(
+      request,
+      "signer_dispatch_failed",
+      error instanceof Error ? error.message : "signer dispatch failed"
+    );
+  }
+
+  const verification = verifySignerResponsePayload(request.params.request, signerResponse);
+  if (!verification.ok) {
+    return errorResponse(request, "invalid_signer_response", verification.error);
   }
   return {
     version: 1,
     request_id: request.request_id,
     ok: true,
-    result: validationResult(true)
+    result: {
+      signer_response: signerResponse
+    }
   };
 }

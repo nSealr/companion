@@ -62,8 +62,11 @@ single-repository CI. Cross-repository drift remains guarded by
   grant-store persistence, latest-client revocation appending, secretless route
   selection, signer-request validation, signer-response verification, local
   client request-id correlation, malformed service-response rejection including
-  pairing digest mismatch, and native-messaging exchange wrapping before any
-  signer I/O exists.
+  pairing digest mismatch, grant-gated signer-request dispatch through an
+  explicitly injected dispatcher, deterministic `signer_route_unavailable`
+  behavior when no dispatcher is configured, malformed dispatch response
+  rejection, and native-messaging exchange wrapping before any real signer
+  transport driver exists.
 - Browser-provider package tests cover NIP-07 `getPublicKey` validation,
   `signEvent` conversion into nSealr signer requests, signed-response
   verification, explicit client identity forwarding, signer refusal propagation,
@@ -98,8 +101,8 @@ single-repository CI. Cross-repository drift remains guarded by
   prove malformed requests and malformed senders fail before provider
   selection, provider-selection failures produce deterministic errors, and the
   native-messaging provider selector binds sender-derived identity to the
-  local-service route path while `sign_event` remains deterministically
-  unavailable until signer dispatch is implemented. Pairing tests prove the
+  local-service dispatch path while `sign_event` remains deterministically
+  unavailable until a signer route dispatcher is configured. Pairing tests prove the
   same sender-derived identity can request a digest-bound local-service pairing
   intent, deterministic pairing-review metadata, and deterministic
   browser-origin permission review metadata without creating grants, writing
@@ -439,8 +442,9 @@ single-repository CI. Cross-repository drift remains guarded by
   revocation, cancel, malformed companion response, native-host disconnects,
   and no key material in extension storage. Current package tests cover the
   local-service backend adapter for authorized selected-account public-key
-  lookup and deterministic signer-unavailable responses before signer dispatch
-  exists.
+  lookup, `signEvent` routing through local-service dispatch, explicit
+  dispatcher success, and deterministic signer-unavailable responses before a
+  real signer transport driver exists.
 - Package consumer smoke currently runs against built JS/declaration artifacts,
   packed tarballs, and executable examples importing every publishable public
   package. README snippets for every publishable package are now executed from

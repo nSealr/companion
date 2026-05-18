@@ -189,6 +189,7 @@ async function localServiceExample(): Promise<void> {
   const pairing = await service.requestPairing(sdkClient, [
     "select_account_route",
     "validate_signer_request",
+    "dispatch_signer_request",
     "verify_signer_response"
   ]);
   if (pairing.ok !== true) throw new Error(pairing.error.message);
@@ -197,7 +198,7 @@ async function localServiceExample(): Promise<void> {
   assert.equal(pairing.result.pairing_intent.stores_production_secrets, false);
   const pairingReview = reviewPairingIntent(pairing.result.pairing_intent);
   assert.equal(pairingReview.contains_secret_material, false);
-  assert.equal(pairingReview.requested_operations.length, 3);
+  assert.equal(pairingReview.requested_operations.length, 4);
 
   const routeSelection = await service.selectAccountRoute(sdkClient, routeVector.request);
   if (routeSelection.ok !== true) throw new Error(routeSelection.error.message);
@@ -249,7 +250,7 @@ async function browserProviderExample(): Promise<void> {
           client_id: clientIdForIdentity(browserClient),
           origin: browserClient.origin,
           surface: browserClient.surface,
-          allowed_operations: ["select_account_route", "validate_signer_request"],
+          allowed_operations: ["select_account_route", "dispatch_signer_request"],
           expires_at: 2_000_000_000
         }],
         now: 1_900_000_000
@@ -380,7 +381,7 @@ function exampleGrant(): LocalClientGrant {
     client_id: clientIdForIdentity(sdkClient),
     origin: sdkClient.origin,
     surface: sdkClient.surface,
-    allowed_operations: ["select_account_route", "validate_signer_request", "verify_signer_response"],
+    allowed_operations: ["select_account_route", "validate_signer_request", "dispatch_signer_request", "verify_signer_response"],
     approved_at: 1_900_000_000,
     expires_at: 2_000_000_000
   };

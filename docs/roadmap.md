@@ -206,6 +206,15 @@ operation returns the same secretless route metadata pinned by shared specs
 vectors. It does not create grants, persist routes, open transports, or dispatch
 signer IO.
 
+Status note, 2026-05-18: `@nsealr/client` now also owns the local-service
+`dispatch_signer_request` boundary. The operation is grant-gated, validates the
+signer request, selects the route, calls only an explicitly injected dispatcher,
+and verifies the signer response before returning it. With no dispatcher
+configured it returns deterministic `signer_route_unavailable`; this adds no
+real signer transport driver, no key custody, and no production signing claim.
+`@nsealr/browser-provider` now uses this service operation for NIP-07
+`signEvent` instead of duplicating validate/select/unavailable behavior.
+
 Status note, 2026-05-11: the companion identity/policy boundary now follows
 the official account model. Account metadata is per resulting public key and
 route; key sources such as mnemonics, passphrase namespaces, standalone
@@ -262,7 +271,8 @@ and uploads checked tarball artifacts without publishing to npm.
   secretless service status, deterministic pairing intents, in-memory
   client-grant enforcement, deterministic pairing-review projection, manual
   approval conversion from pairing intent to a grant, signer-request
-  validation, and signer-response verification.
+  validation, dispatcher-bound signer-request dispatch, and signer-response
+  verification.
   The first high-level client wrapper validates request-id
   correlation, malformed service responses, and operation-specific result
   types before browser, SDK, desktop, or CLI code can trust them. Pure
@@ -283,7 +293,8 @@ and uploads checked tarball artifacts without publishing to npm.
   service context loading can read explicit
   grant/account JSON files for local harnesses only. Remaining work is full
   approval UI, reviewed storage locations, cancellation, deterministic
-  transport errors, signer dispatch, and native-host installation packaging.
+  transport errors, real signer transport driver wiring, async host dispatch,
+  and native-host installation packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are
@@ -294,8 +305,9 @@ and uploads checked tarball artifacts without publishing to npm.
   inputs into nSealr `sign_event` requests, verifies signed responses, and
   stores no browser-side production key material. The provider now has a
   local-service backend adapter that can read the selected public key through
-  authorized route selection and return deterministic signer-unavailable
-  responses while signer dispatch remains blocked. It also has a browser
+  authorized route selection and route `signEvent` through the local-service
+  dispatcher boundary, returning deterministic signer-unavailable responses
+  while no real dispatcher is configured. It also has a browser
   native-messaging client adapter that wraps an explicit `sendNativeMessage`
   function with the shared native host name while reusing local-service
   response validation, optional deterministic response timeouts, and request
@@ -308,9 +320,9 @@ and uploads checked tarball artifacts without publishing to npm.
   The sender-aware handler validates
   both internal request and sender before provider selection. The extension
   scaffold can now create a native-messaging-backed provider selector that
-  binds that sender-derived identity to the local-service route path and keeps
-  `sign_event` deterministically unavailable until signer dispatch is
-  implemented. It can also request a digest-bound local-service pairing intent
+  binds that sender-derived identity to the local-service dispatch path and
+  keeps `sign_event` deterministically unavailable until a real signer route
+  dispatcher is configured. It can also request a digest-bound local-service pairing intent
   for the same sender-derived identity without writing grants, extension
   storage, or native-host files, and can project that intent into deterministic
   pairing-review metadata plus browser-origin permission review metadata for

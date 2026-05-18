@@ -32,6 +32,10 @@ const OPERATION_EFFECTS: Record<PairableLocalServiceOperation, { label: string; 
     label: "Validate signer requests",
     effect: "The client can ask the service to validate signer-request payloads before signer transport."
   },
+  dispatch_signer_request: {
+    label: "Dispatch signer requests",
+    effect: "The client can ask the service to validate, route, dispatch, and verify signer requests through an approved signer route."
+  },
   verify_signer_response: {
     label: "Verify signer responses",
     effect: "The client can ask the service to verify signer responses before returning them upstream."

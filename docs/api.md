@@ -83,6 +83,8 @@ Exports:
 - `NativeMessagingLocalServiceClientOptions`
 - `PairableLocalServiceOperation`
 - `PairingIntent`
+- `SignerDispatchRequest`
+- `SignerRequestDispatcher`
 - `appendLocalGrant`
 - `appendLocalGrantRevocation`
 - `approvePairingIntent`

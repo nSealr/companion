@@ -121,7 +121,7 @@ describe("browser extension background controller boundary", () => {
         },
         requested_operations: [
           "select_account_route",
-          "validate_signer_request"
+          "dispatch_signer_request"
         ]
       }
     });
@@ -183,7 +183,7 @@ describe("browser extension background controller boundary", () => {
             operation: "select_account_route"
           },
           {
-            operation: "validate_signer_request"
+            operation: "dispatch_signer_request"
           }
         ],
         requires_user_approval: true,

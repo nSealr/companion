@@ -33,6 +33,10 @@ public npm release.
   explicitly approved local client grant.
 - `@nsealr/client` method-specific local-service response binding so callers
   reject valid-but-wrong result types before trusting native messaging.
+- `@nsealr/client` local-service `dispatch_signer_request` boundary, which is
+  grant-gated, validates the request, selects the route, calls only an
+  explicitly injected dispatcher, verifies the signer response, and remains
+  deterministically unavailable when no dispatcher is configured.
 - `@nsealr/client` deterministic pairing-review projection for future local
   service approval UX.
 - `nsealr local review-pairing` for rendering deterministic pairing-review
@@ -50,6 +54,9 @@ public npm release.
   adapter over an explicit `sendNativeMessage` function and the shared native
   host name, with optional deterministic response timeouts and request
   cancellation.
+- `@nsealr/browser-provider` local-service backend routing for NIP-07
+  `signEvent` through the shared local-service dispatch operation instead of a
+  provider-local validate/select/unavailable path.
 - Private browser-extension native-messaging provider selector that binds a
   sanitized sender-derived client identity to the local-service provider path
   before browser packaging, content-script injection, or signer dispatch.

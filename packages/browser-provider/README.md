@@ -9,7 +9,8 @@ NIP-07 provider adapter for future nSealr browser-extension packaging.
 - Bind every call to explicit client identity.
 - Convert event templates into nSealr signer requests.
 - Provide a local-service backend adapter for authorized account-route
-  selection and deterministic signer-unavailable responses.
+  selection, signer-request dispatch, and deterministic signer-unavailable
+  responses when no signer route dispatcher is configured.
 - Provide a browser native-messaging local-service client adapter over an
   explicit `sendNativeMessage` function, shared native host name, and optional
   deterministic response timeout/request cancellation.
@@ -44,6 +45,7 @@ const service = createBrowserNativeMessagingLocalServiceClient({
             "request_pairing",
             "select_account_route",
             "validate_signer_request",
+            "dispatch_signer_request",
             "verify_signer_response"
           ],
           requires_pairing: true,
@@ -92,5 +94,5 @@ await assert.rejects(
 
 This package is not a browser extension by itself. It stores no browser-side
 production keys, implements no local signing, persists no grants, and does not
-implement NIP-04, NIP-44, relay sessions, signer dispatch, extension
+implement NIP-04, NIP-44, relay sessions, signer transport drivers, extension
 packaging, or native-host installation.

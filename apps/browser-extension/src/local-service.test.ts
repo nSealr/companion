@@ -53,15 +53,15 @@ function routeSelectionResponse(request: LocalServiceRequest): unknown {
   };
 }
 
-function validationResponse(request: LocalServiceRequest): unknown {
+function dispatchUnavailableResponse(request: LocalServiceRequest): unknown {
   return {
     version: 1,
     request_id: request.request_id,
-    ok: true,
-    result: {
-      validation: {
-        valid: true
-      }
+    ok: false,
+    error: {
+      code: "signer_route_unavailable",
+      message: "signer dispatch is not configured",
+      retryable: false
     }
   };
 }
@@ -114,12 +114,11 @@ describe("browser extension native-messaging local-service provider selector", (
     });
   });
 
-  it("keeps sign_event deterministic and unavailable until signer dispatch is implemented", async () => {
+  it("routes sign_event through local-service dispatch while signer dispatch is unavailable", async () => {
     const operations: string[] = [];
     const sendNativeMessage: BrowserNativeMessageSender = (_hostName, message) => {
       operations.push(message.operation);
-      if (message.operation === "validate_signer_request") return validationResponse(message);
-      if (message.operation === "select_account_route") return routeSelectionResponse(message);
+      if (message.operation === "dispatch_signer_request") return dispatchUnavailableResponse(message);
       throw new Error(`unexpected operation ${message.operation}`);
     };
 
@@ -149,7 +148,7 @@ describe("browser extension native-messaging local-service provider selector", (
       }
     });
 
-    expect(operations).toEqual(["validate_signer_request", "select_account_route"]);
+    expect(operations).toEqual(["dispatch_signer_request"]);
   });
 
   it("rejects invalid native host names before contacting browser native messaging", () => {

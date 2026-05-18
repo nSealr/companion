@@ -111,8 +111,8 @@ describe("browser extension native-messaging pairing boundary", () => {
           label: "Read selected account route"
         },
         {
-          operation: "validate_signer_request",
-          label: "Validate signer requests"
+          operation: "dispatch_signer_request",
+          label: "Dispatch signer requests"
         }
       ],
       requires_user_approval: true,

@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:c0e08c54b601802ccc1deb1f63a518ab46c24f6f20076f8dc908ba5f771c7125`
+API surface digest: `sha256:be1e8f1078830fcf71fa04c61dc06fb83d5bdc7f44b52891793187e4096dece3`
 
 Source: `docs/api.md`
 
@@ -35,9 +35,10 @@ The surface is intentionally small: `createNip07Provider`, the local-service
 backend adapter, the browser native-messaging local-service client adapter, and
 provider/backend types. It stores no browser-side key material and delegates
 signer access to an injected backend. The local-service adapter can read the
-selected account public key through authorized route selection and returns
-deterministic signer-unavailable responses until signer dispatch is explicitly
-implemented. The native-messaging adapter only wraps an explicit
+selected account public key through authorized route selection and routes
+`signEvent` through the local-service dispatch operation, which returns
+deterministic signer-unavailable responses until an explicit signer route
+dispatcher is configured. The native-messaging adapter only wraps an explicit
 `sendNativeMessage` function, validates the host name, and can bound silent or
 cancelled native exchanges with optional deterministic response timeout and
 `AbortSignal` handling; it does not install a native host or persist grants.
@@ -55,16 +56,18 @@ intent creation, deterministic pairing-review projection, manual pairing
 approval into a grant, strict pairing-approval artifact parsing, strict JSON
 grant-store serialization and output-only revocation appending for
 approved/revoked local client grants, secretless route selection,
-signer-request validation, and signer-response verification. Browser runtime
-code uses the reviewed `./browser` subpath, while identity-only callers may use
-the smaller `./client-identity` subpath. Request-id correlation,
+signer-request validation, grant-gated dispatch through an explicitly injected
+dispatcher, and signer-response verification. Browser runtime code uses the
+reviewed `./browser` subpath, while identity-only callers may use the smaller
+`./client-identity` subpath. Request-id correlation,
 native-message framing, and malformed-response rejection are public helpers.
 The shared native host name and native-host manifest builder remain exported
 from the Node-capable root so service manifest generation and packaging checks
 do not drift.
-Route selection returns metadata only; file-backed service loading, signer
-dispatch, cancellation, and native-host installation packaging remain future
-work and must not be implied by this package.
+Route selection returns metadata only; dispatch is unavailable by default and
+does not include real transport drivers. File-backed service loading, async
+signer transport wiring, cancellation, and native-host installation packaging
+remain future work and must not be implied by this package.
 
 ## @nsealr/core
 

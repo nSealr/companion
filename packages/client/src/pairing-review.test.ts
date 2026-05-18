@@ -23,7 +23,7 @@ function pairingIntent() {
     operation: "request_pairing",
     params: {
       client,
-      requested_operations: ["select_account_route", "validate_signer_request"]
+      requested_operations: ["select_account_route", "dispatch_signer_request"]
     }
   });
   if (response.ok !== true || !("pairing_intent" in response.result)) {
@@ -47,9 +47,9 @@ describe("local pairing review", () => {
           effect: "The client can read selected account public key and route metadata."
         },
         {
-          operation: "validate_signer_request",
-          label: "Validate signer requests",
-          effect: "The client can ask the service to validate signer-request payloads before signer transport."
+          operation: "dispatch_signer_request",
+          label: "Dispatch signer requests",
+          effect: "The client can ask the service to validate, route, dispatch, and verify signer requests through an approved signer route."
         }
       ],
       pairing_digest: intent.pairing_digest,

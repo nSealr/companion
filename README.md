@@ -60,12 +60,15 @@ match the shared `contract_id`.
   deterministic pairing-review projection, digest-bound manual approval into a
   grant, a strict secretless JSON grant-store contract for local
   approvals/revocations, secretless route selection, signer-request validation,
-  and signer-response verification. Route selection, validation, and
-  verification require an explicit client grant; unpaired, revoked, expired, or
-  operation-scoped clients are rejected before signer payload handling. The
-  high-level client also binds each operation to its expected result type, so a
-  native-messaging host cannot satisfy `request_pairing` with an unrelated
-  valid service result.
+  signer-response verification, and a signer-dispatch boundary that is
+  unavailable unless a host explicitly injects a dispatcher. Route selection,
+  validation, dispatch, and verification require an explicit client grant;
+  unpaired, revoked, expired, or operation-scoped clients are rejected before
+  signer payload handling. Dispatch validates the request, selects the route,
+  calls only the injected route dispatcher, and verifies the signer response
+  before returning it. The high-level client also binds each operation to its
+  expected result type, so a native-messaging host cannot satisfy
+  `request_pairing` with an unrelated valid service result.
 - `nsealr local review-pairing` renders deterministic local-service pairing
   review metadata from a pairing intent. It validates the digest-bound intent
   and does not approve clients or write grant stores.
@@ -82,10 +85,11 @@ match the shared `contract_id`.
   injected companion backend and explicit client identity. It validates
   `getPublicKey` and `signEvent` boundaries, converts event templates into
   nSealr signer requests, can use local-service route selection for the
-  selected account public key, includes a browser native-messaging client
-  adapter over explicit `sendNativeMessage` with optional deterministic
-  response timeouts and request cancellation, verifies signed responses, and
-  stores no browser-side production keys.
+  selected account public key, routes `signEvent` through local-service
+  dispatch, includes a browser native-messaging client adapter over explicit
+  `sendNativeMessage` with optional deterministic response timeouts and
+  request cancellation, verifies signed responses, and stores no browser-side
+  production keys.
 - `@nsealr/browser-extension` is a private app scaffold for extension-owned
   message parsing and provider-backed request handling. It currently accepts
   only internal `get_public_key` and `sign_event` requests, validates provider
@@ -272,19 +276,22 @@ match the shared `contract_id`.
   manifests, explicit entrypoints, deep-import audit, and test-only signer
   isolation are already in place.
 - Expand the local companion service boundary with pairing, origin/app
-  identity, cancellation, deterministic errors, and signer transport dispatch.
+  identity, cancellation, deterministic errors, and real signer transport
+  drivers behind the reviewed dispatch boundary.
   The pure package-level route selector, the local-service route-selection
   operation, the first SDK wrapper, a deterministic pairing-review projection,
   CLI pairing-review and digest-confirmed approval-artifact commands, a strict
   persistent grant-store contract, a multi-message native-messaging host loop,
-  validated native-host manifest generation, and explicit read-only service
-  context loading are in place. Full approval UI, reviewed storage handling,
+  validated native-host manifest generation, explicit read-only service context
+  loading, and grant-gated `dispatch_signer_request` operation are in place.
+  Full approval UI, reviewed storage handling, real signer transport drivers,
   and localhost APIs need separate threat-model and implementation passes.
 - Browser extension / NIP-07 bridge packaging around the provider adapter so
   `getPublicKey` and `signEvent` route through companion without storing
   production signing material. The package-level provider can already read the
-  selected public key through local-service route selection and returns
-  deterministic signer-unavailable errors until real dispatch is gated. The
+  selected public key through local-service route selection and route
+  `signEvent` through local-service dispatch, returning deterministic
+  signer-unavailable errors until a real dispatcher is configured. The
   private extension scaffold now also has the sender/page-origin identity
   boundary needed before content-script injection is considered.
 - Public npm SDK alpha after package APIs, docs, semver, provenance, and

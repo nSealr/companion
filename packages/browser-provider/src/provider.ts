@@ -34,7 +34,7 @@ export type BrowserProviderOptions = {
 };
 
 export type LocalServiceBrowserProviderBackendOptions = {
-  service: Pick<LocalServiceClient, "selectAccountRoute" | "validateSignerRequest">;
+  service: Pick<LocalServiceClient, "selectAccountRoute" | "dispatchSignerRequest">;
   routeRequest: Extract<LocalServiceRequest, { operation: "select_account_route" }>["params"]["route_request"];
   signingUnavailableMessage?: string;
 };
@@ -239,22 +239,23 @@ export function createLocalServiceBrowserProviderBackend(
     },
 
     async signEventRequest(request: SignEventRequest, client: LocalClientIdentity): Promise<unknown> {
-      const validationResponse = await options.service.validateSignerRequest(client, request);
-      if (validationResponse.ok !== true || !("validation" in validationResponse.result)) {
-        throw new Error(localServiceErrorMessage(validationResponse, "NIP-07 signer-request validation failed"));
+      const dispatchResponse = await options.service.dispatchSignerRequest(client, options.routeRequest, request);
+      if (dispatchResponse.ok === true && "signer_response" in dispatchResponse.result) {
+        return dispatchResponse.result.signer_response;
       }
-      if (!validationResponse.result.validation.valid) {
+      if (dispatchResponse.ok === false) {
+        const code = dispatchResponse.error.code === "signer_route_unavailable"
+          ? dispatchResponse.error.code
+          : "local_service_dispatch_failed";
         return localServiceProtocolError(
           request,
-          "invalid_signer_request",
-          validationResponse.result.validation.error ?? "signer request is invalid"
+          code,
+          dispatchResponse.error.code === "signer_route_unavailable"
+            ? unavailableMessage
+            : dispatchResponse.error.message
         );
       }
-      const routeResponse = await options.service.selectAccountRoute(client, options.routeRequest);
-      if (routeResponse.ok !== true || !("route_selection" in routeResponse.result)) {
-        throw new Error(localServiceErrorMessage(routeResponse, "NIP-07 route selection failed"));
-      }
-      return localServiceProtocolError(request, "signer_route_unavailable", unavailableMessage);
+      return localServiceProtocolError(request, "local_service_dispatch_failed", "local service dispatch returned an unexpected result");
     }
   };
 }

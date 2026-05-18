@@ -32,7 +32,7 @@ const grant: LocalClientGrant = {
   client_id: clientIdForIdentity(client),
   origin: client.origin,
   surface: client.surface,
-  allowed_operations: ["select_account_route", "validate_signer_request", "verify_signer_response"],
+  allowed_operations: ["select_account_route", "validate_signer_request", "dispatch_signer_request", "verify_signer_response"],
   expires_at: 2_000_000_000
 };
 
@@ -114,6 +114,15 @@ describe("local service client", () => {
         route_selection: routeVector.selection
       }
     });
+
+    await expect(service.dispatchSignerRequest(client, routeVector.request, request, "client-dispatch")).resolves.toMatchObject({
+      request_id: "client-dispatch",
+      ok: false,
+      error: {
+        code: "signer_route_unavailable",
+        message: "signer dispatch is not configured"
+      }
+    });
   });
 
   it("rejects malformed or mismatched service responses before callers trust them", async () => {
@@ -178,6 +187,17 @@ describe("local service client", () => {
         }
       }
     }, "expected-request")).toThrow(/repository does not match/u);
+    expect(() => validateLocalServiceResponse({
+      version: 1,
+      request_id: "expected-request",
+      ok: true,
+      result: {
+        signer_response: {
+          ...response,
+          request_id: "bad request id"
+        }
+      }
+    }, "expected-request")).toThrow(/signer response/u);
     expect(() => validateLocalServiceResponse({
       version: 1,
       request_id: "expected-request",
@@ -252,6 +272,9 @@ describe("local service client", () => {
     await expect(
       serviceResultForEveryOperation.selectAccountRoute(client, routeVector.request, "route-mismatch")
     ).rejects.toThrow(/select_account_route returned unexpected local service result/u);
+    await expect(
+      serviceResultForEveryOperation.dispatchSignerRequest(client, routeVector.request, request, "dispatch-mismatch")
+    ).rejects.toThrow(/dispatch_signer_request returned unexpected local service result/u);
 
     const pairingResultForStatus = new LocalServiceClient({
       exchange: (message) => handleLocalServiceRequest({

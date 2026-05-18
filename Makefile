@@ -1,5 +1,10 @@
 PNPM_VERSION := 10.33.4
-PNPM ?= $(shell command -v pnpm >/dev/null 2>&1 && printf '%s' pnpm || printf '%s' 'npm exec --yes --package=pnpm@$(PNPM_VERSION) -- pnpm')
+PNPM_GLOBAL_VERSION := $(shell command -v pnpm >/dev/null 2>&1 && pnpm --version 2>/dev/null || true)
+ifeq ($(PNPM_GLOBAL_VERSION),$(PNPM_VERSION))
+PNPM ?= pnpm
+else
+PNPM ?= npm exec --yes --package=pnpm@$(PNPM_VERSION) -- pnpm
+endif
 
 .PHONY: setup build test package-smoke examples-smoke readme-examples api-docs api-docs-update api-review browser-runtime-imports browser-runtime-bundle public-imports pack-smoke release-artifacts lint audit docs ci
 

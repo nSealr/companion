@@ -262,10 +262,13 @@ single-repository CI. Cross-repository drift remains guarded by
   thin wrapper around `@nsealr/client`, passes injected in-memory authorization
   context to the local service, loads explicit read-only secretless
   grant/account JSON files for local harnesses, rejects secret-bearing or
-  malformed account-store files, returns deterministic `signer_route_unavailable`
-  for authorized dispatch without a configured driver, awaits async dispatchers
-  through the async native-message helpers, and returns deterministic errors
-  for malformed native-message frames.
+  malformed account-store files, parses explicit secretless route-driver stores,
+  rejects empty, duplicate, broad, secret-bearing, non-USB, and QR-vault driver
+  mappings, dispatches matching developer serial-line requests only through an
+  injected opener or explicit route-driver file, returns deterministic
+  `signer_route_unavailable` for authorized dispatch without a configured
+  driver, awaits async dispatchers through the async native-message helpers, and
+  returns deterministic errors for malformed native-message frames.
 - Local service tests cover deterministic pairing intent creation, digest-bound
   pairing-review projection, manual approval into a grant, strict secretless
   JSON grant-store parsing, serialization, persistent revocation history,
@@ -442,7 +445,10 @@ single-repository CI. Cross-repository drift remains guarded by
   account route, malformed native-message rejection, shared
   Chromium/Firefox native-host manifest building in `@nsealr/client`,
   multi-message native-host stdio behavior, and the private service CLI
-  wrapper that renders those manifests without installing them.
+  wrapper that renders those manifests without installing them. Current service
+  route-driver tests cover the developer serial-line dispatch boundary through
+  fake ports only; hardware serial smoke remains a later gate before production
+  driver acceptance.
 - Browser extension provider tests over a fake companion for origin permission,
   revocation, cancel, malformed companion response, native-host disconnects,
   and no key material in extension storage. Current package tests cover the

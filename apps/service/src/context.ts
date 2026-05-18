@@ -5,6 +5,8 @@ import {
   type LocalServiceContext
 } from "@nsealr/client";
 import { parseAccountDescriptor, type AccountDescriptor } from "@nsealr/policy";
+import { type SerialLinePortOpener } from "@nsealr/transport";
+import { createServiceRouteDispatcher, parseServiceRouteDriverStore } from "./drivers.js";
 
 export const SERVICE_ACCOUNT_STORE_FORMAT = "nsealr-service-account-store-v0";
 export const MAX_SERVICE_ACCOUNT_STORE_JSON_BYTES = 64 * 1024;
@@ -20,6 +22,8 @@ export type ServiceAccountStore = {
 export type ServiceContextFileOptions = {
   grantStorePath?: string;
   accountStorePath?: string;
+  routeDriverStorePath?: string;
+  openSerialLinePort?: SerialLinePortOpener;
   now?: number;
 };
 
@@ -103,9 +107,22 @@ export function loadServiceContextFromFiles(options: ServiceContextFileOptions):
   const accountStore: ServiceAccountStore | undefined = options.accountStorePath === undefined
     ? undefined
     : parseServiceAccountStore(readJsonFile(options.accountStorePath, "service account store"));
+  const routeDriverStore = options.routeDriverStorePath === undefined
+    ? undefined
+    : parseServiceRouteDriverStore(readJsonFile(options.routeDriverStorePath, "service route driver store"));
+  if (routeDriverStore !== undefined && options.openSerialLinePort === undefined) {
+    throw new Error("service route driver store requires an explicit serial-line opener");
+  }
   return {
     ...(accountStore !== undefined ? { accounts: accountStore.accounts } : {}),
     ...(grantStore !== undefined ? { grants: grantStore.grants } : {}),
+    ...(routeDriverStore !== undefined && options.openSerialLinePort !== undefined
+      ? {
+          signerDispatcher: createServiceRouteDispatcher(routeDriverStore, {
+            openSerialLinePort: options.openSerialLinePort
+          })
+        }
+      : {}),
     ...(options.now !== undefined ? { now: options.now } : {})
   };
 }
@@ -123,6 +140,10 @@ export function contextArgsFromCliArgs(args: string[]): ServiceContextFileOption
     } else if (arg === "--account-store") {
       if (options.accountStorePath !== undefined) throw new Error("--account-store is duplicated");
       options.accountStorePath = takeOptionValue(normalizedArgs, index, arg);
+      index += 1;
+    } else if (arg === "--route-driver-store") {
+      if (options.routeDriverStorePath !== undefined) throw new Error("--route-driver-store is duplicated");
+      options.routeDriverStorePath = takeOptionValue(normalizedArgs, index, arg);
       index += 1;
     } else if (arg === "--now") {
       if (options.now !== undefined) throw new Error("--now is duplicated");

@@ -201,10 +201,19 @@ importers:
       '@nsealr/policy':
         specifier: workspace:*
         version: link:../../packages/policy
+      '@nsealr/transport':
+        specifier: workspace:*
+        version: link:../../packages/transport
+      serialport:
+        specifier: 13.0.0
+        version: 13.0.0
     devDependencies:
       '@nsealr/fixtures':
         specifier: workspace:*
         version: link:../../packages/fixtures
+      '@nsealr/framing':
+        specifier: workspace:*
+        version: link:../../packages/framing
       tsx:
         specifier: 4.21.0
         version: 4.21.0

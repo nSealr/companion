@@ -1,0 +1,136 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+import { resolveSpecsRoot } from "@nsealr/fixtures";
+import { encodeSerialFrame } from "@nsealr/framing";
+import {
+  SERVICE_ROUTE_DRIVER_STORE_FORMAT,
+  createServiceRouteDispatcher,
+  parseServiceRouteDriverStore
+} from "./drivers.js";
+
+const specsRoot = resolveSpecsRoot();
+const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
+const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
+
+function routeDriver(route: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    account_id: "acct-esp32-usb-slot-0",
+    route_type: "esp32_usb_nip46",
+    transport: "usb",
+    driver: "serial_line",
+    serial_line: {
+      path: "/dev/cu.usbmodem-test",
+      response_timeout_ms: 1000
+    },
+    ...route
+  };
+}
+
+function routeDriverStore(route: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    format: SERVICE_ROUTE_DRIVER_STORE_FORMAT,
+    updated_at: 1_900_000_000,
+    contains_secret_material: false,
+    routes: [routeDriver(route)]
+  };
+}
+
+describe("service route drivers", () => {
+  it("parses explicit secretless serial-line route driver stores", () => {
+    expect(parseServiceRouteDriverStore(routeDriverStore())).toEqual({
+      format: SERVICE_ROUTE_DRIVER_STORE_FORMAT,
+      updated_at: 1_900_000_000,
+      contains_secret_material: false,
+      routes: [{
+        account_id: "acct-esp32-usb-slot-0",
+        route_type: "esp32_usb_nip46",
+        transport: "usb",
+        driver: "serial_line",
+        serial_line: {
+          path: "/dev/cu.usbmodem-test",
+          response_timeout_ms: 1000
+        }
+      }]
+    });
+  });
+
+  it("rejects broad, secret-bearing, or QR route driver stores", () => {
+    expect(() => parseServiceRouteDriverStore({
+      ...routeDriverStore(),
+      routes: []
+    })).toThrow(/routes must be a non-empty array/u);
+    expect(() => parseServiceRouteDriverStore({
+      ...routeDriverStore(),
+      routes: [routeDriver(), routeDriver()]
+    })).toThrow(/duplicate account\/route\/transport/u);
+    expect(() => parseServiceRouteDriverStore(routeDriverStore({ account_id: "*" }))).toThrow(
+      /account_id must be a stable string id/u
+    );
+    expect(() => parseServiceRouteDriverStore(routeDriverStore({ account_id: undefined }))).toThrow(
+      /account_id must be a stable string id/u
+    );
+    expect(() => parseServiceRouteDriverStore(routeDriverStore({ route_type: "raspberry_qr_vault" }))).toThrow(
+      /route_type is unsupported for serial_line/u
+    );
+    expect(() => parseServiceRouteDriverStore(routeDriverStore({ transport: "qr" }))).toThrow(
+      /transport must be usb/u
+    );
+    expect(() => parseServiceRouteDriverStore({
+      ...routeDriverStore(),
+      contains_secret_material: true
+    })).toThrow(/must not contain secret material/u);
+    expect(() => parseServiceRouteDriverStore(routeDriverStore({
+      serial_line: {
+        path: "/dev/cu.usbmodem-test",
+        mnemonic: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+      }
+    }))).toThrow(/secret field routes\[0\]\.serial_line\.mnemonic/u);
+  });
+
+  it("dispatches matching requests through an injected serial-line opener", async () => {
+    const store = parseServiceRouteDriverStore(routeDriverStore());
+    const written: string[] = [];
+    const dispatcher = createServiceRouteDispatcher(store, {
+      openSerialLinePort: (path) => {
+        expect(path).toBe("/dev/cu.usbmodem-test");
+        return {
+          writeLine: async (line) => {
+            written.push(line);
+          },
+          readLine: async () => encodeSerialFrame({ type: "response", payload: response }),
+          close: async () => {
+            written.push("closed");
+          }
+        };
+      }
+    });
+
+    await expect(dispatcher({
+      client: {
+        surface: "native_host_test",
+        origin: "app:nsealr-service-test",
+        app_name: "nSealr service test"
+      },
+      route_selection: {
+        format: "nsealr-route-selection-v0",
+        account_id: "acct-esp32-usb-slot-0",
+        public_key: "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        route_type: "esp32_usb_nip46",
+        repository: "esp32",
+        transport: "usb",
+        custody: "device_persistent",
+        trusted_review: "device_display",
+        policy_support: "scoped_automation",
+        policy_profile_id: "policy-scoped-automation-daily-use",
+        physical_review: true,
+        physical_approval: true,
+        persistent_grants: true,
+        contains_secret_material: false
+      },
+      request
+    })).resolves.toEqual(response);
+    expect(written[0]).toMatch(/^nsealr1f:request:/u);
+    expect(written.at(-1)).toBe("closed");
+  });
+});

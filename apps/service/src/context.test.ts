@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveSpecsRoot } from "@nsealr/fixtures";
+import { encodeSerialFrame } from "@nsealr/framing";
 import {
   clientIdForIdentity,
   createLocalGrantStore,
@@ -12,20 +13,26 @@ import {
   type LocalClientGrant,
   type LocalClientIdentity
 } from "@nsealr/client";
-import { runServiceOnce } from "./index.js";
+import { runServiceOnce, runServiceOnceAsync } from "./index.js";
 import {
   SERVICE_ACCOUNT_STORE_FORMAT,
   contextArgsFromCliArgs,
   loadServiceContextFromFiles,
   parseServiceAccountStore
 } from "./context.js";
+import { SERVICE_ROUTE_DRIVER_STORE_FORMAT } from "./drivers.js";
 
 const specsRoot = resolveSpecsRoot();
 const account = JSON.parse(readFileSync(
   resolve(specsRoot, "vectors/accounts/raspberry-qr-nip06-account-0.json"),
   "utf8"
 ));
+const esp32Account = JSON.parse(readFileSync(
+  resolve(specsRoot, "vectors/accounts/esp32-usb-device-slot-0.json"),
+  "utf8"
+));
 const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
+const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
 const client: LocalClientIdentity = {
   surface: "browser_extension",
   origin: "extension:nsealr-context-test",
@@ -53,6 +60,24 @@ function accountStore(accounts = [account]): Record<string, unknown> {
   };
 }
 
+function routeDriverStore(): Record<string, unknown> {
+  return {
+    format: SERVICE_ROUTE_DRIVER_STORE_FORMAT,
+    updated_at: 1_900_000_000,
+    contains_secret_material: false,
+    routes: [{
+      account_id: "acct-esp32-usb-slot-0",
+      route_type: "esp32_usb_nip46",
+      transport: "usb",
+      driver: "serial_line",
+      serial_line: {
+        path: "/dev/cu.usbmodem-test",
+        response_timeout_ms: 1000
+      }
+    }]
+  };
+}
+
 function withTempFiles(files: Record<string, string>, fn: (paths: Record<string, string>) => void): void {
   const dir = mkdtempSync(join(tmpdir(), "nsealr-service-context-"));
   try {
@@ -62,6 +87,23 @@ function withTempFiles(files: Record<string, string>, fn: (paths: Record<string,
       writeFileSync(paths[name], contents);
     }
     fn(paths);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+async function withTempFilesAsync(
+  files: Record<string, string>,
+  fn: (paths: Record<string, string>) => Promise<void>
+): Promise<void> {
+  const dir = mkdtempSync(join(tmpdir(), "nsealr-service-context-"));
+  try {
+    const paths: Record<string, string> = {};
+    for (const [name, contents] of Object.entries(files)) {
+      paths[name] = join(dir, name);
+      writeFileSync(paths[name], contents);
+    }
+    await fn(paths);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -170,6 +212,62 @@ describe("service context loading", () => {
     });
   });
 
+  it("loads explicit route-driver files for async dispatch only when an opener is injected", async () => {
+    const written: string[] = [];
+    await withTempFilesAsync({
+      "grants.json": serializeLocalGrantStore(createLocalGrantStore([dispatchGrant], { updatedAt: 1_900_000_000 })),
+      "accounts.json": `${JSON.stringify(accountStore([esp32Account]), null, 2)}\n`,
+      "drivers.json": `${JSON.stringify(routeDriverStore(), null, 2)}\n`
+    }, async (paths) => {
+      expect(() => loadServiceContextFromFiles({
+        grantStorePath: paths["grants.json"],
+        accountStorePath: paths["accounts.json"],
+        routeDriverStorePath: paths["drivers.json"],
+        now: 1_900_000_000
+      })).toThrow(/requires an explicit serial-line opener/u);
+
+      const context = loadServiceContextFromFiles({
+        grantStorePath: paths["grants.json"],
+        accountStorePath: paths["accounts.json"],
+        routeDriverStorePath: paths["drivers.json"],
+        now: 1_900_000_000,
+        openSerialLinePort: (path) => {
+          expect(path).toBe("/dev/cu.usbmodem-test");
+          return {
+            writeLine: async (line) => {
+              written.push(line);
+            },
+            readLine: async () => encodeSerialFrame({ type: "response", payload: response })
+          };
+        }
+      });
+
+      const output = await runServiceOnceAsync(encodeNativeMessage({
+        version: 1,
+        request_id: "ctx-dispatch-serial",
+        operation: "dispatch_signer_request",
+        params: {
+          client,
+          route_request: {
+            account_id: "acct-esp32-usb-slot-0",
+            method: "sign_event",
+            route_type: "esp32_usb_nip46"
+          },
+          request
+        }
+      }), context);
+
+      expect(decodeNativeMessage(output)).toMatchObject({
+        request_id: "ctx-dispatch-serial",
+        ok: true,
+        result: {
+          signer_response: response
+        }
+      });
+    });
+    expect(written[0]).toMatch(/^nsealr1f:request:/u);
+  });
+
   it("rejects account stores that contain secret material", () => {
     expect(() => parseServiceAccountStore({
       ...accountStore(),
@@ -205,11 +303,14 @@ describe("service context loading", () => {
       "/tmp/grants.json",
       "--account-store",
       "/tmp/accounts.json",
+      "--route-driver-store",
+      "/tmp/drivers.json",
       "--now",
       "1900000000"
     ])).toEqual({
       grantStorePath: "/tmp/grants.json",
       accountStorePath: "/tmp/accounts.json",
+      routeDriverStorePath: "/tmp/drivers.json",
       now: 1_900_000_000
     });
 
@@ -221,6 +322,12 @@ describe("service context loading", () => {
       "--grant-store",
       "/tmp/two.json"
     ])).toThrow(/--grant-store is duplicated/u);
+    expect(() => contextArgsFromCliArgs([
+      "--route-driver-store",
+      "/tmp/one.json",
+      "--route-driver-store",
+      "/tmp/two.json"
+    ])).toThrow(/--route-driver-store is duplicated/u);
     expect(() => contextArgsFromCliArgs(["--unknown"])).toThrow(/unsupported service option/u);
   });
 });

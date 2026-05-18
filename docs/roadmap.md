@@ -228,6 +228,15 @@ dispatchers deterministically. The private service app now runs its CLI/native
 stdio loop through that async boundary, but still configures no signer driver
 from file-backed context and still stores no production secrets.
 
+Status note, 2026-05-18: the private `@nsealr/service` app can now load an
+explicit secretless route-driver store for exact account/route/USB serial-line
+dispatch. The store rejects secret fields, broad or duplicate route mappings,
+QR-vault routes, non-USB transports, empty route sets, and unsupported fields;
+it opens only the configured local serial path through the package-owned
+serial-line exchange boundary. This is developer/integration driver wiring
+only: it does not choose default paths, persist routes, approve clients, hold
+keys, make QR vaults connected signers, or claim production signer readiness.
+
 Status note, 2026-05-11: the companion identity/policy boundary now follows
 the official account model. Account metadata is per resulting public key and
 route; key sources such as mnemonics, passphrase namespaces, standalone
@@ -307,12 +316,12 @@ and uploads checked tarball artifacts without publishing to npm.
   exposes the reviewed `./browser` runtime subpath plus the minimal
   `./client-identity` identity-only subpath, so future browser extension, SDK,
   desktop, CLI, and native-host surfaces do not fork local-service or
-  origin/app binding rules. Private
-  service context loading can read explicit
-  grant/account JSON files for local harnesses only. Remaining work is full
-  approval UI, reviewed storage locations, cancellation, deterministic
-  transport errors, real signer transport driver wiring, and native-host
-  installation packaging.
+  origin/app binding rules. Private service context loading can read explicit
+  grant/account JSON files for local harnesses only, and it can now opt into an
+  explicit secretless account/route/USB serial-line driver store for developer
+  integration. Remaining work is full approval UI, reviewed storage locations,
+  cancellation, production transport-error taxonomy, production driver
+  acceptance, and native-host installation packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are

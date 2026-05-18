@@ -166,12 +166,14 @@ packages, but it must not export test-only signing as a production path.
   `packages/client`. It processes multiple length-prefixed service messages on
   one stdio session, accepts explicit in-memory authorization context in tests,
   can load explicit read-only secretless grant/account JSON context files for
-  developer and integration harnesses, returns deterministic native-frame
-  errors, and can print validated Chromium/Firefox native-host manifest JSON
-  through the shared `@nsealr/client` manifest builder.
+  developer and integration harnesses, can load explicit secretless route-driver
+  stores for exact account/route/USB serial-line developer dispatch, returns
+  deterministic native-frame errors, and can print validated Chromium/Firefox
+  native-host manifest JSON through the shared `@nsealr/client` manifest
+  builder.
   It is intentionally secretless and does not yet install manifest files, write
   grant/account storage, perform production grant persistence, open relays, or
-  include real signer transport drivers.
+  include default or production signer transport drivers.
 
 Each reusable package has its own `package.json`, source `src/index.ts`
 entrypoint, and built `dist` JS/declaration export. Cross-package source imports
@@ -263,9 +265,13 @@ JSON with explicit host path and extension id inputs through the shared
 parsing and stdout rendering for that contract. `@nsealr/client` also defines
 the persistent grant-store JSON contract used to serialize approved and revoked
 local client grants without secret material. The private service app can now
-load explicit read-only grant/account context files for local harnesses, but
-this still does not add manifest installation, default storage locations, file
-writes, signer dispatch, relay sessions, or browser packaging.
+load explicit read-only grant/account context files for local harnesses. It can
+also load an explicit secretless route-driver store for exact account/route/USB
+serial-line dispatch through the async local-service boundary. That driver store
+does not contain keys, does not approve clients, does not choose default paths,
+and does not make QR vaults connected signers. Manifest installation, default
+storage locations, file writes, relay sessions, browser packaging, and
+production driver acceptance remain separate gates.
 
 The browser-provider package is intentionally one layer above this service
 boundary. Each provider instance is bound to a client identity so the future

@@ -10,6 +10,7 @@ import {
   type LocalServiceContext,
   type LocalServiceResponse
 } from "@nsealr/client";
+import { SerialLineStreamPort, type SerialLinePort } from "@nsealr/transport";
 import { contextArgsFromCliArgs, loadServiceContextFromFiles } from "./context.js";
 import { nativeHostManifestJsonFromArgs } from "./manifest.js";
 
@@ -185,6 +186,21 @@ export async function runServiceStdioAsync(options: {
   }
 }
 
+async function openNodeSerialLinePort(path: string): Promise<SerialLinePort> {
+  const { SerialPort } = await import("serialport");
+  const serialPort = new SerialPort({ path, baudRate: 115_200, autoOpen: false });
+  await new Promise<void>((resolve, reject) => {
+    serialPort.open((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+  return new SerialLineStreamPort({ input: serialPort, output: serialPort });
+}
+
 export async function runServiceCli(args: string[]): Promise<void> {
   if (args.length === 0) {
     await runServiceStdioAsync();
@@ -197,7 +213,10 @@ export async function runServiceCli(args: string[]): Promise<void> {
       return;
     }
     await runServiceStdioAsync({
-      context: loadServiceContextFromFiles(contextArgsFromCliArgs(args))
+      context: loadServiceContextFromFiles({
+        ...contextArgsFromCliArgs(args),
+        openSerialLinePort: openNodeSerialLinePort
+      })
     });
   } catch (error) {
     writeSync(2, `${error instanceof Error ? error.message : String(error)}\n`);

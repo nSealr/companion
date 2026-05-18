@@ -618,7 +618,7 @@
     "custom_hardware_wallet": {
       "label": "Custom Nostr Hardware Wallet With Persistent Secret",
       "repository": "hardware",
-      "product_goal": "A research family for a purpose-built persistent-secret Nostr hardware wallet, including custom ESP32-S3 boards, secure-element-assisted prototypes, and firmware hardening.",
+      "product_goal": "A research family for a purpose-built persistent-secret Nostr hardware wallet, now centered on a USB-C bus-powered TROPIC01-assisted Rev A scaffold before any KiCad or production claim.",
       "features": {
         "request_validation_v0": {
           "target": "required",
@@ -654,7 +654,7 @@
           "target": "required",
           "current": "research",
           "contract_id": "nostr-sign-event-bip340-v0",
-          "notes": "Host MCU signing is the default research path unless secure-element direct BIP-340 is proven."
+          "notes": "Rev A keeps BIP-340 signing on the ESP32-S3 host MCU; direct TROPIC01 Schnorr remains future-gated until a public API, firmware release, or written vendor path is verified."
         },
         "qr_static_request": {
           "target": "optional",
@@ -713,7 +713,7 @@
           "target": "required",
           "current": "research",
           "contract_id": "persistent-secret-custody-v0",
-          "notes": "Research includes secure-element-assisted wrapping, PIN policy, anti-bruteforce, and device authenticity."
+          "notes": "Rev A researches TROPIC01 secure channel, TRNG, pairing lifecycle, MAC-and-Destroy PIN hardening, key wrapping/unlock material, and device authenticity."
         },
         "smartcard_apdu": {
           "target": "not_applicable",
@@ -729,7 +729,7 @@
           "target": "required",
           "current": "research",
           "contract_id": "firmware-boot-hardening-v0",
-          "notes": "Boot, flash, debug, provisioning, update, and recovery policy are core research gates."
+          "notes": "Boot, flash, debug lock, provisioning, update, recovery, and TROPIC01 power-cycle policy are core research gates before storing production secrets."
         },
         "response_verification": {
           "target": "required",

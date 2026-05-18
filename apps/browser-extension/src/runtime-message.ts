@@ -5,8 +5,13 @@ import {
 import { type BrowserExtensionResponse } from "./handler.js";
 import {
   browserExtensionErrorResponse,
-  isBrowserExtensionRequestId
+  isBrowserExtensionRequestId,
+  parseBrowserExtensionRequest
 } from "./messages.js";
+import {
+  type BrowserExtensionPendingRequestLifecycle,
+  type BrowserExtensionPendingRequestState
+} from "./pending-request.js";
 import {
   browserExtensionClientContextFromSender,
   type BrowserExtensionSenderInput
@@ -26,6 +31,8 @@ export type BrowserExtensionRuntimeSenderOptions = {
 export type BrowserExtensionRuntimeMessageOptions = BrowserExtensionRuntimeSenderOptions & {
   controller: Pick<BrowserExtensionBackgroundController, "handleRequest">;
   nativeMessageAbortSignal?: AbortSignal;
+  pendingRequests?: BrowserExtensionPendingRequestLifecycle;
+  onPendingRequestError?: (error: unknown) => void;
 };
 
 export type BrowserExtensionRuntimeMessageResponder = (response: BrowserExtensionResponse) => void;
@@ -125,7 +132,21 @@ export async function handleBrowserExtensionRuntimeMessage(
       ? { nativeMessageAbortSignal: options.nativeMessageAbortSignal }
       : {})
   };
-  return options.controller.handleRequest(value, sender, requestOptions);
+  const pending = startPendingRequest(value, sender, options);
+  try {
+    const response = await options.controller.handleRequest(value, sender, requestOptions);
+    settlePendingRequest(pending, response, options);
+    return response;
+  } catch (error) {
+    if (pending !== undefined && options.pendingRequests !== undefined) {
+      try {
+        options.pendingRequests.settle(pending, "rejected");
+      } catch (pendingError) {
+        reportRuntimeListenerError(pendingError, options.onPendingRequestError);
+      }
+    }
+    throw error;
+  }
 }
 
 function runtimeMessageHandlerOptions(
@@ -137,7 +158,9 @@ function runtimeMessageHandlerOptions(
     ...(options.appName !== undefined ? { appName: options.appName } : {}),
     ...(options.nativeMessageAbortSignal !== undefined
       ? { nativeMessageAbortSignal: options.nativeMessageAbortSignal }
-      : {})
+      : {}),
+    ...(options.pendingRequests !== undefined ? { pendingRequests: options.pendingRequests } : {}),
+    ...(options.onError !== undefined ? { onPendingRequestError: options.onError } : {})
   };
 }
 
@@ -147,6 +170,33 @@ function reportRuntimeListenerError(error: unknown, onError: ((error: unknown) =
     onError(error);
   } catch {
     // Listener diagnostics must not create unhandled browser promise failures.
+  }
+}
+
+function startPendingRequest(
+  value: unknown,
+  sender: BrowserExtensionSenderInput,
+  options: BrowserExtensionRuntimeMessageOptions
+): BrowserExtensionPendingRequestState | undefined {
+  if (options.pendingRequests === undefined) return undefined;
+  try {
+    return options.pendingRequests.start(parseBrowserExtensionRequest(value), sender);
+  } catch (error) {
+    reportRuntimeListenerError(error, options.onPendingRequestError);
+    return undefined;
+  }
+}
+
+function settlePendingRequest(
+  pending: BrowserExtensionPendingRequestState | undefined,
+  response: BrowserExtensionResponse,
+  options: BrowserExtensionRuntimeMessageOptions
+): void {
+  if (pending === undefined || options.pendingRequests === undefined) return;
+  try {
+    options.pendingRequests.settle(pending, response.ok ? "resolved" : "rejected");
+  } catch (error) {
+    reportRuntimeListenerError(error, options.onPendingRequestError);
   }
 }
 

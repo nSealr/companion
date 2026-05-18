@@ -10,6 +10,7 @@ import {
   type BrowserExtensionRuntimeMessageListener,
   type BrowserExtensionRuntimeMessageResponder
 } from "./runtime-message.js";
+import { createBrowserExtensionPendingRequestLifecycle } from "./pending-request.js";
 
 const publicKey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
 const routeRequest = {
@@ -155,6 +156,69 @@ describe("browser extension runtime message boundary", () => {
     });
   });
 
+  it("emits secretless pending request state around accepted runtime messages", async () => {
+    const nativeRequests: LocalServiceRequest[] = [];
+    const states: unknown[] = [];
+    const timestamps = [1_900_000_000, 1_900_000_001];
+    const controller = createBrowserExtensionBackgroundController({
+      sendNativeMessage: nativeResponder(nativeRequests),
+      routeRequest,
+      nextServiceRequestId: () => "runtime-pending-route"
+    });
+    const pendingRequests = createBrowserExtensionPendingRequestLifecycle({
+      now: () => timestamps.shift() ?? 1_900_000_001,
+      onState: (state) => {
+        states.push(state);
+      }
+    });
+
+    await expect(handleBrowserExtensionRuntimeMessage(
+      getPublicKeyRequest("runtime-pending-get-public-key"),
+      {
+        id: "extension@nsealr.dev",
+        origin: "https://example.com",
+        url: "https://example.com/app"
+      },
+      {
+        controller,
+        pendingRequests
+      }
+    )).resolves.toMatchObject({
+      request_id: "runtime-pending-get-public-key",
+      ok: true
+    });
+
+    expect(states).toEqual([
+      {
+        format: "nsealr-browser-extension-pending-request-state-v0",
+        request_id: "runtime-pending-get-public-key",
+        method: "get_public_key",
+        extension_id: "extension@nsealr.dev",
+        page_origin: "https://example.com",
+        app_name: "nSealr Browser Extension",
+        status: "pending",
+        started_at: 1_900_000_000,
+        updated_at: 1_900_000_000,
+        stores_production_secrets: false,
+        includes_event_template: false
+      },
+      {
+        format: "nsealr-browser-extension-pending-request-state-v0",
+        request_id: "runtime-pending-get-public-key",
+        method: "get_public_key",
+        extension_id: "extension@nsealr.dev",
+        page_origin: "https://example.com",
+        app_name: "nSealr Browser Extension",
+        status: "resolved",
+        started_at: 1_900_000_000,
+        updated_at: 1_900_000_001,
+        stores_production_secrets: false,
+        includes_event_template: false
+      }
+    ]);
+    expect(pendingRequests.active()).toEqual([]);
+  });
+
   it("returns deterministic invalid_sender responses before native messaging", async () => {
     let called = false;
     const controller = createBrowserExtensionBackgroundController({
@@ -215,15 +279,82 @@ describe("browser extension runtime message boundary", () => {
     expect(called).toBe(false);
   });
 
+  it("does not emit pending request state for invalid requests or invalid senders", async () => {
+    const states: unknown[] = [];
+    const controller = createBrowserExtensionBackgroundController({
+      routeRequest,
+      sendNativeMessage: () => {
+        throw new Error("invalid runtime input must not contact native messaging");
+      }
+    });
+    const pendingRequests = createBrowserExtensionPendingRequestLifecycle({
+      onState: (state) => {
+        states.push(state);
+      }
+    });
+
+    await expect(handleBrowserExtensionRuntimeMessage(
+      {
+        protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+        version: 1,
+        request_id: "runtime-pending-invalid-request",
+        method: "get_public_key",
+        params: {}
+      },
+      {
+        id: "extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      {
+        controller,
+        pendingRequests
+      }
+    )).resolves.toMatchObject({
+      request_id: "runtime-pending-invalid-request",
+      ok: false,
+      error: {
+        code: "invalid_request"
+      }
+    });
+    await expect(handleBrowserExtensionRuntimeMessage(
+      getPublicKeyRequest("runtime-pending-invalid-sender"),
+      {
+        id: "other-extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      {
+        controller,
+        extensionId: "extension@nsealr.dev",
+        pendingRequests
+      }
+    )).resolves.toMatchObject({
+      request_id: "runtime-pending-invalid-sender",
+      ok: false,
+      error: {
+        code: "invalid_sender"
+      }
+    });
+
+    expect(states).toEqual([]);
+    expect(pendingRequests.active()).toEqual([]);
+  });
+
   it("forwards request-scoped cancellation to the background controller", async () => {
     const abortController = new AbortController();
     abortController.abort();
     let called = false;
+    const states: unknown[] = [];
     const controller = createBrowserExtensionBackgroundController({
       routeRequest,
       sendNativeMessage: () => {
         called = true;
         return {};
+      }
+    });
+    const pendingRequests = createBrowserExtensionPendingRequestLifecycle({
+      now: () => 1_900_000_010 + states.length,
+      onState: (state) => {
+        states.push(state);
       }
     });
 
@@ -235,7 +366,8 @@ describe("browser extension runtime message boundary", () => {
       },
       {
         controller,
-        nativeMessageAbortSignal: abortController.signal
+        nativeMessageAbortSignal: abortController.signal,
+        pendingRequests
       }
     )).resolves.toEqual({
       protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
@@ -249,6 +381,19 @@ describe("browser extension runtime message boundary", () => {
       }
     });
     expect(called).toBe(false);
+    expect(states).toMatchObject([
+      {
+        request_id: "runtime-cancelled",
+        status: "pending",
+        includes_event_template: false
+      },
+      {
+        request_id: "runtime-cancelled",
+        status: "rejected",
+        includes_event_template: false
+      }
+    ]);
+    expect(pendingRequests.active()).toEqual([]);
   });
 
   it("installs an injected runtime message listener and sends accepted responses", async () => {

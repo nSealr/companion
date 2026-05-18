@@ -396,7 +396,11 @@ and uploads checked tarball artifacts without publishing to npm.
   signals to the background controller; an injected runtime `onMessage`
   listener installer can register that adapter on an explicit target with
   asynchronous `sendResponse` handling and explicit teardown, still without
-  calling global browser APIs. A pure page-provider boundary now maps NIP-07
+  calling global browser APIs. The runtime-message boundary can also emit
+  secretless `nsealr-browser-extension-pending-request-state-v0` snapshots
+  through an injected lifecycle, giving future UI a pending/resolved/rejected
+  request source without exposing event templates, keys, grants, storage
+  writes, or signer dispatch. A pure page-provider boundary now maps NIP-07
   `getPublicKey` and `signEvent` calls to validated background requests,
   verifies signed responses, forwards cancellation signals, and installs on an
   explicit target without overwriting an existing provider. A pure page-bridge

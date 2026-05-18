@@ -129,7 +129,11 @@ single-repository CI. Cross-repository drift remains guarded by
   listener installer returns `true` for asynchronous response delivery, sends
   responses only through the injected responder, reports responder failures
   through an injected error callback, and removes the listener through
-  `dispose()`. Page-provider tests prove
+  `dispose()`. Pending-request tests prove the injected
+  `nsealr-browser-extension-pending-request-state-v0` lifecycle emits
+  secretless pending/resolved/rejected request state, cleans up active
+  requests, and never exposes event templates, key material, extension storage,
+  grants, or signer dispatch. Page-provider tests prove
   NIP-07 `getPublicKey` and `signEvent`
   calls become validated background requests, unsafe templates fail before the
   background boundary, malformed responses are rejected, and cancellation is

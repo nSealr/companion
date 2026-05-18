@@ -276,16 +276,18 @@ match the shared `contract_id`.
   manifests, explicit entrypoints, deep-import audit, and test-only signer
   isolation are already in place.
 - Expand the local companion service boundary with pairing, origin/app
-  identity, cancellation, deterministic errors, and real signer transport
-  drivers behind the reviewed dispatch boundary.
+  identity, deterministic request cancellation/timeout bounds, deterministic
+  errors, and real signer transport drivers behind the reviewed dispatch
+  boundary.
   The pure package-level route selector, the local-service route-selection
   operation, the first SDK wrapper, a deterministic pairing-review projection,
   CLI pairing-review and digest-confirmed approval-artifact commands, a strict
   persistent grant-store contract, a multi-message native-messaging host loop,
   validated native-host manifest generation, explicit read-only service context
   loading, and grant-gated `dispatch_signer_request` operation are in place.
-  Full approval UI, reviewed storage handling, real signer transport drivers,
-  and localhost APIs need separate threat-model and implementation passes.
+  Full approval UI, reviewed storage handling, production signer transport
+  drivers, and localhost APIs need separate threat-model and implementation
+  passes.
 - Browser extension / NIP-07 bridge packaging around the provider adapter so
   `getPublicKey` and `signEvent` route through companion without storing
   production signing material. The package-level provider can already read the

@@ -438,9 +438,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - Package release workflow tests should eventually add trusted-publishing dry
   run or npm provenance verification once npm organization settings exist.
 - Local companion service tests with a fake extension/app client: user approval
-  UX, reviewed storage locations, cancellation, deterministic transport errors,
-  signer dispatch, and built-package consumer tests after explicit policy gates
-  exist. The current test suite already covers pairing intent generation,
+  UX, reviewed storage locations, deterministic transport errors, signer
+  dispatch, and additional built-package consumer tests after explicit policy
+  gates exist. The current test suite already covers pairing intent generation,
   deterministic pairing-review projection, strict grant-store
   serialization/revocation, explicit read-only context loading, selected
   account route, malformed native-message rejection, shared

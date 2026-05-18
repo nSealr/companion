@@ -320,8 +320,8 @@ and uploads checked tarball artifacts without publishing to npm.
   grant/account JSON files for local harnesses only, and it can now opt into an
   explicit secretless account/route/USB serial-line driver store for developer
   integration. Remaining work is full approval UI, reviewed storage locations,
-  cancellation, production transport-error taxonomy, production driver
-  acceptance, and native-host installation packaging.
+  production transport-error taxonomy, production driver acceptance, and
+  native-host installation packaging.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are
@@ -438,9 +438,9 @@ and uploads checked tarball artifacts without publishing to npm.
   wildcard hosts, non-local `http`, duplicate matches, host-permission fields,
   and storage. Remaining work: reviewed bootstrap/config UX beyond the static
   developer route config, native-messaging installation, browser UI/storage
-  wiring for origin permission approvals, cancellation UI wiring, and real
-  dispatch after M4.7 gates. No local production signing and no extension-side
-  production key storage.
+  wiring for origin permission approvals, user-visible cancel controls, and
+  real dispatch after M4.7 gates. No local production signing and no
+  extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the
   public `@nsealr/*` entrypoints through workspace package names after building

@@ -351,9 +351,9 @@
         },
         "nip19_nsec_session_import": {
           "target": "required",
-          "current": "planned",
+          "current": "partial",
           "contract_id": "nip19-nsec-session-import-v0",
-          "notes": "The final ESP32 QR vault must match Raspberry NIP-19 nsec RAM-only import behavior once camera and seed-entry UX exist."
+          "notes": "Host-core decodes canonical NIP-19 nsec payloads against the shared vector. Camera QR input, session keyring wiring, local import review, response QR output, and signing remain pending."
         },
         "manual_only_policy": {
           "target": "required",

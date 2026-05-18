@@ -339,9 +339,9 @@
         },
         "stateless_session_custody": {
           "target": "required",
-          "current": "planned",
+          "current": "partial",
           "contract_id": "stateless-session-custody-v0",
-          "notes": "The QR vault target must keep the signing secret in RAM for the session only."
+          "notes": "Host-core now has a bounded RAM-only session keyring model for already parsed nsec and SeedQR key sources. Camera/import UX, device lifecycle wipe tests, hardware reset behavior, local import review, NIP-06 derivation wiring, response QR output, and real signing remain pending."
         },
         "seedqr_session_import": {
           "target": "required",

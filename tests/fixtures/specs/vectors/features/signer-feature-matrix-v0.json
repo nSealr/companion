@@ -23,6 +23,8 @@
           "qr_animated_request",
           "qr_response",
           "stateless_session_custody",
+          "seedqr_session_import",
+          "nip19_nsec_session_import",
           "manual_only_policy",
           "device_display_review",
           "response_verification"
@@ -80,6 +82,16 @@
       "id": "stateless_session_custody",
       "contract_id": "stateless-session-custody-v0",
       "behavior": "Secret material exists only in RAM for the current signing session and is not persisted by the device."
+    },
+    {
+      "id": "seedqr_session_import",
+      "contract_id": "seedsigner-seedqr-session-import-v0",
+      "behavior": "QR vaults import SeedSigner Standard SeedQR or CompactSeedQR BIP-39 seed material into the RAM-only session keyring for NIP-06 Nostr derivation, without Bitcoin descriptors, xpubs, PSBTs, wallet policy, or persistent storage."
+    },
+    {
+      "id": "nip19_nsec_session_import",
+      "contract_id": "nip19-nsec-session-import-v0",
+      "behavior": "QR vaults import canonical NIP-19 nsec private keys into the RAM-only session keyring for direct migration or recovery, without persistent key slots, policy records, mnemonics, or NIP-49 backup semantics."
     },
     {
       "id": "manual_only_policy",
@@ -197,6 +209,18 @@
           "current": "partial",
           "contract_id": "stateless-session-custody-v0",
           "notes": "The product goal is RAM-only custody; real hardware wipe and lifecycle tests remain pending."
+        },
+        "seedqr_session_import": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "seedsigner-seedqr-session-import-v0",
+          "notes": "Standard SeedQR and CompactSeedQR are implemented through shared vectors for RAM-only NIP-06 session loading."
+        },
+        "nip19_nsec_session_import": {
+          "target": "required",
+          "current": "implemented",
+          "contract_id": "nip19-nsec-session-import-v0",
+          "notes": "NIP-19 nsec import is implemented through the shared vector for direct RAM-only session loading."
         },
         "manual_only_policy": {
           "target": "required",
@@ -319,6 +343,18 @@
           "contract_id": "stateless-session-custody-v0",
           "notes": "The QR vault target must keep the signing secret in RAM for the session only."
         },
+        "seedqr_session_import": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "seedsigner-seedqr-session-import-v0",
+          "notes": "The final ESP32 QR vault must match Raspberry SeedQR/CompactSeedQR RAM-only import behavior once camera and seed-entry UX exist."
+        },
+        "nip19_nsec_session_import": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "nip19-nsec-session-import-v0",
+          "notes": "The final ESP32 QR vault must match Raspberry NIP-19 nsec RAM-only import behavior once camera and seed-entry UX exist."
+        },
         "manual_only_policy": {
           "target": "required",
           "current": "implemented",
@@ -435,6 +471,16 @@
           "target": "forbidden",
           "current": "forbidden",
           "notes": "The USB signer is a persistent-secret device family, not a stateless QR vault."
+        },
+        "seedqr_session_import": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "SeedQR RAM-only session import belongs to stateless QR vault lines, not the persistent USB signer."
+        },
+        "nip19_nsec_session_import": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "NIP-19 nsec RAM-only session import belongs to stateless QR vault lines, not the persistent USB signer."
         },
         "manual_only_policy": {
           "target": "optional",
@@ -555,6 +601,16 @@
           "target": "forbidden",
           "current": "forbidden",
           "notes": "The smartcard line is persistent custody, not a RAM-only vault."
+        },
+        "seedqr_session_import": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "SeedQR RAM-only session import belongs to stateless QR vault lines, not display-less smartcard custody."
+        },
+        "nip19_nsec_session_import": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "NIP-19 nsec RAM-only session import belongs to stateless QR vault lines, not display-less smartcard custody."
         },
         "manual_only_policy": {
           "target": "optional",
@@ -678,6 +734,16 @@
           "target": "forbidden",
           "current": "forbidden",
           "notes": "This family is explicitly persistent-secret hardware, not a stateless vault."
+        },
+        "seedqr_session_import": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "SeedQR RAM-only session import belongs to stateless QR vault lines; persistent import belongs under persistent-secret custody design."
+        },
+        "nip19_nsec_session_import": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "NIP-19 nsec RAM-only session import belongs to stateless QR vault lines; persistent import belongs under persistent-secret custody design."
         },
         "manual_only_policy": {
           "target": "optional",

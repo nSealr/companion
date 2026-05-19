@@ -149,7 +149,7 @@ describe("browser extension popup origin permission view", () => {
             injects_provider: false
           };
         },
-        approveOriginPermission(reviewedLocalPairingDigest: string) {
+        approveOriginPermission(_originReview, reviewedLocalPairingDigest: string) {
           reviewedDigests.push(reviewedLocalPairingDigest);
           return approveBrowserExtensionOriginPermissionReview(sourceReview, {
             reviewedLocalPairingDigest,

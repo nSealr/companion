@@ -7,6 +7,11 @@ import { handleLocalServiceRequest, type LocalServiceRequest } from "@nsealr/cli
 import { type BrowserNativeMessageSender } from "@nsealr/browser-provider";
 import { approveBrowserExtensionOriginPermissionReview } from "./pairing.js";
 import { createBrowserExtensionOriginPermissionStore } from "./origin-permission-store.js";
+import {
+  BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY,
+  readBrowserExtensionOriginPermissionStoreFromStorage,
+  type BrowserExtensionOriginPermissionStorageArea
+} from "./origin-permission-storage.js";
 
 const publicKey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
 const routeRequest = {
@@ -19,6 +24,26 @@ const sender = {
   page_url: "https://example.com/app"
 };
 const localPairingDigest = "f".repeat(64);
+
+class FakeOriginPermissionStorage implements BrowserExtensionOriginPermissionStorageArea {
+  readonly setCalls: unknown[] = [];
+  private stored: Record<string, unknown> = {};
+
+  get(key: typeof BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY): unknown {
+    if (!(key in this.stored)) return {};
+    return {
+      [key]: this.stored[key]
+    };
+  }
+
+  set(items: {
+    [BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY]: unknown;
+  }): void {
+    this.setCalls.push(items);
+    this.stored[BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY] =
+      items[BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY];
+  }
+}
 
 function routeSelectionResponse(request: LocalServiceRequest): unknown {
   return {
@@ -334,6 +359,68 @@ describe("browser extension background controller boundary", () => {
       }
     });
     expect(requests.map((request) => request.operation)).toEqual(["request_pairing"]);
+  });
+
+  it("approves origin permission reviews into injected storage without native messaging", async () => {
+    const requests: LocalServiceRequest[] = [];
+    const storage = new FakeOriginPermissionStorage();
+    const controller = createBrowserExtensionBackgroundController({
+      sendNativeMessage: nativeResponder(requests),
+      routeRequest,
+      originPermissionStorage: storage,
+      originPermissionApprovalNow: () => 1_900_000_090,
+      originPermissionStorageEmptyUpdatedAt: 1_900_000_080
+    });
+    const review = {
+      format: "nsealr-browser-origin-permission-review-v0",
+      origin: "https://example.com",
+      app_name: "nSealr Browser Extension",
+      extension_id: "extension@nsealr.dev",
+      requested_methods: [
+        {
+          method: "get_public_key",
+          label: "Read public key",
+          effect: "The page can read the selected account public key through the browser provider."
+        }
+      ],
+      local_pairing_digest: localPairingDigest,
+      requires_user_approval: true,
+      stores_production_secrets: false,
+      creates_grants: false,
+      injects_provider: false
+    } as const;
+
+    await expect(controller.approveOriginPermission(
+      review,
+      localPairingDigest
+    )).resolves.toMatchObject({
+      approval: {
+        origin: "https://example.com",
+        approved_methods: ["get_public_key"],
+        approved_at: 1_900_000_090,
+        creates_grants: false,
+        stores_production_secrets: false,
+        contains_secret_material: false
+      },
+      storageWrite: {
+        updated_at: 1_900_000_090,
+        approval_count: 1,
+        writes_extension_storage: true,
+        dispatches_signers: false
+      }
+    });
+    expect(requests).toEqual([]);
+    expect(storage.setCalls).toHaveLength(1);
+    await expect(readBrowserExtensionOriginPermissionStoreFromStorage(storage)).resolves.toMatchObject({
+      approvals: [
+        {
+          origin: "https://example.com",
+          local_pairing_digest: localPairingDigest
+        }
+      ],
+      writes_extension_storage: false,
+      stores_production_secrets: false
+    });
   });
 
   it("keeps silent native messaging deterministic without approving grants", async () => {

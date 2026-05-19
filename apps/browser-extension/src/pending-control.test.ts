@@ -11,6 +11,53 @@ import {
   BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
   createBrowserExtensionPendingRequestLifecycle
 } from "./pending-request.js";
+import {
+  approveBrowserExtensionOriginPermissionReview,
+  type BrowserExtensionOriginPermissionReview
+} from "./pairing.js";
+import {
+  BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY,
+  BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_WRITE_FORMAT
+} from "./origin-permission-storage.js";
+
+const originReview: BrowserExtensionOriginPermissionReview = {
+  format: "nsealr-browser-origin-permission-review-v0",
+  origin: "https://example.com",
+  app_name: "nSealr Browser Extension",
+  extension_id: "extension@nsealr.dev",
+  requested_methods: [
+    {
+      method: "get_public_key",
+      label: "Read public key",
+      effect: "The page can read the selected account public key through the browser provider."
+    }
+  ],
+  local_pairing_digest: "b".repeat(64),
+  requires_user_approval: true,
+  stores_production_secrets: false,
+  creates_grants: false,
+  injects_provider: false
+};
+
+const originApproval = approveBrowserExtensionOriginPermissionReview(originReview, {
+  reviewedLocalPairingDigest: originReview.local_pairing_digest,
+  approvedAt: 1_900_000_060
+});
+
+const storageWrite = {
+  format: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_WRITE_FORMAT,
+  storage_key: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY,
+  store_format: "nsealr-browser-origin-permission-store-v0",
+  updated_at: 1_900_000_061,
+  approval_count: 1,
+  requires_user_approval: true,
+  reads_extension_storage: true,
+  writes_extension_storage: true,
+  creates_grants: false,
+  dispatches_signers: false,
+  stores_production_secrets: false,
+  contains_secret_material: false
+} as const;
 
 function cancelRequest(requestId: string, pendingRequestId: string): unknown {
   return {
@@ -48,6 +95,19 @@ function originPermissionReviewRequest(requestId: string): unknown {
   };
 }
 
+function approveOriginPermissionRequest(requestId: string): unknown {
+  return {
+    protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+    version: 1,
+    request_id: requestId,
+    method: "approve_origin_permission",
+    params: {
+      origin_review: originReview,
+      reviewed_local_pairing_digest: originReview.local_pairing_digest
+    }
+  };
+}
+
 describe("browser extension pending request control boundary", () => {
   it("parses only the internal pending request control shapes", () => {
     expect(parseBrowserExtensionControlRequest(cancelRequest(
@@ -81,6 +141,16 @@ describe("browser extension pending request control boundary", () => {
         }
       }
     });
+    expect(parseBrowserExtensionControlRequest(approveOriginPermissionRequest("control-origin-approve-1"))).toEqual({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-origin-approve-1",
+      method: "approve_origin_permission",
+      params: {
+        origin_review: originReview,
+        reviewed_local_pairing_digest: originReview.local_pairing_digest
+      }
+    });
 
     expect(() => parseBrowserExtensionControlRequest({
       protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
@@ -108,6 +178,17 @@ describe("browser extension pending request control boundary", () => {
       method: "list_pending_requests",
       params: {}
     })).toThrow(/must not include params/u);
+    expect(() => parseBrowserExtensionControlRequest({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-origin-approve-extra",
+      method: "approve_origin_permission",
+      params: {
+        origin_review: originReview,
+        reviewed_local_pairing_digest: originReview.local_pairing_digest,
+        approved_at: 1_900_000_060
+      }
+    })).toThrow(/unsupported fields/u);
   });
 
   it("lists active pending requests without exposing hidden request payloads", async () => {
@@ -220,10 +301,27 @@ describe("browser extension pending request control boundary", () => {
         injects_provider: false
       }
     };
+    const originPermissionApprovalResponse = {
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-origin-approval-parse",
+      ok: true,
+      result: {
+        approval: originApproval,
+        storage_write: storageWrite,
+        requires_user_approval: true,
+        writes_extension_storage: true,
+        creates_grants: false,
+        dispatches_signers: false,
+        stores_production_secrets: false,
+        contains_secret_material: false
+      }
+    };
 
     expect(parseBrowserExtensionControlResponse(listResponse)).toEqual(listResponse);
     expect(parseBrowserExtensionControlResponse(cancelResponse)).toEqual(cancelResponse);
     expect(parseBrowserExtensionControlResponse(originPermissionReviewResponse)).toEqual(originPermissionReviewResponse);
+    expect(parseBrowserExtensionControlResponse(originPermissionApprovalResponse)).toEqual(originPermissionApprovalResponse);
     expect(parseBrowserExtensionControlResponse({
       protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
       version: 1,
@@ -278,6 +376,16 @@ describe("browser extension pending request control boundary", () => {
         creates_grants: true
       }
     })).toThrow(/non-authorizing/u);
+    expect(() => parseBrowserExtensionControlResponse({
+      ...originPermissionApprovalResponse,
+      result: {
+        ...originPermissionApprovalResponse.result,
+        storage_write: {
+          ...storageWrite,
+          dispatches_signers: true
+        }
+      }
+    })).toThrow(/unsafe effects/u);
   });
 
   it("cancels active pending requests only from extension-internal senders", async () => {
@@ -416,6 +524,104 @@ describe("browser extension pending request control boundary", () => {
       }
     )).resolves.toMatchObject({
       request_id: "control-origin-review-page-sender",
+      ok: false,
+      error: {
+        code: "invalid_sender"
+      }
+    });
+  });
+
+  it("approves origin permissions only from extension-internal senders", async () => {
+    const approvals: unknown[] = [];
+
+    await expect(handleBrowserExtensionControlMessage(
+      approveOriginPermissionRequest("control-origin-approve"),
+      {
+        id: "extension@nsealr.dev",
+        url: "chrome-extension://extension-id/popup.html"
+      },
+      {
+        extensionId: "extension@nsealr.dev",
+        controller: {
+          requestOriginPermissionReview() {
+            throw new Error("not reached");
+          },
+          approveOriginPermission(review, reviewedLocalPairingDigest) {
+            approvals.push({ review, reviewedLocalPairingDigest });
+            return {
+              approval: originApproval,
+              storageWrite
+            };
+          }
+        }
+      }
+    )).resolves.toMatchObject({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-origin-approve",
+      ok: true,
+      result: {
+        approval: {
+          origin: "https://example.com",
+          local_pairing_digest: originReview.local_pairing_digest,
+          creates_grants: false,
+          stores_production_secrets: false,
+          contains_secret_material: false
+        },
+        storage_write: {
+          writes_extension_storage: true,
+          dispatches_signers: false
+        },
+        writes_extension_storage: true,
+        dispatches_signers: false
+      }
+    });
+    expect(approvals).toEqual([{
+      review: originReview,
+      reviewedLocalPairingDigest: originReview.local_pairing_digest
+    }]);
+
+    await expect(handleBrowserExtensionControlMessage(
+      approveOriginPermissionRequest("control-origin-approve-unavailable"),
+      {
+        id: "extension@nsealr.dev",
+        url: "chrome-extension://extension-id/popup.html"
+      },
+      {
+        extensionId: "extension@nsealr.dev",
+        controller: {
+          requestOriginPermissionReview() {
+            throw new Error("not reached");
+          }
+        }
+      }
+    )).resolves.toMatchObject({
+      request_id: "control-origin-approve-unavailable",
+      ok: false,
+      error: {
+        code: "origin_permission_approval_unavailable"
+      }
+    });
+
+    await expect(handleBrowserExtensionControlMessage(
+      approveOriginPermissionRequest("control-origin-approve-page-sender"),
+      {
+        id: "extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      {
+        extensionId: "extension@nsealr.dev",
+        controller: {
+          requestOriginPermissionReview() {
+            throw new Error("not reached");
+          },
+          approveOriginPermission() {
+            throw new Error("page sender must not reach controller");
+          }
+        }
+      }
+    )).resolves.toMatchObject({
+      request_id: "control-origin-approve-page-sender",
       ok: false,
       error: {
         code: "invalid_sender"

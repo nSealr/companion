@@ -127,6 +127,74 @@ function storageWriteResult(
   });
 }
 
+export function parseBrowserExtensionOriginPermissionStorageWriteResult(
+  value: unknown
+): BrowserExtensionOriginPermissionStorageWriteResult {
+  if (!isRecord(value)) {
+    throw new Error("browser extension origin permission storage write result must be an object");
+  }
+  if (!hasOnlyKeys(value, [
+    "format",
+    "storage_key",
+    "store_format",
+    "updated_at",
+    "approval_count",
+    "requires_user_approval",
+    "reads_extension_storage",
+    "writes_extension_storage",
+    "creates_grants",
+    "dispatches_signers",
+    "stores_production_secrets",
+    "contains_secret_material"
+  ])) {
+    throw new Error("browser extension origin permission storage write result has unsupported fields");
+  }
+  if (value.format !== BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_WRITE_FORMAT) {
+    throw new Error("browser extension origin permission storage write result format is unsupported");
+  }
+  if (value.storage_key !== BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY) {
+    throw new Error("browser extension origin permission storage write result key is unsupported");
+  }
+  if (value.store_format !== BROWSER_EXTENSION_ORIGIN_PERMISSION_STORE_FORMAT) {
+    throw new Error("browser extension origin permission storage write result store format is unsupported");
+  }
+  if (value.requires_user_approval !== true) {
+    throw new Error("browser extension origin permission storage write result must require user approval");
+  }
+  if (value.reads_extension_storage !== true && value.reads_extension_storage !== false) {
+    throw new Error("browser extension origin permission storage write result read flag is invalid");
+  }
+  if (
+    value.writes_extension_storage !== true ||
+    value.creates_grants !== false ||
+    value.dispatches_signers !== false ||
+    value.stores_production_secrets !== false ||
+    value.contains_secret_material !== false
+  ) {
+    throw new Error("browser extension origin permission storage write result has unsafe effects");
+  }
+  return Object.freeze({
+    format: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_WRITE_FORMAT,
+    storage_key: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY,
+    store_format: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORE_FORMAT,
+    updated_at: requireNonNegativeSafeInteger(
+      value.updated_at,
+      "browser extension origin permission storage write result updated_at"
+    ),
+    approval_count: requireNonNegativeSafeInteger(
+      value.approval_count,
+      "browser extension origin permission storage write result approval_count"
+    ),
+    requires_user_approval: true,
+    reads_extension_storage: value.reads_extension_storage,
+    writes_extension_storage: true,
+    creates_grants: false,
+    dispatches_signers: false,
+    stores_production_secrets: false,
+    contains_secret_material: false
+  });
+}
+
 export async function readBrowserExtensionOriginPermissionStoreFromStorage(
   area: BrowserExtensionOriginPermissionStorageArea,
   options: BrowserExtensionOriginPermissionStorageReadOptions = {}

@@ -54,6 +54,15 @@ function createText(
   return createBrowserExtensionPopupText(document, "div", className, text);
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function approvalFromControlResult(value: unknown): unknown {
+  if (isRecord(value) && "approval" in value) return value.approval;
+  return value;
+}
+
 export function installBrowserExtensionPopupOriginPermissionView(
   options: BrowserExtensionPopupOriginPermissionViewOptions
 ): BrowserExtensionPopupOriginPermissionViewHandle {
@@ -108,7 +117,17 @@ export function installBrowserExtensionPopupOriginPermissionView(
       const card = createBrowserExtensionOriginPermissionReviewCard({
         document: options.document,
         review: result.origin_review,
-        controls: options.controls,
+        controls: {
+          async approveOriginPermission(originReview, reviewedLocalPairingDigest) {
+            return approvalFromControlResult(await options.controls.approveOriginPermission(
+              originReview,
+              reviewedLocalPairingDigest
+            ));
+          },
+          rejectOriginPermission() {
+            return options.controls.rejectOriginPermission();
+          }
+        },
         onApproved(approval) {
           setStatus("Approved");
           options.onApproved?.(approval);

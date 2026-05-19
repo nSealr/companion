@@ -434,8 +434,12 @@ and uploads checked tarball artifacts without publishing to npm.
   material. A pure popup origin-permission view composer now renders that
   active-tab review through the existing approval card and refresh control,
   delegates digest-bound approval/rejection to injected controls, and still
-  does not itself write browser storage, create grants, inject a provider,
-  dispatch a signer, or handle key material. The sender-aware
+  does not itself call browser storage APIs, create grants, inject a provider,
+  dispatch a signer, or handle key material. The internal control protocol can
+  now send reviewed origin permissions and reviewed pairing digests back to the
+  background controller, where approval writes the approved-origin store only
+  through an explicitly injected storage adapter and still avoids grants,
+  signer dispatch, native messaging, and key material. The sender-aware
   browser request handler can now consume either a static approved-origin store
   or an async injected store loader, denying stale, malformed,
   method-mismatched, ambiguous, or unavailable origin permissions before

@@ -36,6 +36,15 @@ export function installNsealrBackgroundEntrypoint(
       : {}),
     ...(options.pendingRequests !== undefined ? { pendingRequests: options.pendingRequests } : {}),
     ...(options.originPermissions !== undefined ? { originPermissions: options.originPermissions } : {}),
+    ...(options.originPermissionStorage !== undefined
+      ? { originPermissionStorage: options.originPermissionStorage }
+      : {}),
+    ...(options.originPermissionApprovalNow !== undefined
+      ? { originPermissionApprovalNow: options.originPermissionApprovalNow }
+      : {}),
+    ...(options.originPermissionStorageEmptyUpdatedAt !== undefined
+      ? { originPermissionStorageEmptyUpdatedAt: options.originPermissionStorageEmptyUpdatedAt }
+      : {}),
     ...(options.onError !== undefined ? { onError: options.onError } : {})
   });
 }

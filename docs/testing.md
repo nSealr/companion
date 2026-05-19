@@ -166,6 +166,10 @@ single-repository CI. Cross-repository drift remains guarded by
   secretless, mismatched active-tab review metadata renders an unavailable
   state, and the popup refresh control can reload the review without browser
   storage, grants, provider injection, signer dispatch, or key material.
+  Control, popup-control, background-controller, and browser-entrypoint tests
+  now prove digest-confirmed origin permission approval is routed through the
+  extension-internal control protocol into an explicitly injected storage
+  adapter, without native messaging, grants, signer dispatch, or key material.
   Sender-aware handler and background-controller tests prove an injected
   approved-origin store can authorize exact `get_public_key` access while
   denying method-mismatched, stale-digest, or malformed-store requests before

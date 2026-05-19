@@ -21,6 +21,9 @@ import {
 import {
   parseBrowserExtensionRouteConfig
 } from "./route-config.js";
+import {
+  type BrowserExtensionOriginPermissionStorageArea
+} from "./origin-permission-storage.js";
 
 export type BrowserExtensionBackgroundBrowserRuntimeApi = {
   onMessage: BrowserExtensionRuntimeMessageEventTarget;
@@ -41,6 +44,9 @@ export type BrowserExtensionBackgroundBrowserEntrypointOptions = {
   nativeMessageAbortSignal?: AbortSignal;
   pendingRequests?: BrowserExtensionPendingRequestLifecycle;
   originPermissions?: BrowserExtensionOriginPermissionAuthorization;
+  originPermissionStorage?: BrowserExtensionOriginPermissionStorageArea;
+  originPermissionApprovalNow?: () => number;
+  originPermissionStorageEmptyUpdatedAt?: number;
   onError?: (error: unknown) => void;
 };
 
@@ -109,7 +115,16 @@ export function installBrowserExtensionBackgroundBrowserEntrypoint(
     ...(options.nativeMessageAbortSignal !== undefined
       ? { nativeMessageAbortSignal: options.nativeMessageAbortSignal }
       : {}),
-    ...(options.originPermissions !== undefined ? { originPermissions: options.originPermissions } : {})
+    ...(options.originPermissions !== undefined ? { originPermissions: options.originPermissions } : {}),
+    ...(options.originPermissionStorage !== undefined
+      ? { originPermissionStorage: options.originPermissionStorage }
+      : {}),
+    ...(options.originPermissionApprovalNow !== undefined
+      ? { originPermissionApprovalNow: options.originPermissionApprovalNow }
+      : {}),
+    ...(options.originPermissionStorageEmptyUpdatedAt !== undefined
+      ? { originPermissionStorageEmptyUpdatedAt: options.originPermissionStorageEmptyUpdatedAt }
+      : {})
   });
   const listener = installBrowserExtensionRuntimeMessageListener({
     runtimeOnMessage: runtime.onMessage,

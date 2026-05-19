@@ -611,10 +611,14 @@ The popup origin-permission view composer binds that orchestrator to the
 existing approval card and popup refresh surface. It renders exactly the
 reviewed active-tab origin state, delegates digest-bound approval/rejection to
 injected controls, reports errors through the popup status/list region, and
-does not itself write browser storage, create grants, inject a provider,
-dispatch a signer, or handle key material. Future packaged popup approval can
-compose this view with the injected origin-permission storage adapter, but that
-must remain an explicit permissioned manifest/profile decision.
+does not itself call browser storage APIs, create grants, inject a provider,
+dispatch a signer, or handle key material. The extension-internal control
+protocol can now carry that reviewed origin permission plus the reviewed local
+pairing digest back to the background controller. Approval constructs the
+approval artifact in the background and writes the approved-origin store only
+through an explicitly injected origin-permission storage adapter; missing
+storage, digest mismatch, malformed storage-write metadata, or page-origin
+senders fail deterministically without native messaging or signer dispatch.
 The sender-aware request handler can also consume that approved-origin store as
 an injected authorization gate. The gate accepts either a static reviewed store
 or an async injected store loader, then checks the exact

@@ -18,8 +18,15 @@ import {
   type BrowserExtensionPairingIntentResult,
   type BrowserExtensionOriginPermissionReviewResult,
   type BrowserExtensionPairingReviewResult,
-  type BrowserExtensionNativeMessagingPairingOptions
+  type BrowserExtensionNativeMessagingPairingOptions,
+  approveBrowserExtensionOriginPermissionReview,
+  type BrowserExtensionOriginPermissionApproval
 } from "./pairing.js";
+import {
+  upsertBrowserExtensionOriginPermissionApprovalInStorage,
+  type BrowserExtensionOriginPermissionStorageArea,
+  type BrowserExtensionOriginPermissionStorageWriteResult
+} from "./origin-permission-storage.js";
 import { type BrowserExtensionClientContext } from "./sender.js";
 
 export type BrowserExtensionBackgroundControllerOptions = {
@@ -31,6 +38,9 @@ export type BrowserExtensionBackgroundControllerOptions = {
   signingUnavailableMessage?: string;
   pairingOperations?: readonly PairableLocalServiceOperation[];
   originPermissions?: BrowserExtensionOriginPermissionAuthorization;
+  originPermissionStorage?: BrowserExtensionOriginPermissionStorageArea;
+  originPermissionApprovalNow?: () => number;
+  originPermissionStorageEmptyUpdatedAt?: number;
   nativeMessageTimeoutMs?: number;
   nativeMessageAbortSignal?: AbortSignal;
 };
@@ -57,7 +67,18 @@ export type BrowserExtensionBackgroundController = {
     sender: unknown,
     requestOptions?: BrowserExtensionBackgroundRequestOptions
   ): Promise<BrowserExtensionOriginPermissionReviewResult>;
+  approveOriginPermission(
+    originReview: unknown,
+    reviewedLocalPairingDigest: string
+  ): Promise<{
+    approval: BrowserExtensionOriginPermissionApproval;
+    storageWrite: BrowserExtensionOriginPermissionStorageWriteResult;
+  }>;
 };
+
+function defaultNowSeconds(): number {
+  return Math.floor(Date.now() / 1000);
+}
 
 export function createBrowserExtensionBackgroundController(
   options: BrowserExtensionBackgroundControllerOptions
@@ -143,6 +164,37 @@ export function createBrowserExtensionBackgroundController(
           ? { nativeMessageAbortSignal: requestOptions.nativeMessageAbortSignal }
           : {})
       });
+    },
+
+    async approveOriginPermission(
+      originReview: unknown,
+      reviewedLocalPairingDigest: string
+    ): Promise<{
+      approval: BrowserExtensionOriginPermissionApproval;
+      storageWrite: BrowserExtensionOriginPermissionStorageWriteResult;
+    }> {
+      if (options.originPermissionStorage === undefined) {
+        throw new Error("browser extension origin permission storage is unavailable");
+      }
+      const approvedAt = (options.originPermissionApprovalNow ?? defaultNowSeconds)();
+      const approval = approveBrowserExtensionOriginPermissionReview(originReview, {
+        reviewedLocalPairingDigest,
+        approvedAt
+      });
+      const storageWrite = await upsertBrowserExtensionOriginPermissionApprovalInStorage(
+        options.originPermissionStorage,
+        approval,
+        {
+          ...(options.originPermissionStorageEmptyUpdatedAt !== undefined
+            ? { emptyUpdatedAt: options.originPermissionStorageEmptyUpdatedAt }
+            : {}),
+          updatedAt: approvedAt
+        }
+      );
+      return {
+        approval,
+        storageWrite
+      };
     }
   };
 }

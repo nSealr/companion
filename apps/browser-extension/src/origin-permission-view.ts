@@ -12,7 +12,10 @@ import {
 } from "./popup-dom.js";
 
 export type BrowserExtensionOriginPermissionViewControls = {
-  approveOriginPermission(reviewedLocalPairingDigest: string): Promise<unknown> | unknown;
+  approveOriginPermission(
+    originReview: BrowserExtensionOriginPermissionReview,
+    reviewedLocalPairingDigest: string
+  ): Promise<unknown> | unknown;
   rejectOriginPermission(): Promise<void> | void;
 };
 
@@ -119,7 +122,7 @@ export function createBrowserExtensionOriginPermissionReviewCard(
   });
   approve.addEventListener("click", () => {
     setBusy(buttons, status, true, "Approving");
-    void Promise.resolve(options.controls.approveOriginPermission(review.local_pairing_digest))
+    void Promise.resolve(options.controls.approveOriginPermission(review, review.local_pairing_digest))
       .then((value) => {
         const approval = parseBrowserExtensionOriginPermissionApproval(value);
         status.textContent = "Approved";

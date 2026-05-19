@@ -130,15 +130,17 @@ match the shared `contract_id`.
   popup active-tab origin selector for future
   approval UI without storage, grants, manifest permission changes, or key
   material, routes extension-internal popup control messages for origin
-  permission review through the background controller without approval,
-  storage, grants, provider injection, signer dispatch, or key material,
+  permission review and digest-confirmed approval through the background
+  controller, with approval writing only through an explicitly injected storage
+  adapter and still creating no grants, provider injection, signer dispatch, or
+  key material,
   includes a pure active-tab origin permission review orchestrator that binds
   selected-tab origin, extension id, and app name to the returned review before
   any rendering or approval,
   includes a pure popup origin-permission view composer that renders that
-  active-tab review through the existing approval card and refresh control
-  without browser storage, grants, provider injection, signer dispatch, or key
-  material,
+  active-tab review through the existing approval card and refresh control and
+  delegates storage-backed approval to injected controls without direct browser
+  storage APIs, grants, provider injection, signer dispatch, or key material,
   includes a pure
   background-controller boundary over injected native messaging with optional
   response timeouts and request-scoped cancellation,

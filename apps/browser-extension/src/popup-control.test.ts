@@ -8,6 +8,14 @@ import {
 import {
   createBrowserExtensionPopupControls
 } from "./popup-control.js";
+import {
+  approveBrowserExtensionOriginPermissionReview,
+  type BrowserExtensionOriginPermissionReview
+} from "./pairing.js";
+import {
+  BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY,
+  BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_WRITE_FORMAT
+} from "./origin-permission-storage.js";
 
 const pendingState = Object.freeze({
   format: BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
@@ -21,6 +29,45 @@ const pendingState = Object.freeze({
   stores_production_secrets: false as const,
   includes_event_template: false as const
 });
+
+const originReview: BrowserExtensionOriginPermissionReview = {
+  format: "nsealr-browser-origin-permission-review-v0",
+  origin: "https://example.com",
+  app_name: "Example App",
+  extension_id: "extension@nsealr.dev",
+  requested_methods: [
+    {
+      method: "get_public_key",
+      label: "Read public key",
+      effect: "The page can read the selected account public key through the browser provider."
+    }
+  ],
+  local_pairing_digest: "a".repeat(64),
+  requires_user_approval: true,
+  stores_production_secrets: false,
+  creates_grants: false,
+  injects_provider: false
+};
+
+const originApproval = approveBrowserExtensionOriginPermissionReview(originReview, {
+  reviewedLocalPairingDigest: originReview.local_pairing_digest,
+  approvedAt: 1_900_000_410
+});
+
+const storageWrite = {
+  format: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_WRITE_FORMAT,
+  storage_key: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY,
+  store_format: "nsealr-browser-origin-permission-store-v0",
+  updated_at: 1_900_000_411,
+  approval_count: 1,
+  requires_user_approval: true,
+  reads_extension_storage: true,
+  writes_extension_storage: true,
+  creates_grants: false,
+  dispatches_signers: false,
+  stores_production_secrets: false,
+  contains_secret_material: false
+} as const;
 
 describe("browser extension popup pending request controls", () => {
   it("lists pending requests through runtime.sendMessage without exposing hidden payloads", async () => {
@@ -164,6 +211,60 @@ describe("browser extension popup pending request controls", () => {
           page_origin: "https://example.com",
           app_name: "Example App"
         }
+      }
+    }]);
+  });
+
+  it("approves origin permission review through the internal control protocol", async () => {
+    const sentMessages: unknown[] = [];
+    const controls = createBrowserExtensionPopupControls({
+      runtime: {
+        sendMessage(message: unknown): unknown {
+          sentMessages.push(message);
+          return {
+            protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+            version: 1,
+            request_id: "popup-origin-approve-1",
+            ok: true,
+            result: {
+              approval: originApproval,
+              storage_write: storageWrite,
+              requires_user_approval: true,
+              writes_extension_storage: true,
+              creates_grants: false,
+              dispatches_signers: false,
+              stores_production_secrets: false,
+              contains_secret_material: false
+            }
+          };
+        }
+      },
+      nextRequestId: () => "popup-origin-approve-1"
+    });
+
+    await expect(controls.approveOriginPermission(
+      originReview,
+      originReview.local_pairing_digest
+    )).resolves.toMatchObject({
+      approval: {
+        origin: "https://example.com",
+        approved_methods: ["get_public_key"],
+        stores_production_secrets: false,
+        contains_secret_material: false
+      },
+      storage_write: {
+        writes_extension_storage: true,
+        dispatches_signers: false
+      }
+    });
+    expect(sentMessages).toEqual([{
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "popup-origin-approve-1",
+      method: "approve_origin_permission",
+      params: {
+        origin_review: originReview,
+        reviewed_local_pairing_digest: originReview.local_pairing_digest
       }
     }]);
   });

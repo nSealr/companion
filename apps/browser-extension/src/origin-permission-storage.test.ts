@@ -10,6 +10,7 @@ import {
 import {
   BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY,
   BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_WRITE_FORMAT,
+  parseBrowserExtensionOriginPermissionStorageWriteResult,
   readBrowserExtensionOriginPermissionStoreFromStorage,
   removeBrowserExtensionOriginPermissionStoreFromStorage,
   revokeBrowserExtensionOriginPermissionApprovalInStorage,
@@ -159,6 +160,25 @@ describe("browser extension origin permission storage adapter", () => {
     expect(storage.setCalls).toEqual([{
       [BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY]: store
     }]);
+    expect(parseBrowserExtensionOriginPermissionStorageWriteResult({
+      format: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_WRITE_FORMAT,
+      storage_key: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY,
+      store_format: "nsealr-browser-origin-permission-store-v0",
+      updated_at: 1_900_000_702,
+      approval_count: 1,
+      requires_user_approval: true,
+      reads_extension_storage: false,
+      writes_extension_storage: true,
+      creates_grants: false,
+      dispatches_signers: false,
+      stores_production_secrets: false,
+      contains_secret_material: false
+    })).toMatchObject({
+      updated_at: 1_900_000_702,
+      approval_count: 1,
+      writes_extension_storage: true,
+      dispatches_signers: false
+    });
   });
 
   it("upserts and revokes approvals without mutating unrelated origins", async () => {
@@ -275,5 +295,20 @@ describe("browser extension origin permission storage adapter", () => {
       new FakeOriginPermissionStorage(),
       { removedAt: -1 }
     )).rejects.toThrow(/removedAt/u);
+
+    expect(() => parseBrowserExtensionOriginPermissionStorageWriteResult({
+      format: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_WRITE_FORMAT,
+      storage_key: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY,
+      store_format: "nsealr-browser-origin-permission-store-v0",
+      updated_at: 1_900_000_803,
+      approval_count: 0,
+      requires_user_approval: true,
+      reads_extension_storage: false,
+      writes_extension_storage: true,
+      creates_grants: false,
+      dispatches_signers: true,
+      stores_production_secrets: false,
+      contains_secret_material: false
+    })).toThrow(/unsafe effects/u);
   });
 });

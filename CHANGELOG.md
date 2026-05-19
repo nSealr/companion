@@ -85,6 +85,11 @@ public npm release.
   sender-aware request handling can use either a static reviewed store or an
   async injected store loader and still deny malformed, stale, or unavailable
   permissions before provider selection or native messaging.
+- Private browser-extension origin-permission approval control support, so
+  popup approval can send the reviewed origin permission plus reviewed pairing
+  digest to the background controller, which writes the approved-origin store
+  only through an explicitly injected storage adapter and still creates no
+  grants, dispatches no signers, and stores no key material.
 - Private browser-extension background-controller boundary that composes
   sender-aware request handling, pairing-intent requests, pairing review, and
   origin permission review over injected native messaging without using

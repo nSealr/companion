@@ -5,7 +5,11 @@ import {
   type BrowserExtensionControlResponse
 } from "./pending-control.js";
 import { type BrowserExtensionPendingRequestState } from "./pending-request.js";
-import { type BrowserExtensionOriginPermissionReview } from "./pairing.js";
+import {
+  type BrowserExtensionOriginPermissionApproval,
+  type BrowserExtensionOriginPermissionReview
+} from "./pairing.js";
+import { type BrowserExtensionOriginPermissionStorageWriteResult } from "./origin-permission-storage.js";
 import { type BrowserExtensionSenderInput } from "./sender.js";
 
 export type BrowserExtensionPopupRuntimeApi = {
@@ -33,6 +37,17 @@ export type BrowserExtensionPopupOriginPermissionReviewResult = {
   injects_provider: false;
 };
 
+export type BrowserExtensionPopupOriginPermissionApprovalResult = {
+  approval: BrowserExtensionOriginPermissionApproval;
+  storage_write: BrowserExtensionOriginPermissionStorageWriteResult;
+  requires_user_approval: true;
+  writes_extension_storage: true;
+  creates_grants: false;
+  dispatches_signers: false;
+  stores_production_secrets: false;
+  contains_secret_material: false;
+};
+
 export type BrowserExtensionPopupPendingRequestControls = {
   listPendingRequests(): Promise<readonly BrowserExtensionPendingRequestState[]>;
   cancelPendingRequest(pendingRequestId: string): Promise<BrowserExtensionPopupCancelResult>;
@@ -40,6 +55,10 @@ export type BrowserExtensionPopupPendingRequestControls = {
 
 export type BrowserExtensionPopupControls = BrowserExtensionPopupPendingRequestControls & {
   requestOriginPermissionReview(sender: BrowserExtensionSenderInput): Promise<BrowserExtensionPopupOriginPermissionReviewResult>;
+  approveOriginPermission(
+    originReview: BrowserExtensionOriginPermissionReview,
+    reviewedLocalPairingDigest: string
+  ): Promise<BrowserExtensionPopupOriginPermissionApprovalResult>;
 };
 
 type BrowserExtensionPopupControlSuccessResponse = Exclude<
@@ -173,6 +192,27 @@ export function createBrowserExtensionPopupControls(
       }, requestId);
       if (!("origin_review" in response.result)) {
         throw new Error("browser extension popup control origin permission response is invalid");
+      }
+      return response.result;
+    },
+
+    async approveOriginPermission(
+      originReview: BrowserExtensionOriginPermissionReview,
+      reviewedLocalPairingDigest: string
+    ): Promise<BrowserExtensionPopupOriginPermissionApprovalResult> {
+      const requestId = requireControlRequestId(nextRequestId());
+      const response = await sendControlRequest({
+        protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+        version: 1,
+        request_id: requestId,
+        method: "approve_origin_permission",
+        params: {
+          origin_review: originReview,
+          reviewed_local_pairing_digest: reviewedLocalPairingDigest
+        }
+      }, requestId);
+      if (!("approval" in response.result)) {
+        throw new Error("browser extension popup control origin permission approval response is invalid");
       }
       return response.result;
     }

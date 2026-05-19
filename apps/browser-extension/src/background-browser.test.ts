@@ -14,6 +14,11 @@ import {
 } from "./runtime-message.js";
 import { approveBrowserExtensionOriginPermissionReview } from "./pairing.js";
 import { createBrowserExtensionOriginPermissionStore } from "./origin-permission-store.js";
+import {
+  BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY,
+  readBrowserExtensionOriginPermissionStoreFromStorage,
+  type BrowserExtensionOriginPermissionStorageArea
+} from "./origin-permission-storage.js";
 
 const publicKey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
 const routeRequest = {
@@ -22,6 +27,24 @@ const routeRequest = {
   route_type: "esp32_usb_nip46" as const
 };
 const localPairingDigest = "c".repeat(64);
+
+class FakeOriginPermissionStorage implements BrowserExtensionOriginPermissionStorageArea {
+  private stored: Record<string, unknown> = {};
+
+  get(key: typeof BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY): unknown {
+    if (!(key in this.stored)) return {};
+    return {
+      [key]: this.stored[key]
+    };
+  }
+
+  set(items: {
+    [BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY]: unknown;
+  }): void {
+    this.stored[BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY] =
+      items[BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY];
+  }
+}
 
 function getPublicKeyRequest(requestId: string): unknown {
   return {
@@ -69,6 +92,36 @@ function requestOriginPermissionReview(requestId: string): unknown {
         extension_id: "extension@nsealr.dev",
         page_url: "https://example.com/app"
       }
+    }
+  };
+}
+
+function approveOriginPermission(requestId: string): unknown {
+  return {
+    protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+    version: 1,
+    request_id: requestId,
+    method: "approve_origin_permission",
+    params: {
+      origin_review: {
+        format: "nsealr-browser-origin-permission-review-v0",
+        origin: "https://example.com",
+        app_name: "nSealr Browser Extension",
+        extension_id: "extension@nsealr.dev",
+        requested_methods: [
+          {
+            method: "get_public_key",
+            label: "Read public key",
+            effect: "The page can read the selected account public key through the browser provider."
+          }
+        ],
+        local_pairing_digest: localPairingDigest,
+        requires_user_approval: true,
+        stores_production_secrets: false,
+        creates_grants: false,
+        injects_provider: false
+      },
+      reviewed_local_pairing_digest: localPairingDigest
     }
   };
 }
@@ -317,6 +370,62 @@ describe("browser extension background browser entrypoint", () => {
     expect(runtime.nativeMessages.map((message) => (message.message as LocalServiceRequest).operation)).toEqual([
       "request_pairing"
     ]);
+    handle.dispose();
+  });
+
+  it("routes extension-internal origin permission approval control to injected storage", async () => {
+    const runtime = createInjectedRuntime();
+    const responses: unknown[] = [];
+    const storage = new FakeOriginPermissionStorage();
+    const handle = installBrowserExtensionBackgroundBrowserEntrypoint({
+      runtime: runtime.runtime,
+      routeRequest,
+      extensionId: "extension@nsealr.dev",
+      originPermissionStorage: storage,
+      originPermissionApprovalNow: () => 1_900_000_070
+    });
+
+    expect(runtime.emit(
+      approveOriginPermission("background-browser-origin-approve"),
+      {
+        id: "extension@nsealr.dev",
+        url: "chrome-extension://extension-id/popup.html"
+      },
+      (response) => {
+        responses.push(response);
+      }
+    )).toBe(true);
+    await flushAsyncListeners();
+
+    expect(responses).toMatchObject([{
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "background-browser-origin-approve",
+      ok: true,
+      result: {
+        approval: {
+          origin: "https://example.com",
+          local_pairing_digest: localPairingDigest,
+          approved_at: 1_900_000_070,
+          creates_grants: false,
+          stores_production_secrets: false,
+          contains_secret_material: false
+        },
+        storage_write: {
+          writes_extension_storage: true,
+          dispatches_signers: false
+        }
+      }
+    }]);
+    expect(runtime.nativeMessages).toEqual([]);
+    await expect(readBrowserExtensionOriginPermissionStoreFromStorage(storage)).resolves.toMatchObject({
+      approvals: [
+        {
+          origin: "https://example.com",
+          local_pairing_digest: localPairingDigest
+        }
+      ]
+    });
     handle.dispose();
   });
 

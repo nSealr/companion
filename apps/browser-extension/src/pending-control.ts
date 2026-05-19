@@ -8,9 +8,15 @@ import {
   parseBrowserExtensionPendingRequestState
 } from "./pending-request.js";
 import {
+  parseBrowserExtensionOriginPermissionApproval,
   parseBrowserExtensionOriginPermissionReview,
+  type BrowserExtensionOriginPermissionApproval,
   type BrowserExtensionOriginPermissionReview
 } from "./pairing.js";
+import {
+  parseBrowserExtensionOriginPermissionStorageWriteResult,
+  type BrowserExtensionOriginPermissionStorageWriteResult
+} from "./origin-permission-storage.js";
 import {
   browserExtensionClientContextFromSender,
   type BrowserExtensionSenderInput
@@ -45,10 +51,22 @@ export type BrowserExtensionRequestOriginPermissionReview = {
   };
 };
 
+export type BrowserExtensionApproveOriginPermission = {
+  protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
+  version: 1;
+  request_id: string;
+  method: "approve_origin_permission";
+  params: {
+    origin_review: BrowserExtensionOriginPermissionReview;
+    reviewed_local_pairing_digest: string;
+  };
+};
+
 export type BrowserExtensionControlRequest =
   | BrowserExtensionCancelPendingRequest
   | BrowserExtensionListPendingRequests
-  | BrowserExtensionRequestOriginPermissionReview;
+  | BrowserExtensionRequestOriginPermissionReview
+  | BrowserExtensionApproveOriginPermission;
 
 export type BrowserExtensionCancelPendingResponse = {
   protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
@@ -89,6 +107,23 @@ export type BrowserExtensionOriginPermissionReviewResponse = {
   };
 };
 
+export type BrowserExtensionOriginPermissionApprovalResponse = {
+  protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
+  version: 1;
+  request_id: string;
+  ok: true;
+  result: {
+    approval: BrowserExtensionOriginPermissionApproval;
+    storage_write: BrowserExtensionOriginPermissionStorageWriteResult;
+    requires_user_approval: true;
+    writes_extension_storage: true;
+    creates_grants: false;
+    dispatches_signers: false;
+    stores_production_secrets: false;
+    contains_secret_material: false;
+  };
+};
+
 export type BrowserExtensionControlErrorResponse = {
   protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
   version: 1;
@@ -105,20 +140,31 @@ export type BrowserExtensionControlResponse =
   | BrowserExtensionCancelPendingResponse
   | BrowserExtensionListPendingResponse
   | BrowserExtensionOriginPermissionReviewResponse
+  | BrowserExtensionOriginPermissionApprovalResponse
   | BrowserExtensionControlErrorResponse;
 
 export type BrowserExtensionControlSenderOptions = {
   extensionId?: string;
 };
 
-export type BrowserExtensionOriginPermissionReviewController = {
+export type BrowserExtensionOriginPermissionController = {
   requestOriginPermissionReview(
     sender: BrowserExtensionSenderInput
   ): { originReview: BrowserExtensionOriginPermissionReview } | Promise<{ originReview: BrowserExtensionOriginPermissionReview }>;
+  approveOriginPermission?(
+    originReview: BrowserExtensionOriginPermissionReview,
+    reviewedLocalPairingDigest: string
+  ): {
+    approval: BrowserExtensionOriginPermissionApproval;
+    storageWrite: BrowserExtensionOriginPermissionStorageWriteResult;
+  } | Promise<{
+    approval: BrowserExtensionOriginPermissionApproval;
+    storageWrite: BrowserExtensionOriginPermissionStorageWriteResult;
+  }>;
 };
 
 export type BrowserExtensionControlHandlerOptions = BrowserExtensionControlSenderOptions & {
-  controller?: BrowserExtensionOriginPermissionReviewController;
+  controller?: BrowserExtensionOriginPermissionController;
   pendingRequests?: BrowserExtensionPendingRequestLifecycle;
 };
 
@@ -147,6 +193,13 @@ function requireErrorCode(value: string): string {
 function requireErrorMessage(value: string): string {
   if (value.length === 0 || value.length > 512) {
     throw new Error("browser extension control error message is invalid");
+  }
+  return value;
+}
+
+function requireHex64(value: unknown, label: string): string {
+  if (typeof value !== "string" || !/^[0-9a-f]{64}$/u.test(value)) {
+    throw new Error(`browser extension control ${label} is invalid`);
   }
   return value;
 }
@@ -258,6 +311,24 @@ function parseSenderParams(value: unknown): BrowserExtensionRequestOriginPermiss
   };
 }
 
+function parseApproveOriginPermissionParams(
+  value: unknown
+): BrowserExtensionApproveOriginPermission["params"] {
+  if (!isRecord(value)) {
+    throw new Error("browser extension control params must be an object");
+  }
+  if (!hasOnlyKeys(value, ["origin_review", "reviewed_local_pairing_digest"])) {
+    throw new Error("browser extension control params have unsupported fields");
+  }
+  return {
+    origin_review: parseBrowserExtensionOriginPermissionReview(value.origin_review),
+    reviewed_local_pairing_digest: requireHex64(
+      value.reviewed_local_pairing_digest,
+      "reviewed_local_pairing_digest"
+    )
+  };
+}
+
 function parseCancelResult(value: unknown): BrowserExtensionCancelPendingResponse["result"] {
   if (!isRecord(value)) {
     throw new Error("browser extension control cancel result must be an object");
@@ -313,6 +384,46 @@ function parseOriginPermissionReviewResult(
     contains_secret_material: false,
     creates_grants: false,
     injects_provider: false
+  };
+}
+
+function parseOriginPermissionApprovalResult(
+  value: unknown
+): BrowserExtensionOriginPermissionApprovalResponse["result"] {
+  if (!isRecord(value)) {
+    throw new Error("browser extension control origin permission approval result must be an object");
+  }
+  if (!hasOnlyKeys(value, [
+    "approval",
+    "storage_write",
+    "requires_user_approval",
+    "writes_extension_storage",
+    "creates_grants",
+    "dispatches_signers",
+    "stores_production_secrets",
+    "contains_secret_material"
+  ])) {
+    throw new Error("browser extension control origin permission approval result has unsupported fields");
+  }
+  if (
+    value.requires_user_approval !== true ||
+    value.writes_extension_storage !== true ||
+    value.creates_grants !== false ||
+    value.dispatches_signers !== false ||
+    value.stores_production_secrets !== false ||
+    value.contains_secret_material !== false
+  ) {
+    throw new Error("browser extension control origin permission approval result has unsafe effects");
+  }
+  return {
+    approval: parseBrowserExtensionOriginPermissionApproval(value.approval),
+    storage_write: parseBrowserExtensionOriginPermissionStorageWriteResult(value.storage_write),
+    requires_user_approval: true,
+    writes_extension_storage: true,
+    creates_grants: false,
+    dispatches_signers: false,
+    stores_production_secrets: false,
+    contains_secret_material: false
   };
 }
 
@@ -403,6 +514,15 @@ export function parseBrowserExtensionControlRequest(value: unknown): BrowserExte
       params: parseSenderParams(value.params)
     };
   }
+  if (value.method === "approve_origin_permission") {
+    return {
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: requireRequestId(value.request_id, "request_id"),
+      method: "approve_origin_permission",
+      params: parseApproveOriginPermissionParams(value.params)
+    };
+  }
   if (value.method !== "cancel_pending_request") {
     throw new Error("browser extension control method is unsupported");
   }
@@ -451,6 +571,15 @@ export function parseBrowserExtensionControlResponse(value: unknown): BrowserExt
       request_id: requireRequestId(value.request_id, "request_id"),
       ok: true,
       result: parseOriginPermissionReviewResult(result)
+    };
+  }
+  if ("approval" in result) {
+    return {
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: requireRequestId(value.request_id, "request_id"),
+      ok: true,
+      result: parseOriginPermissionApprovalResult(result)
     };
   }
   if ("pending_requests" in result) {
@@ -516,6 +645,43 @@ export async function handleBrowserExtensionControlMessage(
         request.request_id,
         "origin_permission_review_failed",
         "browser extension origin permission review failed"
+      );
+    }
+  }
+  if (request.method === "approve_origin_permission") {
+    if (options.controller?.approveOriginPermission === undefined) {
+      return controlErrorResponse(
+        request.request_id,
+        "origin_permission_approval_unavailable",
+        "browser extension origin permission approval is unavailable"
+      );
+    }
+    try {
+      const result = await options.controller.approveOriginPermission(
+        request.params.origin_review,
+        request.params.reviewed_local_pairing_digest
+      );
+      return {
+        protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+        version: 1,
+        request_id: request.request_id,
+        ok: true,
+        result: parseOriginPermissionApprovalResult({
+          approval: result.approval,
+          storage_write: result.storageWrite,
+          requires_user_approval: true,
+          writes_extension_storage: true,
+          creates_grants: false,
+          dispatches_signers: false,
+          stores_production_secrets: false,
+          contains_secret_material: false
+        })
+      };
+    } catch {
+      return controlErrorResponse(
+        request.request_id,
+        "origin_permission_approval_failed",
+        "browser extension origin permission approval failed"
       );
     }
   }

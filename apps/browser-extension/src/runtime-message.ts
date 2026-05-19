@@ -34,7 +34,10 @@ export type BrowserExtensionRuntimeSenderOptions = {
 };
 
 export type BrowserExtensionRuntimeMessageOptions = BrowserExtensionRuntimeSenderOptions & {
-  controller: Pick<BrowserExtensionBackgroundController, "handleRequest" | "requestOriginPermissionReview">;
+  controller: Pick<
+    BrowserExtensionBackgroundController,
+    "handleRequest" | "requestOriginPermissionReview" | "approveOriginPermission"
+  >;
   nativeMessageAbortSignal?: AbortSignal;
   pendingRequests?: BrowserExtensionPendingRequestLifecycle;
   onPendingRequestError?: (error: unknown) => void;

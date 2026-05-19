@@ -133,7 +133,7 @@ describe("browser extension origin permission review card", () => {
       document: fakeDocument(),
       review: sourceReview,
       controls: {
-        approveOriginPermission(reviewedLocalPairingDigest: string): BrowserExtensionOriginPermissionApproval {
+        approveOriginPermission(_originReview, reviewedLocalPairingDigest: string): BrowserExtensionOriginPermissionApproval {
           reviewedDigests.push(reviewedLocalPairingDigest);
           return approveBrowserExtensionOriginPermissionReview(sourceReview, {
             reviewedLocalPairingDigest,

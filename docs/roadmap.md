@@ -169,6 +169,11 @@ parser rejects embedded secret fields, QR-vault automation, wildcard grants,
 and stateless QR-vault grant targets. This is policy metadata validation only;
 it does not add local-service grant persistence or a browser/relay session.
 
+Status note, 2026-05-19: companion policy parsing now accepts and validates the
+shared NIP-06 `recovery.source_fingerprint` field so secretless account
+descriptors stay aligned with QR vault source-review metadata. This does not
+derive keys, store secrets, or authorize signing.
+
 Status note, 2026-05-11: companion policy code now consumes shared
 policy-decision transcript vectors. The pure evaluator allows only an explicit
 matching unexpired/unrevoked grant, denies expired, revoked, and secret-export

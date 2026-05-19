@@ -558,12 +558,13 @@ single-repository CI. Cross-repository drift remains guarded by
   appending behind storage-approval coverage, input-file immutability,
   deterministic authorization denial after revocation, and no-match rejection
   before output files are written.
-- Policy package tests cover secretless account descriptors, manual-only QR
-  vault policy, manual-only display-less smartcard policy, manual-only
-  persistent-device defaults, scoped grants for ESP32 USB/NIP-46 and custom
-  hardware-wallet routes, policy-change review pages and approval digests,
-  wildcard/decrypt/export rejection, rejection of stateless QR-vault grant
-  targets, and deterministic policy-decision transcripts for allowed, expired,
+- Policy package tests cover secretless account descriptors, NIP-06 recovery
+  source fingerprints, manual-only QR vault policy, manual-only display-less
+  smartcard policy, manual-only persistent-device defaults, scoped grants for
+  ESP32 USB/NIP-46 and custom hardware-wallet routes, policy-change review
+  pages and approval digests, wildcard/decrypt/export rejection, rejection of
+  stateless QR-vault grant targets, and deterministic policy-decision
+  transcripts for allowed, expired,
   revoked, decrypt, export-secret, and unknown-method requests.
 - Pre-signing hardening tests must reject every shared invalid vector that
   reaches companion-owned parsing: unsafe event-template fields, unsafe integer

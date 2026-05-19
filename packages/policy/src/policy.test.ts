@@ -56,8 +56,10 @@ describe("identity, recovery, and policy contracts", () => {
 
     expect(account.signer_route.type).toBe("raspberry_qr_vault");
     expect(account.capabilities.persistent_grants).toBe(false);
+    expect(account.recovery.source_fingerprint).toBe("cd64b58daca009b9");
     expect(esp32QrAccount.signer_route.type).toBe("esp32_qr_vault");
     expect(esp32QrAccount.capabilities.persistent_grants).toBe(false);
+    expect(esp32QrAccount.recovery.source_fingerprint).toBe("cd64b58daca009b9");
     expect(smartcardAccount.recovery.type).toBe("card_slot");
     expect(smartcardAccount.signer_route.trusted_review).toBe("display_less");
     expect(smartcardAccount.capabilities.persistent_grants).toBe(false);
@@ -81,6 +83,15 @@ describe("identity, recovery, and policy contracts", () => {
     account.recovery.mnemonic = "leader monkey parrot ring guide accident before fence cannon height naive bean";
 
     expect(() => parseAccountDescriptor(account)).toThrow(/secret field recovery.mnemonic/u);
+  });
+
+  it("rejects malformed NIP-06 recovery source fingerprints", () => {
+    const account = loadJson(resolve(specsRoot, "vectors/accounts/raspberry-qr-nip06-account-0.json")) as {
+      recovery: Record<string, unknown>;
+    };
+    account.recovery.source_fingerprint = "not-a-fingerprint";
+
+    expect(() => parseAccountDescriptor(account)).toThrow(/source_fingerprint must be 8-byte lowercase hex/u);
   });
 
   it("rejects QR vault policy automation", () => {

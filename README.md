@@ -327,7 +327,9 @@ match the shared `contract_id`.
   transcript vectors without a persistent grant store. It
   rejects embedded private-key material, QR-vault automation,
   wildcard/decrypt/export grants, and stateless QR-vault grant targets before
-  CLI or fixture-verification code can treat those records as valid.
+  CLI or fixture-verification code can treat those records as valid. NIP-06
+  account descriptors must carry a reviewed source fingerprint matching the QR
+  vault import-review contract.
   These records describe resulting signing public keys and routes. Mnemonics,
   BIP-39 passphrase namespaces, standalone `nsec` keys, device slots, card
   slots, and external signers are key sources or routes, not production secrets

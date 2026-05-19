@@ -109,7 +109,8 @@ packages, but it must not export test-only signing as a production path.
 - `packages/policy`: secretless account, route, recovery, policy, grant
   descriptor parsing, policy-change review generation, and pure
   policy-decision evaluation. This package owns anti-secret,
-  anti-QR-automation, anti-decrypt-grant, and audit-event decision checks,
+  anti-QR-automation, NIP-06 recovery source-fingerprint validation,
+  anti-decrypt-grant, and audit-event decision checks,
   including runtime policy-decision request parsing, deterministic expiry,
   revocation, and rate-limit decisions from explicit grant-usage snapshots,
   plus digest-bound `set_policy` review pages for persistent device routes, so

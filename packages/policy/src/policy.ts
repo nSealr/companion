@@ -285,6 +285,13 @@ function requireXOnlyPubkey(value: unknown, field: string): string {
   return value;
 }
 
+function requireSourceFingerprint(value: unknown, field: string): string {
+  if (typeof value !== "string" || !/^[0-9a-f]{16}$/u.test(value)) {
+    throw new Error(`${field} must be 8-byte lowercase hex`);
+  }
+  return value;
+}
+
 function requireGrantId(value: unknown, field: string): string {
   if (typeof value !== "string" || !/^grant-[A-Za-z0-9._:-]{1,122}$/u.test(value)) {
     throw new Error(`${field} must be a grant-* stable string id`);
@@ -375,7 +382,7 @@ function parseSignerRoute(value: unknown): SignerRoute {
 function validateRecovery(recovery: unknown): Record<string, unknown> {
   assertRecord(recovery, "recovery");
   if (recovery.type === "nip06") {
-    assertOnlyKeys(recovery, ["type", "path", "account", "source_vector"], "NIP-06 recovery");
+    assertOnlyKeys(recovery, ["type", "path", "account", "source_vector", "source_fingerprint"], "NIP-06 recovery");
     if (typeof recovery.path !== "string" || !recovery.path.startsWith("m/44'/1237'/")) {
       throw new Error("NIP-06 recovery path must use the Nostr derivation prefix");
     }
@@ -383,6 +390,7 @@ function validateRecovery(recovery: unknown): Record<string, unknown> {
       throw new Error("NIP-06 recovery account must be a non-negative integer");
     }
     requireString(recovery.source_vector, "NIP-06 recovery source_vector");
+    requireSourceFingerprint(recovery.source_fingerprint, "NIP-06 recovery source_fingerprint");
     return recovery;
   }
   if (recovery.type === "device_slot") {

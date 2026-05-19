@@ -220,13 +220,13 @@
           "target": "required",
           "current": "partial",
           "contract_id": "seedsigner-seedqr-session-import-v0",
-          "notes": "Standard SeedQR and CompactSeedQR parser/signing harnesses are implemented through shared vectors for RAM-only NIP-06 session loading, and package tests consume the shared secret-hidden session import review pages and import approval digest. Final Pi camera/display/button import UX remains pending."
+          "notes": "Standard SeedQR and CompactSeedQR parser/signing harnesses are implemented through shared vectors for RAM-only NIP-06 session loading. The Raspberry package now classifies decoded Standard SeedQR text and CompactSeedQR bytes through a package-owned session-source QR boundary, then routes those sources through the shared secret-hidden import review pages and import approval digest before RAM-only keyring load. Final Pi camera/display/button import UX remains pending."
         },
         "nip19_nsec_session_import": {
           "target": "required",
           "current": "partial",
           "contract_id": "nip19-nsec-session-import-v0",
-          "notes": "NIP-19 nsec parser/signing harnesses are implemented through shared vectors for direct RAM-only session loading, and package tests consume the shared secret-hidden session import review pages and import approval digest. Final Pi camera/display/button import UX remains pending."
+          "notes": "NIP-19 nsec parser/signing harnesses are implemented through shared vectors for direct RAM-only session loading. The Raspberry package now classifies decoded canonical nsec QR text through a package-owned session-source QR boundary, then routes that source through the shared secret-hidden import review pages and import approval digest before RAM-only keyring load. Final Pi camera/display/button import UX remains pending."
         },
         "session_source_generation": {
           "target": "required",

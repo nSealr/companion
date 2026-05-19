@@ -33,8 +33,8 @@ match the shared `contract_id`.
 - `nsealr fixture verify` validates shared signing, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, NIP-46 connection URI, account descriptor,
-  policy profile, grant descriptor, policy-change review, policy-decision, and
-  feature-matrix fixtures from
+  policy profile, grant descriptor, policy-change review, policy-decision,
+  source public-key proof, and feature-matrix fixtures from
   `nSealr/specs`, including NIP-46 permission policy checks, bridge
   decisions, implementation limits, feature conformance contracts, and invalid
   hardening vectors.
@@ -325,7 +325,7 @@ match the shared `contract_id`.
   review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
   NIP-46 connection URI, account-descriptor, policy-profile,
   grant-descriptor, policy-change review, policy-decision, route-selection,
-  access-surface,
+  source-public-key-proof, access-surface,
   feature-matrix, and smartcard vectors from `nSealr/specs` for companion,
   Raspberry QR vault, ESP32 firmware, and smartcard conformance tests.
 - `packages/policy` parses secretless account descriptors, policy profiles, and

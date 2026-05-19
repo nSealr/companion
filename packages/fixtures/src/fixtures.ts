@@ -221,6 +221,19 @@ export type SpecsFixtureSet = {
     request: RouteSelectionRequest;
     selection: RouteSelection;
   }>;
+  sourcePublicKeyProofs: Array<{
+    format: "nsealr-source-public-key-proof-v0";
+    name: string;
+    proof_type: "nip06" | "nip19_nsec";
+    source_type: "bip39_seed" | "nsec";
+    source_vector: string;
+    source_fingerprint: string;
+    account?: number;
+    path?: string;
+    passphrase?: string;
+    expected_public_key: string;
+    security_scope: string;
+  }>;
   accessSurfaces: Array<{
     name: string;
     format: "nsealr-access-surface-vector-v0";
@@ -563,6 +576,60 @@ export function validateAccessSurfaceFixture(name: string, fixture: unknown): vo
   }
 }
 
+export function validateSourcePublicKeyProofFixture(name: string, fixture: unknown): void {
+  if (!isRecord(fixture)) throw new Error(`invalid source public-key proof ${name}: fixture must be an object`);
+  if (fixture.format !== "nsealr-source-public-key-proof-v0") {
+    throw new Error(`invalid source public-key proof ${name}: unsupported format`);
+  }
+  if (fixture.name !== name) throw new Error(`invalid source public-key proof ${name}: name mismatch`);
+  if (fixture.proof_type !== "nip06" && fixture.proof_type !== "nip19_nsec") {
+    throw new Error(`invalid source public-key proof ${name}: proof_type is unsupported`);
+  }
+  if (fixture.source_type !== "bip39_seed" && fixture.source_type !== "nsec") {
+    throw new Error(`invalid source public-key proof ${name}: source_type is unsupported`);
+  }
+  if (fixture.proof_type === "nip06") {
+    if (fixture.source_type !== "bip39_seed") {
+      throw new Error(`invalid source public-key proof ${name}: NIP-06 proof requires BIP-39 source`);
+    }
+    if (typeof fixture.account !== "number" || !Number.isInteger(fixture.account) || fixture.account < 0) {
+      throw new Error(`invalid source public-key proof ${name}: NIP-06 account must be a non-negative integer`);
+    }
+    if (typeof fixture.path !== "string" || !fixture.path.startsWith("m/44'/1237'/")) {
+      throw new Error(`invalid source public-key proof ${name}: NIP-06 path is invalid`);
+    }
+    if (typeof fixture.passphrase !== "string") {
+      throw new Error(`invalid source public-key proof ${name}: NIP-06 passphrase must be explicit`);
+    }
+    if (typeof fixture.source_vector !== "string" || !fixture.source_vector.startsWith("vectors/keys/")) {
+      throw new Error(`invalid source public-key proof ${name}: NIP-06 source_vector must point to vectors/keys`);
+    }
+  } else {
+    if (fixture.source_type !== "nsec") {
+      throw new Error(`invalid source public-key proof ${name}: NIP-19 proof requires nsec source`);
+    }
+    if ("account" in fixture || "path" in fixture || "passphrase" in fixture) {
+      throw new Error(`invalid source public-key proof ${name}: nsec proof must not include NIP-06 fields`);
+    }
+    if (typeof fixture.source_vector !== "string" || !fixture.source_vector.startsWith("vectors/nip19/")) {
+      throw new Error(`invalid source public-key proof ${name}: nsec source_vector must point to vectors/nip19`);
+    }
+  }
+  if (typeof fixture.source_fingerprint !== "string" || !/^[0-9a-f]{16}$/u.test(fixture.source_fingerprint)) {
+    throw new Error(`invalid source public-key proof ${name}: source_fingerprint must be 8-byte lowercase hex`);
+  }
+  if (typeof fixture.expected_public_key !== "string" || !/^[0-9a-f]{64}$/u.test(fixture.expected_public_key)) {
+    throw new Error(`invalid source public-key proof ${name}: expected_public_key must be 32-byte lowercase hex`);
+  }
+  if (typeof fixture.security_scope !== "string" || !fixture.security_scope.includes("RAM-only")) {
+    throw new Error(`invalid source public-key proof ${name}: security_scope must describe RAM-only scope`);
+  }
+  const serialized = JSON.stringify(fixture);
+  if (/mnemonic|secret_key|nsec1/u.test(serialized)) {
+    throw new Error(`invalid source public-key proof ${name}: proof fixture must not contain source secret material`);
+  }
+}
+
 function loadJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));
 }
@@ -600,6 +667,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const policyDecisionsRoot = resolve(specsRoot, "vectors/policy-decisions");
   const policyChangesRoot = resolve(specsRoot, "vectors/policy-changes");
   const routeSelectionsRoot = resolve(specsRoot, "vectors/route-selections");
+  const sourcePublicKeyProofsRoot = resolve(specsRoot, "vectors/source-public-key-proofs");
   const accessSurfacesRoot = resolve(specsRoot, "vectors/access-surfaces");
   const featureMatricesRoot = resolve(specsRoot, "vectors/features");
   const invalidVectorsRoot = resolve(specsRoot, "vectors/invalid");
@@ -646,6 +714,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const routeSelectionFiles = readdirSync(routeSelectionsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const sourcePublicKeyProofFiles = readdirSync(sourcePublicKeyProofsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const accessSurfaceFiles = readdirSync(accessSurfacesRoot)
@@ -701,6 +772,12 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     routeSelections: routeSelectionFiles.map(
       (file) => loadJson(resolve(routeSelectionsRoot, file)) as SpecsFixtureSet["routeSelections"][number]
     ),
+    sourcePublicKeyProofs: sourcePublicKeyProofFiles.map((file) => {
+      const fixture = loadJson(resolve(sourcePublicKeyProofsRoot, file));
+      const name = fileStem(file);
+      validateSourcePublicKeyProofFixture(name, fixture);
+      return fixture as SpecsFixtureSet["sourcePublicKeyProofs"][number];
+    }),
     accessSurfaces: accessSurfaceFiles.map(
       (file) => loadJson(resolve(accessSurfacesRoot, file)) as SpecsFixtureSet["accessSurfaces"][number]
     ),

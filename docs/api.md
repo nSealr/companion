@@ -183,6 +183,7 @@ Exports:
 - `validateAccessSurfaceFixture`
 - `validateFeatureMatrixFixture`
 - `validateReviewTranscriptFixture`
+- `validateSourcePublicKeyProofFixture`
 
 Additional package subpaths:
 - `@nsealr/fixtures/specs-root`: `resolveSpecsRoot`

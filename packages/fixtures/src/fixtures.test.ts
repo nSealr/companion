@@ -5,7 +5,8 @@ import {
   loadSpecsFixtures,
   validateAccessSurfaceFixture,
   validateFeatureMatrixFixture,
-  validateReviewTranscriptFixture
+  validateReviewTranscriptFixture,
+  validateSourcePublicKeyProofFixture
 } from "./fixtures.js";
 import { resolveSpecsRoot } from "./specs-root.js";
 
@@ -221,6 +222,30 @@ describe("fixture loading", () => {
     ]);
     expect(fixtures.routeSelections[0].format).toBe("nsealr-route-selection-vector-v0");
     expect(fixtures.routeSelections[0].selection.contains_secret_material).toBe(false);
+  });
+
+  it("loads source public-key proof vectors from the specs repository", () => {
+    const specsRoot = resolveSpecsRoot();
+    const fixtures = loadSpecsFixtures(specsRoot);
+    const expectedNames = readdirSync(resolve(specsRoot, "vectors/source-public-key-proofs"))
+      .filter((file) => file.endsWith(".json"))
+      .map((file) => file.replace(/\.json$/u, ""))
+      .sort();
+
+    expect(fixtures.sourcePublicKeyProofs.map((proof) => proof.name)).toEqual(expectedNames);
+    expect(fixtures.sourcePublicKeyProofs.map((proof) => proof.proof_type)).toEqual(["nip06", "nip19_nsec"]);
+    for (const proof of fixtures.sourcePublicKeyProofs) {
+      expect(() => validateSourcePublicKeyProofFixture(proof.name, proof)).not.toThrow();
+      expect(JSON.stringify(proof)).not.toMatch(/mnemonic|secret_key|nsec1/u);
+    }
+  });
+
+  it("rejects source public-key proof fixtures that carry source secrets", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    const proof = structuredClone(fixtures.sourcePublicKeyProofs[0]) as Record<string, unknown>;
+    proof.secret_key = "1".repeat(64);
+
+    expect(() => validateSourcePublicKeyProofFixture(String(proof.name), proof)).toThrow(/must not contain source secret/u);
   });
 
   it("loads access-surface vectors from the specs repository", () => {

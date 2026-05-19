@@ -36,8 +36,8 @@ single-repository CI. Cross-repository drift remains guarded by
   vectors are discovered from the sibling specs checkout or local snapshot
   instead of being maintained in a hand-written name list.
   Account-descriptor, policy-profile, grant-descriptor, policy-change review,
-  policy-decision, and route-selection loading is also directory-driven through
-  `packages/policy`.
+  policy-decision, route-selection, and source public-key proof loading is also
+  directory-driven through package-owned fixture/policy code.
   QR review-transcript fixture validation also lives in this package and covers
   `scroll` buttons plus rendered-frame `body_line_styles` mismatch rejection,
   keeping `apps/cli` as a thin fixture-verification wrapper.
@@ -424,8 +424,8 @@ single-repository CI. Cross-repository drift remains guarded by
   payload fixtures, NIP-46 policy-file fixtures, NIP-46 connection URI
   fixtures, account descriptors, policy profiles, grant descriptors,
   policy-change review vectors, policy-decision vectors, route-selection
-  vectors, and access-surface vectors, plus the shared implementation-limit
-  profile and invalid hardening vectors.
+  vectors, source public-key proof vectors, and access-surface vectors, plus
+  the shared implementation-limit profile and invalid hardening vectors.
 - CLI policy-change review tests covering
   `nsealr policy review-change --proposal ... --out ...` against shared
   policy-change vectors, including deterministic output and no output after a

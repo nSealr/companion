@@ -98,8 +98,8 @@ packages, but it must not export test-only signing as a production path.
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, NIP-46 connection URI, account-descriptor,
   policy-profile, grant-descriptor, policy-change review, policy-decision,
-  route-selection, access-surface, feature-matrix, limit-profile, and invalid
-  hardening fixture loading.
+  route-selection, source public-key proof, access-surface, feature-matrix,
+  limit-profile, and invalid hardening fixture loading.
   Package code also owns QR review-transcript fixture validation, including
   `scroll` buttons and rendered-frame `body_line_styles`, so the CLI does not
   duplicate that contract.

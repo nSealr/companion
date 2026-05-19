@@ -12,9 +12,9 @@ Status: implemented as the first companion foundation with JSON and QR envelope
 CLI paths. Fixture verification now includes shared review-display-frame,
 review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
 NIP-46 connection URI, account-descriptor, policy-profile, grant-descriptor,
-policy-change review, policy-decision, limit-profile, and invalid hardening
-vectors in addition to event and trusted-review vectors. Policy-decision
-fixtures include explicit grant-usage snapshots for scoped automation
+policy-change review, policy-decision, source public-key proof, limit-profile,
+and invalid hardening vectors in addition to event and trusted-review vectors.
+Policy-decision fixtures include explicit grant-usage snapshots for scoped automation
 rate-limit decisions before any persistent grant store exists. Policy-change
 review fixtures pin manual persistent-device defaults plus digest-bound
 `set_policy` proposals before any authoritative device policy mutation exists.

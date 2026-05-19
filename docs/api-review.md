@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:82d5b0ba7fe07e9a26f2b4687c6ea765d61dff67c8bfd57dbaf1fe2ed3432bc1`
+API surface digest: `sha256:08f6bdf83e1b78919608daf49dc8f859e7d3d7824881d13cb0311b823ba13a50`
 
 Source: `docs/api.md`
 
@@ -114,6 +114,9 @@ Fixtures are conformance tooling for tests, repository integration, and example
 verification. This package can parse and load shared vector sets, but it does
 not define production signer behavior. It is acceptable as a public developer
 package only because it contains no production secret custody path.
+Source public-key proof fixture validation must remain secretless: it may load
+proof metadata, expected public keys, source fingerprints, and source-vector
+paths, but not mnemonic words, raw secret keys, or NIP-19 `nsec` payloads.
 
 ## @nsealr/framing
 

@@ -11,6 +11,7 @@
     },
     "now": 1710000300,
     "grant_ids": ["grant-esp32-usb-kind-1-session"],
+    "grant_usage": {},
     "revoked_grant_ids": []
   },
   "decision": {

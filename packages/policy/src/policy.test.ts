@@ -127,15 +127,12 @@ describe("identity, recovery, and policy contracts", () => {
   it("matches shared policy decision vectors without a persistent grant store", () => {
     const policy = parsePolicyProfile(loadJson(resolve(specsRoot, "vectors/policies/scoped-automation-daily-use.json")));
     const grant = parseGrantDescriptor(loadJson(resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json")));
-    const vectorNames = [
-      "export-secret-denied",
-      "grant-sign-event-kind-1-allowed",
-      "grant-sign-event-kind-1-expired",
-      "grant-sign-event-kind-1-revoked",
-      "nip44-decrypt-manual-review",
-      "unknown-method-manual-review"
-    ];
+    const vectorNames = readdirSync(resolve(specsRoot, "vectors/policy-decisions"))
+      .filter((name) => name.endsWith(".json"))
+      .map((name) => name.replace(/\.json$/u, ""))
+      .sort();
 
+    expect(vectorNames.length).toBeGreaterThan(0);
     for (const name of vectorNames) {
       const vector = loadJson(resolve(specsRoot, `vectors/policy-decisions/${name}.json`)) as {
         request: Parameters<typeof decidePolicyRequest>[0]["request"];

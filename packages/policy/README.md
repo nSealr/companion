@@ -42,6 +42,7 @@ const decision = decidePolicyRequest({
     permission: { method: "sign_event", parameter: "1", event_kind: 1 },
     now: 1_710_000_000,
     grant_ids: [],
+    grant_usage: {},
     revoked_grant_ids: []
   }
 });
@@ -51,8 +52,10 @@ assert.equal(decision.decision, "manual_review");
 
 ## Boundary
 
-Policy records are internal nSealr records, not Nostr events. This package does
-not store persistent grants, approve device policy changes, or hold production
-mnemonics, passphrases, `nsec` values, or decrypted signing material. Route
-selection returns metadata from account descriptors; it does not open
-transports, create grants, or sign events.
+Policy records are internal nSealr records, not Nostr events. Grant decisions
+consume explicit per-grant usage snapshots for rate-limit checks; this package
+does not store the usage history itself. It does not store persistent grants,
+approve device policy changes, or hold production mnemonics, passphrases,
+`nsec` values, or decrypted signing material. Route selection returns metadata
+from account descriptors; it does not open transports, create grants, or sign
+events.

@@ -239,6 +239,7 @@ Exports:
 - `AccountDescriptor`
 - `GrantDescriptor`
 - `GrantPermission`
+- `GrantUsageSnapshot`
 - `PolicyDecision`
 - `PolicyDecisionRequest`
 - `PolicyProfile`

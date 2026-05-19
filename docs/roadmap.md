@@ -13,7 +13,9 @@ CLI paths. Fixture verification now includes shared review-display-frame,
 review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
 NIP-46 connection URI, account-descriptor, policy-profile, grant-descriptor,
 policy-decision, limit-profile, and invalid hardening vectors in addition to
-event and trusted-review vectors. The
+event and trusted-review vectors. Policy-decision fixtures include explicit
+grant-usage snapshots for scoped automation rate-limit decisions before any
+persistent grant store exists. The
 shared invalid-vector set now includes strict response-shape rejection for
 ambiguous result payloads, error/result mixing, and unknown top-level response
 fields, plus contradictory signing-status readiness where a device claims

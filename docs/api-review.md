@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:7872f32bf384b196ef59e99c3311f83ed7cd700a5d72d5d5cfff729f539a5fc1`
+API surface digest: `sha256:246923cf4e1f98ea8ea3fa3af00dd377c87c09d67a8d516d20a8e67348b1b162`
 
 Source: `docs/api.md`
 
@@ -144,8 +144,10 @@ Policy descriptors are internal nSealr records rather than Nostr events. The
 package rejects embedded secret fields, QR-vault automation, wildcard grants,
 decrypt/export grants, and invalid route targets. It also exposes pure
 secretless account-route request parsing and selection from parsed descriptors
-and supported methods. Persistent grant storage, device policy-change approval
-UX, signer dispatch, and account custody remain outside this package.
+and supported methods, plus deterministic expiry, revocation, and rate-limit
+decisions from explicit grant-usage snapshots. Persistent grant storage, usage
+history storage, device policy-change approval UX, signer dispatch, and
+account custody remain outside this package.
 
 ## @nsealr/protocol
 

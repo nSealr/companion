@@ -78,6 +78,11 @@ export type GrantDescriptor = {
   audit_event_format: "nsealr-grant-audit-event-v0";
 };
 
+export type GrantUsageSnapshot = {
+  window_started_at: number;
+  uses: number;
+};
+
 export type PolicyDecisionRequest = {
   account_id: string;
   route_type: RouteType;
@@ -85,6 +90,7 @@ export type PolicyDecisionRequest = {
   permission: GrantPermission;
   now: number;
   grant_ids: string[];
+  grant_usage: Record<string, GrantUsageSnapshot>;
   revoked_grant_ids: string[];
 };
 
@@ -95,6 +101,7 @@ export type PolicyDecision = {
     | "decrypt_requires_manual_review"
     | "forbidden_permission"
     | "grant_expired"
+    | "grant_rate_limited"
     | "grant_revoked"
     | "grant_valid"
     | "no_matching_grant"
@@ -552,6 +559,13 @@ function permissionsMatch(grantPermission: GrantPermission, requestPermission: G
   return grantPermission.parameter === undefined && grantPermission.event_kind === undefined;
 }
 
+function isGrantRateLimited(grant: GrantDescriptor, request: PolicyDecisionRequest): boolean {
+  const usage = request.grant_usage[grant.grant_id];
+  if (usage === undefined) return false;
+  const windowEndsAt = usage.window_started_at + grant.rate_limit.window_seconds;
+  return request.now < windowEndsAt && usage.uses >= grant.rate_limit.max_uses;
+}
+
 function buildPolicyDecision(
   request: PolicyDecisionRequest,
   decision: PolicyDecision["decision"],
@@ -610,6 +624,9 @@ export function decidePolicyRequest(input: {
     }
     if (request.now >= grant.expires_at) {
       return buildPolicyDecision(request, "deny", "grant_expired", grant.grant_id);
+    }
+    if (isGrantRateLimited(grant, request)) {
+      return buildPolicyDecision(request, "deny", "grant_rate_limited", grant.grant_id);
     }
     return buildPolicyDecision(request, "allow", "grant_valid", grant.grant_id);
   }

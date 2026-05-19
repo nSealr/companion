@@ -179,16 +179,14 @@ describe("fixture loading", () => {
   });
 
   it("loads policy decision vectors from the specs repository", () => {
-    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    const specsRoot = resolveSpecsRoot();
+    const fixtures = loadSpecsFixtures(specsRoot);
+    const expectedNames = readdirSync(resolve(specsRoot, "vectors/policy-decisions"))
+      .filter((file) => file.endsWith(".json"))
+      .map((file) => file.replace(/\.json$/u, ""))
+      .sort();
 
-    expect(fixtures.policyDecisions.map((decision) => decision.name)).toEqual([
-      "export-secret-denied",
-      "grant-sign-event-kind-1-allowed",
-      "grant-sign-event-kind-1-expired",
-      "grant-sign-event-kind-1-revoked",
-      "nip44-decrypt-manual-review",
-      "unknown-method-manual-review"
-    ]);
+    expect(fixtures.policyDecisions.map((decision) => decision.name)).toEqual(expectedNames);
     expect(fixtures.policyDecisions[0].format).toBe("nsealr-policy-decision-vector-v0");
   });
 

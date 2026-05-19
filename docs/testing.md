@@ -413,10 +413,10 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI fixture verification tests against `nSealr/specs`, covering both
   signed-event fixtures, trusted-review fixtures, review-display-frame
   fixtures, review-detail-page fixtures, QR review-transcript fixtures, NIP-46
-  payload fixtures, NIP-46 policy-file fixtures, account descriptors, policy
-  profiles, grant descriptors, policy-decision vectors, route-selection
-  vectors, and access-surface vectors, plus the shared implementation-limit
-  profile and invalid hardening vectors.
+  payload fixtures, NIP-46 policy-file fixtures, NIP-46 connection URI
+  fixtures, account descriptors, policy profiles, grant descriptors,
+  policy-decision vectors, route-selection vectors, and access-surface vectors,
+  plus the shared implementation-limit profile and invalid hardening vectors.
 - CLI fixture verification rejects review detail-page style drift, including
   unknown body-line style names and continuation lines that are not styled as
   `value`.
@@ -498,6 +498,11 @@ single-repository CI. Cross-repository drift remains guarded by
   secret-value echo, requested permissions, and rejection of signer-transport
   routing for `connect`. The shared specs fixture suite now includes a
   `connect` policy-review intent and review-page vector.
+- NIP-46 connection-token parser tests covering `bunker://` and
+  `nostrconnect://` descriptor parsing, relay validation, requested
+  permissions, optional client metadata, required `nostrconnect` secret
+  presence, unsupported parameter rejection, and proof that descriptor output
+  does not echo shared secret values.
 - NIP-46 permission matching tests covering derived `sign_event:<kind>`
   requirements, broad `sign_event` grants, method-only grants, denied requests,
   and `connect` exclusion from post-connect request permissions. The CLI fixture

@@ -8,6 +8,7 @@ import {
   isNip46RequestPermitted,
   nip46ResponseFromNSealr,
   nip46PermissionRequirementFromRequest,
+  parseNip46ConnectionUri,
   parseNip46ConnectIntent,
   parseNip46PolicyFile,
   nsealrRequestFromNip46,
@@ -163,6 +164,60 @@ describe("NIP-46 bridge payloads", () => {
     const policy = load("vectors/nip46-policy-files/sign-event-kind-1-approved.json");
 
     expect(parseNip46PolicyFile(policy)).toEqual([{ method: "sign_event", parameter: "1", event_kind: 1 }]);
+  });
+
+  it("matches shared NIP-46 connection URI descriptor vectors", () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+
+    expect(fixtures.nip46ConnectionUris.map((vector) => vector.name)).toEqual([
+      "bunker-remote-signer-token",
+      "nostrconnect-client-token"
+    ]);
+    for (const vector of fixtures.nip46ConnectionUris) {
+      const descriptor = parseNip46ConnectionUri(vector.uri);
+      expect(descriptor).toEqual(vector.expected_descriptor);
+      expect(JSON.stringify(descriptor)).not.toContain(vector.secret_probe);
+    }
+  });
+
+  it("rejects unsafe or ambiguous NIP-46 connection URIs", () => {
+    const pubkey = "c".repeat(64);
+
+    expect(() => parseNip46ConnectionUri(`https://${pubkey}?relay=wss%3A%2F%2Frelay.example.com`)).toThrow(
+      /scheme/u
+    );
+    expect(() => parseNip46ConnectionUri(`bunker://${pubkey}?relay=https%3A%2F%2Frelay.example.com`)).toThrow(
+      /wss URL/u
+    );
+    expect(() => parseNip46ConnectionUri(`bunker://${pubkey}`)).toThrow(/at least one relay/u);
+    expect(() =>
+      parseNip46ConnectionUri(`bunker://bad-pubkey?relay=${encodeURIComponent("wss://relay.example.com")}`)
+    ).toThrow(/remote-signer pubkey/u);
+    expect(() =>
+      parseNip46ConnectionUri(
+        `bunker://${pubkey}?relay=${encodeURIComponent("wss://relay.example.com")}` +
+          `&relay=${encodeURIComponent("wss://relay.example.com")}`
+      )
+    ).toThrow(/relays must be unique/u);
+    expect(() =>
+      parseNip46ConnectionUri(`nostrconnect://${pubkey}?relay=${encodeURIComponent("wss://relay.example.com")}`)
+    ).toThrow(/requires a secret/u);
+    expect(() =>
+      parseNip46ConnectionUri(
+        `nostrconnect://${pubkey}?relay=${encodeURIComponent("wss://relay.example.com")}&secret=secret` +
+          `&perms=${encodeURIComponent("sign_event:not-a-kind")}`
+      )
+    ).toThrow(/sign_event permission kind/u);
+    expect(() =>
+      parseNip46ConnectionUri(
+        `bunker://${pubkey}?relay=${encodeURIComponent("wss://relay.example.com")}&perms=sign_event%3A1`
+      )
+    ).toThrow(/bunker URI/u);
+    expect(() =>
+      parseNip46ConnectionUri(
+        `nostrconnect://${pubkey}?relay=${encodeURIComponent("wss://relay.example.com")}&secret=secret&unknown=1`
+      )
+    ).toThrow(/unsupported query parameter/u);
   });
 
   it("rejects shared invalid NIP-46 hardening vectors deterministically", () => {

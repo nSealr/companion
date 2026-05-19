@@ -202,7 +202,7 @@ Exports:
 
 ## @nsealr/nip46
 
-Already-decrypted NIP-46 bridge and permission-review helpers for nSealr companion.
+Already-decrypted NIP-46 bridge, connection-token descriptor, and permission-review helpers for nSealr companion.
 
 Source entrypoint: `packages/nip46/src/index.ts`
 
@@ -210,6 +210,7 @@ Exports:
 - `Nip46BridgeDecision`
 - `Nip46ConnectIntent`
 - `Nip46ConnectReview`
+- `Nip46ConnectionUriDescriptor`
 - `Nip46Permission`
 - `Nip46PermissionRequirement`
 - `Nip46RequestMessage`
@@ -221,6 +222,7 @@ Exports:
 - `nip46ResponseFromNSealr`
 - `nsealrRequestFromNip46`
 - `parseNip46ConnectIntent`
+- `parseNip46ConnectionUri`
 - `parseNip46Permissions`
 - `parseNip46PolicyFile`
 - `respondToLocalNip46Request`

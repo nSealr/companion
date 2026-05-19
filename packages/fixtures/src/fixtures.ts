@@ -194,6 +194,14 @@ export type SpecsFixtureSet = {
       event_kind?: number;
     }>;
   }>;
+  nip46ConnectionUris: Array<{
+    name: string;
+    format: "nsealr-nip46-connection-uri-v0";
+    uri: string;
+    secret_probe: string;
+    expected_descriptor: unknown;
+    scope: string;
+  }>;
   accounts: AccountDescriptor[];
   policyProfiles: PolicyProfile[];
   grants: GrantDescriptor[];
@@ -574,6 +582,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const reviewTranscriptsRoot = resolve(specsRoot, "vectors/review-transcripts");
   const nip46Root = resolve(specsRoot, "vectors/nip46");
   const nip46PolicyFilesRoot = resolve(specsRoot, "vectors/nip46-policy-files");
+  const nip46ConnectionUrisRoot = resolve(specsRoot, "vectors/nip46-connection-uris");
   const accountsRoot = resolve(specsRoot, "vectors/accounts");
   const policyProfilesRoot = resolve(specsRoot, "vectors/policies");
   const grantsRoot = resolve(specsRoot, "vectors/grants");
@@ -604,6 +613,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const nip46PolicyFiles = readdirSync(nip46PolicyFilesRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const nip46ConnectionUriFiles = readdirSync(nip46ConnectionUrisRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const accountFiles = readdirSync(accountsRoot)
@@ -660,6 +672,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
           ...(loadJson(resolve(nip46PolicyFilesRoot, file)) as Record<string, unknown>),
           name: fileStem(file)
         }) as SpecsFixtureSet["nip46PolicyFiles"][number]
+    ),
+    nip46ConnectionUris: nip46ConnectionUriFiles.map(
+      (file) => loadJson(resolve(nip46ConnectionUrisRoot, file)) as SpecsFixtureSet["nip46ConnectionUris"][number]
     ),
     accounts,
     policyProfiles,

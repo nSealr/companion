@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:0919607e5bbe400d198f440083d98b156a5b816d0e63b85c26f8ec555910744a`
+API surface digest: `sha256:7872f32bf384b196ef59e99c3311f83ed7cd700a5d72d5d5cfff729f539a5fc1`
 
 Source: `docs/api.md`
 
@@ -23,9 +23,10 @@ Source: `docs/api.md`
 - Companion APIs may prepare requests, validate payloads, verify responses,
   render untrusted review previews, and route to signers. Trusted review and
   approval remain signer-route responsibilities.
-- NIP-46 APIs currently handle already-decrypted payloads only. Relay sessions,
-  NIP-44 encryption, persistent grants, and browser extension packaging remain
-  outside this reviewed surface.
+- NIP-46 APIs currently handle the already-decrypted payload bridge plus
+  descriptor-only connection URI parsing. Relay sessions, NIP-44 encryption,
+  `connect` acknowledgements, persistent grants, and browser extension
+  packaging remain outside this reviewed surface.
 
 ## @nsealr/browser-provider
 
@@ -128,10 +129,12 @@ future host transports.
 Status: reviewed for pre-alpha.
 
 The NIP-46 package converts already-decrypted messages into nSealr decisions or
-deterministic local responses, parses connect review intents, parses read-only
-policy files, and enforces permission checks. It deliberately excludes relay
-sessions, NIP-44 encryption/decryption, persistent grants, connect
-acknowledgement, browser storage, and signer I/O.
+deterministic local responses, parses connect review intents, parses
+descriptor-only `bunker://` and `nostrconnect://` connection URI metadata,
+parses read-only policy files, and enforces permission checks. The connection
+URI parser records only secret presence, not the secret value. It deliberately
+excludes relay sessions, NIP-44 encryption/decryption, persistent grants,
+connect acknowledgement, browser storage, and signer I/O.
 
 ## @nsealr/policy
 

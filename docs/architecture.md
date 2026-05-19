@@ -96,9 +96,10 @@ packages, but it must not export test-only signing as a production path.
   callers can treat them as accepted output.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
-  payload, NIP-46 policy-file, account-descriptor, policy-profile,
-  grant-descriptor, policy-decision, route-selection, access-surface,
-  feature-matrix, limit-profile, and invalid hardening fixture loading.
+  payload, NIP-46 policy-file, NIP-46 connection URI, account-descriptor,
+  policy-profile, grant-descriptor, policy-decision, route-selection,
+  access-surface, feature-matrix, limit-profile, and invalid hardening fixture
+  loading.
   Package code also owns QR review-transcript fixture validation, including
   `scroll` buttons and rendered-frame `body_line_styles`, so the CLI does not
   duplicate that contract.
@@ -914,9 +915,10 @@ type error. It is not a real-card compatibility claim.
 ## NIP-46 Bridge Boundary
 
 The first NIP-46 module handles only already-decrypted JSON-RPC-like payloads
-from NIP-46 kind `24133` content. It does not implement relay subscriptions,
-NIP-44 encryption/decryption, connection tokens, permission persistence, or auth
-challenge UX.
+from NIP-46 kind `24133` content plus descriptor-only parsing for official
+`bunker://` and `nostrconnect://` connection tokens. It does not implement
+relay subscriptions, NIP-44 encryption/decryption, connection
+acknowledgements, permission persistence, or auth challenge UX.
 
 The bridge maps `get_public_key` and `sign_event` messages into standard
 nSealr v1 requests so any signer transport can handle them behind the same
@@ -961,6 +963,16 @@ review intent and deterministic review pages, but it does not return `ack`,
 echo secrets, persist grants, or authorize a client. A later policy layer must
 review and explicitly approve that intent. The same boundary is now covered by
 a shared `nSealr/specs` NIP-46 vector and `nsealr fixture verify`.
+
+Connection-token parsing follows the same boundary. `bunker://` descriptors
+validate the remote-signer pubkey and relay list for a client that wants to
+talk to an external signer; `nostrconnect://` descriptors validate the client
+pubkey, required secret presence, relay list, optional client metadata, and
+requested permissions for a signer that is being asked to approve a client.
+The returned descriptor intentionally includes only `secret_present`, never the
+secret value. Parsing a token does not subscribe to relays, derive a NIP-44
+session key, return a NIP-46 acknowledgement, create a grant, or choose a
+signer route.
 
 ## QR Envelope
 

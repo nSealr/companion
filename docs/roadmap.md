@@ -11,9 +11,9 @@
 Status: implemented as the first companion foundation with JSON and QR envelope
 CLI paths. Fixture verification now includes shared review-display-frame,
 review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
-account-descriptor, policy-profile, grant-descriptor, policy-decision,
-limit-profile, and invalid hardening vectors in addition to event and
-trusted-review vectors. The
+NIP-46 connection URI, account-descriptor, policy-profile, grant-descriptor,
+policy-decision, limit-profile, and invalid hardening vectors in addition to
+event and trusted-review vectors. The
 shared invalid-vector set now includes strict response-shape rejection for
 ambiguous result payloads, error/result mixing, and unknown top-level response
 fields, plus contradictory signing-status readiness where a device claims
@@ -96,6 +96,8 @@ production-grade browser/native USB/WebSerial binding.
   review, and denied permissions.
 - CLI decision harness for already-decrypted NIP-46 payloads.
 - Read-only policy-file input for the CLI decision harness.
+- Descriptor-only parsing for official `bunker://` and `nostrconnect://`
+  connection tokens, without relay sessions or secret echo.
 
 Status: the first decrypted-payload bridge is implemented in `packages/nip46`.
 It consumes shared `nSealr/specs` NIP-46 payload vectors through unit tests
@@ -113,7 +115,10 @@ line or from a `nsealr-nip46-policy-v0` policy file pinned by shared specs
 vectors, but neither command creates, updates, approves, or persists grants by
 itself. Policy-file parsing is now package-owned in `packages/nip46`, leaving
 the CLI as a file/argument adapter. These paths also do not add relay,
-encryption, or signer I/O.
+encryption, or signer I/O. The package now also validates `bunker://` and
+`nostrconnect://` connection tokens into non-secret descriptors for later UI
+and session work; the parser records only whether a secret was present and does
+not acknowledge a connection, open relays, or create grants.
 Relay sessions, NIP-44 encryption/decryption, connection token responses,
 permission storage, grant review, and auth challenge UX remain future work.
 
@@ -605,7 +610,9 @@ without publishing to npm.
   tarball artifacts with byte counts and SHA-256 digests without npm
   publication. Actual npm trusted publishing/provenance activation remains
   pending.
-- M5 full NIP-46/Nostr Connect relay session integration.
+- M5 full NIP-46/Nostr Connect relay session integration after reviewed
+  connection acknowledgement, NIP-44 session handling, grants, and auth
+  challenges are specified.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and
   `SmartcardSigner` boundary.

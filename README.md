@@ -32,8 +32,9 @@ match the shared `contract_id`.
 
 - `nsealr fixture verify` validates shared signing, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
-  payload, NIP-46 policy-file, account descriptor, policy profile, grant
-  descriptor, policy-decision, and feature-matrix fixtures from
+  payload, NIP-46 policy-file, NIP-46 connection URI, account descriptor,
+  policy profile, grant descriptor, policy-decision, and feature-matrix
+  fixtures from
   `nSealr/specs`, including NIP-46 permission policy checks, bridge
   decisions, implementation limits, feature conformance contracts, and invalid
   hardening vectors.
@@ -308,10 +309,10 @@ match the shared `contract_id`.
   signing-disabled scaffold responses.
 - `packages/fixtures` loads shared event, trusted-review, review-display-frame,
   review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
-  account-descriptor, policy-profile, grant-descriptor, policy-decision,
-  route-selection, access-surface, feature-matrix, and smartcard vectors from
-  `nSealr/specs` for companion, Raspberry QR vault, ESP32 firmware, and
-  smartcard conformance tests.
+  NIP-46 connection URI, account-descriptor, policy-profile,
+  grant-descriptor, policy-decision, route-selection, access-surface,
+  feature-matrix, and smartcard vectors from `nSealr/specs` for companion,
+  Raspberry QR vault, ESP32 firmware, and smartcard conformance tests.
 - `packages/policy` parses secretless account descriptors, policy profiles, and
   grant descriptors, selects secretless account-route metadata, then evaluates
   policy-decision transcript vectors without a persistent grant store. It
@@ -336,12 +337,15 @@ match the shared `contract_id`.
   `get_public_key`, `sign_event`, local `ping`, and nSealr response mapping.
   It also parses `connect` requests into policy-review intents and deterministic
   review pages, validates requested permission strings, and owns the read-only
-  policy-file parser used by the CLI. Shared specs vectors now pin the derived
+  policy-file parser used by the CLI. It can also parse official `bunker://`
+  and `nostrconnect://` connection tokens into descriptor-only metadata for
+  later UX, validating relays, requested permissions, and client metadata while
+  retaining only secret presence. Shared specs vectors now pin the derived
   permission requirements, positive/negative permission checks, bridge
   decisions, `connect` review pages, and invalid payload rejection for signer
   routing, local response routing, `connect` review, and permission-denied
-  responses. Relay transport, NIP-44 encryption, persistent permission grants,
-  and auth flows remain future work.
+  responses. Relay transport, NIP-44 encryption, `connect` acknowledgement,
+  persistent permission grants, and auth flows remain future work.
 
 ## Planned Capabilities
 

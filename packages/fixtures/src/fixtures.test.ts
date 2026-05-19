@@ -143,6 +143,18 @@ describe("fixture loading", () => {
     expect(fixtures.nip46PolicyFiles[0].format).toBe("nsealr-nip46-policy-v0");
   });
 
+  it("loads NIP-46 connection URI vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    expect(fixtures.nip46ConnectionUris.map((vector) => vector.name)).toEqual([
+      "bunker-remote-signer-token",
+      "nostrconnect-client-token"
+    ]);
+    expect(fixtures.nip46ConnectionUris[0].format).toBe("nsealr-nip46-connection-uri-v0");
+    expect(JSON.stringify(fixtures.nip46ConnectionUris[0].expected_descriptor)).not.toContain(
+      fixtures.nip46ConnectionUris[0].secret_probe
+    );
+  });
+
   it("loads identity, policy, and grant descriptors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
 

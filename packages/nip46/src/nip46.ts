@@ -27,6 +27,25 @@ export type Nip46ConnectIntent = {
   requested_permissions: Nip46Permission[];
 };
 
+export type Nip46ConnectionUriDescriptor = {
+  format: "nsealr-nip46-connection-uri-v0";
+  kind: "bunker" | "nostrconnect";
+  remote_signer_pubkey?: string;
+  client_pubkey?: string;
+  relays: string[];
+  secret_present: boolean;
+  requested_permissions: Nip46Permission[];
+  client_metadata?: {
+    name?: string;
+    url?: string;
+    image?: string;
+  };
+  starts_relay_session: false;
+  creates_grants: false;
+  stores_production_secrets: false;
+  exposes_secret: false;
+};
+
 export type Nip46ConnectReview = {
   format: "nsealr-nip46-connect-review-v0";
   id: string;
@@ -72,6 +91,8 @@ const NIP46_PERMISSION_METHODS = new Set([
   "switch_relays"
 ]);
 
+const NIP46_CONNECTION_URI_PARAMS = new Set(["relay", "secret", "perms", "name", "url", "image"]);
+
 type NSealrBridgeRequest =
   | {
       version: 1;
@@ -103,6 +124,39 @@ function requireXOnlyPubkey(value: unknown, label: string): string {
     throw new Error(`NIP-46 ${label} must be 32-byte lowercase hex`);
   }
   return value;
+}
+
+function requireSingleQueryParam(params: URLSearchParams, name: string): string | undefined {
+  const values = params.getAll(name);
+  if (values.length > 1) throw new Error(`NIP-46 connection URI ${name} must appear at most once`);
+  return values[0];
+}
+
+function requireRelayUrl(value: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch (error) {
+    throw new Error("NIP-46 connection URI relay must be a valid URL");
+  }
+  if (parsed.protocol !== "wss:" || parsed.username !== "" || parsed.password !== "" || parsed.hash !== "") {
+    throw new Error("NIP-46 connection URI relay must be a wss URL without credentials or fragment");
+  }
+  if (parsed.hostname === "") throw new Error("NIP-46 connection URI relay host is required");
+  return parsed.toString();
+}
+
+function requireOptionalHttpUrl(value: string, name: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch (error) {
+    throw new Error(`NIP-46 connection URI ${name} must be a valid URL`);
+  }
+  if ((parsed.protocol !== "https:" && parsed.protocol !== "http:") || parsed.username !== "" || parsed.password !== "") {
+    throw new Error(`NIP-46 connection URI ${name} must be an http(s) URL without credentials`);
+  }
+  return parsed.toString();
 }
 
 function requireMessage(value: unknown): Nip46RequestMessage {
@@ -207,6 +261,83 @@ export function parseNip46PolicyFile(policy: unknown, context = "NIP-46 policy f
     throw new Error(`${context}: approved_permissions must be a list`);
   }
   return policy.approved_permissions.map((permission) => parseNip46PolicyPermission(permission, context));
+}
+
+export function parseNip46ConnectionUri(value: string): Nip46ConnectionUriDescriptor {
+  if (typeof value !== "string" || value.trim() !== value || value.length === 0) {
+    throw new Error("NIP-46 connection URI must be a non-empty trimmed string");
+  }
+
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch (error) {
+    throw new Error("NIP-46 connection URI is invalid");
+  }
+
+  const kind = url.protocol === "bunker:" ? "bunker" : url.protocol === "nostrconnect:" ? "nostrconnect" : undefined;
+  if (kind === undefined) throw new Error("NIP-46 connection URI scheme must be bunker or nostrconnect");
+  if (url.username !== "" || url.password !== "" || url.pathname !== "" || url.hash !== "") {
+    throw new Error("NIP-46 connection URI must not include credentials, path, or fragment");
+  }
+
+  for (const key of url.searchParams.keys()) {
+    if (!NIP46_CONNECTION_URI_PARAMS.has(key)) {
+      throw new Error(`NIP-46 connection URI unsupported query parameter: ${key}`);
+    }
+  }
+
+  const relays = url.searchParams.getAll("relay").map(requireRelayUrl);
+  if (relays.length === 0) throw new Error("NIP-46 connection URI requires at least one relay");
+  if (new Set(relays).size !== relays.length) throw new Error("NIP-46 connection URI relays must be unique");
+
+  const secret = requireSingleQueryParam(url.searchParams, "secret");
+  const perms = requireSingleQueryParam(url.searchParams, "perms");
+  const name = requireSingleQueryParam(url.searchParams, "name");
+  const clientUrl = requireSingleQueryParam(url.searchParams, "url");
+  const image = requireSingleQueryParam(url.searchParams, "image");
+
+  if (kind === "bunker") {
+    if (perms !== undefined || name !== undefined || clientUrl !== undefined || image !== undefined) {
+      throw new Error("NIP-46 bunker URI must not include client metadata or requested permissions");
+    }
+    return {
+      format: "nsealr-nip46-connection-uri-v0",
+      kind,
+      remote_signer_pubkey: requireXOnlyPubkey(url.hostname, "bunker remote-signer pubkey"),
+      relays,
+      secret_present: secret !== undefined && secret !== "",
+      requested_permissions: [],
+      starts_relay_session: false,
+      creates_grants: false,
+      stores_production_secrets: false,
+      exposes_secret: false
+    };
+  }
+
+  if (secret === undefined || secret === "") {
+    throw new Error("NIP-46 nostrconnect URI requires a secret");
+  }
+
+  return {
+    format: "nsealr-nip46-connection-uri-v0",
+    kind,
+    client_pubkey: requireXOnlyPubkey(url.hostname, "nostrconnect client pubkey"),
+    relays,
+    secret_present: true,
+    requested_permissions: perms !== undefined ? parseNip46Permissions(perms) : [],
+    ...((name !== undefined || clientUrl !== undefined || image !== undefined) && {
+      client_metadata: {
+        ...(name !== undefined && { name }),
+        ...(clientUrl !== undefined && { url: requireOptionalHttpUrl(clientUrl, "url") }),
+        ...(image !== undefined && { image: requireOptionalHttpUrl(image, "image") })
+      }
+    }),
+    starts_relay_session: false,
+    creates_grants: false,
+    stores_production_secrets: false,
+    exposes_secret: false
+  };
 }
 
 export function parseNip46ConnectIntent(value: unknown): Nip46ConnectIntent {

@@ -249,11 +249,14 @@ by grant-store writes, while still avoiding default storage locations,
 production persistence, relay sessions, browser installation, or production
 signer-driver acceptance.
 
-Status note, 2026-05-18: native-host install plans are now digest-bound, and
-the private `@nsealr/service` app can render native-host install approval JSON
-only after the caller supplies the reviewed install digest. The approval remains
-artifact-only with `writes_files=false`; actual native-host manifest writing is
-still a separate installation-execution gate.
+Status note, 2026-05-19: native-host install plans are now digest-bound and
+explicit about both the parent directory to ensure and the manifest file to
+write. The private `@nsealr/service` app can render native-host install
+approval JSON only after the caller supplies the reviewed install digest. The
+approval remains artifact-only with `writes_files=false`; the separate
+`--native-host-install-execute` path verifies the approval digest again, creates
+only the reviewed parent directory, and writes only the reviewed manifest path
+with exclusive create semantics.
 
 Status note, 2026-05-11: the companion identity/policy boundary now follows
 the official account model. Account metadata is per resulting public key and
@@ -350,7 +353,8 @@ and uploads checked tarball artifacts without publishing to npm.
   artifact builders now require those approvals to cover their input/output
   paths before writing, and they refuse existing output files.
   Remaining work is full approval UI, default production storage activation,
-  production driver acceptance, and native-host installation execution.
+  production driver acceptance, and production installer UX around the approved
+  native-host manifest writer.
   The M4.7 threat model selects native messaging for browser alpha; localhost
   HTTP/WebSocket remains research-only until origin binding, CSRF/DNS rebinding
   resistance, pairing, rate limits, app suspension, and kill-switch behavior are

@@ -177,10 +177,13 @@ packages, but it must not export test-only signing as a production path.
   serial-line developer dispatch, returns deterministic native-frame errors,
   and can print validated Chromium/Firefox native-host manifest JSON plus
   digest-bound dry-run install-plan and install-approval JSON through the
-  shared `@nsealr/client` manifest builder.
-  It is intentionally secretless and does not yet install manifest files, write
-  grant/account storage, perform production grant persistence, open relays, or
-  include default or production signer transport drivers.
+  shared `@nsealr/client` manifest builder. Its explicit install-execution path
+  verifies the approval digest again, ensures only the reviewed parent
+  directory, and writes only the reviewed manifest path with exclusive create
+  semantics.
+  It is intentionally secretless and does not write grant/account storage,
+  perform production grant persistence, open relays, or include default or
+  production signer transport drivers.
 
 Each reusable package has its own `package.json`, source `src/index.ts`
 entrypoint, and built `dist` JS/declaration export. Cross-package source imports
@@ -282,8 +285,10 @@ request. It can also generate validated Chromium/Firefox native-host manifest
 JSON, digest-bound dry-run install-plan JSON, and digest-confirmed
 install-approval JSON with explicit host path, manifest path, extension id,
 and reviewed install digest inputs through the shared `@nsealr/client`
-manifest builder; the service app only owns CLI argument parsing and stdout
-rendering for that contract. `@nsealr/client` also defines
+manifest builder. The service app also exposes a separate digest-confirmed
+install-execution wrapper that writes only the reviewed manifest path with
+exclusive create semantics; planning and approval paths remain JSON-only.
+`@nsealr/client` also defines
 the persistent grant-store JSON contract used to serialize approved and revoked
 local client grants without secret material. The private service app can now
 load explicit read-only grant/account context files for local harnesses only
@@ -295,9 +300,11 @@ contain keys, does not approve clients, does not choose default paths, and does
 not make QR vaults connected signers. Serial-line open, timeout, protocol, I/O,
 close, and fallback failures are normalized into deterministic local-service
 transport error codes before they cross the service boundary.
-Install approvals still keep `writes_files=false`; manifest installation,
-default storage locations, file writes, relay sessions, browser packaging, and
-production driver acceptance remain separate gates.
+Install approvals still keep `writes_files=false`; install execution is a
+separate digest-confirmed gate that reports `writes_files=true` only after the
+reviewed manifest writer runs. Default storage locations, grant/account file
+writes, relay sessions, browser packaging, and production driver acceptance
+remain separate gates.
 
 The browser-provider package is intentionally one layer above this service
 boundary. Each provider instance is bound to a client identity so the future

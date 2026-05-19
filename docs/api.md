@@ -86,12 +86,15 @@ Exports:
 - `MAX_SERVICE_JSON_BYTES`
 - `NATIVE_HOST_DESCRIPTION`
 - `NATIVE_HOST_INSTALL_APPROVAL_FORMAT`
+- `NATIVE_HOST_INSTALL_EXECUTION_FORMAT`
 - `NATIVE_HOST_INSTALL_PLAN_FORMAT`
 - `NATIVE_HOST_NAME`
 - `NATIVE_MESSAGE_LENGTH_BYTES`
 - `NativeHostBrowser`
 - `NativeHostInstallApproval`
 - `NativeHostInstallApprovalOptions`
+- `NativeHostInstallExecution`
+- `NativeHostInstallExecutionOptions`
 - `NativeHostInstallPlan`
 - `NativeHostInstallPlanOptions`
 - `NativeHostManifest`
@@ -121,6 +124,7 @@ Exports:
 - `createRouteDispatcher`
 - `decodeNativeMessage`
 - `encodeNativeMessage`
+- `executeNativeHostInstallApproval`
 - `handleLocalServiceRequest`
 - `handleLocalServiceRequestAsync`
 - `parseLocalClientIdentity`
@@ -131,6 +135,7 @@ Exports:
 - `parseLocalStorageReview`
 - `parseLocalStorageReviewEntry`
 - `parseNativeHostInstallApproval`
+- `parseNativeHostInstallExecution`
 - `parseNativeHostInstallPlan`
 - `parsePairingIntent`
 - `requireLocalStorageApprovalEntry`

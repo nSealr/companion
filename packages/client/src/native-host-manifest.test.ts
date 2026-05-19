@@ -1,19 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
   NATIVE_HOST_INSTALL_APPROVAL_FORMAT,
+  NATIVE_HOST_INSTALL_EXECUTION_FORMAT,
   NATIVE_HOST_DESCRIPTION,
   NATIVE_HOST_INSTALL_PLAN_FORMAT,
   NATIVE_HOST_NAME,
   approveNativeHostInstallPlan,
   buildNativeHostInstallPlan,
   buildNativeHostManifest,
+  executeNativeHostInstallApproval,
   parseNativeHostInstallApproval,
+  parseNativeHostInstallExecution,
   parseNativeHostInstallPlan
 } from "./index.js";
 
 const chromiumExtensionId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const hostPath = "/Applications/nSealr/nsealr-service";
 const manifestPath = "/Users/example/Library/Application Support/Google/Chrome/NativeMessagingHosts/dev.nsealr.companion.json";
+const manifestParent = "/Users/example/Library/Application Support/Google/Chrome/NativeMessagingHosts";
 
 describe("native host manifest contract", () => {
   it("builds a deterministic Chromium native-messaging manifest", () => {
@@ -82,6 +86,12 @@ describe("native host manifest contract", () => {
       browser: "chromium",
       manifest_path: manifestPath,
       manifest,
+      would_create_directories: [{
+        purpose: "native_host_manifest_parent",
+        path: manifestParent,
+        access: "ensure_directory",
+        contains_secret_material: false
+      }],
       would_write_files: [{
         purpose: "native_host_manifest",
         path: manifestPath,
@@ -143,6 +153,13 @@ describe("native host manifest contract", () => {
     })).toThrow(/digest mismatch/u);
     expect(() => parseNativeHostInstallPlan({
       ...plan,
+      would_create_directories: [{
+        ...plan.would_create_directories[0],
+        access: "create_parent"
+      }]
+    })).toThrow(/directory intent/u);
+    expect(() => parseNativeHostInstallPlan({
+      ...plan,
       would_write_files: [{
         ...plan.would_write_files[0],
         access: "overwrite"
@@ -187,5 +204,104 @@ describe("native host manifest contract", () => {
         install_digest: "0".repeat(64)
       }
     })).toThrow(/digest mismatch/u);
+  });
+
+  it("executes approved native-host installs through an explicit write-new adapter", async () => {
+    const plan = buildNativeHostInstallPlan({
+      browser: "chromium",
+      hostPath,
+      extensionIds: [chromiumExtensionId],
+      manifestPath
+    });
+    const approval = approveNativeHostInstallPlan(plan, {
+      reviewedInstallDigest: plan.install_digest,
+      approvedAt: 1_900_000_000
+    });
+    const ensured: string[] = [];
+    const written: Array<{ path: string; contents: string }> = [];
+
+    const result = await executeNativeHostInstallApproval(approval, {
+      reviewedInstallDigest: plan.install_digest,
+      writer: {
+        ensureDirectory(path) {
+          ensured.push(path);
+        },
+        writeFileNew(path, contents) {
+          written.push({ path, contents });
+        }
+      }
+    });
+
+    expect(ensured).toEqual([manifestParent]);
+    const writtenContents = written[0]?.contents;
+    if (writtenContents === undefined) throw new Error("native host manifest was not written");
+    expect(written).toEqual([{
+      path: manifestPath,
+      contents: writtenContents
+    }]);
+    expect(writtenContents).toBe(`${JSON.stringify(plan.manifest, null, 2)}\n`);
+    expect(result).toEqual({
+      format: NATIVE_HOST_INSTALL_EXECUTION_FORMAT,
+      install_digest: plan.install_digest,
+      approved_at: 1_900_000_000,
+      browser: "chromium",
+      manifest_path: manifestPath,
+      directories_ensured: [{
+        purpose: "native_host_manifest_parent",
+        path: manifestParent,
+        access: "ensure_directory",
+        contains_secret_material: false
+      }],
+      files_written: [{
+        purpose: "native_host_manifest",
+        path: manifestPath,
+        access: "write_new",
+        bytes: new TextEncoder().encode(writtenContents).byteLength,
+        sha256: expect.stringMatching(/^[0-9a-f]{64}$/u),
+        contains_secret_material: false
+      }],
+      requires_user_approval: true,
+      writes_files: true,
+      stores_production_secrets: false
+    });
+    expect(parseNativeHostInstallExecution(result)).toEqual(result);
+    expect(() => parseNativeHostInstallExecution({
+      ...result,
+      writes_files: false
+    })).toThrow(/file writes/u);
+    expect(() => parseNativeHostInstallExecution({
+      ...result,
+      files_written: [{
+        ...result.files_written[0],
+        access: "overwrite"
+      }]
+    })).toThrow(/file report/u);
+  });
+
+  it("rejects install execution before writing when the reviewed digest is wrong", async () => {
+    const plan = buildNativeHostInstallPlan({
+      browser: "chromium",
+      hostPath,
+      extensionIds: [chromiumExtensionId],
+      manifestPath
+    });
+    const approval = approveNativeHostInstallPlan(plan, {
+      reviewedInstallDigest: plan.install_digest,
+      approvedAt: 1_900_000_000
+    });
+    let wrote = false;
+
+    await expect(executeNativeHostInstallApproval(approval, {
+      reviewedInstallDigest: "0".repeat(64),
+      writer: {
+        ensureDirectory() {
+          wrote = true;
+        },
+        writeFileNew() {
+          wrote = true;
+        }
+      }
+    })).rejects.toThrow(/digest does not match/u);
+    expect(wrote).toBe(false);
   });
 });

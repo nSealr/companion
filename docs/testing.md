@@ -481,9 +481,11 @@ single-repository CI. Cross-repository drift remains guarded by
   malformed
   native-message rejection, shared Chromium/Firefox native-host manifest
   building, digest-bound dry-run install-plan building, install-approval
-  artifact generation in `@nsealr/client`, multi-message native-host stdio
-  behavior, and the private service CLI wrapper that renders those
-  manifests/plans/approvals without installing them. Current service
+  artifact generation in `@nsealr/client`, explicit approval-bound
+  install-execution through a write-new adapter, multi-message native-host stdio
+  behavior, and the private service CLI wrapper that renders
+  manifests/plans/approvals and can write an approved manifest path without
+  overwriting existing files. Current service
   route-driver tests cover the developer serial-line
   dispatch boundary through fake ports only; hardware serial smoke remains a
   later gate before production driver acceptance.

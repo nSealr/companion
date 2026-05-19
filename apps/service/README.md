@@ -21,6 +21,10 @@ Private native-messaging host scaffold for the nSealr local companion service.
   shared `@nsealr/client` manifest contract for future installer work.
 - Render digest-bound native-host install approval JSON from a reviewed install
   plan without installing manifest files.
+- Execute an approved native-host manifest install only when the caller supplies
+  the approval artifact and reviewed install digest; the command creates the
+  reviewed parent directory and writes the reviewed manifest path with
+  `write_new` semantics.
 
 ## Manifest Example
 
@@ -37,6 +41,9 @@ pnpm --filter @nsealr/service service -- --native-host-install-plan chromium \
 pnpm --filter @nsealr/service service -- --native-host-install-approval ./native-host-install-plan.json \
   --reviewed-install-digest <digest-hex> \
   --approved-at 1900000000
+
+pnpm --filter @nsealr/service service -- --native-host-install-execute ./native-host-install-approval.json \
+  --reviewed-install-digest <digest-hex>
 ```
 
 ## Explicit Context Example
@@ -93,10 +100,10 @@ signing material. Its async stdio path only awaits an explicitly configured
 or injected dispatcher. The serial-line route driver opens only the exact path
 provided in an explicit route-driver store and still relies on the device to
 own trusted review, approval, and signing refusal or signing behavior. Manifest
-generation and install-plan generation only print JSON; they do not install
-files into browser native-messaging directories. Install approvals are also
-JSON-only and keep `writes_files=false`; actual native-host installation
-execution is a later gate. File-backed context loading is an explicit
-storage-approved read-only developer and integration harness until approval UX,
-native-host installation execution, and production driver acceptance are
+generation and install-plan generation only print JSON. Install approvals are
+also JSON-only and keep `writes_files=false`; the separate install execution
+command is the only path that writes a native-host manifest, and it writes only
+the reviewed path from the approval artifact with exclusive create semantics.
+File-backed context loading is an explicit storage-approved read-only developer
+and integration harness until approval UX and production driver acceptance are
 specified.

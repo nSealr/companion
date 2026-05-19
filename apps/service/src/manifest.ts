@@ -3,27 +3,35 @@ import {
   approveNativeHostInstallPlan,
   buildNativeHostInstallPlan,
   buildNativeHostManifest,
+  executeNativeHostInstallApproval,
   parseNativeHostInstallPlan,
   type NativeHostInstallPlan,
   type NativeHostInstallApproval,
+  type NativeHostInstallExecution,
+  type NativeHostInstallExecutionOptions,
   type NativeHostBrowser,
   type NativeHostManifest
 } from "@nsealr/client";
 
 export {
   NATIVE_HOST_INSTALL_APPROVAL_FORMAT,
+  NATIVE_HOST_INSTALL_EXECUTION_FORMAT,
   NATIVE_HOST_DESCRIPTION,
   NATIVE_HOST_NAME,
   NATIVE_HOST_INSTALL_PLAN_FORMAT,
   approveNativeHostInstallPlan,
   buildNativeHostInstallPlan,
   buildNativeHostManifest,
+  executeNativeHostInstallApproval,
+  parseNativeHostInstallExecution,
   parseNativeHostInstallApproval,
   parseNativeHostInstallPlan,
   type ChromiumNativeHostManifest,
   type FirefoxNativeHostManifest,
   type NativeHostInstallApproval,
   type NativeHostInstallApprovalOptions,
+  type NativeHostInstallExecution,
+  type NativeHostInstallExecutionOptions,
   type NativeHostInstallPlan,
   type NativeHostInstallPlanOptions,
   type NativeHostBrowser,
@@ -212,4 +220,43 @@ export function nativeHostInstallApprovalFromArgs(args: string[]): NativeHostIns
 
 export function nativeHostInstallApprovalJsonFromArgs(args: string[]): string {
   return `${JSON.stringify(nativeHostInstallApprovalFromArgs(args), null, 2)}\n`;
+}
+
+export async function nativeHostInstallExecutionFromArgs(
+  args: string[],
+  writer: NativeHostInstallExecutionOptions["writer"]
+): Promise<NativeHostInstallExecution> {
+  const normalizedArgs = args[0] === "--" ? args.slice(1) : args;
+  let approvalPath: string | undefined;
+  let reviewedInstallDigest: string | undefined;
+
+  for (let index = 0; index < normalizedArgs.length; index += 1) {
+    const arg = normalizedArgs[index];
+    if (arg === "--native-host-install-execute") {
+      approvalPath = takeOptionValue(normalizedArgs, index, arg);
+      index += 1;
+    } else if (arg === "--reviewed-install-digest") {
+      reviewedInstallDigest = requireLowerHex64(takeOptionValue(normalizedArgs, index, arg), arg);
+      index += 1;
+    } else {
+      throw new Error(`unsupported service option: ${arg}`);
+    }
+  }
+
+  if (approvalPath === undefined) throw new Error("--native-host-install-execute is required");
+  if (reviewedInstallDigest === undefined) throw new Error("--reviewed-install-digest is required");
+  return executeNativeHostInstallApproval(readJsonFile(
+    approvalPath,
+    "native host install approval"
+  ), {
+    reviewedInstallDigest,
+    writer
+  });
+}
+
+export async function nativeHostInstallExecutionJsonFromArgs(
+  args: string[],
+  writer: NativeHostInstallExecutionOptions["writer"]
+): Promise<string> {
+  return `${JSON.stringify(await nativeHostInstallExecutionFromArgs(args, writer), null, 2)}\n`;
 }

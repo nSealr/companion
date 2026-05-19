@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readSync, writeSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
 import {
   MAX_NATIVE_MESSAGE_BYTES,
   NATIVE_MESSAGE_LENGTH_BYTES,
@@ -14,6 +15,7 @@ import { SerialLineStreamPort, type SerialLinePort } from "@nsealr/transport";
 import { contextArgsFromCliArgs, loadServiceContextFromFiles } from "./context.js";
 import {
   nativeHostInstallApprovalJsonFromArgs,
+  nativeHostInstallExecutionJsonFromArgs,
   nativeHostInstallPlanJsonFromArgs,
   nativeHostManifestJsonFromArgs
 } from "./manifest.js";
@@ -222,6 +224,17 @@ export async function runServiceCli(args: string[]): Promise<void> {
     }
     if (normalizedArgs.includes("--native-host-install-approval")) {
       writeSync(1, nativeHostInstallApprovalJsonFromArgs(args));
+      return;
+    }
+    if (normalizedArgs.includes("--native-host-install-execute")) {
+      writeSync(1, await nativeHostInstallExecutionJsonFromArgs(args, {
+        async ensureDirectory(path) {
+          await mkdir(path, { recursive: true });
+        },
+        writeFileNew(path, contents) {
+          return writeFile(path, contents, { encoding: "utf8", flag: "wx" });
+        }
+      }));
       return;
     }
     await runServiceStdioAsync({

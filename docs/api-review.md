@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:881296e5906ba74eb2e12d4c10a91db12702e75153bf7553a7f54525bf489097`
+API surface digest: `sha256:ad509daf21c23e8e6bba49942742c2249e646e6dc5fb098aa00d50b8f1bb478b`
 
 Source: `docs/api.md`
 
@@ -68,9 +68,10 @@ request cancellation, and `AbortSignal` forwarding into injected exchanges so
 browser-provider, SDK, extension, and future desktop code do not fork stalled
 local-service behavior.
 The shared native host name, native-host manifest builder, digest-bound dry-run
-install-plan builder/parser, and install-approval artifact helpers remain
-exported from the Node-capable root so service manifest/plan/approval
-generation and packaging checks do not drift.
+install-plan builder/parser, install-approval artifact helpers, and explicit
+approval-bound install execution builder/parser remain exported from the
+Node-capable root so service manifest/plan/approval/execution generation and
+packaging checks do not drift.
 `SignerTransportError` is the public typed error host-owned dispatchers should
 throw when a transport failure needs to cross the local-service boundary with a
 deterministic code instead of a generic dispatch failure.
@@ -82,10 +83,12 @@ and rejects ambiguous handler configuration without opening a signer transport.
 The async local-service handler is only an awaitable form of the same reviewed
 dispatch boundary for future host-owned I/O drivers; the synchronous handler
 rejects async dispatchers deterministically. File-backed service loading is now
-storage-approval gated, and native-host install approvals remain artifact-only
-with `writes_files=false`. Route-specific signer transport wiring, production
-storage writes, and native-host installation execution remain future work and
-must not be implied by this package.
+storage-approval gated. Native-host install approvals remain artifact-only with
+`writes_files=false`; the separate execution helper requires the reviewed
+install digest again, uses an injected writer, reports `writes_files=true`, and
+writes only the reviewed manifest path with write-new semantics. Route-specific
+signer transport wiring, production storage writes, and production installer UX
+remain future work and must not be implied by this package.
 
 ## @nsealr/core
 

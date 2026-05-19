@@ -7,8 +7,9 @@ Local companion service protocol and client wrappers.
 - Encode and decode native-messaging frames.
 - Build validated Chromium and Firefox native-host manifest objects from
   explicit host path and extension-id inputs.
-- Build digest-bound native-host install plans and approval artifacts without
-  installing manifest files.
+- Build digest-bound native-host install plans, approval artifacts, and
+  explicit approval-bound manifest installation execution through an injected
+  write-new adapter.
 - Validate local service requests and responses.
 - Route signer requests through an explicit injected dispatcher only after
   client authorization, request validation, route selection, and response
@@ -45,6 +46,7 @@ import {
   buildNativeHostManifest,
   createLocalGrantStore,
   createLocalStorageReview,
+  executeNativeHostInstallApproval,
   handleLocalServiceRequest,
   parseLocalClientIdentity,
   reviewPairingIntent
@@ -101,10 +103,24 @@ const nativeHostInstallApproval = approveNativeHostInstallPlan(nativeHostInstall
   reviewedInstallDigest: nativeHostInstallPlan.install_digest,
   approvedAt: 1_710_000_000
 });
+const nativeHostInstallWrites: string[] = [];
+const nativeHostInstallExecution = await executeNativeHostInstallApproval(nativeHostInstallApproval, {
+  reviewedInstallDigest: nativeHostInstallApproval.install_digest,
+  writer: {
+    ensureDirectory(path) {
+      nativeHostInstallWrites.push(`dir:${path}`);
+    },
+    writeFileNew(path) {
+      nativeHostInstallWrites.push(`file:${path}`);
+    }
+  }
+});
 assert.equal(grantStore.contains_secret_material, false);
 assert.equal(storageReview.requires_user_approval, true);
 assert.equal(storageApproval.storage_digest, storageReview.storage_digest);
 assert.equal(nativeHostInstallApproval.install_digest, nativeHostInstallPlan.install_digest);
+assert.equal(nativeHostInstallExecution.writes_files, true);
+assert.equal(nativeHostInstallWrites.some((entry) => entry.startsWith("file:")), true);
 assert.equal(appendLocalGrantRevocation(grantStore, {
   clientId: approval.grant.client_id,
   origin: approval.grant.origin,
@@ -144,5 +160,7 @@ It does not store production keys, open relays, or include real signer
 transport drivers. A host app still has to own backup policy, signer transport
 wiring, production storage writes, and user approval UX.
 The package can build native-host manifest objects, digest-bound dry-run install
-plans, and digest-confirmed install approval artifacts for an explicit manifest
-path, but it does not install them or choose a host file location.
+plans, digest-confirmed install approval artifacts, and explicit install
+execution reports for an approved manifest path. The execution helper still
+requires an injected writer, uses the reviewed `write_new` path from the plan,
+and does not choose a host file location.

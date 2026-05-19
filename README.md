@@ -153,7 +153,7 @@ match the shared `contract_id`.
   can emit secretless pending/resolved/rejected/cancelled request-state
   snapshots for future UI without exposing event templates or key material,
   and can abort in-flight native messaging when that pending request is
-  cancelled through an extension-internal control message,
+  cancelled through extension-internal list/cancel control messages,
   and can build either the default minimal no-host-permission manifest or an
   opt-in explicit-origin content-script manifest profile. The content-script
   profile still omits host-permission fields, broad URL matches, extension

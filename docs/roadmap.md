@@ -403,10 +403,11 @@ and uploads checked tarball artifacts without publishing to npm.
   templates, keys, grants, storage writes, or signer dispatch. The lifecycle
   also owns a per-request cancel hook that aborts the in-flight native-message
   path and suppresses duplicate rejected-state drift after cancellation. The
-  runtime-message boundary now routes a separate
-  `nsealr-browser-extension-control-v0` `cancel_pending_request` message from
-  extension-internal senders only, so page-origin senders cannot cancel active
-  requests. A pure page-provider boundary now maps NIP-07
+  background entrypoint now owns an in-memory lifecycle by default, and the
+  runtime-message boundary routes separate `nsealr-browser-extension-control-v0`
+  `list_pending_requests` and `cancel_pending_request` messages from
+  extension-internal senders only, so page-origin senders cannot list or cancel
+  active requests. A pure page-provider boundary now maps NIP-07
   `getPublicKey` and `signEvent` calls to validated background requests,
   verifies signed responses, forwards cancellation signals, and installs on an
   explicit target without overwriting an existing provider. A pure page-bridge
@@ -486,7 +487,7 @@ and uploads checked tarball artifacts without publishing to npm.
   and storage. Remaining work: reviewed bootstrap/config UX beyond the static
   developer route config, native-messaging installation, browser UI/storage
   wiring for origin permission approvals, visible UI controls over the tested
-  internal cancel message, and real dispatch after M4.7 gates. No local
+  internal list/cancel messages, and real dispatch after M4.7 gates. No local
   production signing and no extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the

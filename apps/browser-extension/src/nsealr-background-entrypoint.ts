@@ -34,6 +34,7 @@ export function installNsealrBackgroundEntrypoint(
     ...(options.nativeMessageAbortSignal !== undefined
       ? { nativeMessageAbortSignal: options.nativeMessageAbortSignal }
       : {}),
+    ...(options.pendingRequests !== undefined ? { pendingRequests: options.pendingRequests } : {}),
     ...(options.onError !== undefined ? { onError: options.onError } : {})
   });
 }

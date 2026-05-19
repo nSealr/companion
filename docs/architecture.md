@@ -523,10 +523,12 @@ app name, status, and timestamps; they do not include event templates, key
 material, grants, storage writes, or signer dispatch. The same lifecycle owns
 the per-request cancellation hook: cancelling an active snapshot aborts the
 in-flight native-message path and emits one `cancelled` state instead of
-leaking a later duplicate rejection. The cancel hook is reachable through a
-separate `nsealr-browser-extension-control-v0` runtime message that accepts
-extension-internal senders only; page-origin senders cannot cancel pending
-requests.
+leaking a later duplicate rejection. The background entrypoint owns an
+in-memory lifecycle by default, and extension UI can query or cancel it through
+separate `nsealr-browser-extension-control-v0` `list_pending_requests` and
+`cancel_pending_request` runtime messages. Those messages accept
+extension-internal senders only; page-origin senders cannot list or cancel
+pending requests.
 The runtime-message listener installer is a thin adapter over an injected
 `runtime.onMessage`-like target. It registers exactly one listener, returns
 `true` for asynchronous `sendResponse` delivery, sends deterministic responses

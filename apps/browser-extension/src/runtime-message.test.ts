@@ -80,6 +80,15 @@ function cancelPendingRequest(requestId: string, pendingRequestId: string): unkn
   };
 }
 
+function listPendingRequests(requestId: string): unknown {
+  return {
+    protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+    version: 1,
+    request_id: requestId,
+    method: "list_pending_requests"
+  };
+}
+
 function createInjectedRuntimeOnMessage(): {
   runtimeOnMessage: {
     addListener(listener: BrowserExtensionRuntimeMessageListener): void;
@@ -540,6 +549,47 @@ describe("browser extension runtime message boundary", () => {
       }
     ]);
     expect(pendingRequests.active()).toEqual([]);
+  });
+
+  it("routes extension-internal control messages to list active pending requests", async () => {
+    const pendingRequests = createBrowserExtensionPendingRequestLifecycle();
+    const started = pendingRequests.start(
+      getPublicKeyRequest("runtime-control-listed"),
+      {
+        extension_id: "extension@nsealr.dev",
+        page_origin: "https://example.com"
+      }
+    );
+    const controller = createBrowserExtensionBackgroundController({
+      routeRequest,
+      sendNativeMessage: () => {
+        throw new Error("list control messages must not contact native messaging");
+      }
+    });
+
+    await expect(handleBrowserExtensionRuntimeMessage(
+      listPendingRequests("runtime-control-list"),
+      {
+        id: "extension@nsealr.dev",
+        url: "chrome-extension://extension-id/popup.html"
+      },
+      {
+        controller,
+        extensionId: "extension@nsealr.dev",
+        pendingRequests
+      }
+    )).resolves.toEqual({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "runtime-control-list",
+      ok: true,
+      result: {
+        pending_requests: [started],
+        stores_production_secrets: false,
+        contains_secret_material: false
+      }
+    });
+    expect(pendingRequests.active()).toEqual([started]);
   });
 
   it("rejects page-origin control messages before they can cancel pending requests", async () => {

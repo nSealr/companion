@@ -6,6 +6,7 @@ import {
   installBrowserExtensionBackgroundBrowserEntrypoint
 } from "./background-browser.js";
 import { BROWSER_EXTENSION_MESSAGE_PROTOCOL } from "./handler.js";
+import { BROWSER_EXTENSION_CONTROL_PROTOCOL } from "./pending-control.js";
 import { BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT } from "./route-config.js";
 import {
   type BrowserExtensionRuntimeMessageListener,
@@ -25,6 +26,15 @@ function getPublicKeyRequest(requestId: string): unknown {
     version: 1,
     request_id: requestId,
     method: "get_public_key"
+  };
+}
+
+function listPendingRequests(requestId: string): unknown {
+  return {
+    protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+    version: 1,
+    request_id: requestId,
+    method: "list_pending_requests"
   };
 }
 
@@ -108,6 +118,7 @@ describe("browser extension background browser entrypoint", () => {
       extensionId: "extension@nsealr.dev",
       nextServiceRequestId: () => "background-browser-route"
     });
+    expect(handle.pendingRequests.active()).toEqual([]);
     expect(runtime.listenerCount()).toBe(1);
 
     expect(runtime.emit(
@@ -150,6 +161,42 @@ describe("browser extension background browser entrypoint", () => {
 
     handle.dispose();
     expect(runtime.listenerCount()).toBe(0);
+  });
+
+  it("owns an in-memory pending lifecycle for extension-internal control queries", async () => {
+    const runtime = createInjectedRuntime();
+    const responses: unknown[] = [];
+    const handle = installBrowserExtensionBackgroundBrowserEntrypoint({
+      runtime: runtime.runtime,
+      routeRequest,
+      extensionId: "extension@nsealr.dev"
+    });
+
+    expect(runtime.emit(
+      listPendingRequests("background-browser-list-empty"),
+      {
+        id: "extension@nsealr.dev",
+        url: "chrome-extension://extension-id/popup.html"
+      },
+      (response) => {
+        responses.push(response);
+      }
+    )).toBe(true);
+    await flushAsyncListeners();
+
+    expect(responses).toEqual([{
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "background-browser-list-empty",
+      ok: true,
+      result: {
+        pending_requests: [],
+        stores_production_secrets: false,
+        contains_secret_material: false
+      }
+    }]);
+    expect(runtime.nativeMessages).toEqual([]);
+    handle.dispose();
   });
 
   it("rejects invalid browser-like runtime dependencies before listener installation", () => {

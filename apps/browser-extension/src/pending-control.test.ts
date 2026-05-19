@@ -19,8 +19,17 @@ function cancelRequest(requestId: string, pendingRequestId: string): unknown {
   };
 }
 
+function listRequest(requestId: string): unknown {
+  return {
+    protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+    version: 1,
+    request_id: requestId,
+    method: "list_pending_requests"
+  };
+}
+
 describe("browser extension pending request control boundary", () => {
-  it("parses only the internal cancel_pending_request control shape", () => {
+  it("parses only the internal pending request control shapes", () => {
     expect(parseBrowserExtensionControlRequest(cancelRequest(
       "control-cancel-1",
       "pending-request-1"
@@ -32,6 +41,12 @@ describe("browser extension pending request control boundary", () => {
       params: {
         pending_request_id: "pending-request-1"
       }
+    });
+    expect(parseBrowserExtensionControlRequest(listRequest("control-list-1"))).toEqual({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-list-1",
+      method: "list_pending_requests"
     });
 
     expect(() => parseBrowserExtensionControlRequest({
@@ -53,6 +68,57 @@ describe("browser extension pending request control boundary", () => {
         pending_request_id: "pending-request-1"
       }
     })).toThrow(/method/u);
+    expect(() => parseBrowserExtensionControlRequest({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-list-with-params",
+      method: "list_pending_requests",
+      params: {}
+    })).toThrow(/must not include params/u);
+  });
+
+  it("lists active pending requests without exposing hidden request payloads", () => {
+    const pendingRequests = createBrowserExtensionPendingRequestLifecycle();
+    pendingRequests.start({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "pending-list-visible",
+      method: "get_public_key"
+    }, {
+      extension_id: "extension@nsealr.dev",
+      page_origin: "https://example.com"
+    });
+
+    expect(handleBrowserExtensionControlMessage(
+      listRequest("control-list-active"),
+      {
+        id: "extension@nsealr.dev",
+        url: "chrome-extension://extension-id/popup.html"
+      },
+      {
+        extensionId: "extension@nsealr.dev",
+        pendingRequests
+      }
+    )).toMatchObject({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-list-active",
+      ok: true,
+      result: {
+        pending_requests: [
+          {
+            request_id: "pending-list-visible",
+            method: "get_public_key",
+            page_origin: "https://example.com",
+            status: "pending",
+            stores_production_secrets: false,
+            includes_event_template: false
+          }
+        ],
+        stores_production_secrets: false,
+        contains_secret_material: false
+      }
+    });
   });
 
   it("cancels active pending requests only from extension-internal senders", () => {

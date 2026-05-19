@@ -12,6 +12,10 @@ import {
   type BrowserExtensionRuntimeMessageListenerHandle
 } from "./runtime-message.js";
 import {
+  createBrowserExtensionPendingRequestLifecycle,
+  type BrowserExtensionPendingRequestLifecycle
+} from "./pending-request.js";
+import {
   parseBrowserExtensionRouteConfig
 } from "./route-config.js";
 
@@ -32,12 +36,14 @@ export type BrowserExtensionBackgroundBrowserEntrypointOptions = {
   signingUnavailableMessage?: string;
   nativeMessageTimeoutMs?: number;
   nativeMessageAbortSignal?: AbortSignal;
+  pendingRequests?: BrowserExtensionPendingRequestLifecycle;
   onError?: (error: unknown) => void;
 };
 
 export type BrowserExtensionBackgroundBrowserEntrypointHandle =
   BrowserExtensionRuntimeMessageListenerHandle & {
     controller: BrowserExtensionBackgroundController;
+    pendingRequests: BrowserExtensionPendingRequestLifecycle;
   };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -85,6 +91,7 @@ export function installBrowserExtensionBackgroundBrowserEntrypoint(
 ): BrowserExtensionBackgroundBrowserEntrypointHandle {
   const runtime = requireBrowserRuntime(options.runtime);
   const routeRequest = routeRequestFromOptions(options);
+  const pendingRequests = options.pendingRequests ?? createBrowserExtensionPendingRequestLifecycle();
   const controller = createBrowserExtensionBackgroundController({
     sendNativeMessage: createBrowserExtensionBackgroundBrowserNativeMessageSender(runtime),
     routeRequest,
@@ -107,10 +114,12 @@ export function installBrowserExtensionBackgroundBrowserEntrypoint(
     ...(options.nativeMessageAbortSignal !== undefined
       ? { nativeMessageAbortSignal: options.nativeMessageAbortSignal }
       : {}),
+    pendingRequests,
     ...(options.onError !== undefined ? { onError: options.onError } : {})
   });
   return Object.freeze({
     controller,
+    pendingRequests,
     dispose(): void {
       listener.dispose();
     }

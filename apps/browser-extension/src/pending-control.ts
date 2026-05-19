@@ -8,7 +8,7 @@ import {
 
 export const BROWSER_EXTENSION_CONTROL_PROTOCOL = "nsealr-browser-extension-control-v0";
 
-export type BrowserExtensionControlRequest = {
+export type BrowserExtensionCancelPendingRequest = {
   protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
   version: 1;
   request_id: string;
@@ -18,6 +18,17 @@ export type BrowserExtensionControlRequest = {
   };
 };
 
+export type BrowserExtensionListPendingRequests = {
+  protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
+  version: 1;
+  request_id: string;
+  method: "list_pending_requests";
+};
+
+export type BrowserExtensionControlRequest =
+  | BrowserExtensionCancelPendingRequest
+  | BrowserExtensionListPendingRequests;
+
 export type BrowserExtensionControlResponse = {
   protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
   version: 1;
@@ -26,6 +37,16 @@ export type BrowserExtensionControlResponse = {
   result: {
     pending_request_id: string;
     cancelled: boolean;
+    stores_production_secrets: false;
+    contains_secret_material: false;
+  };
+} | {
+  protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
+  version: 1;
+  request_id: string;
+  ok: true;
+  result: {
+    pending_requests: readonly BrowserExtensionPendingRequestState[];
     stores_production_secrets: false;
     contains_secret_material: false;
   };
@@ -142,7 +163,7 @@ function requireInternalSender(value: unknown, options: BrowserExtensionControlS
   }
 }
 
-function parseControlParams(value: unknown): BrowserExtensionControlRequest["params"] {
+function parseCancelParams(value: unknown): BrowserExtensionCancelPendingRequest["params"] {
   if (!isRecord(value)) {
     throw new Error("browser extension control params must be an object");
   }
@@ -171,6 +192,17 @@ export function parseBrowserExtensionControlRequest(value: unknown): BrowserExte
   if (value.version !== 1) {
     throw new Error("browser extension control version is unsupported");
   }
+  if (value.method === "list_pending_requests") {
+    if ("params" in value) {
+      throw new Error("browser extension control list_pending_requests must not include params");
+    }
+    return {
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: requireRequestId(value.request_id, "request_id"),
+      method: "list_pending_requests"
+    };
+  }
   if (value.method !== "cancel_pending_request") {
     throw new Error("browser extension control method is unsupported");
   }
@@ -179,7 +211,7 @@ export function parseBrowserExtensionControlRequest(value: unknown): BrowserExte
     version: 1,
     request_id: requireRequestId(value.request_id, "request_id"),
     method: "cancel_pending_request",
-    params: parseControlParams(value.params)
+    params: parseCancelParams(value.params)
   };
 }
 
@@ -202,6 +234,19 @@ export function handleBrowserExtensionControlMessage(
   }
   if (options.pendingRequests === undefined) {
     return controlErrorResponse(request.request_id, "pending_requests_unavailable", "pending request control is unavailable");
+  }
+  if (request.method === "list_pending_requests") {
+    return {
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: request.request_id,
+      ok: true,
+      result: {
+        pending_requests: options.pendingRequests.active(),
+        stores_production_secrets: false,
+        contains_secret_material: false
+      }
+    };
   }
 
   let cancelled: BrowserExtensionPendingRequestState | undefined;

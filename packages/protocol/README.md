@@ -1,7 +1,7 @@
 # @nsealr/protocol
 
 Shared nSealr request, response, capability, signing-status, and resource-limit
-validation.
+validation, plus small browser-safe encoding helpers for transport envelopes.
 
 ## Purpose
 
@@ -9,6 +9,8 @@ validation.
 - Centralize host-side copies of constrained-signer implementation limits.
 - Reject unsafe `sign_event` templates before transport or signer routing.
 - Validate capability and signing-status diagnostics.
+- Share deterministic JSON-to-UTF-8 and unpadded base64url helpers used by QR
+  and serial framing packages without relying on Node runtime globals.
 
 ## Example
 
@@ -29,4 +31,6 @@ assert.equal(validation.ok, true);
 
 These limits are nSealr v0 safety limits, not Nostr protocol limits. This
 package does not perform signing and must be used before any companion access
-surface contacts a signer route.
+surface contacts a signer route. Its encoding helpers are low-level transport
+primitives; callers should prefer `@nsealr/qr` or `@nsealr/framing` for complete
+envelope formats.

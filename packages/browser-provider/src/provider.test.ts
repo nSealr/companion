@@ -3,7 +3,6 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   LocalServiceClient,
-  clientIdForIdentity,
   handleLocalServiceRequest,
   type LocalClientGrant,
   type LocalClientIdentity
@@ -20,26 +19,18 @@ import {
 
 const specsRoot = resolveSpecsRoot();
 const fixtures = loadSpecsFixtures(specsRoot);
-const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8"));
+const accessSurfaceVector = fixtures.accessSurfaces.find(
+  (surface) => surface.name === "browser-provider-local-service-esp32-usb-unavailable"
+);
+if (!accessSurfaceVector) throw new Error("browser provider access-surface fixture is missing");
+const request = JSON.parse(readFileSync(resolve(specsRoot, accessSurfaceVector.sign_event_request_vector), "utf8"));
 const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
 const responseError = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-error-rejected.json"), "utf8"));
-const routeVector = fixtures.routeSelections.find((selection) => selection.name === "esp32-usb-sign-event-slot-0");
+const routeVector = fixtures.routeSelections.find((selection) => selection.name === accessSurfaceVector.route_selection_vector);
 if (!routeVector) throw new Error("route selection fixture is missing");
 const publicKey = response.result.event.pubkey as string;
-const client: LocalClientIdentity = {
-  surface: "browser_extension",
-  origin: "https://example.com",
-  app_name: "Example Nostr Client",
-  instance_id: "extension-test-1"
-};
-const localServiceGrant: LocalClientGrant = {
-  client_id: clientIdForIdentity(client),
-  origin: client.origin,
-  surface: client.surface,
-  allowed_operations: ["select_account_route", "dispatch_signer_request"],
-  approved_at: 1_900_000_000,
-  expires_at: 2_000_000_000
-};
+const client: LocalClientIdentity = accessSurfaceVector.client;
+const localServiceGrant: LocalClientGrant = accessSurfaceVector.client_grant as LocalClientGrant;
 
 function backend(overrides: Partial<BrowserProviderBackend> = {}): BrowserProviderBackend {
   return {
@@ -133,16 +124,20 @@ describe("NIP-07 browser provider boundary", () => {
         now: 1_900_000_000
       })
     });
+    const localServiceBackend = createLocalServiceBrowserProviderBackend({
+      service,
+      routeRequest: routeVector.request
+    });
     const provider = createNip07Provider({
-      backend: createLocalServiceBrowserProviderBackend({
-        service,
-        routeRequest: routeVector.request
-      }),
+      backend: localServiceBackend,
       client,
       nextRequestId: () => "req-kind-1-basic"
     });
 
-    await expect(provider.getPublicKey()).resolves.toBe(routeVector.selection.public_key);
+    await expect(provider.getPublicKey()).resolves.toBe(accessSurfaceVector.expected.get_public_key.public_key);
+    await expect(localServiceBackend.signEventRequest(request, client)).resolves.toEqual(
+      accessSurfaceVector.expected.sign_event_without_dispatcher.response
+    );
     await expect(provider.signEvent(request.params.event_template)).rejects.toThrow(/Signer dispatch is not configured/u);
   });
 

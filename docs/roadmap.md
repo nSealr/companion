@@ -228,6 +228,13 @@ Status note, 2026-05-19: local-service dispatch now treats display-less
 routes require a `nsealr-external-review-acknowledgement-v0` artifact whose
 `approval_digest` matches the signer request before the injected dispatcher is
 called; the same artifact is rejected on routes with trusted device review.
+
+Status note, 2026-05-19: `@nsealr/browser-provider` now consumes the shared
+access-surface vector for NIP-07 over local companion service route selection.
+The vector pins `getPublicKey` to the selected ESP32 USB route and pins
+`signEvent` without a dispatcher to deterministic `signer_route_unavailable`.
+This keeps the browser provider aligned with specs without adding browser key
+custody, grants, relay sessions, or production signing.
 This adds no trusted-host claim, no production signer driver, and no policy
 automation.
 

@@ -97,8 +97,8 @@ packages, but it must not export test-only signing as a production path.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, account-descriptor, policy-profile,
-  grant-descriptor, policy-decision, feature-matrix, limit-profile, and
-  invalid hardening fixture loading.
+  grant-descriptor, policy-decision, route-selection, access-surface,
+  feature-matrix, limit-profile, and invalid hardening fixture loading.
   Package code also owns QR review-transcript fixture validation, including
   `scroll` buttons and rendered-frame `body_line_styles`, so the CLI does not
   duplicate that contract.
@@ -778,6 +778,14 @@ open transports, create grants, approve clients, dispatch signer I/O, or claim
 route readiness. Route-selection request parsing also lives in `packages/policy`
 so browser extension, local service, CLI, SDK, and future UI code do not fork
 the selected-account route-request shape.
+
+Access-surface vectors are loaded through `packages/fixtures` and consumed by
+browser-provider tests. The current shared vector pins the NIP-07 browser
+provider over local companion service route selection: an authorized browser
+client can read the selected public key, while `signEvent` without an explicit
+host signer dispatcher returns a deterministic `signer_route_unavailable`
+protocol response. The vector is secretless and does not create grants, store
+keys, install a browser extension, or enable production signing.
 External NIP-46 bunker routes are treated the same way at this layer: they are
 secretless external adapter metadata, not a built-in relay session, NIP-44
 state machine, permission grant, or companion-owned key vault. The local

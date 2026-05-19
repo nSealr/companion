@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:5b1bb6ae23db97d02f8a89f7bd4d5c14770d27382fa4a21a0bd25905fea8f912`
+API surface digest: `sha256:0919607e5bbe400d198f440083d98b156a5b816d0e63b85c26f8ec555910744a`
 
 Source: `docs/api.md`
 

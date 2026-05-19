@@ -77,9 +77,11 @@ single-repository CI. Cross-repository drift remains guarded by
 - Browser-provider package tests cover NIP-07 `getPublicKey` validation,
   `signEvent` conversion into nSealr signer requests, signed-response
   verification, explicit client identity forwarding, signer refusal propagation,
-  browser native-messaging local-service client adaptation, shared native host
-  name use, invalid native-host-name rejection, and rejection before backend
-  contact when an event template contains forbidden signer-owned fields.
+  shared access-surface vector consumption for local-service route selection
+  and signer-unavailable behavior, browser native-messaging local-service
+  client adaptation, shared native host name use, invalid native-host-name
+  rejection, and rejection before backend contact when an event template
+  contains forbidden signer-owned fields.
   The browser-runtime import hygiene check walks packaged browser-extension
   entrypoints plus `@nsealr/browser-provider` and fails if that runtime graph
   imports Node builtins, uses `Buffer`/`process`, or imports the Node-capable
@@ -409,8 +411,9 @@ single-repository CI. Cross-repository drift remains guarded by
   signed-event fixtures, trusted-review fixtures, review-display-frame
   fixtures, review-detail-page fixtures, QR review-transcript fixtures, NIP-46
   payload fixtures, NIP-46 policy-file fixtures, account descriptors, policy
-  profiles, grant descriptors, and policy-decision vectors, plus the shared
-  implementation-limit profile and invalid hardening vectors.
+  profiles, grant descriptors, policy-decision vectors, route-selection
+  vectors, and access-surface vectors, plus the shared implementation-limit
+  profile and invalid hardening vectors.
 - CLI fixture verification rejects review detail-page style drift, including
   unknown body-line style names and continuation lines that are not styled as
   `value`.

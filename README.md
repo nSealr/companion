@@ -309,9 +309,9 @@ match the shared `contract_id`.
 - `packages/fixtures` loads shared event, trusted-review, review-display-frame,
   review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
   account-descriptor, policy-profile, grant-descriptor, policy-decision,
-  route-selection, feature-matrix, and smartcard vectors from `nSealr/specs`
-  for companion, Raspberry QR vault, ESP32 firmware, and smartcard conformance
-  tests.
+  route-selection, access-surface, feature-matrix, and smartcard vectors from
+  `nSealr/specs` for companion, Raspberry QR vault, ESP32 firmware, and
+  smartcard conformance tests.
 - `packages/policy` parses secretless account descriptors, policy profiles, and
   grant descriptors, selects secretless account-route metadata, then evaluates
   policy-decision transcript vectors without a persistent grant store. It

@@ -1,7 +1,12 @@
 import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { loadSpecsFixtures, validateFeatureMatrixFixture, validateReviewTranscriptFixture } from "./fixtures.js";
+import {
+  loadSpecsFixtures,
+  validateAccessSurfaceFixture,
+  validateFeatureMatrixFixture,
+  validateReviewTranscriptFixture
+} from "./fixtures.js";
 import { resolveSpecsRoot } from "./specs-root.js";
 
 describe("fixture loading", () => {
@@ -188,6 +193,18 @@ describe("fixture loading", () => {
     ]);
     expect(fixtures.routeSelections[0].format).toBe("nsealr-route-selection-vector-v0");
     expect(fixtures.routeSelections[0].selection.contains_secret_material).toBe(false);
+  });
+
+  it("loads access-surface vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+
+    expect(fixtures.accessSurfaces.map((surface) => surface.name)).toEqual([
+      "browser-provider-local-service-esp32-usb-unavailable"
+    ]);
+    expect(fixtures.accessSurfaces[0].format).toBe("nsealr-access-surface-vector-v0");
+    expect(fixtures.accessSurfaces[0].surface).toBe("browser_provider_nip07");
+    expect(fixtures.accessSurfaces[0].safety.stores_production_secrets).toBe(false);
+    expect(() => validateAccessSurfaceFixture(fixtures.accessSurfaces[0].name, fixtures.accessSurfaces[0])).not.toThrow();
   });
 
   it("loads and validates signer feature matrix vectors from the specs repository", () => {

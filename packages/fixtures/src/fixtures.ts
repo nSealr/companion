@@ -210,6 +210,38 @@ export type SpecsFixtureSet = {
     request: RouteSelectionRequest;
     selection: RouteSelection;
   }>;
+  accessSurfaces: Array<{
+    name: string;
+    format: "nsealr-access-surface-vector-v0";
+    surface: "browser_provider_nip07";
+    transport: "local_service";
+    client: {
+      surface: "browser_extension" | "desktop_app" | "cli" | "sdk" | "native_host_test";
+      origin: string;
+      app_name?: string;
+      instance_id?: string;
+    };
+    client_grant: {
+      client_id: string;
+      origin: string;
+      surface: "browser_extension" | "desktop_app" | "cli" | "sdk" | "native_host_test";
+      allowed_operations: string[];
+      approved_at?: number;
+      expires_at?: number;
+    };
+    route_selection_vector: string;
+    sign_event_request_vector: string;
+    expected: {
+      get_public_key: {
+        public_key: string;
+      };
+      sign_event_without_dispatcher: {
+        response: unknown;
+      };
+    };
+    safety: Record<string, boolean>;
+    scope: string;
+  }>;
   featureMatrices: Array<{
     name: string;
     format: "nsealr-signer-feature-matrix-v0";
@@ -276,6 +308,14 @@ const FEATURE_SOLUTION_IDS = new Set([
   "smartcard",
   "custom_hardware_wallet"
 ]);
+const ACCESS_SURFACE_SAFETY = {
+  stores_production_secrets: false,
+  contains_secret_material: false,
+  creates_grants: false,
+  dispatches_without_signer: false,
+  requires_shared_request_validation: true,
+  requires_signed_response_verification: true
+};
 const STATELESS_QR_PARITY_FEATURES = [
   "request_validation_v0",
   "nostr_event_review_universal",
@@ -447,6 +487,63 @@ export function validateFeatureMatrixFixture(name: string, fixture: unknown): vo
   }
 }
 
+export function validateAccessSurfaceFixture(name: string, fixture: unknown): void {
+  if (!isRecord(fixture)) throw new Error(`invalid access-surface fixture ${name}: fixture must be an object`);
+  if (fixture.format !== "nsealr-access-surface-vector-v0") {
+    throw new Error(`invalid access-surface fixture ${name}: unsupported format`);
+  }
+  if (fixture.name !== name) throw new Error(`invalid access-surface fixture ${name}: name mismatch`);
+  if (fixture.surface !== "browser_provider_nip07") {
+    throw new Error(`invalid access-surface fixture ${name}: unsupported surface`);
+  }
+  if (fixture.transport !== "local_service") {
+    throw new Error(`invalid access-surface fixture ${name}: unsupported transport`);
+  }
+  if (!isRecord(fixture.client) || fixture.client.surface !== "browser_extension" || typeof fixture.client.origin !== "string") {
+    throw new Error(`invalid access-surface fixture ${name}: client boundary is invalid`);
+  }
+  if (!isRecord(fixture.client_grant) || fixture.client_grant.origin !== fixture.client.origin) {
+    throw new Error(`invalid access-surface fixture ${name}: client grant boundary is invalid`);
+  }
+  if (typeof fixture.route_selection_vector !== "string" || fixture.route_selection_vector.length === 0) {
+    throw new Error(`invalid access-surface fixture ${name}: route_selection_vector is invalid`);
+  }
+  if (typeof fixture.sign_event_request_vector !== "string" || !fixture.sign_event_request_vector.startsWith("examples/")) {
+    throw new Error(`invalid access-surface fixture ${name}: sign_event_request_vector is invalid`);
+  }
+  if (!isRecord(fixture.safety)) throw new Error(`invalid access-surface fixture ${name}: safety must be an object`);
+  const safetyKeys = Object.keys(fixture.safety).sort();
+  const expectedSafetyKeys = Object.keys(ACCESS_SURFACE_SAFETY).sort();
+  if (JSON.stringify(safetyKeys) !== JSON.stringify(expectedSafetyKeys)) {
+    throw new Error(`invalid access-surface fixture ${name}: safety boundary drift`);
+  }
+  for (const [key, expected] of Object.entries(ACCESS_SURFACE_SAFETY)) {
+    if (fixture.safety[key] !== expected) {
+      throw new Error(`invalid access-surface fixture ${name}: safety boundary drift`);
+    }
+  }
+  const expected = fixture.expected;
+  if (!isRecord(expected)) throw new Error(`invalid access-surface fixture ${name}: expected must be an object`);
+  if (!isRecord(expected.get_public_key) || typeof expected.get_public_key.public_key !== "string") {
+    throw new Error(`invalid access-surface fixture ${name}: expected get_public_key is invalid`);
+  }
+  if (
+    !isRecord(expected.sign_event_without_dispatcher) ||
+    !isRecord(expected.sign_event_without_dispatcher.response)
+  ) {
+    throw new Error(`invalid access-surface fixture ${name}: expected signer-unavailable response is invalid`);
+  }
+  const unavailableResponse = expected.sign_event_without_dispatcher.response;
+  if (
+    unavailableResponse.ok !== false ||
+    !isRecord(unavailableResponse.error) ||
+    unavailableResponse.error.code !== "signer_route_unavailable" ||
+    unavailableResponse.error.retryable !== false
+  ) {
+    throw new Error(`invalid access-surface fixture ${name}: signer-unavailable response drift`);
+  }
+}
+
 function loadJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));
 }
@@ -482,6 +579,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const grantsRoot = resolve(specsRoot, "vectors/grants");
   const policyDecisionsRoot = resolve(specsRoot, "vectors/policy-decisions");
   const routeSelectionsRoot = resolve(specsRoot, "vectors/route-selections");
+  const accessSurfacesRoot = resolve(specsRoot, "vectors/access-surfaces");
   const featureMatricesRoot = resolve(specsRoot, "vectors/features");
   const invalidVectorsRoot = resolve(specsRoot, "vectors/invalid");
   const eventFiles = readdirSync(eventsRoot)
@@ -521,6 +619,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const routeSelectionFiles = readdirSync(routeSelectionsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const accessSurfaceFiles = readdirSync(accessSurfacesRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const featureMatrixFiles = readdirSync(featureMatricesRoot)
@@ -568,6 +669,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     ),
     routeSelections: routeSelectionFiles.map(
       (file) => loadJson(resolve(routeSelectionsRoot, file)) as SpecsFixtureSet["routeSelections"][number]
+    ),
+    accessSurfaces: accessSurfaceFiles.map(
+      (file) => loadJson(resolve(accessSurfacesRoot, file)) as SpecsFixtureSet["accessSurfaces"][number]
     ),
     featureMatrices: featureMatrixFiles.map(
       (file) => loadJson(resolve(featureMatricesRoot, file)) as SpecsFixtureSet["featureMatrices"][number]

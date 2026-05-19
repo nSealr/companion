@@ -180,6 +180,7 @@ Exports:
 - `SpecsFixtureSet`
 - `loadSpecsFixtures`
 - `resolveSpecsRoot`
+- `validateAccessSurfaceFixture`
 - `validateFeatureMatrixFixture`
 - `validateReviewTranscriptFixture`
 

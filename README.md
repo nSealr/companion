@@ -123,7 +123,9 @@ match the shared `contract_id`.
   an injected approved-origin store before provider selection so denied methods
   fail before native messaging, passes that gate through both the browser-like
   background adapter and packaged background entrypoint over explicit injected
-  dependencies, includes a pure
+  dependencies, includes a pure popup active-tab origin selector for future
+  approval UI without storage, grants, manifest permission changes, or key
+  material, includes a pure
   background-controller boundary over injected native messaging with optional
   response timeouts and request-scoped cancellation,
   includes a pure runtime-message adapter that maps raw browser sender metadata

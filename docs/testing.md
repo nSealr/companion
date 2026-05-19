@@ -139,6 +139,11 @@ single-repository CI. Cross-repository drift remains guarded by
   approval controls, accepts only parseable approval artifacts, handles
   rejection without creating an approval, and restores controls on malformed
   approval output.
+  Popup active-tab origin tests prove future approval UI can resolve exactly
+  one injected active tab into normalized sender/origin metadata, accepts local
+  development HTTP origins, rejects browser-internal pages, rejects ambiguous
+  tabs, malformed ids, invalid extension ids, and invalid injected APIs, and
+  still stores no browser secrets or key material.
   Sender-aware handler and background-controller tests prove an injected
   approved-origin store can authorize exact `get_public_key` access while
   denying method-mismatched, stale-digest, or malformed-store requests before

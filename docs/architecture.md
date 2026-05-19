@@ -572,6 +572,13 @@ and approve/reject actions over injected controls. It accepts approval only
 when the injected control returns a parseable approval artifact, and it still
 does not persist storage, create grants, inject a provider, dispatch signers,
 or hold key material.
+The popup active-tab origin selector is another pure boundary for future
+approval UI. It queries an injected `tabs` API for exactly one active tab,
+normalizes the tab URL through the same sender/client-identity parser, and
+returns secretless page-origin metadata plus a sender object suitable for the
+existing background request path. It does not add manifest permissions, read or
+write browser storage, create grants, inject a provider, dispatch signers, or
+handle key material.
 The sender-aware request handler can also consume that approved-origin store as
 an injected authorization gate. When configured, it checks the exact
 origin/extension/pairing-digest/method tuple after request and sender parsing

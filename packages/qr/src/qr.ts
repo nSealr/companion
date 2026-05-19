@@ -1,6 +1,12 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
-import { NSEALR_V0_LIMITS } from "@nsealr/protocol";
+import {
+  assertBase64UrlPayload,
+  decodeBase64Url,
+  encodeBase64Url,
+  jsonToUtf8Bytes,
+  NSEALR_V0_LIMITS
+} from "@nsealr/protocol";
 
 export const QR_ENVELOPE_PREFIX = "nsealr1:";
 export const ANIMATED_QR_ENVELOPE_PREFIX = "nsealr1a:";
@@ -9,84 +15,18 @@ export type AnimatedQrEnvelopeOptions = {
   chunkSizeChars?: number;
 };
 
-const BASE64URL_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-const BASE64URL_DECODE = new Map([...BASE64URL_ALPHABET].map((char, index) => [char, index]));
 const TEXT_ENCODER = new TextEncoder();
 const TEXT_DECODER = new TextDecoder("utf-8", { fatal: true });
 
 function assertBase64Url(value: string): void {
-  if (value.includes("=")) {
-    throw new Error("QR envelope payload must be unpadded base64url");
-  }
-  if (!/^[A-Za-z0-9_-]+$/u.test(value)) {
-    throw new Error("QR envelope payload must be base64url");
-  }
-}
-
-function jsonBytes(value: unknown): Uint8Array {
-  const json = JSON.stringify(value);
-  if (json === undefined) {
-    throw new Error("QR payload must be JSON-serializable");
-  }
-  return TEXT_ENCODER.encode(json);
+  assertBase64UrlPayload(value, {
+    padded: "QR envelope payload must be unpadded base64url",
+    invalid: "QR envelope payload must be base64url"
+  });
 }
 
 function sha256Hex(value: string | Uint8Array): string {
   return bytesToHex(sha256(typeof value === "string" ? TEXT_ENCODER.encode(value) : value));
-}
-
-function encodeBase64Url(bytes: Uint8Array): string {
-  let output = "";
-  for (let offset = 0; offset < bytes.length; offset += 3) {
-    const first = bytes[offset];
-    const hasSecond = offset + 1 < bytes.length;
-    const hasThird = offset + 2 < bytes.length;
-    const second = hasSecond ? bytes[offset + 1] : 0;
-    const third = hasThird ? bytes[offset + 2] : 0;
-
-    output += BASE64URL_ALPHABET[first >> 2];
-    output += BASE64URL_ALPHABET[((first & 0x03) << 4) | (second >> 4)];
-    if (hasSecond) {
-      output += BASE64URL_ALPHABET[((second & 0x0f) << 2) | (third >> 6)];
-    }
-    if (hasThird) {
-      output += BASE64URL_ALPHABET[third & 0x3f];
-    }
-  }
-  return output;
-}
-
-function decodeBase64Url(value: string, errorMessage: string): Uint8Array {
-  if (value.length % 4 === 1) {
-    throw new Error(errorMessage);
-  }
-  const output = new Uint8Array(Math.floor((value.length * 3) / 4));
-  let outputOffset = 0;
-  for (let offset = 0; offset < value.length; offset += 4) {
-    const remaining = value.length - offset;
-    if (remaining === 1) {
-      throw new Error(errorMessage);
-    }
-    const first = BASE64URL_DECODE.get(value[offset]);
-    const second = BASE64URL_DECODE.get(value[offset + 1]);
-    const third = remaining > 2 ? BASE64URL_DECODE.get(value[offset + 2]) : 0;
-    const fourth = remaining > 3 ? BASE64URL_DECODE.get(value[offset + 3]) : 0;
-    if (first === undefined || second === undefined || third === undefined || fourth === undefined) {
-      throw new Error(errorMessage);
-    }
-    const block = (first << 18) | (second << 12) | (third << 6) | fourth;
-    output[outputOffset] = (block >> 16) & 0xff;
-    outputOffset += 1;
-    if (remaining > 2) {
-      output[outputOffset] = (block >> 8) & 0xff;
-      outputOffset += 1;
-    }
-    if (remaining > 3) {
-      output[outputOffset] = block & 0xff;
-      outputOffset += 1;
-    }
-  }
-  return output;
 }
 
 function animatedFrameChecksum(digest: string, index: number, total: number, chunk: string): string {
@@ -94,7 +34,7 @@ function animatedFrameChecksum(digest: string, index: number, total: number, chu
 }
 
 export function encodeQrEnvelope(value: unknown): string {
-  const decodedJson = jsonBytes(value);
+  const decodedJson = jsonToUtf8Bytes(value, "QR payload must be JSON-serializable");
   if (decodedJson.byteLength > NSEALR_V0_LIMITS.max_static_qr_decoded_json_bytes) {
     throw new Error("QR decoded JSON exceeds max_static_qr_decoded_json_bytes");
   }
@@ -110,7 +50,7 @@ export function encodeAnimatedQrEnvelopeFrames(value: unknown, options: Animated
   if (chunkSize > NSEALR_V0_LIMITS.max_animated_qr_frame_payload_chars) {
     throw new Error("animated QR chunk exceeds max_animated_qr_frame_payload_chars");
   }
-  const decodedJson = jsonBytes(value);
+  const decodedJson = jsonToUtf8Bytes(value, "QR payload must be JSON-serializable");
   if (decodedJson.byteLength > NSEALR_V0_LIMITS.max_animated_qr_decoded_json_bytes) {
     throw new Error("animated QR decoded JSON exceeds max_animated_qr_decoded_json_bytes");
   }

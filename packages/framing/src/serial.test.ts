@@ -26,6 +26,24 @@ describe("serial framing draft", () => {
     expect(decodeSerialFrame(frame.replace("\n", "\r\n"))).toEqual({ type: "request", payload: signEventRequest });
   });
 
+  it("round-trips UTF-8 payloads without Node runtime helpers", () => {
+    const request = {
+      ...signEventRequest,
+      request_id: "req-serial-utf8-browser-safe",
+      params: {
+        event_template: {
+          ...signEventRequest.params.event_template,
+          content: "Line one\nTabbed\tEuro \u20ac Lock \ud83d\udd10"
+        }
+      }
+    };
+
+    expect(decodeSerialFrame(encodeSerialFrame({ type: "request", payload: request }))).toEqual({
+      type: "request",
+      payload: request
+    });
+  });
+
   it("rejects encoded frames that would exceed max_serial_frame_bytes", () => {
     expect(() =>
       encodeSerialFrame({

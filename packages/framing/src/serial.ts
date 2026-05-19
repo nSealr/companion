@@ -1,6 +1,13 @@
-import { createHash } from "node:crypto";
-import { TextDecoder } from "node:util";
-import { NSEALR_V0_LIMITS, utf8ByteLength } from "@nsealr/protocol";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
+import {
+  assertBase64UrlPayload,
+  decodeBase64Url,
+  encodeBase64Url,
+  jsonToUtf8Bytes,
+  NSEALR_V0_LIMITS,
+  utf8ByteLength
+} from "@nsealr/protocol";
 
 export const SERIAL_FRAME_PREFIX = "nsealr1f:";
 
@@ -11,21 +18,22 @@ export type SerialFrame = {
   payload: unknown;
 };
 
+const TEXT_ENCODER = new TextEncoder();
+const TEXT_DECODER = new TextDecoder("utf-8", { fatal: true });
+
 function isSerialFrameType(value: string): value is SerialFrameType {
   return value === "request" || value === "response" || value === "error";
 }
 
 function assertBase64Url(value: string): void {
-  if (value.includes("=")) {
-    throw new Error("serial frame payload must be unpadded base64url");
-  }
-  if (!/^[A-Za-z0-9_-]+$/u.test(value)) {
-    throw new Error("serial frame payload must be base64url");
-  }
+  assertBase64UrlPayload(value, {
+    padded: "serial frame payload must be unpadded base64url",
+    invalid: "serial frame payload must be base64url"
+  });
 }
 
 function checksum(type: SerialFrameType, payload: string): string {
-  return createHash("sha256").update(`${type}:${payload}`, "utf8").digest("hex").slice(0, 16);
+  return bytesToHex(sha256(TEXT_ENCODER.encode(`${type}:${payload}`))).slice(0, 16);
 }
 
 function stripLineEnding(line: string): string {
@@ -39,7 +47,7 @@ function stripLineEnding(line: string): string {
 }
 
 export function encodeSerialFrame(frame: SerialFrame): string {
-  const payload = Buffer.from(JSON.stringify(frame.payload), "utf8").toString("base64url");
+  const payload = encodeBase64Url(jsonToUtf8Bytes(frame.payload, "serial frame payload must be JSON-serializable"));
   const frameChecksum = checksum(frame.type, payload);
   const line = `${SERIAL_FRAME_PREFIX}${frame.type}:${payload}:${frameChecksum}\n`;
   if (utf8ByteLength(line) > NSEALR_V0_LIMITS.max_serial_frame_bytes) {
@@ -68,9 +76,10 @@ export function decodeSerialFrame(line: string): SerialFrame {
   if (frameChecksum !== checksum(type, payload)) {
     throw new Error("serial checksum mismatch");
   }
+  const decoded = decodeBase64Url(payload, "serial frame payload must be base64url");
   let json: string;
   try {
-    json = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.from(payload, "base64url"));
+    json = TEXT_DECODER.decode(decoded);
   } catch (error) {
     throw new Error("serial frame payload must be valid UTF-8", { cause: error });
   }

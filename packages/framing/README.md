@@ -7,6 +7,9 @@ Checksum-protected serial frame helpers for USB CDC and UART experiments.
 - Encode and decode nSealr serial line frames.
 - Enforce shared serial-frame byte limits.
 - Reject checksum mismatches and malformed payloads deterministically.
+- Stay browser-runtime safe for future WebSerial/WebUSB experiments while
+  remaining outside the `@nsealr/sdk/browser` facade until that access surface
+  is reviewed.
 
 ## Example
 

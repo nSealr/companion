@@ -35,7 +35,7 @@ describe("QR envelope v0", () => {
       params: {
         event_template: {
           ...signEventRequest.params.event_template,
-          content: "Line one\\nTabbed\\tEuro \\u20ac Lock \\ud83d\\udd10"
+          content: "Line one\nTabbed\tEuro \u20ac Lock \ud83d\udd10"
         }
       }
     };

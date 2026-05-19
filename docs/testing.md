@@ -89,10 +89,11 @@ single-repository CI. Cross-repository drift remains guarded by
   behavior. The same browser facade now also imports `@nsealr/qr`, which keeps
   static and animated QR helpers under the browser-runtime import gate.
   The browser-runtime import hygiene check walks packaged browser-extension
-  entrypoints plus `@nsealr/browser-provider` and fails if that runtime graph
-  imports Node builtins, uses `Buffer`/`process`, or imports the Node-capable
-  `@nsealr/client` root instead of `@nsealr/client/browser`. Run it directly
-  with `make browser-runtime-imports`. The browser-runtime bundle smoke then
+  entrypoints plus `@nsealr/browser-provider`, `@nsealr/framing`, and the
+  browser SDK facade. It fails if that runtime graph imports Node builtins, uses
+  `Buffer`/`process`, or imports the Node-capable `@nsealr/client` root instead
+  of `@nsealr/client/browser`. Run it directly with
+  `make browser-runtime-imports`. The browser-runtime bundle smoke then
   runs esbuild against the packaged background, content-script, page-script,
   and popup entrypoints with `platform: browser` and browser-compatible IIFE
   output, and fails if bundled outputs contain Node builtin specifiers,
@@ -346,8 +347,8 @@ single-repository CI. Cross-repository drift remains guarded by
   request/QR handling, fixture loading, policy decisions, review rendering,
   serial framing, local companion-service calls, browser-provider refusal
   behavior, already-decrypted NIP-46 bridge decisions, `@nsealr/sdk` and
-  `@nsealr/sdk/browser` facade namespace imports including QR, smartcard APDU round-trip,
-  and in-memory serial-line transport refusal without importing
+  `@nsealr/sdk/browser` facade namespace imports including QR, smartcard APDU
+  round-trip, and in-memory serial-line transport refusal without importing
   `@nsealr/dev-signer`.
 - `make readme-examples` builds package artifacts, then extracts
   `nsealr-readme-example` TypeScript snippets from every publishable package

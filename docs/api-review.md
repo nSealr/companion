@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:3baadd70c7bfc5eec4d57a41caef83f0a07a95ccf9bdb36cf2f19391c7bd9d77`
+API surface digest: `sha256:82d5b0ba7fe07e9a26f2b4687c6ea765d61dff67c8bfd57dbaf1fe2ed3432bc1`
 
 Source: `docs/api.md`
 
@@ -121,8 +121,9 @@ Status: reviewed for pre-alpha.
 
 The framing package only encodes and decodes checksum-protected serial frames.
 It has no device-opening, route-selection, policy, storage, or signing
-responsibility. This boundary is suitable for USB CDC/UART experiments and
-future host transports.
+responsibility. It is browser-runtime clean as a direct package for future USB
+CDC/UART/WebSerial experiments, but WebSerial/WebUSB exposure remains outside
+`@nsealr/sdk/browser` until that access-surface boundary is reviewed.
 
 ## @nsealr/nip46
 
@@ -157,9 +158,11 @@ custody remain outside this package.
 Status: reviewed for pre-alpha.
 
 The protocol package owns nSealr v0 request, response, capability,
-signing-status, and implementation-limit validation. Its limits are nSealr
-safety limits for constrained signers, not Nostr protocol limits. All access
-surfaces should validate through this package before contacting signer routes.
+signing-status, implementation-limit validation, and small browser-safe
+encoding helpers shared by QR and serial framing packages. Its limits are
+nSealr safety limits for constrained signers, not Nostr protocol limits. All
+access surfaces should validate through this package before contacting signer
+routes.
 
 ## @nsealr/qr
 

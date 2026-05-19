@@ -270,10 +270,15 @@ nSealr request and response validation with shared v0 implementation limits.
 Source entrypoint: `packages/protocol/src/index.ts`
 
 Exports:
+- `Base64UrlPayloadErrorMessages`
 - `NSEALR_V0_LIMITS`
 - `ValidationResult`
+- `assertBase64UrlPayload`
 - `compactJsonUtf8ByteLength`
+- `decodeBase64Url`
+- `encodeBase64Url`
 - `isSafeNonNegativeInteger`
+- `jsonToUtf8Bytes`
 - `nSealrV0Limits`
 - `utf8ByteLength`
 - `validateRequest`

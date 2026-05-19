@@ -126,8 +126,10 @@ packages, but it must not export test-only signing as a production path.
   stdio, serial-frame, and serial-line adapters. It is intentionally
   secretless and does not depend on `@nsealr/dev-signer`.
 - `packages/qr`: v0 `nsealr1:` QR envelope encoding and decoding.
-- `packages/framing`: checksum-protected serial line framing draft with the
-  shared v0 serial-frame byte limit.
+- `packages/framing`: browser-runtime-clean checksum-protected serial line
+  framing draft with the shared v0 serial-frame byte limit. It is a direct
+  protocol package for future WebSerial/WebUSB experiments, not a transport
+  opener.
 - `packages/smartcard`: APDU codec, provider-based PC/SC APDU transport
   boundary, `SmartcardSigner` boundary, and response verification for the
   display-less smartcard line. Test-only APDU simulation is private
@@ -1039,4 +1041,6 @@ the first 16 lowercase hexadecimal characters of SHA-256 over
 catches accidental framing and transport corruption before the companion applies
 schema and signature verification.
 The decoder enforces the shared complete-frame byte limit and rejects malformed
-payloads before JSON parsing.
+payloads before JSON parsing. The framing package is browser-runtime clean, but
+browser access surfaces still need separate origin, permission, and transport
+review before WebSerial/WebUSB support is exposed through `@nsealr/sdk/browser`.

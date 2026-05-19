@@ -11,6 +11,7 @@ const browserRuntimeEntrypoints = [
   "apps/browser-extension/src/nsealr-popup-entrypoint.ts",
   "apps/browser-extension/src/nsealr-page-script-entrypoint.ts",
   "packages/browser-provider/src/index.ts",
+  "packages/framing/src/index.ts",
   "packages/sdk/src/browser.ts"
 ].map((path) => join(root, path));
 

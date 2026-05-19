@@ -52,11 +52,12 @@ lines remain distinguishable from new items.
 - CLI serial-frame wrapping and unwrapping helpers.
 
 Status: file, stdio, in-memory development signer transport, QR envelope,
-serial framing, serial-frame transport foundations, and offline CLI
-serial-frame helpers are implemented. Transport adapters now validate outbound
-request payloads and inbound response payloads at their boundary, including the
-development signer, JSON file handoff, JSON-lines stdio, and serial-frame
-adapters. Exchange adapters also reject otherwise valid responses whose
+browser-runtime-clean serial framing, serial-frame transport foundations, and
+offline CLI serial-frame helpers are implemented. Transport adapters now
+validate outbound request payloads and inbound response payloads at their
+boundary, including the development signer, JSON file handoff, JSON-lines
+stdio, and serial-frame adapters. Exchange adapters also reject otherwise valid
+responses whose
 `request_id` does not match the outbound request, and they cryptographically
 verify successful `sign_event` responses before returning them. Malformed
 requests, malformed device responses, invalid signed-event output, or
@@ -371,7 +372,10 @@ transport adapters. `@nsealr/sdk/browser` is the browser-safe subpath over the
 provider, `@nsealr/client/browser`, and pure core/policy/protocol/QR/review
 helper packages, giving extension and web callers a reviewed SDK import that is
 checked by browser-runtime import hygiene. `@nsealr/qr` is now browser-runtime
-clean and no longer requires Node `Buffer`. A manual package release rehearsal
+clean and no longer requires Node `Buffer`; `@nsealr/framing` is also
+browser-runtime clean as a direct package, but remains outside
+`@nsealr/sdk/browser` until the WebSerial/WebUSB access-surface boundary is
+reviewed. A manual package release rehearsal
 workflow now prepares and uploads
 checked tarball artifacts with byte counts and SHA-256 digests without
 publishing to npm.

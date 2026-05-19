@@ -306,7 +306,9 @@ match the shared `contract_id`.
   frame-count checks before JSON parsing.
 - `packages/framing` implements the first checksum-protected serial line frame
   draft for USB CDC and UART experiments, including shared frame-size limits on
-  both decode and encode.
+  both decode and encode. The package is browser-runtime clean for future
+  WebSerial/WebUSB work, but it is not part of `@nsealr/sdk/browser` until that
+  access surface is reviewed.
 - `packages/protocol` validates request/response shape, centralizes the
   companion copy of the shared v0 implementation limits, and validates
   capability discovery and signing-status responses, including rejection of

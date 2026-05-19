@@ -58,6 +58,13 @@ export type BrowserExtensionPackageBuildResult = {
   format: typeof BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT;
   target: BrowserExtensionManifestOptions["target"];
   out_dir: string;
+  route_config_digest: string;
+  route_account_id: string;
+  route_type?: string;
+  origin_permission_mode: "none" | BrowserExtensionPackageOriginPermissionMode;
+  extension_id?: string;
+  local_pairing_digest?: string;
+  content_script_origins: readonly string[];
   package_digest: string;
   files: readonly BrowserExtensionPackageBuildFile[];
   installs_native_host_manifest: false;
@@ -452,6 +459,7 @@ export async function buildBrowserExtensionPackage(
       : {})
   }));
   const originPermissions = originPermissionsForPackage(options, plan);
+  const contentScriptOrigins = packagedContentScriptOrigins(plan);
   const buildResult = await esbuild({
     absWorkingDir: COMPANION_ROOT,
     bundle: true,
@@ -499,6 +507,15 @@ export async function buildBrowserExtensionPackage(
     format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
     target: plan.target,
     out_dir: outDir,
+    route_config_digest: browserExtensionRouteConfigDigest(routeConfig),
+    route_account_id: routeConfig.account_id,
+    ...(routeConfig.route_type !== undefined ? { route_type: routeConfig.route_type } : {}),
+    origin_permission_mode: originPermissions?.mode ?? "none",
+    ...(originPermissions?.extensionId !== undefined ? { extension_id: originPermissions.extensionId } : {}),
+    ...(originPermissions?.localPairingDigest !== undefined
+      ? { local_pairing_digest: originPermissions.localPairingDigest }
+      : {}),
+    content_script_origins: Object.freeze(contentScriptOrigins),
     package_digest: packageDigest(plan.target, files),
     files,
     installs_native_host_manifest: false,

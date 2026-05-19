@@ -202,9 +202,11 @@ match the shared `contract_id`.
   only after route-config review/approval. Embedded-store content-script builds
   still require a reviewed origin-permission store as secretless background
   gate data; storage-backed builds start from browser extension storage instead
-  of embedding approvals. The build still does not install a browser extension,
-  write extension storage at build time, create grants, dispatch signers, or
-  hold key material.
+  of embedding approvals. The build result exposes the selected route,
+  content-script origin, extension id, local pairing digest, and
+  origin-permission mode it packaged, while still not installing a browser
+  extension, writing extension storage at build time, creating grants,
+  dispatching signers, or holding key material.
 - `@nsealr/client` exposes the shared local-client identity parser, including
   the browser-safe `@nsealr/client/client-identity` subpath, used before
   pairing, route selection, signer-request validation, and response

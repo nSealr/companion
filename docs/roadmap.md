@@ -549,11 +549,11 @@ and uploads checked tarball artifacts without publishing to npm.
   only after successful in-memory bundling, embeds that approved secretless
   static route config, and requires a reviewed origin-permission store before
   content scripts can be packaged. That store is embedded as secretless
-  background gate data, not browser storage. Package build returns a package
-  digest plus per-file byte counts and SHA-256 hashes, and still avoids
-  native-host installation, extension storage writes, key custody, and signer
-  dispatch. The browser-extension
-  manifest builder can still build a minimal
+  background gate data, not browser storage. Package build returns explicit
+  route, origin, extension, and pairing metadata plus a package digest and
+  per-file byte counts and SHA-256 hashes, and still avoids native-host
+  installation, extension storage writes, key custody, and signer dispatch.
+  The browser-extension manifest builder can still build a minimal
   MV3 manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage
   permissions by default, with a packaged action popup HTML/entrypoint that can

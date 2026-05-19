@@ -112,6 +112,12 @@ describe("browser extension package-build CLI", () => {
         format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
         target: "chromium",
         out_dir: temp.outDir,
+        route_account_id: "esp32-usb-slot-0",
+        route_type: "esp32_usb_nip46",
+        origin_permission_mode: "embedded",
+        extension_id: chromiumExtensionId,
+        local_pairing_digest: localPairingDigest,
+        content_script_origins: ["https://example.com"],
         package_digest: expect.stringMatching(/^[0-9a-f]{64}$/u),
         installs_native_host_manifest: false,
         writes_extension_storage: false,
@@ -178,6 +184,12 @@ describe("browser extension package-build CLI", () => {
       expect(result).toMatchObject({
         format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
         target: "chromium",
+        route_account_id: "esp32-usb-slot-0",
+        route_type: "esp32_usb_nip46",
+        origin_permission_mode: "extension_storage",
+        extension_id: chromiumExtensionId,
+        local_pairing_digest: localPairingDigest,
+        content_script_origins: ["https://example.com"],
         embeds_origin_permission_store: false,
         uses_extension_origin_permission_storage: true
       });

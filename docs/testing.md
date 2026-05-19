@@ -103,9 +103,10 @@ single-repository CI. Cross-repository drift remains guarded by
   secretless selected route; package-build requires that approval before
   embedding the route config, requires a new output directory, writes manifest,
   popup HTML, and bundled entrypoints only after successful in-memory bundling,
-  returns a package digest plus per-file byte counts and SHA-256 hashes, and
-  still performs no native-host installation, build-time browser storage
-  writes, key custody, or signer dispatch. A separate test covers the explicit
+  returns explicit route, origin, extension, and pairing metadata plus a
+  package digest and per-file byte counts plus SHA-256 hashes, and still
+  performs no native-host installation, build-time browser storage writes, key
+  custody, or signer dispatch. A separate test covers the explicit
   storage-backed origin-approval build profile and pins its `activeTab` plus
   `storage` permissions.
 - Browser-extension app tests cover the private internal message parser for

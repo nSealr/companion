@@ -591,6 +591,12 @@ authorizing/secret-carrying control results before any card rendering or
 approval path can consume it. It is still review-only and does not write
 browser storage, create grants, inject a provider, dispatch a signer, or carry
 key material.
+The popup origin-permission view composer binds that orchestrator to the
+existing approval card and popup refresh surface. It renders exactly the
+reviewed active-tab origin state, delegates digest-bound approval/rejection to
+injected controls, reports errors through the popup status/list region, and
+does not choose a browser storage backend, create grants, inject a provider,
+dispatch a signer, or handle key material.
 The sender-aware request handler can also consume that approved-origin store as
 an injected authorization gate. When configured, it checks the exact
 origin/extension/pairing-digest/method tuple after request and sender parsing

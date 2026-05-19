@@ -415,7 +415,11 @@ and uploads checked tarball artifacts without publishing to npm.
   extension-id mismatches, app-name mismatches, unsupported result fields, and
   authorizing/secret-carrying control results before rendering or approval,
   still without storage, grants, provider injection, signer dispatch, or key
-  material. The sender-aware
+  material. A pure popup origin-permission view composer now renders that
+  active-tab review through the existing approval card and refresh control,
+  delegates digest-bound approval/rejection to injected controls, and still
+  does not choose browser storage, create grants, inject a provider, dispatch a
+  signer, or handle key material. The sender-aware
   browser request handler can now consume an injected approved-origin store and
   deny stale, malformed, or method-mismatched origin permissions before provider
   selection, native messaging, route selection, or signer dispatch; the

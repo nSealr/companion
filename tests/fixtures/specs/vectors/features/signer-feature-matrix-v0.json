@@ -345,9 +345,9 @@
         },
         "qr_response": {
           "target": "required",
-          "current": "planned",
+          "current": "partial",
           "contract_id": "qr-response-v0",
-          "notes": "QR output for signed responses is planned after signing gates and QR-board hardware acceptance."
+          "notes": "Host-core can encode already-produced response JSON into static nsealr1 and animated nsealr1a QR envelopes against the shared response vector. Real signing, response QR display hardware, camera scan-back, and hardware acceptance remain pending."
         },
         "stateless_session_custody": {
           "target": "required",

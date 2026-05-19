@@ -341,7 +341,7 @@
           "target": "required",
           "current": "partial",
           "contract_id": "stateless-session-custody-v0",
-          "notes": "Host-core now has a bounded RAM-only session keyring model for already parsed nsec and BIP-39 key sources plus shared secret-hidden import review summaries with deterministic review_id, fingerprints, and import approval digests. Camera/import UX, device lifecycle wipe tests, hardware reset behavior, hardware review acceptance, NIP-06 derivation wiring, response QR output, and real signing remain pending."
+          "notes": "Host-core now has a bounded RAM-only session keyring model for already parsed nsec and BIP-39 key sources, wipes active source slots on clear/destruction, disables keyring copy/move operations, and consumes shared secret-hidden import review summaries with deterministic review_id, fingerprints, and import approval digests. Camera/import UX, hardware reset behavior, hardware review acceptance, NIP-06 derivation wiring, response QR output, and real signing remain pending."
         },
         "seedqr_session_import": {
           "target": "required",

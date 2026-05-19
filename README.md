@@ -113,7 +113,10 @@ match the shared `contract_id`.
   with approval bound to the reviewed local pairing digest, can normalize those
   already-approved origin artifacts into a deterministic secretless store
   contract for exact origin/extension/pairing-digest/method lookup without
-  writing browser storage, creating grants, or dispatching signers, includes a pure
+  writing browser storage, creating grants, or dispatching signers, can render a
+  pure origin-permission review card for future popup approval UX without
+  performing storage, grant, provider-injection, or signer-dispatch side
+  effects, includes a pure
   background-controller boundary over injected native messaging with optional
   response timeouts and request-scoped cancellation,
   includes a pure runtime-message adapter that maps raw browser sender metadata

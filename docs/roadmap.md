@@ -394,7 +394,13 @@ and uploads checked tarball artifacts without publishing to npm.
   deterministic secretless origin-permission store contract for exact
   origin/extension/pairing-digest/method lookup, while still not choosing a
   browser storage backend, creating local-service grants, dispatching signers,
-  or storing secret material. A pure background-controller boundary now composes
+  or storing secret material. The private extension app now also has a pure
+  origin-permission review card for future popup approval UX: it renders the
+  validated review, full pairing digest, requested method effects, and
+  approve/reject actions over injected controls, and accepts only parsed
+  approval artifacts. It still writes no storage, creates no grants, injects no
+  provider, dispatches no signer, and holds no key material. A pure
+  background-controller boundary now composes
   request handling, pairing-intent requests, pairing-review projection, and
   origin-permission review projection over injected native messaging without
   using browser APIs, and can use the same optional native response timeout and
@@ -500,8 +506,8 @@ and uploads checked tarball artifacts without publishing to npm.
   matches, host-permission fields, and storage. Remaining work: reviewed
   bootstrap/config UX beyond the static developer route config,
   native-messaging installation, browser UI/storage wiring for the approved
-  origin-permission store, richer popup/origin approval rendering, and real
-  dispatch after M4.7 gates. No local
+  origin-permission store into real browser UI/storage, tab/origin selection
+  for popup approval, and real dispatch after M4.7 gates. No local
   production signing and no extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the

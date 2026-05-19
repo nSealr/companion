@@ -126,6 +126,12 @@ single-repository CI. Cross-repository drift remains guarded by
   route-only approvals cannot authorize `sign_event`, duplicate approvals are
   rejected before shadowing, and malformed or secret-looking store fields fail
   before any browser storage, grant, signer dispatch, or key material exists.
+  Origin-permission view tests prove the future popup approval card renders the
+  validated origin, app name, full local-pairing digest, method effects, and
+  no-key/no-grant/no-storage-write chips, passes the exact digest to injected
+  approval controls, accepts only parseable approval artifacts, handles
+  rejection without creating an approval, and restores controls on malformed
+  approval output.
   Background-controller tests prove request handling, pairing-intent requests,
   pairing-review projection, and origin-permission review projection share the
   same injected native-messaging boundary, silent or

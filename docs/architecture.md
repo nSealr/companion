@@ -560,6 +560,12 @@ approved origin artifacts, sorts them deterministically, rejects duplicate
 origin/extension/pairing-digest/method lookups. That store contract is still
 pure data validation: it does not call browser storage APIs, choose a
 persistence backend, create grants, dispatch signers, or store secrets.
+The matching origin-permission review card is also pure: it renders the
+already-validated review, the full pairing digest, requested method effects,
+and approve/reject actions over injected controls. It accepts approval only
+when the injected control returns a parseable approval artifact, and it still
+does not persist storage, create grants, inject a provider, dispatch signers,
+or hold key material.
 Its manifest builder is intentionally restrictive: the default Chromium
 manifest omits host permissions, optional host permissions, content scripts,
 web-accessible resources, and storage; Firefox manifests require an explicit

@@ -70,7 +70,8 @@ export function browserExtensionPopupHtml(): string {
       min-width: 0;
     }
     .nsealr-popup__empty,
-    .nsealr-popup__request {
+    .nsealr-popup__request,
+    .nsealr-popup__permission {
       border: 1px solid var(--nsealr-rule);
       border-radius: 8px;
       background: var(--nsealr-panel);
@@ -80,7 +81,8 @@ export function browserExtensionPopupHtml(): string {
       color: var(--nsealr-muted);
       text-align: center;
     }
-    .nsealr-popup__request {
+    .nsealr-popup__request,
+    .nsealr-popup__permission {
       display: grid;
       gap: 8px;
       padding: 10px;
@@ -116,8 +118,44 @@ export function browserExtensionPopupHtml(): string {
     .nsealr-popup__meta-line {
       overflow-wrap: anywhere;
     }
+    .nsealr-popup__digest {
+      border: 1px solid #e3e8ef;
+      border-radius: 6px;
+      padding: 5px 6px;
+      overflow-wrap: anywhere;
+      color: #344054;
+      background: #ffffff;
+      font: 11px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .nsealr-popup__permission-methods {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+    .nsealr-popup__permission-method {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+      padding-top: 6px;
+      border-top: 1px solid #e3e8ef;
+    }
+    .nsealr-popup__permission-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .nsealr-popup__chip {
+      border: 1px solid #c7d7fe;
+      border-radius: 999px;
+      padding: 2px 7px;
+      color: #1849a9;
+      background: #eef4ff;
+      font-size: 11px;
+      line-height: 1.25;
+    }
     .nsealr-popup__actions {
       display: flex;
+      gap: 6px;
       justify-content: flex-end;
     }
     .nsealr-popup__button {
@@ -139,6 +177,20 @@ export function browserExtensionPopupHtml(): string {
     }
     .nsealr-popup__button--danger {
       color: var(--nsealr-danger);
+    }
+    .nsealr-popup__button--primary {
+      border-color: #0f766e;
+      color: #ffffff;
+      background: #0f766e;
+    }
+    .nsealr-popup__button--primary:hover {
+      border-color: #115e59;
+      background: #115e59;
+    }
+    .nsealr-popup__button--primary:disabled {
+      border-color: #99d6cf;
+      color: #eef4f3;
+      background: #99d6cf;
     }
     .nsealr-popup__footer {
       display: flex;

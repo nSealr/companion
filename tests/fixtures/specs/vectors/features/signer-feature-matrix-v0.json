@@ -232,7 +232,7 @@
           "target": "required",
           "current": "partial",
           "contract_id": "session-source-generation-v0",
-          "notes": "Package-owned helpers can generate 12- or 24-word BIP-39 sources and standalone nsec-equivalent private-key sources into the RAM-only session-source boundary with injected entropy for tests. Final Pi backup/export UI, physical review, and power-cycle evidence remain pending."
+          "notes": "Package-owned helpers can generate 12- or 24-word BIP-39 sources and standalone nsec-equivalent private-key sources into the RAM-only session-source boundary with injected entropy for tests. Raspberry now consumes shared danger-zone backup review vectors and reveals BIP-39 words/SeedQR or NIP-19 nsec payloads only after final-page local approval. Final Pi physical backup display/output acceptance and power-cycle evidence remain pending."
         },
         "manual_only_policy": {
           "target": "required",
@@ -371,7 +371,7 @@
           "target": "required",
           "current": "partial",
           "contract_id": "session-source-generation-v0",
-          "notes": "Host-core can generate BIP-39 sources from 16- or 32-byte entropy and standalone nsec-equivalent private-key sources from valid secp256k1 scalar entropy into the same RAM-only source/review boundary. Hardware RNG wiring, backup/export UI, hardware review acceptance, reset-loss evidence, response QR output, and real signing remain pending."
+          "notes": "Host-core can generate BIP-39 sources from 16- or 32-byte entropy and standalone nsec-equivalent private-key sources from valid secp256k1 scalar entropy into the same RAM-only source/review boundary. ESP32 now consumes shared danger-zone backup review vectors and reveals BIP-39 words/SeedQR or NIP-19 nsec payloads only after final-page local approval. Hardware RNG wiring, physical backup display/output acceptance, reset-loss evidence, response QR output, and real signing remain pending."
         },
         "manual_only_policy": {
           "target": "required",

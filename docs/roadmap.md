@@ -368,9 +368,10 @@ count, and SHA-256 digest before artifact upload.
 `@nsealr/sdk` now provides a platform-neutral facade over curated public
 namespaces without importing private test signing, Node-only fixtures, or host
 transport adapters. `@nsealr/sdk/browser` is the browser-safe subpath over the
-provider, `@nsealr/client/browser`, and pure core/policy/protocol/review helper
-packages, giving extension and web callers a reviewed SDK import that is
-checked by browser-runtime import hygiene. A manual package release rehearsal
+provider, `@nsealr/client/browser`, and pure core/policy/protocol/QR/review
+helper packages, giving extension and web callers a reviewed SDK import that is
+checked by browser-runtime import hygiene. `@nsealr/qr` is now browser-runtime
+clean and no longer requires Node `Buffer`. A manual package release rehearsal
 workflow now prepares and uploads
 checked tarball artifacts with byte counts and SHA-256 digests without
 publishing to npm.

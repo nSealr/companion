@@ -28,6 +28,22 @@ describe("QR envelope v0", () => {
     expect(decodeQrEnvelope(qrVector.envelope)).toEqual(qrVector.decoded);
   });
 
+  it("round-trips UTF-8 content in browser-safe QR helpers", () => {
+    const request = {
+      ...signEventRequest,
+      request_id: "req-utf8-browser-safe",
+      params: {
+        event_template: {
+          ...signEventRequest.params.event_template,
+          content: "Line one\\nTabbed\\tEuro \\u20ac Lock \\ud83d\\udd10"
+        }
+      }
+    };
+
+    expect(decodeQrEnvelope(encodeQrEnvelope(request))).toEqual(request);
+    expect(decodeAnimatedQrEnvelopeFrames(encodeAnimatedQrEnvelopeFrames(request, { chunkSizeChars: 23 }))).toEqual(request);
+  });
+
   it("rejects envelopes without the nsealr1 prefix", () => {
     expect(() => decodeQrEnvelope("nostr:abc")).toThrow("QR envelope requires nsealr1 prefix");
   });

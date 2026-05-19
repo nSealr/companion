@@ -180,7 +180,7 @@ packages, but it must not export test-only signing as a production path.
   package surface. Browser runtime code must use the reviewed
   `@nsealr/sdk/browser` subpath, which re-exports
   `@nsealr/browser-provider`, `@nsealr/client/browser`, and pure
-  core/policy/protocol/review helpers without pulling in the broader SDK root.
+  core/policy/protocol/QR/review helpers without pulling in the broader SDK root.
 - `apps/service`: private native-messaging host scaffold over
   `packages/client`. It processes multiple length-prefixed service messages on
   one stdio session, accepts explicit in-memory authorization context in tests,

@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:6d1cf56752d1a9125f23876644c929f5352f93864300da510614a4b4179f5481`
+API surface digest: `sha256:3baadd70c7bfc5eec4d57a41caef83f0a07a95ccf9bdb36cf2f19391c7bd9d77`
 
 Source: `docs/api.md`
 
@@ -188,7 +188,7 @@ browser, app, and companion integrations. It intentionally excludes the private
 `@nsealr/dev-signer` package and does not import Node-only fixture loading or
 host transport adapters. The `@nsealr/sdk/browser` subpath is the reviewed
 browser-safe facade over the NIP-07 provider, `@nsealr/client/browser`, and
-pure core/policy/protocol/review helpers. Use `@nsealr/fixtures` and
+pure core/policy/protocol/QR/review helpers. Use `@nsealr/fixtures` and
 `@nsealr/transport` directly when test/lab or Node host code needs those
 specialized surfaces. The SDK must remain a secretless convenience layer: no
 production key custody, browser-side signing material, grant database,

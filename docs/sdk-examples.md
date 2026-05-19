@@ -27,7 +27,7 @@ package and cover:
 - platform-neutral `@nsealr/sdk` facade imports for browser-provider, client,
   core, protocol, and smartcard namespaces;
 - browser-safe `@nsealr/sdk/browser` facade imports for the NIP-07 provider,
-  browser local-service client, and pure core/policy/protocol/review helpers;
+  browser local-service client, and pure core/policy/protocol/QR/review helpers;
 - smartcard APDU command/response round-trip and package-owned serial-line
   exchange against an in-memory port that returns `signing_disabled`.
 

@@ -85,5 +85,14 @@ assert.equal(sdkBrowser.protocol.validateRequest({
   request_id: "consumer-smoke-sdk-browser-get-public-key",
   method: "get_public_key"
 }).ok, true);
+assert.deepEqual(sdkBrowser.qr.decodeQrEnvelope(sdkBrowser.qr.encodeQrEnvelope({
+  version: 1,
+  request_id: "consumer-smoke-sdk-browser-qr",
+  method: "get_public_key"
+})), {
+  version: 1,
+  request_id: "consumer-smoke-sdk-browser-qr",
+  method: "get_public_key"
+});
 
 console.log("nSealr package consumer smoke passed");

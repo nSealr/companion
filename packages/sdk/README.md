@@ -4,7 +4,7 @@ Platform-neutral facade over curated nSealr companion packages.
 
 Browser runtime code should import `@nsealr/sdk/browser`, which exposes only
 the browser-safe provider, local-service client, and pure core/policy/protocol/
-review helpers.
+QR/review helpers.
 
 ## Boundary
 
@@ -50,7 +50,7 @@ assert.equal(protocol.validateRequest({
 
 ```ts nsealr-readme-example
 import assert from "node:assert/strict";
-import { browserProvider, client, protocol } from "@nsealr/sdk/browser";
+import { browserProvider, client, protocol, qr } from "@nsealr/sdk/browser";
 
 const identity = client.parseLocalClientIdentity({
   surface: "browser_extension",
@@ -66,4 +66,13 @@ assert.equal(protocol.validateRequest({
   method: "get_public_key"
 }).ok, true);
 assert.equal(identity.origin, "https://example.com");
+assert.deepEqual(qr.decodeQrEnvelope(qr.encodeQrEnvelope({
+  version: 1,
+  request_id: "readme-sdk-browser-qr",
+  method: "get_public_key"
+})), {
+  version: 1,
+  request_id: "readme-sdk-browser-qr",
+  method: "get_public_key"
+});
 ```

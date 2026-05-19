@@ -334,7 +334,7 @@ Exports:
 - `smartcard`
 
 Additional package subpaths:
-- `@nsealr/sdk/browser`: `browserProvider`, `client`, `core`, `policy`, `protocol`, `review`
+- `@nsealr/sdk/browser`: `browserProvider`, `client`, `core`, `policy`, `protocol`, `qr`, `review`
 
 ## @nsealr/smartcard
 

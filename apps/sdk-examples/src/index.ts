@@ -387,6 +387,7 @@ function sdkFacadeExample(): void {
     request_id: "sdk-browser-facade-get-public-key",
     method: "get_public_key"
   }).ok, true);
+  assert.deepEqual(sdkBrowser.qr.decodeQrEnvelope(sdkBrowser.qr.encodeQrEnvelope(request)), request);
 }
 
 function exampleGrant(): LocalClientGrant {

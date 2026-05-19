@@ -77,9 +77,9 @@ match the shared `contract_id`.
   `request_pairing` with an unrelated valid service result.
 - `@nsealr/sdk/browser` is the browser-safe public SDK subpath for extension
   and web callers. It exposes `@nsealr/browser-provider`,
-  `@nsealr/client/browser`, and pure core/policy/protocol/review helpers while
-  leaving the broader SDK root, fixtures, transport adapters, and test-only
-  signing out of browser runtime imports.
+  `@nsealr/client/browser`, and pure core/policy/protocol/QR/review helpers
+  while leaving the broader SDK root, fixtures, transport adapters, and
+  test-only signing out of browser runtime imports.
 - `nsealr local review-pairing` renders deterministic local-service pairing
   review metadata from a pairing intent. It validates the digest-bound intent
   and does not approve clients or write grant stores.

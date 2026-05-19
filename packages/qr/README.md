@@ -8,6 +8,8 @@ Static and animated QR envelope helpers for nSealr requests and responses.
 - Encode and decode v0 `nsealr1a:` animated QR frame sets.
 - Enforce shared QR byte limits, frame digests, frame checksums, and malformed
   payload rejection before JSON parsing.
+- Stay browser-runtime safe so `@nsealr/sdk/browser` can expose the same QR
+  helpers without Node `Buffer` or builtin module dependencies.
 
 ## Example
 

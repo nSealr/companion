@@ -407,7 +407,8 @@ and uploads checked tarball artifacts without publishing to npm.
   deny stale, malformed, or method-mismatched origin permissions before provider
   selection, native messaging, route selection, or signer dispatch; the
   browser-like background entrypoint now forwards that same injected gate over
-  explicit runtime dependencies. A pure
+  explicit runtime dependencies, and the packaged background entrypoint now
+  preserves that option instead of dropping it at the launcher boundary. A pure
   background-controller boundary now composes
   request handling, pairing-intent requests, pairing-review projection, and
   origin-permission review projection over injected native messaging without

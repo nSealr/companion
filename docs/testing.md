@@ -139,7 +139,8 @@ single-repository CI. Cross-repository drift remains guarded by
   denying method-mismatched, stale-digest, or malformed-store requests before
   provider selection or native messaging. Browser-entrypoint tests prove the
   same gate is forwarded through browser-like runtime handling over injected
-  dependencies without calling native messaging on denied methods.
+  dependencies without calling native messaging on denied methods. Packaged
+  entrypoint tests prove the launcher preserves the same authorization option.
   Background-controller tests prove request handling, pairing-intent requests,
   pairing-review projection, and origin-permission review projection share the
   same injected native-messaging boundary, silent or

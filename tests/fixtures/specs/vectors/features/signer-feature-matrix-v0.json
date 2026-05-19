@@ -25,6 +25,7 @@
           "stateless_session_custody",
           "seedqr_session_import",
           "nip19_nsec_session_import",
+          "session_source_generation",
           "manual_only_policy",
           "device_display_review",
           "response_verification"
@@ -92,6 +93,11 @@
       "id": "nip19_nsec_session_import",
       "contract_id": "nip19-nsec-session-import-v0",
       "behavior": "QR vaults import canonical NIP-19 nsec private keys into the RAM-only session keyring for direct migration or recovery after a secret-hidden source review, without persistent key slots, policy records, mnemonics, or NIP-49 backup semantics."
+    },
+    {
+      "id": "session_source_generation",
+      "contract_id": "session-source-generation-v0",
+      "behavior": "Stateless QR vaults can generate BIP-39 mnemonic or standalone NIP-19 nsec session sources locally in RAM, require an explicit local backup/export ceremony before use, and never persist generated secret material."
     },
     {
       "id": "manual_only_policy",
@@ -221,6 +227,12 @@
           "current": "partial",
           "contract_id": "nip19-nsec-session-import-v0",
           "notes": "NIP-19 nsec parser/signing harnesses are implemented through shared vectors for direct RAM-only session loading, and package tests consume the shared secret-hidden session import review pages and import approval digest. Final Pi camera/display/button import UX remains pending."
+        },
+        "session_source_generation": {
+          "target": "required",
+          "current": "partial",
+          "contract_id": "session-source-generation-v0",
+          "notes": "Package-owned helpers can generate 12- or 24-word BIP-39 sources and standalone nsec-equivalent private-key sources into the RAM-only session-source boundary with injected entropy for tests. Final Pi backup/export UI, physical review, and power-cycle evidence remain pending."
         },
         "manual_only_policy": {
           "target": "required",
@@ -355,6 +367,12 @@
           "contract_id": "nip19-nsec-session-import-v0",
           "notes": "Host-core decodes canonical NIP-19 nsec payloads against the shared vector, the bounded session keyring can hold parsed nsec material, and consumes the shared secret-hidden session import review vectors without exposing raw private-key bytes. Camera QR input, hardware import-review acceptance, response QR output, and signing remain pending."
         },
+        "session_source_generation": {
+          "target": "required",
+          "current": "planned",
+          "contract_id": "session-source-generation-v0",
+          "notes": "The ESP32 QR vault must match the Raspberry behavior for local RAM-only source generation, but host-core generation, backup/export UI, hardware review acceptance, and reset-loss evidence remain pending."
+        },
         "manual_only_policy": {
           "target": "required",
           "current": "implemented",
@@ -481,6 +499,11 @@
           "target": "not_applicable",
           "current": "not_applicable",
           "notes": "NIP-19 nsec RAM-only session import belongs to stateless QR vault lines, not the persistent USB signer."
+        },
+        "session_source_generation": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "RAM-only QR-vault source generation is not the persistent USB/NIP-46 signer account-generation model; persistent seed/key creation belongs under persistent-secret custody and policy-gated provisioning."
         },
         "manual_only_policy": {
           "target": "optional",
@@ -611,6 +634,11 @@
           "target": "not_applicable",
           "current": "not_applicable",
           "notes": "NIP-19 nsec RAM-only session import belongs to stateless QR vault lines, not display-less smartcard custody."
+        },
+        "session_source_generation": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "RAM-only QR-vault source generation is not a display-less smartcard custody feature."
         },
         "manual_only_policy": {
           "target": "required",
@@ -743,6 +771,11 @@
           "target": "not_applicable",
           "current": "not_applicable",
           "notes": "NIP-19 nsec RAM-only session import belongs to stateless QR vault lines; persistent import belongs under persistent-secret custody design."
+        },
+        "session_source_generation": {
+          "target": "not_applicable",
+          "current": "not_applicable",
+          "notes": "RAM-only QR-vault source generation is not the custom persistent-secret wallet generation model; persistent seed/key creation belongs under persistent-secret custody and TROPIC01-assisted provisioning research."
         },
         "manual_only_policy": {
           "target": "optional",

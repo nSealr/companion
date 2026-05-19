@@ -488,7 +488,7 @@ single-repository CI. Cross-repository drift remains guarded by
   session lifecycle and reviewed `connect` acknowledgement are specified.
 - Large QR payload strategy tests once chunking or compression is designed.
 - Hardware serial smoke tests before adding WebUSB, HID, CDC, or persistent
-  session adapters.
+  local transport session adapters.
 
 ## Rule
 

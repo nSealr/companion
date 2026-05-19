@@ -41,6 +41,16 @@ function statusLabel(value: BrowserExtensionPendingRequestState["status"]): stri
   return "Rejected";
 }
 
+function pendingRequestMetaLines(state: BrowserExtensionPendingRequestState): string[] {
+  return [
+    state.app_name ?? "nSealr",
+    state.page_origin,
+    `Request ${state.request_id}`,
+    `Started ${state.started_at}`,
+    `Updated ${state.updated_at}`
+  ];
+}
+
 export function installBrowserExtensionPopupView(
   options: BrowserExtensionPopupViewOptions
 ): BrowserExtensionPopupViewHandle {
@@ -90,8 +100,14 @@ export function installBrowserExtensionPopupView(
 
     const meta = options.document.createElement("div");
     meta.className = "nsealr-popup__meta";
-    meta.appendChild(createText("div", "nsealr-popup__meta-line", state.app_name ?? "nSealr"));
-    meta.appendChild(createText("div", "nsealr-popup__meta-line", state.page_origin));
+    for (const line of pendingRequestMetaLines(state)) {
+      meta.appendChild(createText("div", "nsealr-popup__meta-line", line));
+    }
+
+    const chips = options.document.createElement("div");
+    chips.className = "nsealr-popup__chips";
+    chips.appendChild(createText("span", "nsealr-popup__chip", "No keys"));
+    chips.appendChild(createText("span", "nsealr-popup__chip", "No event payload"));
 
     const actions = options.document.createElement("div");
     actions.className = "nsealr-popup__actions";
@@ -117,6 +133,7 @@ export function installBrowserExtensionPopupView(
 
     item.appendChild(head);
     item.appendChild(meta);
+    item.appendChild(chips);
     item.appendChild(actions);
     return item;
   }

@@ -135,7 +135,18 @@ describe("browser extension popup view", () => {
     expect(fake.status.textContent).toBe("1 pending");
     expect(fake.list.children).toHaveLength(1);
     expect(fake.list.children[0].children[0].children[0].textContent).toBe("Sign event");
-    const cancelButton = fake.list.children[0].children[2].children[0];
+    expect(fake.list.children[0].children[1].children.map((child) => child.textContent)).toEqual([
+      "Example",
+      "https://example.com",
+      "Request pending-popup-view",
+      "Started 1900000500",
+      "Updated 1900000500"
+    ]);
+    expect(fake.list.children[0].children[2].children.map((child) => child.textContent)).toEqual([
+      "No keys",
+      "No event payload"
+    ]);
+    const cancelButton = fake.list.children[0].children[3].children[0];
     expect(cancelButton.textContent).toBe("Cancel");
     expect(cancelButton.dataset.pendingRequestId).toBe("pending-popup-view");
 

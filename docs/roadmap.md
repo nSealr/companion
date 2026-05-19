@@ -532,8 +532,9 @@ and uploads checked tarball artifacts without publishing to npm.
   MV3 manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage
   permissions by default, with a packaged action popup HTML/entrypoint that can
-  list/cancel pending requests through the tested popup-control client, plus an
-  opt-in explicit-origin content-script manifest profile that exposes only the
+  list/cancel pending requests through the tested popup-control client and
+  render safe request metadata without event payloads or keys, plus an opt-in
+  explicit-origin content-script manifest profile that exposes only the
   packaged page-script entrypoint to those same explicit origins and rejects
   `<all_urls>`, wildcard schemes, wildcard hosts, non-local `http`, duplicate
   matches, host-permission fields, and storage. Remaining work: reviewed

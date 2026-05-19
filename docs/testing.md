@@ -191,7 +191,10 @@ single-repository CI. Cross-repository drift remains guarded by
   and can use the background entrypoint's default in-memory lifecycle.
   Popup-control tests prove future visible UI can call the same list/cancel and
   origin-review protocol through injected `runtime.sendMessage`, rejects
-  mismatched or unsafe response envelopes, and remains secretless.
+  mismatched or unsafe response envelopes, and remains secretless. Popup-view
+  tests prove the visible pending-request card renders request id, timestamps,
+  and no-key/no-event-payload state while keeping cancellation bound to the
+  validated pending request id.
   Page-provider tests prove
   NIP-07 `getPublicKey` and `signEvent`
   calls become validated background requests, unsafe templates fail before the

@@ -542,12 +542,15 @@ extension-internal senders only; page-origin senders cannot list or cancel
 pending requests. A popup-control client now wraps those messages over an
 injected `runtime.sendMessage`, validates response envelopes and secretless
 pending-state snapshots, rejects request-id mismatches, and exposes only
-list/cancel operations for the packaged action popup. The same internal
-control protocol can also request browser-origin permission review metadata
-from the background controller for an explicit sanitized page sender. That path
-does not approve the origin, write browser storage, create grants, inject a
-provider, dispatch a signer, or carry key material. The popup path is not a
-storage, grant, native-host installation, or signer-dispatch boundary.
+list/cancel operations for the packaged action popup. The popup view renders
+only safe pending-state metadata: request id, method, status, page origin,
+optional app name, timestamps, and explicit no-key/no-event-payload chips. The
+same internal control protocol can also request browser-origin permission
+review metadata from the background controller for an explicit sanitized page
+sender. That path does not approve the origin, write browser storage, create
+grants, inject a provider, dispatch a signer, or carry key material. The popup
+path is not a storage, grant, native-host installation, or signer-dispatch
+boundary.
 The runtime-message listener installer is a thin adapter over an injected
 `runtime.onMessage`-like target. It registers exactly one listener, returns
 `true` for asynchronous `sendResponse` delivery, sends deterministic responses

@@ -118,6 +118,11 @@ export function browserExtensionPopupHtml(): string {
     .nsealr-popup__meta-line {
       overflow-wrap: anywhere;
     }
+    .nsealr-popup__chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
     .nsealr-popup__digest {
       border: 1px solid #e3e8ef;
       border-radius: 6px;

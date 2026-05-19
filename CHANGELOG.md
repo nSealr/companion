@@ -13,6 +13,8 @@ public npm release.
 - Browser-extension package-build output now includes audited selected-route,
   content-script origin, extension id, local pairing digest, and origin
   permission mode metadata in addition to file hashes.
+- Browser-extension package-build tests now cover Firefox manifest output in
+  addition to Chromium package artifacts.
 - Browser-extension package builds can now opt into a storage-backed
   origin-approval profile that requests `activeTab` and `storage`, loads
   approved origins through the reviewed storage adapter, and wires the packaged

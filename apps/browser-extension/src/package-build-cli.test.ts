@@ -199,6 +199,42 @@ describe("browser extension package-build CLI", () => {
     }
   });
 
+  it("writes a Firefox package build from explicit args", async () => {
+    const temp = tempBuildRoot();
+    try {
+      const approvalPath = join(temp.root, "route-config-approval.json");
+      writeRouteConfigApproval(approvalPath);
+      const result = JSON.parse(await browserExtensionPackageBuildJsonFromArgs([
+        "--target",
+        "firefox",
+        "--firefox-extension-id",
+        "extension@nsealr.dev",
+        "--out-dir",
+        temp.outDir,
+        "--route-account-id",
+        "esp32-usb-slot-0",
+        "--route-type",
+        "esp32_usb_nip46",
+        "--route-config-approval",
+        approvalPath
+      ]));
+
+      expect(result).toMatchObject({
+        format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
+        target: "firefox",
+        route_account_id: "esp32-usb-slot-0",
+        route_type: "esp32_usb_nip46",
+        origin_permission_mode: "none",
+        content_script_origins: [],
+        embeds_origin_permission_store: false,
+        uses_extension_origin_permission_storage: false
+      });
+      expect(existsSync(join(temp.outDir, "manifest.json"))).toBe(true);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
   it("rejects unsupported or incomplete package-build args before output", async () => {
     const temp = tempBuildRoot();
     await expect(browserExtensionPackageBuildJsonFromArgs([])).rejects.toThrow(/out-dir is required|target is required/u);

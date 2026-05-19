@@ -179,6 +179,50 @@ describe("browser extension package build", () => {
     }
   });
 
+  it("writes a Firefox package artifact with explicit browser settings", async () => {
+    const temp = tempOutDir();
+    try {
+      const firefoxExtensionId = "extension@nsealr.dev";
+      const result = await buildBrowserExtensionPackage({
+        target: "firefox",
+        outDir: temp.outDir,
+        routeConfig,
+        routeConfigApproval,
+        firefoxExtensionId
+      });
+
+      expect(result).toMatchObject({
+        format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
+        target: "firefox",
+        out_dir: temp.outDir,
+        route_config_digest: routeConfigReview.route_config_digest,
+        route_account_id: "esp32-usb-slot-0",
+        route_type: "esp32_usb_nip46",
+        origin_permission_mode: "none",
+        content_script_origins: [],
+        installs_native_host_manifest: false,
+        writes_extension_storage: false,
+        stores_production_secrets: false,
+        dispatches_signers: false,
+        embeds_origin_permission_store: false,
+        uses_extension_origin_permission_storage: false
+      });
+      expect("extension_id" in result).toBe(false);
+      expect("local_pairing_digest" in result).toBe(false);
+      const manifest = JSON.parse(readFileSync(join(temp.outDir, "manifest.json"), "utf8"));
+      expect(manifest.permissions).toEqual(["nativeMessaging"]);
+      expect(manifest.browser_specific_settings).toEqual({
+        gecko: {
+          id: firefoxExtensionId
+        }
+      });
+      expect("content_scripts" in manifest).toBe(false);
+      expect("host_permissions" in manifest).toBe(false);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
   it("writes an explicit storage-backed origin approval package artifact", async () => {
     const temp = tempOutDir();
     try {

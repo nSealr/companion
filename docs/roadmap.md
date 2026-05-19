@@ -399,7 +399,10 @@ and uploads checked tarball artifacts without publishing to npm.
   validated review, full pairing digest, requested method effects, and
   approve/reject actions over injected controls, and accepts only parsed
   approval artifacts. It still writes no storage, creates no grants, injects no
-  provider, dispatches no signer, and holds no key material. A pure
+  provider, dispatches no signer, and holds no key material. The sender-aware
+  browser request handler can now consume an injected approved-origin store and
+  deny stale, malformed, or method-mismatched origin permissions before provider
+  selection, native messaging, route selection, or signer dispatch. A pure
   background-controller boundary now composes
   request handling, pairing-intent requests, pairing-review projection, and
   origin-permission review projection over injected native messaging without

@@ -566,6 +566,12 @@ and approve/reject actions over injected controls. It accepts approval only
 when the injected control returns a parseable approval artifact, and it still
 does not persist storage, create grants, inject a provider, dispatch signers,
 or hold key material.
+The sender-aware request handler can also consume that approved-origin store as
+an injected authorization gate. When configured, it checks the exact
+origin/extension/pairing-digest/method tuple after request and sender parsing
+but before provider selection, native messaging, route selection, or signer
+dispatch. Denied, stale, or malformed origin-permission state returns
+`origin_permission_denied` deterministically.
 Its manifest builder is intentionally restrictive: the default Chromium
 manifest omits host permissions, optional host permissions, content scripts,
 web-accessible resources, and storage; Firefox manifests require an explicit

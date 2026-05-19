@@ -13,6 +13,7 @@ import {
   browserExtensionClientContextFromSender,
   type BrowserExtensionClientContext
 } from "./sender.js";
+import { isBrowserExtensionOriginMethodAllowed } from "./origin-permission-store.js";
 
 export { BROWSER_EXTENSION_MESSAGE_PROTOCOL } from "./messages.js";
 
@@ -44,6 +45,12 @@ export type BrowserExtensionHandlerOptions = {
 
 export type BrowserExtensionSenderHandlerOptions = {
   providerForClient: (context: BrowserExtensionClientContext) => BrowserExtensionHandlerOptions["provider"];
+  originPermissions?: BrowserExtensionOriginPermissionAuthorization;
+};
+
+export type BrowserExtensionOriginPermissionAuthorization = {
+  store: unknown;
+  localPairingDigest: string;
 };
 
 const FALLBACK_REQUEST_ID = "invalid-browser-extension-request";
@@ -166,6 +173,20 @@ async function handleParsedBrowserExtensionRequest(
   return handleSignEvent(request, provider);
 }
 
+function assertOriginPermission(
+  request: BrowserExtensionRequest,
+  context: BrowserExtensionClientContext,
+  authorization: BrowserExtensionOriginPermissionAuthorization | undefined
+): boolean {
+  if (authorization === undefined) return true;
+  return isBrowserExtensionOriginMethodAllowed(authorization.store, {
+    origin: context.client.origin,
+    extensionId: context.extension_id,
+    localPairingDigest: authorization.localPairingDigest,
+    method: request.method
+  });
+}
+
 export async function handleBrowserExtensionSenderRequest(
   value: unknown,
   sender: unknown,
@@ -183,6 +204,13 @@ export async function handleBrowserExtensionSenderRequest(
     context = browserExtensionClientContextFromSender(sender);
   } catch {
     return errorResponse(requestId, "invalid_sender", "browser extension sender is invalid");
+  }
+  try {
+    if (!assertOriginPermission(request, context, options.originPermissions)) {
+      return errorResponse(request.request_id, "origin_permission_denied", "browser extension origin permission denied");
+    }
+  } catch {
+    return errorResponse(request.request_id, "origin_permission_denied", "browser extension origin permission denied");
   }
   try {
     return handleParsedBrowserExtensionRequest(request, options.providerForClient(context));

@@ -5,6 +5,12 @@ import {
   handleBrowserExtensionSenderRequest,
   type BrowserExtensionHandlerOptions
 } from "./handler.js";
+import {
+  approveBrowserExtensionOriginPermissionReview
+} from "./pairing.js";
+import {
+  createBrowserExtensionOriginPermissionStore
+} from "./origin-permission-store.js";
 
 const eventTemplate = {
   kind: 1,
@@ -27,6 +33,47 @@ const provider: BrowserExtensionHandlerOptions["provider"] = {
   getPublicKey: async () => signedEvent.pubkey,
   signEvent: async () => signedEvent
 };
+const sender = {
+  extension_id: "extension@nsealr.dev",
+  page_url: "https://example.com/app"
+};
+const localPairingDigest = "d".repeat(64);
+
+function originPermissionStore(methods: Array<"get_public_key" | "sign_event"> = ["get_public_key", "sign_event"]): unknown {
+  const requestedMethods = methods.map((method) => {
+    if (method === "get_public_key") {
+      return {
+        method,
+        label: "Read public key",
+        effect: "The page can read the selected account public key through the browser provider."
+      };
+    }
+    return {
+      method,
+      label: "Request event signatures",
+      effect: "The page can ask for Nostr event signatures; the selected signer route still enforces review, approval, and policy."
+    };
+  });
+  return createBrowserExtensionOriginPermissionStore([
+    approveBrowserExtensionOriginPermissionReview({
+      format: "nsealr-browser-origin-permission-review-v0",
+      origin: "https://example.com",
+      app_name: "nSealr Browser Extension",
+      extension_id: "extension@nsealr.dev",
+      requested_methods: requestedMethods,
+      local_pairing_digest: localPairingDigest,
+      requires_user_approval: true,
+      stores_production_secrets: false,
+      creates_grants: false,
+      injects_provider: false
+    }, {
+      reviewedLocalPairingDigest: localPairingDigest,
+      approvedAt: 1_900_000_020
+    })
+  ], {
+    updatedAt: 1_900_000_021
+  });
+}
 
 describe("browser extension request handler", () => {
   it("returns validated get_public_key responses from the injected provider", async () => {
@@ -147,10 +194,7 @@ describe("browser extension request handler", () => {
       version: 1,
       request_id: "browser-sender-get-pubkey",
       method: "get_public_key"
-    }, {
-      extension_id: "extension@nsealr.dev",
-      page_url: "https://example.com/app"
-    }, {
+    }, sender, {
       providerForClient: (context) => {
         seenOrigins.push(context.client.origin);
         return provider;
@@ -164,6 +208,109 @@ describe("browser extension request handler", () => {
     });
 
     expect(seenOrigins).toEqual(["https://example.com"]);
+  });
+
+  it("enforces configured origin permissions before provider selection", async () => {
+    let selected = false;
+    await expect(handleBrowserExtensionSenderRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "browser-origin-permission-get-public-key",
+      method: "get_public_key"
+    }, sender, {
+      providerForClient: () => {
+        selected = true;
+        return provider;
+      },
+      originPermissions: {
+        store: originPermissionStore(["get_public_key"]),
+        localPairingDigest
+      }
+    })).resolves.toMatchObject({
+      request_id: "browser-origin-permission-get-public-key",
+      ok: true
+    });
+    expect(selected).toBe(true);
+
+    selected = false;
+    await expect(handleBrowserExtensionSenderRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "browser-origin-permission-sign-event-denied",
+      method: "sign_event",
+      params: {
+        event_template: eventTemplate
+      }
+    }, sender, {
+      providerForClient: () => {
+        selected = true;
+        return provider;
+      },
+      originPermissions: {
+        store: originPermissionStore(["get_public_key"]),
+        localPairingDigest
+      }
+    })).resolves.toEqual({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "browser-origin-permission-sign-event-denied",
+      ok: false,
+      error: {
+        code: "origin_permission_denied",
+        message: "browser extension origin permission denied",
+        retryable: false
+      }
+    });
+    expect(selected).toBe(false);
+  });
+
+  it("rejects stale or malformed origin permission stores before provider selection", async () => {
+    let selected = false;
+    await expect(handleBrowserExtensionSenderRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "browser-origin-permission-stale-digest",
+      method: "get_public_key"
+    }, sender, {
+      providerForClient: () => {
+        selected = true;
+        return provider;
+      },
+      originPermissions: {
+        store: originPermissionStore(),
+        localPairingDigest: "e".repeat(64)
+      }
+    })).resolves.toMatchObject({
+      request_id: "browser-origin-permission-stale-digest",
+      ok: false,
+      error: {
+        code: "origin_permission_denied"
+      }
+    });
+    expect(selected).toBe(false);
+
+    await expect(handleBrowserExtensionSenderRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "browser-origin-permission-malformed-store",
+      method: "get_public_key"
+    }, sender, {
+      providerForClient: () => {
+        selected = true;
+        return provider;
+      },
+      originPermissions: {
+        store: { format: "wrong" },
+        localPairingDigest
+      }
+    })).resolves.toMatchObject({
+      request_id: "browser-origin-permission-malformed-store",
+      ok: false,
+      error: {
+        code: "origin_permission_denied"
+      }
+    });
+    expect(selected).toBe(false);
   });
 
   it("rejects invalid request or sender before provider selection", async () => {

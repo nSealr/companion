@@ -132,6 +132,10 @@ single-repository CI. Cross-repository drift remains guarded by
   approval controls, accepts only parseable approval artifacts, handles
   rejection without creating an approval, and restores controls on malformed
   approval output.
+  Sender-aware handler and background-controller tests prove an injected
+  approved-origin store can authorize exact `get_public_key` access while
+  denying method-mismatched, stale-digest, or malformed-store requests before
+  provider selection or native messaging.
   Background-controller tests prove request handling, pairing-intent requests,
   pairing-review projection, and origin-permission review projection share the
   same injected native-messaging boundary, silent or

@@ -5,6 +5,8 @@ import {
 import { createBrowserExtensionBackgroundController } from "./background.js";
 import { handleLocalServiceRequest, type LocalServiceRequest } from "@nsealr/client";
 import { type BrowserNativeMessageSender } from "@nsealr/browser-provider";
+import { approveBrowserExtensionOriginPermissionReview } from "./pairing.js";
+import { createBrowserExtensionOriginPermissionStore } from "./origin-permission-store.js";
 
 const publicKey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
 const routeRequest = {
@@ -16,6 +18,7 @@ const sender = {
   extension_id: "extension@nsealr.dev",
   page_url: "https://example.com/app"
 };
+const localPairingDigest = "f".repeat(64);
 
 function routeSelectionResponse(request: LocalServiceRequest): unknown {
   return {
@@ -50,6 +53,34 @@ function nativeResponder(requests: LocalServiceRequest[]): BrowserNativeMessageS
     if (message.operation === "select_account_route") return routeSelectionResponse(message);
     throw new Error(`unexpected operation ${message.operation}`);
   };
+}
+
+function routeOnlyOriginPermissionStore(): unknown {
+  return createBrowserExtensionOriginPermissionStore([
+    approveBrowserExtensionOriginPermissionReview({
+      format: "nsealr-browser-origin-permission-review-v0",
+      origin: "https://example.com",
+      app_name: "nSealr Browser Extension",
+      extension_id: "extension@nsealr.dev",
+      requested_methods: [
+        {
+          method: "get_public_key",
+          label: "Read public key",
+          effect: "The page can read the selected account public key through the browser provider."
+        }
+      ],
+      local_pairing_digest: localPairingDigest,
+      requires_user_approval: true,
+      stores_production_secrets: false,
+      creates_grants: false,
+      injects_provider: false
+    }, {
+      reviewedLocalPairingDigest: localPairingDigest,
+      approvedAt: 1_900_000_040
+    })
+  ], {
+    updatedAt: 1_900_000_041
+  });
 }
 
 describe("browser extension background controller boundary", () => {
@@ -156,6 +187,44 @@ describe("browser extension background controller boundary", () => {
       }
     });
     expect(called).toBe(false);
+  });
+
+  it("rejects origin-permission-denied requests before native messaging", async () => {
+    const requests: LocalServiceRequest[] = [];
+    const controller = createBrowserExtensionBackgroundController({
+      routeRequest,
+      sendNativeMessage: nativeResponder(requests),
+      originPermissions: {
+        store: routeOnlyOriginPermissionStore(),
+        localPairingDigest
+      }
+    });
+
+    await expect(controller.handleRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "background-origin-permission-denied",
+      method: "sign_event",
+      params: {
+        event_template: {
+          kind: 1,
+          created_at: 1_710_000_000,
+          tags: [],
+          content: "denied before native messaging"
+        }
+      }
+    }, sender)).resolves.toEqual({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "background-origin-permission-denied",
+      ok: false,
+      error: {
+        code: "origin_permission_denied",
+        message: "browser extension origin permission denied",
+        retryable: false
+      }
+    });
+    expect(requests).toEqual([]);
   });
 
   it("projects pairing review metadata without browser storage or grants", async () => {

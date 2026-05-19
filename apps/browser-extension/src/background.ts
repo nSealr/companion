@@ -7,6 +7,7 @@ import {
 } from "@nsealr/browser-provider";
 import {
   handleBrowserExtensionSenderRequest,
+  type BrowserExtensionOriginPermissionAuthorization,
   type BrowserExtensionResponse
 } from "./handler.js";
 import { createBrowserExtensionNativeMessagingProviderSelector } from "./local-service.js";
@@ -29,6 +30,7 @@ export type BrowserExtensionBackgroundControllerOptions = {
   nextSignerRequestId?: () => string;
   signingUnavailableMessage?: string;
   pairingOperations?: readonly PairableLocalServiceOperation[];
+  originPermissions?: BrowserExtensionOriginPermissionAuthorization;
   nativeMessageTimeoutMs?: number;
   nativeMessageAbortSignal?: AbortSignal;
 };
@@ -93,13 +95,17 @@ export function createBrowserExtensionBackgroundController(
       requestOptions: BrowserExtensionBackgroundRequestOptions = {}
     ): Promise<BrowserExtensionResponse> {
       if (requestOptions.nativeMessageAbortSignal === undefined) {
-        return handleBrowserExtensionSenderRequest(value, sender, { providerForClient });
+        return handleBrowserExtensionSenderRequest(value, sender, {
+          providerForClient,
+          ...(options.originPermissions !== undefined ? { originPermissions: options.originPermissions } : {})
+        });
       }
       return handleBrowserExtensionSenderRequest(value, sender, {
         providerForClient: createBrowserExtensionNativeMessagingProviderSelector({
           ...providerOptions,
           nativeMessageAbortSignal: requestOptions.nativeMessageAbortSignal
-        })
+        }),
+        ...(options.originPermissions !== undefined ? { originPermissions: options.originPermissions } : {})
       });
     },
 

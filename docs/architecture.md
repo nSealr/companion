@@ -733,6 +733,12 @@ open transports, create grants, approve clients, dispatch signer I/O, or claim
 route readiness. Route-selection request parsing also lives in `packages/policy`
 so browser extension, local service, CLI, SDK, and future UI code do not fork
 the selected-account route-request shape.
+External NIP-46 bunker routes are treated the same way at this layer: they are
+secretless external adapter metadata, not a built-in relay session, NIP-44
+state machine, permission grant, or companion-owned key vault. The local
+service can pass such a selected route to an explicitly injected dispatcher,
+but it returns deterministic route-unavailable errors when no adapter has been
+provided.
 
 Those descriptors model the resulting signing public key and route. The
 mnemonic, BIP-39 passphrase namespace, standalone `nsec`, device slot,

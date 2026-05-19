@@ -22,6 +22,10 @@ const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kin
 const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
 const routeVector = fixtures.routeSelections.find((selection) => selection.name === "esp32-usb-sign-event-slot-0");
 if (!routeVector) throw new Error("route selection fixture is missing");
+const externalNip46RouteVector = fixtures.routeSelections.find(
+  (selection) => selection.name === "external-nip46-sign-event-bunker"
+);
+if (!externalNip46RouteVector) throw new Error("external NIP-46 route selection fixture is missing");
 const client: LocalClientIdentity = {
   surface: "browser_extension",
   origin: "https://example.com",
@@ -490,6 +494,92 @@ describe("local service boundary", () => {
     expect(dispatched).toEqual([{
       client,
       route_selection: routeVector.selection,
+      request
+    }]);
+  });
+
+  it("keeps external NIP-46 routes as secretless adapter metadata", () => {
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-external-nip46-route",
+      operation: "select_account_route",
+      params: {
+        client,
+        route_request: externalNip46RouteVector.request
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [routeGrant],
+      now: 1_900_000_000
+    })).toEqual({
+      version: 1,
+      request_id: "svc-external-nip46-route",
+      ok: true,
+      result: {
+        route_selection: externalNip46RouteVector.selection
+      }
+    });
+    expect(externalNip46RouteVector.selection).toMatchObject({
+      route_type: "external_nip46",
+      transport: "nip46_relay",
+      custody: "external_signer",
+      trusted_review: "external_policy",
+      policy_support: "external",
+      physical_review: false,
+      physical_approval: false,
+      persistent_grants: false,
+      contains_secret_material: false
+    });
+    expect("repository" in externalNip46RouteVector.selection).toBe(false);
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-external-nip46-dispatch-unavailable",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: externalNip46RouteVector.request,
+        request
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "signer_route_unavailable",
+        message: "signer dispatch is not configured"
+      }
+    });
+
+    const dispatched: unknown[] = [];
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-external-nip46-dispatch-injected",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: externalNip46RouteVector.request,
+        request
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: (dispatchRequest) => {
+        dispatched.push(dispatchRequest);
+        return response;
+      }
+    })).toMatchObject({
+      ok: true,
+      result: {
+        signer_response: response
+      }
+    });
+    expect(dispatched).toEqual([{
+      client,
+      route_selection: externalNip46RouteVector.selection,
       request
     }]);
   });

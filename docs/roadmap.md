@@ -402,11 +402,17 @@ and uploads checked tarball artifacts without publishing to npm.
   digest confirmation, without creating grants, writing extension storage, or
   injecting a provider. It can now normalize those approved artifacts into a
   deterministic secretless origin-permission store contract for exact
-  origin/extension/pairing-digest/method lookup, while still not choosing a
-  browser storage backend, creating local-service grants, dispatching signers,
-  or storing secret material. The store contract now includes deterministic
+  origin/extension/pairing-digest/method lookup, while the store contract
+  itself still creates no local-service grants, dispatches no signers, and
+  stores no secret material. The store contract now includes deterministic
   upsert/revoke helpers for exact approved-origin records, so future popup
   storage wiring does not need to invent mutation semantics. A private
+  injected storage adapter now reads and writes that same secretless store at
+  one fixed extension-storage key, validates loaded data through the reviewed
+  parser, supports deterministic empty-store loading plus exact
+  upsert/revoke/remove writes, and still reads no global browser APIs, creates
+  no grants, dispatches no signers, stores no production secrets, and changes
+  no packaged manifest permissions by default. A private
   browser-extension origin-permission CLI now exposes approval, empty-store,
   upsert, and revoke artifact commands over the same package-owned parsers,
   writing JSON to stdout only and still avoiding browser storage, grants,
@@ -428,8 +434,8 @@ and uploads checked tarball artifacts without publishing to npm.
   material. A pure popup origin-permission view composer now renders that
   active-tab review through the existing approval card and refresh control,
   delegates digest-bound approval/rejection to injected controls, and still
-  does not choose browser storage, create grants, inject a provider, dispatch a
-  signer, or handle key material. The sender-aware
+  does not itself write browser storage, create grants, inject a provider,
+  dispatch a signer, or handle key material. The sender-aware
   browser request handler can now consume an injected approved-origin store and
   deny stale, malformed, or method-mismatched origin permissions before provider
   selection, native messaging, route selection, or signer dispatch; the

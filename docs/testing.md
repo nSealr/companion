@@ -130,8 +130,14 @@ single-repository CI. Cross-repository drift remains guarded by
   route-only approvals cannot authorize `sign_event`, duplicate approvals are
   rejected before shadowing, exact approved-origin upsert/revoke mutations do
   not keep stale method scopes or move the store clock backward, and malformed
-  or secret-looking store fields fail before any browser storage, grant, signer
-  dispatch, or key material exists.
+  or secret-looking store fields fail before any storage-adapter write, grant,
+  signer dispatch, or key material exists.
+  Origin-permission storage-adapter tests prove the extension can load a
+  deterministic empty store, parse an existing store, persist only the
+  validated fixed-key artifact, upsert and revoke approved origins without
+  touching unrelated records, remove the store only through an explicit injected
+  remove dependency, and reject malformed dependencies, malformed reads,
+  secret-looking stored objects, or stale write timestamps.
   Origin-permission CLI tests prove private artifact commands can approve a
   reviewed origin permission, create an empty store, upsert an approval, and
   revoke an exact origin/pairing key through package-owned parsers while

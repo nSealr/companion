@@ -76,6 +76,11 @@ public npm release.
 - Private browser-extension origin-permission approval artifacts that require
   explicit local pairing digest confirmation and still create no grants,
   extension storage, provider injection, or key material.
+- Private browser-extension origin-permission storage adapter over an injected
+  storage area, with deterministic empty-store loading, validated
+  upsert/revoke/remove writes, and explicit no-secret/no-grant/no-dispatch
+  metadata. It does not read global browser APIs or change packaged manifest
+  permissions.
 - Private browser-extension background-controller boundary that composes
   sender-aware request handling, pairing-intent requests, pairing review, and
   origin permission review over injected native messaging without using

@@ -578,6 +578,14 @@ upsert, and revoke operations as stdout-only artifact commands. Those commands
 let operators and tests produce reviewed JSON without adding browser storage,
 default paths, grant creation, provider injection, signer dispatch, or key
 material.
+The origin-permission storage adapter is the first reviewed persistence
+boundary for that data shape. It accepts only an explicit injected storage area,
+reads and writes one fixed storage key, returns a deterministic empty store
+when the key is absent, validates stored artifacts through the same parser, and
+records every write as secretless extension-storage metadata. It still does not
+read global browser APIs, create grants, inject a provider, dispatch signers,
+or store production secrets; packaged manifests do not request storage
+permission by default.
 The matching origin-permission review card is also pure: it renders the
 already-validated review, the full pairing digest, requested method effects,
 and approve/reject actions over injected controls. It accepts approval only
@@ -603,8 +611,10 @@ The popup origin-permission view composer binds that orchestrator to the
 existing approval card and popup refresh surface. It renders exactly the
 reviewed active-tab origin state, delegates digest-bound approval/rejection to
 injected controls, reports errors through the popup status/list region, and
-does not choose a browser storage backend, create grants, inject a provider,
-dispatch a signer, or handle key material.
+does not itself write browser storage, create grants, inject a provider,
+dispatch a signer, or handle key material. Future packaged popup approval can
+compose this view with the injected origin-permission storage adapter, but that
+must remain an explicit permissioned manifest/profile decision.
 The sender-aware request handler can also consume that approved-origin store as
 an injected authorization gate. When configured, it checks the exact
 origin/extension/pairing-digest/method tuple after request and sender parsing

@@ -117,7 +117,10 @@ match the shared `contract_id`.
   pure origin-permission review card for future popup approval UX without
   performing storage, grant, provider-injection, or signer-dispatch side
   effects, can maintain the approved-origin store through deterministic
-  upsert/revoke helpers without choosing a browser storage backend, exposes
+  upsert/revoke helpers, includes a browser-storage adapter over an explicit
+  injected storage area for that secretless origin-permission store without
+  reading global browser APIs or changing packaged manifest permissions,
+  exposes
   private stdout-only origin-permission artifact commands for approval,
   empty-store creation, upsert, and revoke, can enforce
   an injected approved-origin store before provider selection so denied methods
@@ -354,7 +357,9 @@ match the shared `contract_id`.
   `signEvent` through local-service dispatch, returning deterministic
   signer-unavailable errors until a real dispatcher is configured. The
   private extension scaffold now also has the sender/page-origin identity
-  boundary needed before content-script injection is considered.
+  boundary and injected origin-permission storage adapter needed before
+  content-script injection is considered. The packaged manifest still requests
+  no storage permission by default.
 - Public npm SDK alpha after package APIs, docs, semver, provenance, and
   third-party import tests are stable. Package README coverage and a
   built-artifact consumer smoke are now part of `make ci`; packed-tarball

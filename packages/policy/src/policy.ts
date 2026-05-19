@@ -282,6 +282,7 @@ function parseSignerRoute(value: unknown): SignerRoute {
 function validateRecovery(recovery: unknown): Record<string, unknown> {
   assertRecord(recovery, "recovery");
   if (recovery.type === "nip06") {
+    assertOnlyKeys(recovery, ["type", "path", "account", "source_vector"], "NIP-06 recovery");
     if (typeof recovery.path !== "string" || !recovery.path.startsWith("m/44'/1237'/")) {
       throw new Error("NIP-06 recovery path must use the Nostr derivation prefix");
     }
@@ -292,15 +293,111 @@ function validateRecovery(recovery: unknown): Record<string, unknown> {
     return recovery;
   }
   if (recovery.type === "device_slot") {
+    assertOnlyKeys(recovery, ["type", "slot_id", "backup_required"], "device_slot recovery");
     requireString(recovery.slot_id, "device_slot recovery slot_id");
     requireBoolean(recovery.backup_required, "device_slot recovery backup_required");
     return recovery;
   }
+  if (recovery.type === "card_slot") {
+    assertOnlyKeys(recovery, ["type", "card_id", "slot_id", "backup_required"], "card_slot recovery");
+    requireString(recovery.card_id, "card_slot recovery card_id");
+    requireString(recovery.slot_id, "card_slot recovery slot_id");
+    requireBoolean(recovery.backup_required, "card_slot recovery backup_required");
+    return recovery;
+  }
+  if (recovery.type === "hardware_wallet_slot") {
+    assertOnlyKeys(recovery, ["type", "device_id", "slot_id", "backup_required"], "hardware_wallet_slot recovery");
+    requireString(recovery.device_id, "hardware_wallet_slot recovery device_id");
+    requireString(recovery.slot_id, "hardware_wallet_slot recovery slot_id");
+    requireBoolean(recovery.backup_required, "hardware_wallet_slot recovery backup_required");
+    return recovery;
+  }
   if (recovery.type === "external_signer") {
+    assertOnlyKeys(recovery, ["type", "external_signer_id"], "external_signer recovery");
     requireString(recovery.external_signer_id, "external_signer recovery external_signer_id");
     return recovery;
   }
   throw new Error("recovery.type is unknown");
+}
+
+function validateRouteSemantics(
+  route: SignerRoute,
+  capabilities: AccountDescriptor["capabilities"],
+  source: unknown
+): void {
+  if (QR_ROUTE_TYPES.has(route.type)) {
+    const serialized = JSON.stringify(source) ?? "";
+    if (serialized.toLowerCase().includes("tropic01")) {
+      throw new Error("stateless QR vault descriptors must not reference TROPIC01");
+    }
+    if (route.transport !== "qr") throw new Error("stateless QR vault routes must use qr transport");
+    if (route.custody !== "stateless_session") {
+      throw new Error("stateless QR vault routes must use stateless_session custody");
+    }
+    if (route.policy_support !== "manual_only") {
+      throw new Error("stateless QR vault routes must use manual_only policy support");
+    }
+    if (capabilities.persistent_grants !== false) {
+      throw new Error("stateless QR vault routes must not support persistent grants");
+    }
+    return;
+  }
+
+  if (route.type === "esp32_usb_nip46") {
+    if (route.transport !== "usb") throw new Error("ESP32 USB/NIP-46 routes must use usb transport");
+    if (route.custody !== "device_persistent") {
+      throw new Error("ESP32 USB/NIP-46 routes must use device_persistent custody");
+    }
+    if (route.trusted_review !== "device_display") throw new Error("ESP32 USB/NIP-46 routes must use device_display review");
+    if (route.policy_support !== "scoped_automation") {
+      throw new Error("ESP32 USB/NIP-46 routes must use scoped_automation policy support");
+    }
+    if (!capabilities.physical_review || !capabilities.physical_approval) {
+      throw new Error("ESP32 USB/NIP-46 routes require physical review and approval");
+    }
+    if (!capabilities.persistent_grants) throw new Error("ESP32 USB/NIP-46 routes require persistent grant support");
+    return;
+  }
+
+  if (route.type === "smartcard") {
+    if (route.transport !== "smartcard") throw new Error("smartcard routes must use smartcard transport");
+    if (route.custody !== "card_persistent") throw new Error("smartcard routes must use card_persistent custody");
+    if (route.trusted_review !== "display_less") throw new Error("smartcard routes must remain display_less");
+    if (route.policy_support !== "manual_only") {
+      throw new Error("display-less smartcard routes must use manual_only policy support");
+    }
+    if (capabilities.physical_review || capabilities.physical_approval) {
+      throw new Error("display-less smartcard routes must not claim physical review or approval");
+    }
+    if (capabilities.persistent_grants) throw new Error("display-less smartcard routes must not support persistent grants");
+    return;
+  }
+
+  if (route.type === "custom_hardware_wallet") {
+    if (route.transport !== "usb") throw new Error("custom hardware-wallet routes must use usb transport in v0");
+    if (route.custody !== "custom_hardware_persistent") {
+      throw new Error("custom hardware-wallet routes must use custom_hardware_persistent custody");
+    }
+    if (route.trusted_review !== "device_display") throw new Error("custom hardware-wallet routes must use device_display review");
+    if (route.policy_support !== "scoped_automation") {
+      throw new Error("custom hardware-wallet routes must use scoped_automation policy support");
+    }
+    if (!capabilities.physical_review || !capabilities.physical_approval) {
+      throw new Error("custom hardware-wallet routes require physical review and approval");
+    }
+    if (!capabilities.persistent_grants) throw new Error("custom hardware-wallet routes require persistent grant support");
+    return;
+  }
+
+  if (route.type === "external_nip46") {
+    if (route.transport !== "nip46_relay") throw new Error("external NIP-46 routes must use nip46_relay transport");
+    if (route.custody !== "external_signer") throw new Error("external NIP-46 routes must use external_signer custody");
+    if (route.trusted_review !== "external_policy") throw new Error("external NIP-46 routes must use external_policy review");
+    if (route.policy_support !== "external") throw new Error("external NIP-46 routes must use external policy support");
+    if (capabilities.physical_review || capabilities.physical_approval) {
+      throw new Error("external NIP-46 routes must not claim nSealr physical review or approval");
+    }
+  }
 }
 
 export function parseAccountDescriptor(value: unknown): AccountDescriptor {
@@ -330,21 +427,7 @@ export function parseAccountDescriptor(value: unknown): AccountDescriptor {
   if (!descriptor.policy_profile_id.startsWith("policy-")) {
     throw new Error("policy_profile_id must reference a policy-* profile");
   }
-  if (QR_ROUTE_TYPES.has(route.type)) {
-    if (JSON.stringify(value).toLowerCase().includes("tropic01")) {
-      throw new Error("stateless QR vault descriptors must not reference TROPIC01");
-    }
-    if (route.transport !== "qr") throw new Error("stateless QR vault routes must use qr transport");
-    if (route.custody !== "stateless_session") {
-      throw new Error("stateless QR vault routes must use stateless_session custody");
-    }
-    if (route.policy_support !== "manual_only") {
-      throw new Error("stateless QR vault routes must use manual_only policy support");
-    }
-    if (descriptor.capabilities.persistent_grants !== false) {
-      throw new Error("stateless QR vault routes must not support persistent grants");
-    }
-  }
+  validateRouteSemantics(route, descriptor.capabilities, value);
   return descriptor;
 }
 
@@ -361,6 +444,9 @@ export function parsePolicyProfile(value: unknown): PolicyProfile {
   if (!forbiddenPermissions.includes("export_secret")) throw new Error("forbidden_permissions must include export_secret");
   if (routeTypes.some((route) => QR_ROUTE_TYPES.has(route)) && (mode !== "manual_only" || grantsAllowed !== false)) {
     throw new Error("QR vault routes must remain manual_only with grants_allowed false");
+  }
+  if (routeTypes.includes("smartcard") && (mode !== "manual_only" || grantsAllowed !== false)) {
+    throw new Error("display-less smartcard routes must remain manual_only with grants_allowed false");
   }
   if (mode === "manual_only" && grantsAllowed) throw new Error("manual_only profiles must not allow grants");
   if (grantsAllowed) {

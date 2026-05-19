@@ -455,6 +455,19 @@ function fileStem(file: string): string {
   return file.replace(/\.json$/, "");
 }
 
+function validateAccountPolicyReferences(accounts: AccountDescriptor[], policyProfiles: PolicyProfile[]): void {
+  const policyById = new Map(policyProfiles.map((policy) => [policy.policy_id, policy]));
+  for (const account of accounts) {
+    const policy = policyById.get(account.policy_profile_id);
+    if (policy === undefined) {
+      throw new Error(`invalid account descriptor ${account.account_id}: policy profile not found`);
+    }
+    if (!policy.route_types.includes(account.signer_route.type)) {
+      throw new Error(`invalid account descriptor ${account.account_id}: policy profile does not include signer route type`);
+    }
+  }
+}
+
 export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const eventsRoot = resolve(specsRoot, "vectors/events");
   const reviewsRoot = resolve(specsRoot, "vectors/review");
@@ -516,6 +529,10 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const invalidVectorFiles = readdirSync(invalidVectorsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
+  const accounts = accountFiles.map((file) => parseAccountDescriptor(loadJson(resolve(accountsRoot, file))));
+  const policyProfiles = policyProfileFiles.map((file) => parsePolicyProfile(loadJson(resolve(policyProfilesRoot, file))));
+  validateAccountPolicyReferences(accounts, policyProfiles);
+
   return {
     key: loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as SpecsFixtureSet["key"],
     limits: loadJson(resolve(specsRoot, "vectors/limits/nsealr-v0.json")) as SpecsFixtureSet["limits"],
@@ -543,8 +560,8 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
           name: fileStem(file)
         }) as SpecsFixtureSet["nip46PolicyFiles"][number]
     ),
-    accounts: accountFiles.map((file) => parseAccountDescriptor(loadJson(resolve(accountsRoot, file)))),
-    policyProfiles: policyProfileFiles.map((file) => parsePolicyProfile(loadJson(resolve(policyProfilesRoot, file)))),
+    accounts,
+    policyProfiles,
     grants: grantFiles.map((file) => parseGrantDescriptor(loadJson(resolve(grantsRoot, file)))),
     policyDecisions: policyDecisionFiles.map(
       (file) => loadJson(resolve(policyDecisionsRoot, file)) as SpecsFixtureSet["policyDecisions"][number]

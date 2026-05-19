@@ -142,15 +142,23 @@ describe("fixture loading", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
 
     expect(fixtures.accounts.map((account) => account.account_id)).toEqual(expect.arrayContaining([
-      "acct-raspberry-qr-nip06-account-0",
+      "acct-custom-hardware-wallet-slot-0",
+      "acct-esp32-qr-nip06-account-0",
       "acct-esp32-usb-slot-0",
-      "acct-external-nip46-bunker"
+      "acct-external-nip46-bunker",
+      "acct-raspberry-qr-nip06-account-0",
+      "acct-smartcard-slot-0"
     ]));
     expect(fixtures.policyProfiles.map((policy) => policy.policy_id)).toEqual(expect.arrayContaining([
+      "policy-manual-only-displayless-smartcard",
       "policy-manual-only-qr-vault",
       "policy-scoped-automation-daily-use"
     ]));
     expect(fixtures.grants.map((grant) => grant.grant_id)).toEqual(["grant-esp32-usb-kind-1-session"]);
+    for (const account of fixtures.accounts) {
+      const policy = fixtures.policyProfiles.find((candidate) => candidate.policy_id === account.policy_profile_id);
+      expect(policy?.route_types).toContain(account.signer_route.type);
+    }
   });
 
   it("loads policy decision vectors from the specs repository", () => {
@@ -171,8 +179,12 @@ describe("fixture loading", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
 
     expect(fixtures.routeSelections.map((selection) => selection.name)).toEqual([
+      "custom-hardware-wallet-sign-event-slot-0",
+      "esp32-qr-sign-event-account-0",
       "esp32-usb-sign-event-slot-0",
-      "raspberry-qr-sign-event-account-0"
+      "external-nip46-sign-event-bunker",
+      "raspberry-qr-sign-event-account-0",
+      "smartcard-sign-event-slot-0"
     ]);
     expect(fixtures.routeSelections[0].format).toBe("nsealr-route-selection-vector-v0");
     expect(fixtures.routeSelections[0].selection.contains_secret_material).toBe(false);

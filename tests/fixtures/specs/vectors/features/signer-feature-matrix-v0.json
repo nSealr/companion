@@ -96,7 +96,7 @@
     {
       "id": "manual_only_policy",
       "contract_id": "manual-only-approval-policy-v0",
-      "behavior": "The implementation never signs automatically; every sign_event decision requires local review and physical approval."
+      "behavior": "The implementation never signs automatically; every sign_event decision requires route-specific explicit approval through local physical approval on trusted-display devices or external review acknowledgement for display-less custody."
     },
     {
       "id": "device_display_review",
@@ -613,10 +613,10 @@
           "notes": "NIP-19 nsec RAM-only session import belongs to stateless QR vault lines, not display-less smartcard custody."
         },
         "manual_only_policy": {
-          "target": "optional",
-          "current": "planned",
+          "target": "required",
+          "current": "partial",
           "contract_id": "manual-only-approval-policy-v0",
-          "notes": "Manual external acknowledgement can be required for every signing operation."
+          "notes": "Display-less smartcard signing must remain manual-only with explicit external review acknowledgement."
         },
         "device_display_review": {
           "target": "not_applicable",
@@ -635,10 +635,9 @@
           "notes": "The companion can route approved, already-decrypted NIP-46 requests to a card-backed signer."
         },
         "scoped_policy_automation": {
-          "target": "optional",
-          "current": "planned",
-          "contract_id": "scoped-policy-automation-v0",
-          "notes": "Automation is only acceptable when explicit external policy and acknowledgement requirements are satisfied."
+          "target": "forbidden",
+          "current": "forbidden",
+          "notes": "A display-less smartcard must not be treated as a trusted policy-automation signer without a later card-side policy contract."
         },
         "persistent_secret_custody": {
           "target": "required",

@@ -718,7 +718,9 @@ The companion may keep labels, public keys, signer routes, recovery
 descriptors, capabilities, policy ids, and scoped grant metadata. It must not
 store production `nsec`, mnemonic, seed, passphrase, NIP-49 ciphertext, or raw
 private key material. Stateless QR vault routes remain manual-only and cannot
-receive persistent grants.
+receive persistent grants. Display-less smartcard routes also remain
+manual-only; they require explicit external review acknowledgement and cannot
+claim trusted device review or persistent grant automation.
 
 Route-selection vectors are also consumed through `packages/policy`. The
 selector is pure and secretless: it accepts parsed account descriptors plus a

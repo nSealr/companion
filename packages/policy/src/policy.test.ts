@@ -32,13 +32,34 @@ describe("identity, recovery, and policy contracts", () => {
     const account = parseAccountDescriptor(
       loadJson(resolve(specsRoot, "vectors/accounts/raspberry-qr-nip06-account-0.json"))
     );
+    const esp32QrAccount = parseAccountDescriptor(
+      loadJson(resolve(specsRoot, "vectors/accounts/esp32-qr-nip06-account-0.json"))
+    );
+    const smartcardAccount = parseAccountDescriptor(
+      loadJson(resolve(specsRoot, "vectors/accounts/smartcard-slot-0.json"))
+    );
+    const customHardwareWalletAccount = parseAccountDescriptor(
+      loadJson(resolve(specsRoot, "vectors/accounts/custom-hardware-wallet-slot-0.json"))
+    );
     const policy = parsePolicyProfile(loadJson(resolve(specsRoot, "vectors/policies/manual-only-qr-vault.json")));
+    const smartcardPolicy = parsePolicyProfile(
+      loadJson(resolve(specsRoot, "vectors/policies/manual-only-displayless-smartcard.json"))
+    );
     const grant = parseGrantDescriptor(loadJson(resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json")));
 
     expect(account.signer_route.type).toBe("raspberry_qr_vault");
     expect(account.capabilities.persistent_grants).toBe(false);
+    expect(esp32QrAccount.signer_route.type).toBe("esp32_qr_vault");
+    expect(esp32QrAccount.capabilities.persistent_grants).toBe(false);
+    expect(smartcardAccount.recovery.type).toBe("card_slot");
+    expect(smartcardAccount.signer_route.trusted_review).toBe("display_less");
+    expect(smartcardAccount.capabilities.persistent_grants).toBe(false);
+    expect(customHardwareWalletAccount.recovery.type).toBe("hardware_wallet_slot");
+    expect(customHardwareWalletAccount.capabilities.persistent_grants).toBe(true);
     expect(policy.mode).toBe("manual_only");
     expect(policy.grants_allowed).toBe(false);
+    expect(smartcardPolicy.mode).toBe("manual_only");
+    expect(smartcardPolicy.grants_allowed).toBe(false);
     expect(grant.route_type).toBe("esp32_usb_nip46");
     expect(grant.permission).toEqual({ method: "sign_event", parameter: "1", event_kind: 1 });
   });
@@ -58,6 +79,28 @@ describe("identity, recovery, and policy contracts", () => {
     policy.grants_allowed = true;
 
     expect(() => parsePolicyProfile(policy)).toThrow(/QR vault routes must remain manual_only/u);
+  });
+
+  it("rejects display-less smartcard policy automation and trusted-review claims", () => {
+    const policy = loadJson(resolve(specsRoot, "vectors/policies/manual-only-displayless-smartcard.json")) as Record<
+      string,
+      unknown
+    >;
+    policy.mode = "scoped_automation";
+    policy.grants_allowed = true;
+
+    expect(() => parsePolicyProfile(policy)).toThrow(/display-less smartcard routes must remain manual_only/u);
+
+    const account = loadJson(resolve(specsRoot, "vectors/accounts/smartcard-slot-0.json")) as {
+      signer_route: Record<string, unknown>;
+      capabilities: Record<string, unknown>;
+    };
+    account.signer_route.trusted_review = "device_display";
+    account.signer_route.policy_support = "scoped_automation";
+    account.capabilities.physical_review = true;
+    account.capabilities.persistent_grants = true;
+
+    expect(() => parseAccountDescriptor(account)).toThrow(/smartcard routes must remain display_less/u);
   });
 
   it("rejects wildcard grants and stateless QR vault grant targets", () => {

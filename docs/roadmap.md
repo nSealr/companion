@@ -266,7 +266,9 @@ production secrets by companion. Policy records are internal nSealr records,
 not Nostr events. Companion may transport policy proposals, but persistent
 devices must accept authoritative policy changes locally. The final
 per-account policy menu remains open; current scoped-automation vectors are
-minimal conformance scaffolds.
+minimal conformance scaffolds for ESP32 USB/NIP-46 and custom hardware-wallet
+routes. Display-less smartcard routes stay manual-only with external review
+acknowledgement unless a later card-side policy contract is designed.
 
 Status note, 2026-05-10: companion QR tooling now supports `qr-animated`
 frame files for larger valid payloads. The implementation consumes the shared

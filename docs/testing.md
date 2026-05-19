@@ -471,15 +471,14 @@ single-repository CI. Cross-repository drift remains guarded by
   route-driver tests cover the developer serial-line
   dispatch boundary through fake ports only; hardware serial smoke remains a
   later gate before production driver acceptance.
-- Browser extension provider tests over a fake companion for origin permission,
-  revocation, cancel, malformed companion response, native-host disconnects,
-  and no key material in extension storage. Current package tests cover the
-  local-service backend adapter for authorized selected-account public-key
-  lookup, `signEvent` routing through local-service dispatch, explicit
-  dispatcher success, and deterministic signer-unavailable responses before a
-  real signer transport driver exists. Local-service client tests now own the
-  timeout/abort contract directly, including already-cancelled requests,
-  in-flight cancellation, and `AbortSignal` forwarding into injected exchanges.
+- Browser extension provider tests over fake companion/local-service backends
+  cover authorized selected-account public-key lookup, `signEvent` routing
+  through local-service dispatch, explicit dispatcher success, deterministic
+  signer-unavailable responses before a real signer transport driver exists,
+  malformed companion outputs, already-cancelled requests, in-flight
+  cancellation, `AbortSignal` forwarding into injected exchanges, thrown
+  native-host sender failures, and latest-grant revocation before browser
+  callers trust route selection or signer dispatch.
 - Package consumer smoke currently runs against built JS/declaration artifacts,
   packed tarballs, and executable examples importing every publishable public
   package. README snippets for every publishable package are now executed from

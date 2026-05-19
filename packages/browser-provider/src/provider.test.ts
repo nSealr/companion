@@ -260,6 +260,16 @@ describe("NIP-07 browser provider boundary", () => {
     await expect(request).rejects.toThrow(/cancelled/u);
   });
 
+  it("surfaces browser native-messaging sender failures deterministically", async () => {
+    const service = createBrowserNativeMessagingLocalServiceClient({
+      sendNativeMessage: () => {
+        throw new Error("native host disconnected");
+      }
+    });
+
+    await expect(service.serviceStatus("browser-native-disconnect")).rejects.toThrow(/native host disconnected/u);
+  });
+
   it("surfaces local-service authorization failure before browser callers trust a key", async () => {
     const service = new LocalServiceClient({
       exchange: (message) => handleLocalServiceRequest(message, {
@@ -276,5 +286,37 @@ describe("NIP-07 browser provider boundary", () => {
     });
 
     await expect(provider.getPublicKey()).rejects.toThrow(/client is not paired/u);
+  });
+
+  it("surfaces latest local-service revocation before browser callers trust routes or signatures", async () => {
+    let dispatched = false;
+    const revokedGrant: LocalClientGrant = {
+      ...localServiceGrant,
+      approved_at: 1_900_000_010,
+      revoked: true
+    };
+    const service = new LocalServiceClient({
+      exchange: (message) => handleLocalServiceRequest(message, {
+        accounts: fixtures.accounts,
+        grants: [localServiceGrant, revokedGrant],
+        now: 1_900_000_020,
+        signerDispatcher: () => {
+          dispatched = true;
+          return response;
+        }
+      })
+    });
+    const provider = createNip07Provider({
+      backend: createLocalServiceBrowserProviderBackend({
+        service,
+        routeRequest: routeVector.request
+      }),
+      client,
+      nextRequestId: () => "req-kind-1-basic"
+    });
+
+    await expect(provider.getPublicKey()).rejects.toThrow(/revoked/u);
+    await expect(provider.signEvent(request.params.event_template)).rejects.toThrow(/revoked/u);
+    expect(dispatched).toBe(false);
   });
 });

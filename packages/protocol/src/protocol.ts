@@ -19,6 +19,7 @@ const SIGNING_STATUS_GATES = [
   "approval_digest_binding",
   "unicode_review_rendering",
   "key_provisioning",
+  "source_public_key_proof",
   "secure_boot",
   "flash_encryption",
   "debug_lock",

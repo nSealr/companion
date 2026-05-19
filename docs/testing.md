@@ -120,7 +120,12 @@ single-repository CI. Cross-repository drift remains guarded by
   extension storage, injecting providers, or touching native host installation.
   They also prove origin permission approvals require explicit local pairing
   digest confirmation and still create no grants, storage writes, provider
-  injection, or key material.
+  injection, or key material. Origin-permission store tests prove already
+  approved origin artifacts can be normalized into deterministic secretless
+  records, exact origin/extension/pairing-digest/method lookup is required,
+  route-only approvals cannot authorize `sign_event`, duplicate approvals are
+  rejected before shadowing, and malformed or secret-looking store fields fail
+  before any browser storage, grant, signer dispatch, or key material exists.
   Background-controller tests prove request handling, pairing-intent requests,
   pairing-review projection, and origin-permission review projection share the
   same injected native-messaging boundary, silent or

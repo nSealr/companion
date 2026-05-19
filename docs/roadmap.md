@@ -390,7 +390,11 @@ and uploads checked tarball artifacts without publishing to npm.
   future approval UI. The browser-origin permission boundary can now parse that
   review and create an approval artifact only after explicit local pairing
   digest confirmation, without creating grants, writing extension storage, or
-  injecting a provider. A pure background-controller boundary now composes
+  injecting a provider. It can now normalize those approved artifacts into a
+  deterministic secretless origin-permission store contract for exact
+  origin/extension/pairing-digest/method lookup, while still not choosing a
+  browser storage backend, creating local-service grants, dispatching signers,
+  or storing secret material. A pure background-controller boundary now composes
   request handling, pairing-intent requests, pairing-review projection, and
   origin-permission review projection over injected native messaging without
   using browser APIs, and can use the same optional native response timeout and
@@ -495,8 +499,8 @@ and uploads checked tarball artifacts without publishing to npm.
   `<all_urls>`, wildcard schemes, wildcard hosts, non-local `http`, duplicate
   matches, host-permission fields, and storage. Remaining work: reviewed
   bootstrap/config UX beyond the static developer route config,
-  native-messaging installation, browser UI/storage wiring for origin
-  permission approvals, richer popup/origin approval rendering, and real
+  native-messaging installation, browser UI/storage wiring for the approved
+  origin-permission store, richer popup/origin approval rendering, and real
   dispatch after M4.7 gates. No local
   production signing and no extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and

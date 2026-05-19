@@ -110,7 +110,10 @@ match the shared `contract_id`.
   native-messaging local-service provider path, can request a digest-bound
   pairing intent, deterministic pairing-review metadata, and deterministic
   browser-origin permission review and approval metadata for that identity,
-  with approval bound to the reviewed local pairing digest, includes a pure
+  with approval bound to the reviewed local pairing digest, can normalize those
+  already-approved origin artifacts into a deterministic secretless store
+  contract for exact origin/extension/pairing-digest/method lookup without
+  writing browser storage, creating grants, or dispatching signers, includes a pure
   background-controller boundary over injected native messaging with optional
   response timeouts and request-scoped cancellation,
   includes a pure runtime-message adapter that maps raw browser sender metadata
@@ -162,8 +165,8 @@ match the shared `contract_id`.
   profile still omits host-permission fields, broad URL matches, extension
   storage, and provider grants. It can build an explicit developer package
   artifact only after route-config review/approval, but it does not install a
-  browser extension, write extension storage, create grants, dispatch signers,
-  or hold key material.
+  browser extension, write extension storage, persist the origin-permission
+  store, create grants, dispatch signers, or hold key material.
 - `@nsealr/client` exposes the shared local-client identity parser, including
   the browser-safe `@nsealr/client/client-identity` subpath, used before
   pairing, route selection, signer-request validation, and response

@@ -553,7 +553,13 @@ reviews into page-visible NIP-07 method effects and parses them before any
 approval artifact is created. Approval requires the exact reviewed local pairing
 digest, records the approved page-visible methods, and only authorizes a future
 provider-injection step. It does not create local-service grants, write browser
-storage, inject a provider, or contain key material.
+storage, inject a provider, or contain key material. The matching
+`nsealr-browser-origin-permission-store-v0` contract accepts only already
+approved origin artifacts, sorts them deterministically, rejects duplicate
+`origin + extension_id + local_pairing_digest` records, and answers exact
+origin/extension/pairing-digest/method lookups. That store contract is still
+pure data validation: it does not call browser storage APIs, choose a
+persistence backend, create grants, dispatch signers, or store secrets.
 Its manifest builder is intentionally restrictive: the default Chromium
 manifest omits host permissions, optional host permissions, content scripts,
 web-accessible resources, and storage; Firefox manifests require an explicit

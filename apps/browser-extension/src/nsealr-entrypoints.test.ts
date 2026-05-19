@@ -24,9 +24,22 @@ import {
 import { installNsealrBackgroundEntrypoint } from "./nsealr-background-entrypoint.js";
 import { installNsealrContentScriptEntrypoint } from "./nsealr-content-script-entrypoint.js";
 import { installNsealrPageScriptEntrypoint } from "./nsealr-page-script-entrypoint.js";
-import { createNsealrPopupEntrypoint } from "./nsealr-popup-entrypoint.js";
+import {
+  createNsealrPopupEntrypoint,
+  installNsealrPopupEntrypoint
+} from "./nsealr-popup-entrypoint.js";
 import { approveBrowserExtensionOriginPermissionReview } from "./pairing.js";
 import { createBrowserExtensionOriginPermissionStore } from "./origin-permission-store.js";
+import {
+  BROWSER_EXTENSION_POPUP_LIST_ID,
+  BROWSER_EXTENSION_POPUP_REFRESH_ID,
+  BROWSER_EXTENSION_POPUP_ROOT_ID,
+  BROWSER_EXTENSION_POPUP_STATUS_ID
+} from "./popup-html.js";
+import {
+  type BrowserExtensionPopupDocument,
+  type BrowserExtensionPopupElement
+} from "./popup-dom.js";
 
 const publicKey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
 const routeRequest = {
@@ -37,6 +50,39 @@ const routeRequest = {
 const localPairingDigest = "d".repeat(64);
 
 type WindowMessageListener = (event: unknown) => void;
+
+class FakePopupElement implements BrowserExtensionPopupElement {
+  textContent: string | null = null;
+  className = "";
+  disabled = false;
+  dataset: Record<string, string> = {};
+  readonly attributes = new Map<string, string>();
+  readonly children: FakePopupElement[] = [];
+  readonly listeners = new Map<string, Array<() => void>>();
+
+  appendChild(child: BrowserExtensionPopupElement): unknown {
+    this.children.push(child as FakePopupElement);
+    return child;
+  }
+
+  replaceChildren(...children: BrowserExtensionPopupElement[]): void {
+    this.children.splice(0, this.children.length, ...(children as FakePopupElement[]));
+  }
+
+  addEventListener(type: "click", listener: () => void): void {
+    const listeners = this.listeners.get(type) ?? [];
+    listeners.push(listener);
+    this.listeners.set(type, listeners);
+  }
+
+  removeEventListener(type: "click", listener: () => void): void {
+    this.listeners.set(type, (this.listeners.get(type) ?? []).filter((candidate) => candidate !== listener));
+  }
+
+  setAttribute(name: string, value: string): void {
+    this.attributes.set(name, value);
+  }
+}
 
 function routeConfig(): unknown {
   return {
@@ -136,6 +182,39 @@ function routeOnlyOriginPermissionStore(): unknown {
   ], {
     updatedAt: 1_900_000_061
   });
+}
+
+function createPopupDocument(): {
+  document: BrowserExtensionPopupDocument;
+  root: FakePopupElement;
+  status: FakePopupElement;
+  list: FakePopupElement;
+  refresh: FakePopupElement;
+} {
+  const root = new FakePopupElement();
+  const status = new FakePopupElement();
+  const list = new FakePopupElement();
+  const refresh = new FakePopupElement();
+  const elements = new Map<string, FakePopupElement>([
+    [BROWSER_EXTENSION_POPUP_ROOT_ID, root],
+    [BROWSER_EXTENSION_POPUP_STATUS_ID, status],
+    [BROWSER_EXTENSION_POPUP_LIST_ID, list],
+    [BROWSER_EXTENSION_POPUP_REFRESH_ID, refresh]
+  ]);
+  return {
+    document: {
+      getElementById(id: string): unknown {
+        return elements.get(id);
+      },
+      createElement(): BrowserExtensionPopupElement {
+        return new FakePopupElement();
+      }
+    },
+    root,
+    status,
+    list,
+    refresh
+  };
 }
 
 function createRuntimeGlobal(): {
@@ -501,6 +580,62 @@ describe("packaged browser extension entrypoints", () => {
       request_id: "packaged-popup-list",
       method: "list_pending_requests"
     }]);
+  });
+
+  it("installs the packaged popup view through browser.runtime and document globals", async () => {
+    const runtimeMessages: unknown[] = [];
+    const popup = createPopupDocument();
+    const handle = installNsealrPopupEntrypoint({
+      globalScope: {
+        browser: {
+          runtime: {
+            sendMessage(message: unknown): unknown {
+              runtimeMessages.push(message);
+              return {
+                protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+                version: 1,
+                request_id: "packaged-popup-install-list",
+                ok: true,
+                result: {
+                  pending_requests: [{
+                    format: BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
+                    request_id: "pending-popup-install",
+                    method: "sign_event",
+                    extension_id: "extension@nsealr.dev",
+                    page_origin: "https://example.com",
+                    app_name: "Example",
+                    status: "pending",
+                    started_at: 1_900_000_410,
+                    updated_at: 1_900_000_410,
+                    stores_production_secrets: false,
+                    includes_event_template: false
+                  }],
+                  stores_production_secrets: false,
+                  contains_secret_material: false
+                }
+              };
+            }
+          }
+        },
+        document: popup.document
+      },
+      nextRequestId: () => "packaged-popup-install-list"
+    });
+
+    await flushAsyncListeners();
+
+    expect(runtimeMessages).toEqual([{
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "packaged-popup-install-list",
+      method: "list_pending_requests"
+    }]);
+    expect(popup.root.attributes.get("data-nsealr-popup")).toBe("ready");
+    expect(popup.status.textContent).toBe("1 pending");
+    expect(popup.list.children).toHaveLength(1);
+    expect(popup.list.children[0].children[0].children[0].textContent).toBe("Sign event");
+    handle.dispose();
+    expect(popup.refresh.listeners.get("click")).toEqual([]);
   });
 
   it("rejects ambiguous extension runtime globals before installing listeners or scripts", () => {

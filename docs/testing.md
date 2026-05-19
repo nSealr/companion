@@ -179,16 +179,18 @@ single-repository CI. Cross-repository drift remains guarded by
   `dispose()`. Pending-request tests prove the injected
   `nsealr-browser-extension-pending-request-state-v0` lifecycle emits
   secretless pending/resolved/rejected/cancelled request state, cleans up
-  active requests, rejects duplicate active ids, aborts the native-message
-  signal for UI-driven cancellation, suppresses stale duplicate rejection after
-  cancellation, and never exposes event templates, key material, extension
-  storage, grants, or signer dispatch. Pending-control and runtime-message
+  active requests, rejects duplicate active ids, enforces the active-request
+  bound before publishing state, aborts the native-message signal for UI-driven
+  cancellation, suppresses stale duplicate rejection after cancellation, and
+  never exposes event templates, key material, extension storage, grants, or
+  signer dispatch. Pending-control and runtime-message
   tests prove the separate `nsealr-browser-extension-control-v0`
   `list_pending_requests`, `cancel_pending_request`, and
   `request_origin_permission_review` paths accept extension-internal senders,
-  reject page-origin senders, keep list/cancel operations away from native
-  messaging, route origin-review requests through the background controller,
-  and can use the background entrypoint's default in-memory lifecycle.
+  reject page-origin senders, reject oversized pending-state lists, keep
+  list/cancel operations away from native messaging, route origin-review
+  requests through the background controller, and can use the background
+  entrypoint's default in-memory lifecycle.
   Popup-control tests prove future visible UI can call the same list/cancel and
   origin-review protocol through injected `runtime.sendMessage`, rejects
   mismatched or unsafe response envelopes, and remains secretless. Popup-view

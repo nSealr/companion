@@ -2,6 +2,7 @@ import {
   isBrowserExtensionRequestId
 } from "./messages.js";
 import {
+  BROWSER_EXTENSION_MAX_ACTIVE_PENDING_REQUESTS,
   type BrowserExtensionPendingRequestLifecycle,
   type BrowserExtensionPendingRequestState,
   parseBrowserExtensionPendingRequestState
@@ -328,6 +329,9 @@ function parseListResult(value: unknown): BrowserExtensionListPendingResponse["r
   }
   if (!Array.isArray(value.pending_requests)) {
     throw new Error("browser extension control list result pending_requests must be an array");
+  }
+  if (value.pending_requests.length > BROWSER_EXTENSION_MAX_ACTIVE_PENDING_REQUESTS) {
+    throw new Error("browser extension control list result has too many pending_requests");
   }
   if (value.stores_production_secrets !== false || value.contains_secret_material !== false) {
     throw new Error("browser extension control list result must be secretless");

@@ -7,6 +7,7 @@ import {
   parseBrowserExtensionControlRequest
 } from "./pending-control.js";
 import {
+  BROWSER_EXTENSION_MAX_ACTIVE_PENDING_REQUESTS,
   BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
   createBrowserExtensionPendingRequestLifecycle
 } from "./pending-request.js";
@@ -250,6 +251,19 @@ describe("browser extension pending request control boundary", () => {
         }]
       }
     })).toThrow(/event templates/u);
+    expect(() => parseBrowserExtensionControlResponse({
+      ...listResponse,
+      result: {
+        ...listResponse.result,
+        pending_requests: Array.from(
+          { length: BROWSER_EXTENSION_MAX_ACTIVE_PENDING_REQUESTS + 1 },
+          (_, index) => ({
+            ...pendingState,
+            request_id: `pending-control-many-${index}`
+          })
+        )
+      }
+    })).toThrow(/too many pending_requests/u);
     expect(() => parseBrowserExtensionControlResponse({
       ...cancelResponse,
       result: {

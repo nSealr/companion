@@ -531,9 +531,10 @@ It can emit `nsealr-browser-extension-pending-request-state-v0` snapshots
 through an injected lifecycle for future visible pending/cancel UI. Those
 snapshots expose only request id, method, extension id, page origin, optional
 app name, status, and timestamps; they do not include event templates, key
-material, grants, storage writes, or signer dispatch. The same lifecycle owns
-the per-request cancellation hook: cancelling an active snapshot aborts the
-in-flight native-message path and emits one `cancelled` state instead of
+material, grants, storage writes, or signer dispatch. The lifecycle has a
+small explicit active-request bound before publishing state. The same lifecycle
+owns the per-request cancellation hook: cancelling an active snapshot aborts
+the in-flight native-message path and emits one `cancelled` state instead of
 leaking a later duplicate rejection. The background entrypoint owns an
 in-memory lifecycle by default, and extension UI can query or cancel it through
 separate `nsealr-browser-extension-control-v0` `list_pending_requests` and

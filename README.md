@@ -177,6 +177,7 @@ match the shared `contract_id`.
   boundaries,
   can emit secretless pending/resolved/rejected/cancelled request-state
   snapshots for future UI without exposing event templates or key material,
+  keeps the active pending-request set explicitly bounded,
   and can abort in-flight native messaging when that pending request is
   cancelled through extension-internal list/cancel control messages,
   includes a packaged action popup HTML plus popup entrypoint over injected

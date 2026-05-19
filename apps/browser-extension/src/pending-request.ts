@@ -11,6 +11,7 @@ import {
 
 export const BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT =
   "nsealr-browser-extension-pending-request-state-v0";
+export const BROWSER_EXTENSION_MAX_ACTIVE_PENDING_REQUESTS = 16;
 
 export type BrowserExtensionPendingRequestStatus = "pending" | "resolved" | "rejected" | "cancelled";
 export type BrowserExtensionPendingRequestSettledStatus = "resolved" | "rejected";
@@ -43,6 +44,7 @@ export type BrowserExtensionPendingRequestLifecycle = {
 export type BrowserExtensionPendingRequestLifecycleOptions = {
   now?: () => number;
   onState?: (state: BrowserExtensionPendingRequestState) => void;
+  maxActiveRequests?: number;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -56,6 +58,13 @@ function hasOnlyKeys(value: Record<string, unknown>, allowedKeys: string[]): boo
 function requireNonNegativeSafeInteger(value: number, label: string): number {
   if (!Number.isInteger(value) || !Number.isSafeInteger(value) || value < 0) {
     throw new Error(`${label} must be a non-negative safe integer`);
+  }
+  return value;
+}
+
+function requirePositiveSafeInteger(value: number, label: string): number {
+  if (!Number.isInteger(value) || !Number.isSafeInteger(value) || value <= 0) {
+    throw new Error(`${label} must be a positive safe integer`);
   }
   return value;
 }
@@ -166,6 +175,10 @@ export function createBrowserExtensionPendingRequestLifecycle(
   const active = new Map<string, BrowserExtensionPendingRequestState>();
   const abortControllers = new Map<string, AbortController>();
   const now = options.now ?? Date.now;
+  const maxActiveRequests = requirePositiveSafeInteger(
+    options.maxActiveRequests ?? BROWSER_EXTENSION_MAX_ACTIVE_PENDING_REQUESTS,
+    "browser extension pending request maxActiveRequests"
+  );
 
   function stateWithStatus(
     state: BrowserExtensionPendingRequestState,
@@ -183,6 +196,9 @@ export function createBrowserExtensionPendingRequestLifecycle(
     start(request: BrowserExtensionRequest, sender: BrowserExtensionSenderInput): BrowserExtensionPendingRequestState {
       if (active.has(request.request_id)) {
         throw new Error("browser extension pending request id is already active");
+      }
+      if (active.size >= maxActiveRequests) {
+        throw new Error("browser extension pending request active limit reached");
       }
       const context = browserExtensionClientContextFromSender(sender);
       const timestamp = requireNonNegativeSafeInteger(now(), "browser extension pending request timestamp");

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BROWSER_EXTENSION_MESSAGE_PROTOCOL } from "./handler.js";
 import {
+  BROWSER_EXTENSION_MAX_ACTIVE_PENDING_REQUESTS,
   BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
   createBrowserExtensionPendingRequestLifecycle,
   parseBrowserExtensionPendingRequestState
@@ -165,6 +166,39 @@ describe("browser extension pending request lifecycle", () => {
 
     expect(() => lifecycle.start(request, sender)).toThrow(/already active/u);
     expect(lifecycle.active()).toEqual([started]);
+  });
+
+  it("bounds active pending requests before publishing state", () => {
+    const states: unknown[] = [];
+    const lifecycle = createBrowserExtensionPendingRequestLifecycle({
+      maxActiveRequests: 1,
+      onState: (state) => {
+        states.push(state);
+      }
+    });
+    const sender = {
+      extension_id: "extension@nsealr.dev",
+      page_origin: "https://example.com"
+    };
+    const started = lifecycle.start({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "pending-limit-1",
+      method: "get_public_key"
+    }, sender);
+
+    expect(() => lifecycle.start({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "pending-limit-2",
+      method: "get_public_key"
+    }, sender)).toThrow(/active limit/u);
+    expect(lifecycle.active()).toEqual([started]);
+    expect(states).toEqual([started]);
+    expect(BROWSER_EXTENSION_MAX_ACTIVE_PENDING_REQUESTS).toBeGreaterThanOrEqual(1);
+    expect(() => createBrowserExtensionPendingRequestLifecycle({
+      maxActiveRequests: 0
+    })).toThrow(/maxActiveRequests/u);
   });
 
   it("parses only secretless pending request state snapshots", () => {

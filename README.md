@@ -314,12 +314,14 @@ match the shared `contract_id`.
 - `packages/fixtures` loads shared event, trusted-review, review-display-frame,
   review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
   NIP-46 connection URI, account-descriptor, policy-profile,
-  grant-descriptor, policy-decision, route-selection, access-surface,
+  grant-descriptor, policy-change review, policy-decision, route-selection,
+  access-surface,
   feature-matrix, and smartcard vectors from `nSealr/specs` for companion,
   Raspberry QR vault, ESP32 firmware, and smartcard conformance tests.
 - `packages/policy` parses secretless account descriptors, policy profiles, and
-  grant descriptors, selects secretless account-route metadata, then evaluates
-  policy-decision transcript vectors without a persistent grant store. It
+  grant descriptors, selects secretless account-route metadata, renders
+  digest-bound policy-change review pages, then evaluates policy-decision
+  transcript vectors without a persistent grant store. It
   rejects embedded private-key material, QR-vault automation,
   wildcard/decrypt/export grants, and stateless QR-vault grant targets before
   CLI or fixture-verification code can treat those records as valid.
@@ -327,8 +329,9 @@ match the shared `contract_id`.
   BIP-39 passphrase namespaces, standalone `nsec` keys, device slots, card
   slots, and external signers are key sources or routes, not production secrets
   kept by companion. Policy records are internal nSealr records, not Nostr
-  events, and the current scoped-automation vectors are conformance fixtures,
-  not the final policy UX.
+  events. Persistent-device account descriptors default to manual-only policy;
+  scoped-automation vectors are conformance fixtures that require a
+  device-reviewed policy-change proposal before they can become active policy.
 - `packages/smartcard` implements the first APDU codec, provider-based PC/SC
   APDU transport boundary, and `SmartcardSigner` boundary against shared
   smartcard vectors, including APDU rejection status words. The test-only APDU

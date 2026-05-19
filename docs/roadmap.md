@@ -12,10 +12,13 @@ Status: implemented as the first companion foundation with JSON and QR envelope
 CLI paths. Fixture verification now includes shared review-display-frame,
 review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
 NIP-46 connection URI, account-descriptor, policy-profile, grant-descriptor,
-policy-decision, limit-profile, and invalid hardening vectors in addition to
-event and trusted-review vectors. Policy-decision fixtures include explicit
-grant-usage snapshots for scoped automation rate-limit decisions before any
-persistent grant store exists. The
+policy-change review, policy-decision, limit-profile, and invalid hardening
+vectors in addition to event and trusted-review vectors. Policy-decision
+fixtures include explicit grant-usage snapshots for scoped automation
+rate-limit decisions before any persistent grant store exists. Policy-change
+review fixtures pin manual persistent-device defaults plus digest-bound
+`set_policy` proposals before any authoritative device policy mutation exists.
+The
 shared invalid-vector set now includes strict response-shape rejection for
 ambiguous result payloads, error/result mixing, and unknown top-level response
 fields, plus contradictory signing-status readiness where a device claims
@@ -173,6 +176,13 @@ requests, routes decrypt and unknown methods to manual review, and emits the
 expected audit-event object. This still does not add a grant store, relay
 session, signer I/O, or production key custody.
 
+Status note, 2026-05-19: companion policy code now also consumes shared
+policy-change review vectors. Persistent-device account descriptors default to
+manual-only policy; a browser, SDK, desktop, or CLI caller can only produce a
+secretless `set_policy` proposal plus deterministic device-review pages and
+approval digest. This does not approve or persist device policy, create grants,
+enable relay sessions, or make the companion authoritative.
+
 Status note, 2026-05-13: companion policy code now consumes shared
 route-selection vectors. The pure selector maps parsed account descriptors and
 requested methods to secretless route metadata, rejecting unknown accounts,
@@ -295,11 +305,14 @@ the official account model. Account metadata is per resulting public key and
 route; key sources such as mnemonics, passphrase namespaces, standalone
 `nsec`, device slots, card slots, and external signers are not stored as
 production secrets by companion. Policy records are internal nSealr records,
-not Nostr events. Companion may transport policy proposals, but persistent
-devices must accept authoritative policy changes locally. The final
-per-account policy menu remains open; current scoped-automation vectors are
-minimal conformance scaffolds for ESP32 USB/NIP-46 and custom hardware-wallet
-routes. Display-less smartcard routes stay manual-only with external review
+not Nostr events. Companion may transport policy proposals, but only
+device-local review and physical approval can make persistent-device policy
+changes effective. The final
+per-account policy menu remains open; persistent-device accounts now default
+to manual-only policy, and current scoped-automation vectors are minimal
+conformance scaffolds for ESP32 USB/NIP-46 and custom hardware-wallet routes
+that require a device-reviewed policy-change proposal before activation.
+Display-less smartcard routes stay manual-only with external review
 acknowledgement unless a later card-side policy contract is designed.
 
 Status note, 2026-05-10: companion QR tooling now supports `qr-animated`

@@ -35,8 +35,9 @@ single-repository CI. Cross-repository drift remains guarded by
   Invalid hardening fixture loading is directory-driven so new shared invalid
   vectors are discovered from the sibling specs checkout or local snapshot
   instead of being maintained in a hand-written name list.
-  Account-descriptor, policy-profile, grant-descriptor, policy-decision, and
-  route-selection loading is also directory-driven through `packages/policy`.
+  Account-descriptor, policy-profile, grant-descriptor, policy-change review,
+  policy-decision, and route-selection loading is also directory-driven through
+  `packages/policy`.
   QR review-transcript fixture validation also lives in this package and covers
   `scroll` buttons plus rendered-frame `body_line_styles` mismatch rejection,
   keeping `apps/cli` as a thin fixture-verification wrapper.
@@ -552,8 +553,9 @@ single-repository CI. Cross-repository drift remains guarded by
   deterministic authorization denial after revocation, and no-match rejection
   before output files are written.
 - Policy package tests cover secretless account descriptors, manual-only QR
-  vault policy, manual-only display-less smartcard policy, scoped grants for
-  ESP32 USB/NIP-46 and custom hardware-wallet routes,
+  vault policy, manual-only display-less smartcard policy, manual-only
+  persistent-device defaults, scoped grants for ESP32 USB/NIP-46 and custom
+  hardware-wallet routes, policy-change review pages and approval digests,
   wildcard/decrypt/export rejection, rejection of stateless QR-vault grant
   targets, and deterministic policy-decision transcripts for allowed, expired,
   revoked, decrypt, export-secret, and unknown-method requests.

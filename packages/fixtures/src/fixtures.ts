@@ -3,9 +3,11 @@ import { resolve } from "node:path";
 import {
   parseAccountDescriptor,
   parseGrantDescriptor,
+  parsePolicyChangeReviewVector,
   parsePolicyProfile,
   type AccountDescriptor,
   type GrantDescriptor,
+  type PolicyChangeReviewVector,
   type PolicyDecision,
   type PolicyDecisionRequest,
   type PolicyProfile,
@@ -212,6 +214,7 @@ export type SpecsFixtureSet = {
     request: PolicyDecisionRequest;
     decision: PolicyDecision;
   }>;
+  policyChanges: PolicyChangeReviewVector[];
   routeSelections: Array<{
     name: string;
     format: "nsealr-route-selection-vector-v0";
@@ -595,6 +598,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const policyProfilesRoot = resolve(specsRoot, "vectors/policies");
   const grantsRoot = resolve(specsRoot, "vectors/grants");
   const policyDecisionsRoot = resolve(specsRoot, "vectors/policy-decisions");
+  const policyChangesRoot = resolve(specsRoot, "vectors/policy-changes");
   const routeSelectionsRoot = resolve(specsRoot, "vectors/route-selections");
   const accessSurfacesRoot = resolve(specsRoot, "vectors/access-surfaces");
   const featureMatricesRoot = resolve(specsRoot, "vectors/features");
@@ -636,6 +640,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const policyDecisionFiles = readdirSync(policyDecisionsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const policyChangeFiles = readdirSync(policyChangesRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const routeSelectionFiles = readdirSync(routeSelectionsRoot)
@@ -690,6 +697,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     policyDecisions: policyDecisionFiles.map(
       (file) => loadJson(resolve(policyDecisionsRoot, file)) as SpecsFixtureSet["policyDecisions"][number]
     ),
+    policyChanges: policyChangeFiles.map((file) => parsePolicyChangeReviewVector(loadJson(resolve(policyChangesRoot, file)))),
     routeSelections: routeSelectionFiles.map(
       (file) => loadJson(resolve(routeSelectionsRoot, file)) as SpecsFixtureSet["routeSelections"][number]
     ),

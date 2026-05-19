@@ -168,6 +168,7 @@ describe("fixture loading", () => {
     ]));
     expect(fixtures.policyProfiles.map((policy) => policy.policy_id)).toEqual(expect.arrayContaining([
       "policy-manual-only-displayless-smartcard",
+      "policy-manual-only-persistent-device",
       "policy-manual-only-qr-vault",
       "policy-scoped-automation-daily-use"
     ]));
@@ -176,6 +177,19 @@ describe("fixture loading", () => {
       const policy = fixtures.policyProfiles.find((candidate) => candidate.policy_id === account.policy_profile_id);
       expect(policy?.route_types).toContain(account.signer_route.type);
     }
+  });
+
+  it("loads policy change review vectors from the specs repository", () => {
+    const specsRoot = resolveSpecsRoot();
+    const fixtures = loadSpecsFixtures(specsRoot);
+    const expectedNames = readdirSync(resolve(specsRoot, "vectors/policy-changes"))
+      .filter((file) => file.endsWith(".json"))
+      .map((file) => file.replace(/\.json$/u, ""))
+      .sort();
+
+    expect(fixtures.policyChanges.map((change) => change.name)).toEqual(expectedNames);
+    expect(fixtures.policyChanges[0].format).toBe("nsealr-policy-change-review-v0");
+    expect(fixtures.policyChanges[0].proposal.companion_authoritative).toBe(false);
   });
 
   it("loads policy decision vectors from the specs repository", () => {

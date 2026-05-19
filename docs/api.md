@@ -240,6 +240,10 @@ Exports:
 - `GrantDescriptor`
 - `GrantPermission`
 - `GrantUsageSnapshot`
+- `PolicyChangeProposal`
+- `PolicyChangeReview`
+- `PolicyChangeReviewPage`
+- `PolicyChangeReviewVector`
 - `PolicyDecision`
 - `PolicyDecisionRequest`
 - `PolicyProfile`
@@ -251,9 +255,12 @@ Exports:
 - `decidePolicyRequest`
 - `parseAccountDescriptor`
 - `parseGrantDescriptor`
+- `parsePolicyChangeProposal`
+- `parsePolicyChangeReviewVector`
 - `parsePolicyDecisionRequest`
 - `parsePolicyProfile`
 - `parseRouteSelectionRequest`
+- `reviewPolicyChangeProposal`
 - `selectAccountRoute`
 
 ## @nsealr/protocol

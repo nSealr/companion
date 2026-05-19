@@ -5,8 +5,11 @@ import {
   decidePolicyRequest,
   parseAccountDescriptor,
   parseGrantDescriptor,
+  parsePolicyChangeProposal,
+  parsePolicyChangeReviewVector,
   parsePolicyDecisionRequest,
   parsePolicyProfile,
+  reviewPolicyChangeProposal,
   parseRouteSelectionRequest,
   selectAccountRoute
 } from "./policy.js";
@@ -46,6 +49,9 @@ describe("identity, recovery, and policy contracts", () => {
     const smartcardPolicy = parsePolicyProfile(
       loadJson(resolve(specsRoot, "vectors/policies/manual-only-displayless-smartcard.json"))
     );
+    const persistentManualPolicy = parsePolicyProfile(
+      loadJson(resolve(specsRoot, "vectors/policies/manual-only-persistent-device.json"))
+    );
     const grant = parseGrantDescriptor(loadJson(resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json")));
 
     expect(account.signer_route.type).toBe("raspberry_qr_vault");
@@ -61,6 +67,9 @@ describe("identity, recovery, and policy contracts", () => {
     expect(policy.grants_allowed).toBe(false);
     expect(smartcardPolicy.mode).toBe("manual_only");
     expect(smartcardPolicy.grants_allowed).toBe(false);
+    expect(persistentManualPolicy.mode).toBe("manual_only");
+    expect(persistentManualPolicy.route_types).toEqual(["esp32_usb_nip46", "custom_hardware_wallet"]);
+    expect(customHardwareWalletAccount.policy_profile_id).toBe("policy-manual-only-persistent-device");
     expect(grant.route_type).toBe("esp32_usb_nip46");
     expect(grant.permission).toEqual({ method: "sign_event", parameter: "1", event_kind: 1 });
   });
@@ -185,6 +194,41 @@ describe("identity, recovery, and policy contracts", () => {
         }
       }
     })).toThrow(/uses must be a non-negative integer/u);
+  });
+
+  it("matches shared policy change review vectors", () => {
+    const vectorNames = readdirSync(resolve(specsRoot, "vectors/policy-changes"))
+      .filter((name) => name.endsWith(".json"))
+      .map((name) => name.replace(/\.json$/u, ""))
+      .sort();
+
+    expect(vectorNames.length).toBeGreaterThan(0);
+    for (const name of vectorNames) {
+      const vector = parsePolicyChangeReviewVector(loadJson(resolve(specsRoot, `vectors/policy-changes/${name}.json`)));
+
+      expect(reviewPolicyChangeProposal(vector.proposal)).toEqual(vector.review);
+    }
+  });
+
+  it("rejects policy change proposals that make the companion authoritative", () => {
+    const vector = loadJson(resolve(specsRoot, "vectors/policy-changes/esp32-usb-enable-kind-1-automation.json")) as {
+      proposal: Record<string, unknown>;
+    };
+
+    expect(parsePolicyChangeProposal(vector.proposal)).toMatchObject({
+      proposal_id: "proposal-esp32-usb-enable-kind-1-automation",
+      companion_authoritative: false
+    });
+
+    expect(() => parsePolicyChangeProposal({
+      ...vector.proposal,
+      companion_authoritative: true
+    })).toThrow(/companion_authoritative must be false/u);
+
+    expect(() => parsePolicyChangeProposal({
+      ...vector.proposal,
+      route_type: "esp32_qr_vault"
+    })).toThrow(/device-display persistent route/u);
   });
 
   it("matches shared route-selection vectors without signer dispatch", () => {

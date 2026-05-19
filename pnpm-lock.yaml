@@ -314,7 +314,11 @@ importers:
         specifier: workspace:*
         version: link:../fixtures
 
-  packages/policy: {}
+  packages/policy:
+    dependencies:
+      '@noble/hashes':
+        specifier: 2.2.0
+        version: 2.2.0
 
   packages/protocol:
     devDependencies:

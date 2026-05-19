@@ -1,3 +1,6 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
+
 export type RouteType =
   | "raspberry_qr_vault"
   | "esp32_qr_vault"
@@ -122,6 +125,47 @@ export type PolicyDecision = {
   };
 };
 
+export type PolicyChangeProposal = {
+  format: "nsealr-policy-change-proposal-v0";
+  proposal_id: string;
+  account_id: string;
+  route_type: "esp32_usb_nip46" | "custom_hardware_wallet";
+  action: "set_policy";
+  current_policy_id: string;
+  proposed_policy_id: string;
+  proposed_grant_ids: string[];
+  requested_by: {
+    surface: "browser_extension" | "desktop_app" | "cli" | "sdk" | "native_host_test";
+    client_pubkey: string;
+    label?: string;
+  };
+  created_at: number;
+  device_review_required: true;
+  physical_approval_required: true;
+  companion_authoritative: false;
+  contains_secret_material: false;
+};
+
+export type PolicyChangeReviewPage = {
+  title: string;
+  lines: string[];
+  action: "next" | "approve_or_reject";
+};
+
+export type PolicyChangeReview = {
+  format: "nsealr-policy-change-review-pages-v0";
+  proposal_id: string;
+  approval_digest: string;
+  pages: PolicyChangeReviewPage[];
+};
+
+export type PolicyChangeReviewVector = {
+  name: string;
+  format: "nsealr-policy-change-review-v0";
+  proposal: PolicyChangeProposal;
+  review: PolicyChangeReview;
+};
+
 export type RouteSelectionRequest = {
   account_id: string;
   method: string;
@@ -179,6 +223,8 @@ const POLICY_DECISION_ROUTE_TYPES = new Set<RouteType>([
   "custom_hardware_wallet",
   "external_nip46"
 ]);
+const POLICY_CHANGE_ROUTE_TYPES = new Set<RouteType>(["esp32_usb_nip46", "custom_hardware_wallet"]);
+const POLICY_CHANGE_SURFACES = new Set(["browser_extension", "desktop_app", "cli", "sdk", "native_host_test"]);
 const SECRET_FIELD_NAMES = new Set([
   "secret_key",
   "private_key",
@@ -282,6 +328,20 @@ function requireStringArray(value: unknown, field: string): string[] {
 function requireGrantIdArray(value: unknown, field: string): string[] {
   if (!Array.isArray(value)) throw new Error(`${field} must be an array of grant ids`);
   return value.map((item, index) => requireGrantId(item, `${field}[${index}]`));
+}
+
+function requirePolicyId(value: unknown, field: string): string {
+  if (typeof value !== "string" || !/^policy-[A-Za-z0-9._:-]{1,121}$/u.test(value)) {
+    throw new Error(`${field} must be a policy-* stable string id`);
+  }
+  return value;
+}
+
+function requireProposalId(value: unknown, field: string): string {
+  if (typeof value !== "string" || !/^proposal-[A-Za-z0-9._:-]{1,119}$/u.test(value)) {
+    throw new Error(`${field} must be a proposal-* stable string id`);
+  }
+  return value;
 }
 
 function parseSignerRoute(value: unknown): SignerRoute {
@@ -729,6 +789,180 @@ export function decidePolicyRequest(input: {
   }
 
   return buildPolicyDecision(request, "manual_review", "no_matching_grant");
+}
+
+function sortForCanonicalJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((item) => sortForCanonicalJson(item));
+  if (!isRecord(value)) return value;
+  return Object.fromEntries(
+    Object.keys(value)
+      .sort()
+      .map((key) => [key, sortForCanonicalJson(value[key])])
+  );
+}
+
+function canonicalJson(value: unknown): string {
+  return JSON.stringify(sortForCanonicalJson(value));
+}
+
+function sha256Utf8Hex(value: string): string {
+  return bytesToHex(sha256(utf8ToBytes(value)));
+}
+
+export function parsePolicyChangeProposal(value: unknown): PolicyChangeProposal {
+  rejectSecretFields(value);
+  assertRecord(value, "policy change proposal");
+  assertOnlyKeys(value, [
+    "format",
+    "proposal_id",
+    "account_id",
+    "route_type",
+    "action",
+    "current_policy_id",
+    "proposed_policy_id",
+    "proposed_grant_ids",
+    "requested_by",
+    "created_at",
+    "device_review_required",
+    "physical_approval_required",
+    "companion_authoritative",
+    "contains_secret_material"
+  ], "policy change proposal");
+  if (value.format !== "nsealr-policy-change-proposal-v0") throw new Error("policy change proposal format mismatch");
+  const routeType = requireRouteType(value.route_type);
+  if (!POLICY_CHANGE_ROUTE_TYPES.has(routeType)) {
+    throw new Error("policy change route_type must be a device-display persistent route");
+  }
+  if (value.action !== "set_policy") throw new Error("policy change action must be set_policy");
+  assertRecord(value.requested_by, "policy change requested_by");
+  assertOnlyKeys(value.requested_by, ["surface", "client_pubkey", "label"], "policy change requested_by");
+  const surface = requireString(value.requested_by.surface, "policy change requested_by.surface");
+  if (!POLICY_CHANGE_SURFACES.has(surface)) throw new Error("policy change requested_by.surface is unsupported");
+  if (value.device_review_required !== true) throw new Error("policy change device_review_required must be true");
+  if (value.physical_approval_required !== true) throw new Error("policy change physical_approval_required must be true");
+  if (value.companion_authoritative !== false) throw new Error("policy change companion_authoritative must be false");
+  if (value.contains_secret_material !== false) throw new Error("policy change contains_secret_material must be false");
+  return {
+    format: "nsealr-policy-change-proposal-v0",
+    proposal_id: requireProposalId(value.proposal_id, "proposal_id"),
+    account_id: requireStringId(value.account_id, "account_id"),
+    route_type: routeType as PolicyChangeProposal["route_type"],
+    action: "set_policy",
+    current_policy_id: requirePolicyId(value.current_policy_id, "current_policy_id"),
+    proposed_policy_id: requirePolicyId(value.proposed_policy_id, "proposed_policy_id"),
+    proposed_grant_ids: requireGrantIdArray(value.proposed_grant_ids, "proposed_grant_ids"),
+    requested_by: {
+      surface: surface as PolicyChangeProposal["requested_by"]["surface"],
+      client_pubkey: requireXOnlyPubkey(value.requested_by.client_pubkey, "requested_by.client_pubkey"),
+      ...(typeof value.requested_by.label === "string" ? { label: requireString(value.requested_by.label, "requested_by.label") } : {})
+    },
+    created_at: requirePositiveInteger(value.created_at, "created_at"),
+    device_review_required: true,
+    physical_approval_required: true,
+    companion_authoritative: false,
+    contains_secret_material: false
+  };
+}
+
+export function reviewPolicyChangeProposal(value: unknown): PolicyChangeReview {
+  const proposal = parsePolicyChangeProposal(value);
+  const policyLines = [
+    `From: ${proposal.current_policy_id}`,
+    `To: ${proposal.proposed_policy_id}`,
+    `Grants: ${proposal.proposed_grant_ids.length}`,
+    ...proposal.proposed_grant_ids.map((grantId) => `Grant: ${grantId}`)
+  ];
+  const requesterLines = [
+    `Surface: ${proposal.requested_by.surface}`,
+    `Client: ${proposal.requested_by.client_pubkey}`,
+    ...(proposal.requested_by.label !== undefined ? [`Label: ${proposal.requested_by.label}`] : [])
+  ];
+  const pages: PolicyChangeReviewPage[] = [
+    {
+      title: "Policy change",
+      lines: [
+        `Action: ${proposal.action}`,
+        `Account: ${proposal.account_id}`,
+        `Route: ${proposal.route_type}`
+      ],
+      action: "next"
+    },
+    {
+      title: "Requester",
+      lines: requesterLines,
+      action: "next"
+    },
+    {
+      title: "Policy",
+      lines: policyLines,
+      action: "next"
+    },
+    {
+      title: "Decision",
+      lines: [
+        "Review on device",
+        "Physical approval required",
+        "Companion cannot approve alone"
+      ],
+      action: "approve_or_reject"
+    }
+  ];
+  return {
+    format: "nsealr-policy-change-review-pages-v0",
+    proposal_id: proposal.proposal_id,
+    approval_digest: sha256Utf8Hex(canonicalJson({ proposal, pages })),
+    pages
+  };
+}
+
+function parsePolicyChangeReview(value: unknown): PolicyChangeReview {
+  assertRecord(value, "policy change review");
+  assertOnlyKeys(value, ["format", "proposal_id", "approval_digest", "pages"], "policy change review");
+  if (value.format !== "nsealr-policy-change-review-pages-v0") throw new Error("policy change review format mismatch");
+  if (typeof value.approval_digest !== "string" || !/^[0-9a-f]{64}$/u.test(value.approval_digest)) {
+    throw new Error("policy change approval_digest is invalid");
+  }
+  if (!Array.isArray(value.pages)) throw new Error("policy change review pages must be an array");
+  const pages = value.pages.map((page, index) => {
+    assertRecord(page, `policy change review pages[${index}]`);
+    assertOnlyKeys(page, ["title", "lines", "action"], `policy change review pages[${index}]`);
+    const action = requireString(page.action, `policy change review pages[${index}].action`);
+    if (action !== "next" && action !== "approve_or_reject") {
+      throw new Error(`policy change review pages[${index}].action is invalid`);
+    }
+    return {
+      title: requireString(page.title, `policy change review pages[${index}].title`),
+      lines: requireStringArray(page.lines, `policy change review pages[${index}].lines`),
+      action: action as PolicyChangeReviewPage["action"]
+    };
+  });
+  return {
+    format: "nsealr-policy-change-review-pages-v0",
+    proposal_id: requireProposalId(value.proposal_id, "policy change review proposal_id"),
+    approval_digest: value.approval_digest,
+    pages
+  };
+}
+
+export function parsePolicyChangeReviewVector(value: unknown): PolicyChangeReviewVector {
+  rejectSecretFields(value);
+  assertRecord(value, "policy change review vector");
+  assertOnlyKeys(value, ["name", "format", "proposal", "review"], "policy change review vector");
+  if (value.format !== "nsealr-policy-change-review-v0") throw new Error("policy change review vector format mismatch");
+  const proposal = parsePolicyChangeProposal(value.proposal);
+  const review = parsePolicyChangeReview(value.review);
+  const expectedReview = reviewPolicyChangeProposal(proposal);
+  if (review.proposal_id !== proposal.proposal_id) throw new Error("policy change review proposal_id mismatch");
+  if (review.approval_digest !== expectedReview.approval_digest) throw new Error("policy change approval_digest mismatch");
+  if (JSON.stringify(review.pages) !== JSON.stringify(expectedReview.pages)) {
+    throw new Error("policy change review pages mismatch");
+  }
+  return {
+    name: requireStringId(value.name, "policy change review vector name"),
+    format: "nsealr-policy-change-review-v0",
+    proposal,
+    review
+  };
 }
 
 function routeSelectionFromAccount(account: AccountDescriptor): RouteSelection {

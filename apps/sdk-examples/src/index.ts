@@ -35,6 +35,7 @@ import {
   parseAccountDescriptor,
   parseGrantDescriptor,
   parsePolicyProfile,
+  reviewPolicyChangeProposal,
   selectAccountRoute
 } from "@nsealr/policy";
 import { validateRequest, validateResponse } from "@nsealr/protocol";
@@ -142,9 +143,15 @@ async function fixturesPolicyReviewAndFramingExample(): Promise<void> {
     request: policyVector.request
   }), policyVector.decision);
   assert.equal(account.account_id, policyVector.request.account_id);
-  assert.equal(account.policy_profile_id, policyVector.policy_profile_id);
+  assert.equal(account.policy_profile_id, "policy-manual-only-persistent-device");
   assert.equal(grant.account_id, account.account_id);
   assert.equal(policy.route_types.includes(policyVector.request.route_type), true);
+
+  const policyChange = fixtures.policyChanges.find((candidate) => candidate.proposal.account_id === account.account_id);
+  if (!policyChange) throw new Error("SDK example could not find a matching policy-change vector");
+  assert.equal(policyChange.proposal.current_policy_id, account.policy_profile_id);
+  assert.equal(policyChange.proposal.proposed_policy_id, policyVector.policy_profile_id);
+  assert.deepEqual(reviewPolicyChangeProposal(policyChange.proposal), policyChange.review);
 
   const routeVector = fixtures.routeSelections.find((candidate) => candidate.request.account_id === account.account_id);
   if (!routeVector) throw new Error("SDK example could not find a matching route-selection vector");

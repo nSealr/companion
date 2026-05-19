@@ -97,9 +97,9 @@ packages, but it must not export test-only signing as a production path.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, NIP-46 connection URI, account-descriptor,
-  policy-profile, grant-descriptor, policy-decision, route-selection,
-  access-surface, feature-matrix, limit-profile, and invalid hardening fixture
-  loading.
+  policy-profile, grant-descriptor, policy-change review, policy-decision,
+  route-selection, access-surface, feature-matrix, limit-profile, and invalid
+  hardening fixture loading.
   Package code also owns QR review-transcript fixture validation, including
   `scroll` buttons and rendered-frame `body_line_styles`, so the CLI does not
   duplicate that contract.
@@ -107,12 +107,14 @@ packages, but it must not export test-only signing as a production path.
   drift and Raspberry/ESP32 stateless QR vault target drift fail in companion
   conformance checks.
 - `packages/policy`: secretless account, route, recovery, policy, grant
-  descriptor parsing, and pure policy-decision evaluation. This package owns
-  anti-secret, anti-QR-automation, anti-decrypt-grant, and audit-event decision
-  checks, including runtime policy-decision request parsing and deterministic
-  expiry, revocation, and rate-limit decisions from explicit grant-usage
-  snapshots, so CLI code does not grow a parallel policy parser. The package
-  does not persist usage history or grants.
+  descriptor parsing, policy-change review generation, and pure
+  policy-decision evaluation. This package owns anti-secret,
+  anti-QR-automation, anti-decrypt-grant, and audit-event decision checks,
+  including runtime policy-decision request parsing, deterministic expiry,
+  revocation, and rate-limit decisions from explicit grant-usage snapshots,
+  plus digest-bound `set_policy` review pages for persistent device routes, so
+  CLI/browser/SDK code does not grow a parallel policy parser. The package does
+  not persist usage history, grants, or authoritative device policy.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: private test-only signing implementation,
@@ -778,6 +780,14 @@ accepts that acknowledgement only as
 from the request; acknowledged metadata is rejected on routes with trusted
 device review.
 
+Policy-change review vectors are also consumed through `packages/policy`.
+Persistent-device account descriptors start on
+`policy-manual-only-persistent-device`; switching to scoped automation is a
+secretless `set_policy` proposal that renders deterministic device-review
+pages and an approval digest. The companion can carry the proposal, but it does
+not make the policy authoritative, write a grant store, or bypass local device
+approval.
+
 Route-selection vectors are also consumed through `packages/policy`. The
 selector is pure and secretless: it accepts parsed account descriptors plus a
 requested account/method and returns selected route metadata only. It does not
@@ -819,7 +829,8 @@ The current scoped-automation fixtures are deliberately minimal conformance
 data. They prove bounded decisions, denial, manual-review routing, revocation,
 expiry, and audit-event shape before grant storage exists; they are not the
 final product policy menu and should not grow into companion-owned rule-engine
-state.
+state. They also are not the default account policy for persistent nSealr
+devices; a reviewed policy-change proposal must activate them.
 
 Pre-signing hardening vectors are the companion's rejection oracle for unsafe
 input. They must be evaluated before signer transport, dev signing,

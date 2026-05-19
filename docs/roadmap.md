@@ -647,7 +647,7 @@ without publishing to npm.
   private `@nsealr/dev-signer` so the publishable smartcard package stays
   secretless.
 - Shared APDU rejection status vectors: implemented for wrong `SIGN_EVENT_ID`
-  length, unsupported CLA, and unsupported INS.
+  length, non-zero P1/P2, unsupported Le, unsupported CLA, and unsupported INS.
 - `SmartcardSigner` companion boundary: implemented for `GET_PUBLIC_KEY` plus
   `SIGN_EVENT_ID`, with shared request validation and external-review-only
   acknowledgement before APDU exchange. External `approvalDigest` binding is

@@ -894,6 +894,10 @@ The first smartcard package covers the display-less APDU contract from
 `nSealr/specs`: `GET_PUBLIC_KEY` and `SIGN_EVENT_ID`. It can protect key
 material in a card-like boundary, but trusted event review must still happen
 before the companion sends a 32-byte event id to a card.
+The v0 command profile is intentionally exact: CLA `0x80`, P1/P2 `0x00`, no
+Le byte, and one fixed payload shape per instruction. The private simulator and
+shared vectors reject profile-shape mismatches before any signature is
+produced.
 
 `SmartcardSigner` models the companion side of that boundary. It retrieves the
 card public key, computes the NIP-01 event id from the requested template, asks

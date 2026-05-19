@@ -476,7 +476,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - Shared `nSealr/specs` ESP32-S3 signing-disabled response conformance
   tests.
 - Shared `nSealr/specs` smartcard APDU vector conformance tests, including
-  deterministic APDU rejection status vectors.
+  deterministic APDU rejection status vectors for wrong length, non-zero P1/P2,
+  unsupported Le, unsupported CLA, and unsupported INS.
 - Smartcard signer tests covering mandatory review acknowledgement, APDU-backed
   public-key retrieval, event-id signing, Schnorr verification, and standard
   signed-event response verification.

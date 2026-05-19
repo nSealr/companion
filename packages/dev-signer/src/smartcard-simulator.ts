@@ -12,6 +12,7 @@ import {
   ResponseApdu,
   SIGN_EVENT_ID_INS,
   SW_CLA_NOT_SUPPORTED,
+  SW_INCORRECT_P1P2,
   SW_INS_NOT_SUPPORTED,
   SW_NO_ERROR,
   SW_WRONG_LENGTH
@@ -23,11 +24,13 @@ export class SmartcardSimulator {
   async exchange(command: CommandApdu): Promise<ResponseApdu> {
     if (command.cla !== NSEALR_CLA) return new ResponseApdu(new Uint8Array(), SW_CLA_NOT_SUPPORTED);
     if (command.ins === GET_PUBLIC_KEY_INS) {
-      if (command.data.length !== 0) return new ResponseApdu(new Uint8Array(), SW_WRONG_LENGTH);
+      if (command.p1 !== 0 || command.p2 !== 0) return new ResponseApdu(new Uint8Array(), SW_INCORRECT_P1P2);
+      if (command.data.length !== 0 || command.le !== undefined) return new ResponseApdu(new Uint8Array(), SW_WRONG_LENGTH);
       return new ResponseApdu(Uint8Array.from(hexToBytes(simulatorPublicKeyFromSecret(this.secretKeyHex))), SW_NO_ERROR);
     }
     if (command.ins === SIGN_EVENT_ID_INS) {
-      if (command.data.length !== 32) return new ResponseApdu(new Uint8Array(), SW_WRONG_LENGTH);
+      if (command.p1 !== 0 || command.p2 !== 0) return new ResponseApdu(new Uint8Array(), SW_INCORRECT_P1P2);
+      if (command.data.length !== 32 || command.le !== undefined) return new ResponseApdu(new Uint8Array(), SW_WRONG_LENGTH);
       const signature = schnorr.sign(command.data, hexToBytes(this.secretKeyHex), new Uint8Array(32));
       return new ResponseApdu(Uint8Array.from(signature), SW_NO_ERROR);
     }
@@ -35,7 +38,13 @@ export class SmartcardSimulator {
   }
 
   async verifySignEventIdResponse(command: CommandApdu, response: ResponseApdu): Promise<VerificationResult> {
-    if (command.ins !== SIGN_EVENT_ID_INS || command.data.length !== 32) {
+    if (
+      command.ins !== SIGN_EVENT_ID_INS ||
+      command.p1 !== 0 ||
+      command.p2 !== 0 ||
+      command.le !== undefined ||
+      command.data.length !== 32
+    ) {
       return { ok: false, error: "command is not a sign_event_id APDU" };
     }
     if (response.statusWord !== SW_NO_ERROR || response.data.length !== 64) {

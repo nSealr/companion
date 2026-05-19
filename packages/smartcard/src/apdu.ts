@@ -5,6 +5,7 @@ export const GET_PUBLIC_KEY_INS = 0x10;
 export const SIGN_EVENT_ID_INS = 0x20;
 export const SW_NO_ERROR = 0x9000;
 export const SW_WRONG_LENGTH = 0x6700;
+export const SW_INCORRECT_P1P2 = 0x6a86;
 export const SW_CLA_NOT_SUPPORTED = 0x6e00;
 export const SW_INS_NOT_SUPPORTED = 0x6d00;
 

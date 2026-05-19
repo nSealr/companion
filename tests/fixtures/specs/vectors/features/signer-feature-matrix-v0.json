@@ -208,7 +208,7 @@
           "target": "required",
           "current": "partial",
           "contract_id": "stateless-session-custody-v0",
-          "notes": "The product goal is RAM-only custody; real hardware wipe and lifecycle tests remain pending."
+          "notes": "Package-owned session keyring slots are RAM-only, store mutable internal copies of imported sources, and wipe those internal slots on clear/destruction as best-effort Python process hygiene. Real Pi power-cycle/session-loss evidence and hardware lifecycle acceptance remain pending."
         },
         "seedqr_session_import": {
           "target": "required",

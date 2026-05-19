@@ -366,6 +366,9 @@ single-repository CI. Cross-repository drift remains guarded by
   only `dist`, README, and package metadata, verifies `workspace:*` dependency
   protocols were rewritten, installs the tarballs into a temporary npm consumer
   project, and imports them by package name.
+- `make release-artifacts-safety` proves the release-artifact helper refuses
+  destructive output paths such as the repository root, `packages/`, or the
+  top-level `release-artifacts/` directory before any cleanup occurs.
 - `make release-artifacts` builds package artifacts, packs every public
   package, validates the same tarball boundaries, and writes
   `release-artifacts/packages/manifest.json` with each tarball filename, byte

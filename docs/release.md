@@ -64,6 +64,10 @@ path that a later publication workflow must build on. The uploaded manifest
 records every package name, version, tarball filename, byte count, and SHA-256
 digest so reviewers can verify downloaded rehearsal artifacts exactly.
 
+The release artifact helper may delete and recreate only a child directory
+under `release-artifacts/`. `make release-artifacts-safety` is part of CI and
+proves dangerous output paths are rejected before cleanup.
+
 ## Provenance
 
 Publication should happen only from a reviewed GitHub Actions release workflow

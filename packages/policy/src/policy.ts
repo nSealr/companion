@@ -106,6 +106,7 @@ export type PolicyDecision = {
     | "grant_valid"
     | "no_matching_grant"
     | "policy_manual_only"
+    | "policy_route_mismatch"
     | "unknown_method_requires_manual_review";
   grant_id?: string;
   audit_event: {
@@ -691,6 +692,9 @@ export function decidePolicyRequest(input: {
   const { policy, grants } = input;
   const request = parsePolicyDecisionRequest(input.request);
   const method = request.permission.method;
+  if (!policy.route_types.includes(request.route_type)) {
+    return buildPolicyDecision(request, "manual_review", "policy_route_mismatch");
+  }
   if (policy.forbidden_permissions.includes(method) || method === "export_secret") {
     return buildPolicyDecision(request, "deny", "forbidden_permission");
   }

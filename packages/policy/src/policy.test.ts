@@ -126,7 +126,6 @@ describe("identity, recovery, and policy contracts", () => {
   });
 
   it("matches shared policy decision vectors without a persistent grant store", () => {
-    const policy = parsePolicyProfile(loadJson(resolve(specsRoot, "vectors/policies/scoped-automation-daily-use.json")));
     const grant = parseGrantDescriptor(loadJson(resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json")));
     const vectorNames = readdirSync(resolve(specsRoot, "vectors/policy-decisions"))
       .filter((name) => name.endsWith(".json"))
@@ -136,9 +135,12 @@ describe("identity, recovery, and policy contracts", () => {
     expect(vectorNames.length).toBeGreaterThan(0);
     for (const name of vectorNames) {
       const vector = loadJson(resolve(specsRoot, `vectors/policy-decisions/${name}.json`)) as {
+        policy_profile_id: string;
         request: Parameters<typeof decidePolicyRequest>[0]["request"];
         decision: ReturnType<typeof decidePolicyRequest>;
       };
+      const policyName = vector.policy_profile_id.replace(/^policy-/u, "");
+      const policy = parsePolicyProfile(loadJson(resolve(specsRoot, `vectors/policies/${policyName}.json`)));
 
       expect(decidePolicyRequest({
         policy,

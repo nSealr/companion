@@ -17,9 +17,12 @@ import {
   BROWSER_EXTENSION_POPUP_STATUS_ID
 } from "./popup-html.js";
 import {
+  createBrowserExtensionPopupText,
+  reportBrowserExtensionPopupError,
+  requireBrowserExtensionPopupElementById,
   type BrowserExtensionPopupDocument,
   type BrowserExtensionPopupElement
-} from "./popup-view.js";
+} from "./popup-dom.js";
 
 export type BrowserExtensionPopupOriginPermissionViewControls =
   BrowserExtensionPopupOriginPermissionReviewControls &
@@ -43,66 +46,35 @@ export type BrowserExtensionPopupOriginPermissionViewHandle = {
   dispose(): void;
 };
 
-function isPopupElement(value: unknown): value is BrowserExtensionPopupElement {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value) &&
-    "appendChild" in value &&
-    typeof value.appendChild === "function" &&
-    "replaceChildren" in value &&
-    typeof value.replaceChildren === "function" &&
-    "addEventListener" in value &&
-    typeof value.addEventListener === "function" &&
-    "setAttribute" in value &&
-    typeof value.setAttribute === "function"
-  );
-}
-
-function requirePopupElement(value: unknown, label: string): BrowserExtensionPopupElement {
-  if (!isPopupElement(value)) {
-    throw new Error(`${label} is unavailable`);
-  }
-  return value;
-}
-
 function createText(
   document: BrowserExtensionPopupDocument,
   className: string,
   text: string
 ): BrowserExtensionPopupElement {
-  const element = document.createElement("div");
-  element.className = className;
-  element.textContent = text;
-  return element;
-}
-
-function reportError(error: unknown, onError: ((error: unknown) => void) | undefined): void {
-  if (onError === undefined) return;
-  try {
-    onError(error);
-  } catch {
-    // Popup diagnostics must not break the visible origin-review surface.
-  }
+  return createBrowserExtensionPopupText(document, "div", className, text);
 }
 
 export function installBrowserExtensionPopupOriginPermissionView(
   options: BrowserExtensionPopupOriginPermissionViewOptions
 ): BrowserExtensionPopupOriginPermissionViewHandle {
-  const root = requirePopupElement(
-    options.document.getElementById(options.rootId ?? BROWSER_EXTENSION_POPUP_ROOT_ID),
+  const root = requireBrowserExtensionPopupElementById(
+    options.document,
+    options.rootId ?? BROWSER_EXTENSION_POPUP_ROOT_ID,
     "browser extension popup root"
   );
-  const status = requirePopupElement(
-    options.document.getElementById(options.statusId ?? BROWSER_EXTENSION_POPUP_STATUS_ID),
+  const status = requireBrowserExtensionPopupElementById(
+    options.document,
+    options.statusId ?? BROWSER_EXTENSION_POPUP_STATUS_ID,
     "browser extension popup status"
   );
-  const list = requirePopupElement(
-    options.document.getElementById(options.listId ?? BROWSER_EXTENSION_POPUP_LIST_ID),
+  const list = requireBrowserExtensionPopupElementById(
+    options.document,
+    options.listId ?? BROWSER_EXTENSION_POPUP_LIST_ID,
     "browser extension popup list"
   );
-  const refreshButton = requirePopupElement(
-    options.document.getElementById(options.refreshId ?? BROWSER_EXTENSION_POPUP_REFRESH_ID),
+  const refreshButton = requireBrowserExtensionPopupElementById(
+    options.document,
+    options.refreshId ?? BROWSER_EXTENSION_POPUP_REFRESH_ID,
     "browser extension popup refresh"
   );
   let disposed = false;
@@ -116,7 +88,7 @@ export function installBrowserExtensionPopupOriginPermissionView(
   }
 
   function renderUnavailable(error: unknown): void {
-    reportError(error, options.onError);
+    reportBrowserExtensionPopupError(error, options.onError);
     renderEmpty("Unavailable");
     setStatus("Unavailable");
   }

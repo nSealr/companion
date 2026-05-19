@@ -9,7 +9,7 @@ import {
 } from "./popup-control.js";
 import {
   type BrowserExtensionPopupDocument
-} from "./popup-view.js";
+} from "./popup-dom.js";
 import {
   type BrowserExtensionContentScriptBrowserLocation,
   type BrowserExtensionContentScriptBrowserPageWindow

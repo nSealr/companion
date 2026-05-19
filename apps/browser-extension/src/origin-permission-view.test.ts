@@ -10,7 +10,7 @@ import {
 import {
   type BrowserExtensionPopupDocument,
   type BrowserExtensionPopupElement
-} from "./popup-view.js";
+} from "./popup-dom.js";
 
 const digest = "c".repeat(64);
 

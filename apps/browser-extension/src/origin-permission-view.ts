@@ -5,9 +5,11 @@ import {
   type BrowserExtensionOriginPermissionReview
 } from "./pairing.js";
 import {
+  createBrowserExtensionPopupText,
+  reportBrowserExtensionPopupError,
   type BrowserExtensionPopupDocument,
   type BrowserExtensionPopupElement
-} from "./popup-view.js";
+} from "./popup-dom.js";
 
 export type BrowserExtensionOriginPermissionViewControls = {
   approveOriginPermission(reviewedLocalPairingDigest: string): Promise<unknown> | unknown;
@@ -29,10 +31,7 @@ function createText(
   className: string,
   text: string
 ): BrowserExtensionPopupElement {
-  const element = document.createElement(tagName);
-  element.className = className;
-  element.textContent = text;
-  return element;
+  return createBrowserExtensionPopupText(document, tagName, className, text);
 }
 
 function setBusy(
@@ -44,15 +43,6 @@ function setBusy(
   status.textContent = text;
   for (const button of buttons) {
     button.disabled = busy;
-  }
-}
-
-function reportError(error: unknown, onError: ((error: unknown) => void) | undefined): void {
-  if (onError === undefined) return;
-  try {
-    onError(error);
-  } catch {
-    // Permission prompt diagnostics must not break the visible decision surface.
   }
 }
 
@@ -123,7 +113,7 @@ export function createBrowserExtensionOriginPermissionReviewCard(
         options.onRejected?.();
       })
       .catch((error: unknown) => {
-        reportError(error, options.onError);
+        reportBrowserExtensionPopupError(error, options.onError);
         setBusy(buttons, status, false, "Unavailable");
       });
   });
@@ -136,7 +126,7 @@ export function createBrowserExtensionOriginPermissionReviewCard(
         options.onApproved?.(approval);
       })
       .catch((error: unknown) => {
-        reportError(error, options.onError);
+        reportBrowserExtensionPopupError(error, options.onError);
         setBusy(buttons, status, false, "Unavailable");
       });
   });

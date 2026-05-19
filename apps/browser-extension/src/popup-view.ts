@@ -1,28 +1,18 @@
 import { type BrowserExtensionPendingRequestState } from "./pending-request.js";
 import { type BrowserExtensionPopupPendingRequestControls } from "./popup-control.js";
 import {
+  createBrowserExtensionPopupText,
+  reportBrowserExtensionPopupError,
+  requireBrowserExtensionPopupElementById,
+  type BrowserExtensionPopupDocument,
+  type BrowserExtensionPopupElement
+} from "./popup-dom.js";
+import {
   BROWSER_EXTENSION_POPUP_LIST_ID,
   BROWSER_EXTENSION_POPUP_REFRESH_ID,
   BROWSER_EXTENSION_POPUP_ROOT_ID,
   BROWSER_EXTENSION_POPUP_STATUS_ID
 } from "./popup-html.js";
-
-export type BrowserExtensionPopupElement = {
-  textContent: string | null;
-  className: string;
-  disabled?: boolean;
-  dataset?: Record<string, string>;
-  appendChild(child: BrowserExtensionPopupElement): unknown;
-  replaceChildren(...children: BrowserExtensionPopupElement[]): void;
-  addEventListener(type: "click", listener: () => void): void;
-  removeEventListener?(type: "click", listener: () => void): void;
-  setAttribute(name: string, value: string): void;
-};
-
-export type BrowserExtensionPopupDocument = {
-  getElementById(id: string): unknown;
-  createElement(tagName: "button" | "div" | "span"): BrowserExtensionPopupElement;
-};
 
 export type BrowserExtensionPopupViewOptions = {
   document: BrowserExtensionPopupDocument;
@@ -39,29 +29,6 @@ export type BrowserExtensionPopupViewHandle = {
   dispose(): void;
 };
 
-function isPopupElement(value: unknown): value is BrowserExtensionPopupElement {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value) &&
-    "appendChild" in value &&
-    typeof value.appendChild === "function" &&
-    "replaceChildren" in value &&
-    typeof value.replaceChildren === "function" &&
-    "addEventListener" in value &&
-    typeof value.addEventListener === "function" &&
-    "setAttribute" in value &&
-    typeof value.setAttribute === "function"
-  );
-}
-
-function requirePopupElement(value: unknown, label: string): BrowserExtensionPopupElement {
-  if (!isPopupElement(value)) {
-    throw new Error(`${label} is unavailable`);
-  }
-  return value;
-}
-
 function methodLabel(value: BrowserExtensionPendingRequestState["method"]): string {
   if (value === "get_public_key") return "Get public key";
   return "Sign event";
@@ -74,32 +41,27 @@ function statusLabel(value: BrowserExtensionPendingRequestState["status"]): stri
   return "Rejected";
 }
 
-function reportError(error: unknown, onError: ((error: unknown) => void) | undefined): void {
-  if (onError === undefined) return;
-  try {
-    onError(error);
-  } catch {
-    // Popup diagnostics must not break the visible control surface.
-  }
-}
-
 export function installBrowserExtensionPopupView(
   options: BrowserExtensionPopupViewOptions
 ): BrowserExtensionPopupViewHandle {
-  const root = requirePopupElement(
-    options.document.getElementById(options.rootId ?? BROWSER_EXTENSION_POPUP_ROOT_ID),
+  const root = requireBrowserExtensionPopupElementById(
+    options.document,
+    options.rootId ?? BROWSER_EXTENSION_POPUP_ROOT_ID,
     "browser extension popup root"
   );
-  const status = requirePopupElement(
-    options.document.getElementById(options.statusId ?? BROWSER_EXTENSION_POPUP_STATUS_ID),
+  const status = requireBrowserExtensionPopupElementById(
+    options.document,
+    options.statusId ?? BROWSER_EXTENSION_POPUP_STATUS_ID,
     "browser extension popup status"
   );
-  const list = requirePopupElement(
-    options.document.getElementById(options.listId ?? BROWSER_EXTENSION_POPUP_LIST_ID),
+  const list = requireBrowserExtensionPopupElementById(
+    options.document,
+    options.listId ?? BROWSER_EXTENSION_POPUP_LIST_ID,
     "browser extension popup list"
   );
-  const refreshButton = requirePopupElement(
-    options.document.getElementById(options.refreshId ?? BROWSER_EXTENSION_POPUP_REFRESH_ID),
+  const refreshButton = requireBrowserExtensionPopupElementById(
+    options.document,
+    options.refreshId ?? BROWSER_EXTENSION_POPUP_REFRESH_ID,
     "browser extension popup refresh"
   );
   let disposed = false;
@@ -109,10 +71,7 @@ export function installBrowserExtensionPopupView(
   }
 
   function createText(tagName: "div" | "span", className: string, text: string): BrowserExtensionPopupElement {
-    const element = options.document.createElement(tagName);
-    element.className = className;
-    element.textContent = text;
-    return element;
+    return createBrowserExtensionPopupText(options.document, tagName, className, text);
   }
 
   function renderEmpty(text: string): void {
@@ -149,7 +108,7 @@ export function installBrowserExtensionPopupView(
       void options.controls.cancelPendingRequest(state.request_id)
         .then(() => refresh())
         .catch((error: unknown) => {
-          reportError(error, options.onError);
+          reportBrowserExtensionPopupError(error, options.onError);
           setStatus("Unavailable");
           cancel.disabled = false;
         });
@@ -180,7 +139,7 @@ export function installBrowserExtensionPopupView(
       const states = await options.controls.listPendingRequests();
       if (!disposed) renderPending(states);
     } catch (error) {
-      reportError(error, options.onError);
+      reportBrowserExtensionPopupError(error, options.onError);
       if (!disposed) {
         renderEmpty("Unavailable");
         setStatus("Unavailable");

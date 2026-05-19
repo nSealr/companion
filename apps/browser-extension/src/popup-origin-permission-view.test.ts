@@ -16,7 +16,7 @@ import {
 import {
   type BrowserExtensionPopupDocument,
   type BrowserExtensionPopupElement
-} from "./popup-view.js";
+} from "./popup-dom.js";
 import { type BrowserExtensionPopupTabsApi } from "./popup-tab.js";
 
 const digest = "e".repeat(64);

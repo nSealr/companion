@@ -10,9 +10,11 @@ import {
   BROWSER_EXTENSION_POPUP_STATUS_ID
 } from "./popup-html.js";
 import {
-  installBrowserExtensionPopupView,
   type BrowserExtensionPopupDocument,
   type BrowserExtensionPopupElement
+} from "./popup-dom.js";
+import {
+  installBrowserExtensionPopupView
 } from "./popup-view.js";
 
 class FakeElement implements BrowserExtensionPopupElement {

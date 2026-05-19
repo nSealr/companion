@@ -27,6 +27,7 @@ const browserProvider = await import("@nsealr/browser-provider");
 const clientBrowser = await import("@nsealr/client/browser");
 const clientIdentity = await import("@nsealr/client/client-identity");
 const sdk = await import("@nsealr/sdk");
+const sdkBrowser = await import("@nsealr/sdk/browser");
 
 assert.equal(protocol.validateRequest({
   version: 1,
@@ -78,5 +79,11 @@ assert.equal(sdk.core.computeEventId({
   tags: [],
   content: "consumer smoke sdk"
 }).length, 64);
+assert.equal(sdkBrowser.client.NATIVE_HOST_NAME, browserProvider.NATIVE_HOST_NAME);
+assert.equal(sdkBrowser.protocol.validateRequest({
+  version: 1,
+  request_id: "consumer-smoke-sdk-browser-get-public-key",
+  method: "get_public_key"
+}).ok, true);
 
 console.log("nSealr package consumer smoke passed");

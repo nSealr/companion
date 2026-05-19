@@ -177,9 +177,10 @@ packages, but it must not export test-only signing as a production path.
   timeouts, cancellation, and request-id correlation.
 - `packages/sdk`: public namespace facade for app, browser-extension, and
   companion integrations. It excludes private test signing from the public
-  package surface, but browser runtime code must use reviewed browser-facing
-  entrypoints such as `@nsealr/browser-provider` and
-  `@nsealr/client/browser` instead of assuming the SDK root is bundle-safe.
+  package surface. Browser runtime code must use the reviewed
+  `@nsealr/sdk/browser` subpath, which re-exports
+  `@nsealr/browser-provider`, `@nsealr/client/browser`, and pure
+  core/policy/protocol/review helpers without pulling in the broader SDK root.
 - `apps/service`: private native-messaging host scaffold over
   `packages/client`. It processes multiple length-prefixed service messages on
   one stdio session, accepts explicit in-memory authorization context in tests,
@@ -679,11 +680,11 @@ Executable SDK examples live in private app `@nsealr/sdk-examples`. They are
 not another access surface and do not own production behavior. Their role is to
 prove that a consumer can use the built public package entrypoints for request
 validation, QR envelopes, local-service calls, browser-provider integration,
-and already-decrypted NIP-46 decisions without importing private test-only
-signing code or storing secrets. The browser-provider example consumes the
-shared access-surface vector, so SDK-facing examples stay pinned to the same
-secretless local-service route-selection and signer-unavailable contract as
-package tests.
+the browser-safe SDK facade, and already-decrypted NIP-46 decisions without
+importing private test-only signing code or storing secrets. The
+browser-provider example consumes the shared access-surface vector, so
+SDK-facing examples stay pinned to the same secretless local-service
+route-selection and signer-unavailable contract as package tests.
 The public package import-hygiene gate checks production source separately from
 package manifests and tarball contents. It rejects `@nsealr/*` imports that do
 not resolve to reviewed public packages or exported subpaths, rejects relative

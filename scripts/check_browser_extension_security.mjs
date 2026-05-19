@@ -7,7 +7,8 @@ import { root } from "./package_set.mjs";
 
 const auditedRoots = [
   "apps/browser-extension/src",
-  "packages/browser-provider/src"
+  "packages/browser-provider/src",
+  "packages/sdk/src"
 ].map((path) => join(root, path));
 
 const bannedPackagePrefixes = [
@@ -114,7 +115,8 @@ function assertPackageManifest(path) {
 
 for (const manifest of [
   "apps/browser-extension/package.json",
-  "packages/browser-provider/package.json"
+  "packages/browser-provider/package.json",
+  "packages/sdk/package.json"
 ].map((path) => join(root, path))) {
   assertPackageManifest(manifest);
 }

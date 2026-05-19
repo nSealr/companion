@@ -52,8 +52,8 @@ match the shared `contract_id`.
   so SDK, extension, service, and CLI code share the same boundaries.
 - `@nsealr/sdk-examples` is a private executable examples app that imports
   public packages through their built entrypoints and exercises request/QR,
-  local-service, browser-provider, and already-decrypted NIP-46 flows without
-  importing test-only signing helpers.
+  local-service, browser-provider, the `@nsealr/sdk/browser` facade, and
+  already-decrypted NIP-46 flows without importing test-only signing helpers.
 - Public package production-source imports are checked in CI so `@nsealr/*`
   imports stay on reviewed public entrypoints/subpaths and cannot drift into
   private apps or test-only signer packages.
@@ -75,6 +75,11 @@ match the shared `contract_id`.
   high-level client also binds each operation to its expected result type, so a
   native-messaging host cannot satisfy
   `request_pairing` with an unrelated valid service result.
+- `@nsealr/sdk/browser` is the browser-safe public SDK subpath for extension
+  and web callers. It exposes `@nsealr/browser-provider`,
+  `@nsealr/client/browser`, and pure core/policy/protocol/review helpers while
+  leaving the broader SDK root, fixtures, transport adapters, and test-only
+  signing out of browser runtime imports.
 - `nsealr local review-pairing` renders deterministic local-service pairing
   review metadata from a pairing intent. It validates the digest-bound intent
   and does not approve clients or write grant stores.

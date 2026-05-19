@@ -84,8 +84,9 @@ single-repository CI. Cross-repository drift remains guarded by
   rejection, and rejection before backend contact when an event template
   contains forbidden signer-owned fields.
 - SDK examples also consume the shared browser-provider access-surface vector
-  through built public package entrypoints, so the npm-facing facade does not
-  drift into a separate browser/local-service behavior.
+  through built public package entrypoints and import `@nsealr/sdk/browser`,
+  so the npm-facing facade does not drift into a separate browser/local-service
+  behavior.
   The browser-runtime import hygiene check walks packaged browser-extension
   entrypoints plus `@nsealr/browser-provider` and fails if that runtime graph
   imports Node builtins, uses `Buffer`/`process`, or imports the Node-capable
@@ -333,9 +334,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - `make package-smoke` builds package artifacts, then runs the private
   `@nsealr/consumer-smoke` app. The smoke imports every public `@nsealr/*`
   package through its built package entrypoint plus the public
-  `@nsealr/client/browser` and `@nsealr/client/client-identity` subpaths, and
-  exercises a minimal no-signer consumer path. It also checks the `@nsealr/sdk`
-  facade namespaces without
+  `@nsealr/client/browser`, `@nsealr/client/client-identity`, and
+  `@nsealr/sdk/browser` subpaths, and exercises a minimal no-signer consumer
+  path. It also checks the `@nsealr/sdk` facade namespaces without
   importing private signing helpers. This catches broken exports that relative
   in-package tests would miss.
 - `make examples-smoke` builds package artifacts, then runs private
@@ -343,9 +344,10 @@ single-repository CI. Cross-repository drift remains guarded by
   package usage. They import every publishable public package and cover
   request/QR handling, fixture loading, policy decisions, review rendering,
   serial framing, local companion-service calls, browser-provider refusal
-  behavior, already-decrypted NIP-46 bridge decisions, `@nsealr/sdk` facade
-  namespace imports, smartcard APDU round-trip, and in-memory serial-line
-  transport refusal without importing `@nsealr/dev-signer`.
+  behavior, already-decrypted NIP-46 bridge decisions, `@nsealr/sdk` and
+  `@nsealr/sdk/browser` facade namespace imports, smartcard APDU round-trip,
+  and in-memory serial-line transport refusal without importing
+  `@nsealr/dev-signer`.
 - `make readme-examples` builds package artifacts, then extracts
   `nsealr-readme-example` TypeScript snippets from every publishable package
   README and executes each snippet from the private SDK-example app context.

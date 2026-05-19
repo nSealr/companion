@@ -349,11 +349,12 @@ Package README files document purpose and trust boundaries, built JS/declaration
 artifacts are generated before tests, package tarballs are restricted to `dist`
 plus README, consumer smokes import both workspace-built and packed package
 entrypoints, executable SDK examples now cover request/QR, local-service,
-browser-provider, already-decrypted NIP-46, fixtures, policy, review, framing,
-smartcard APDU, and serial-line transport flows. The browser-provider SDK
-example consumes the shared access-surface vector for NIP-07 over local
-service, so the npm-facing facade follows the same secretless route-selection
-and signer-unavailable behavior as specs and package tests. The
+browser-provider, `@nsealr/sdk/browser`, already-decrypted NIP-46, fixtures,
+policy, review, framing, smartcard APDU, and serial-line transport flows. The
+browser-provider SDK example consumes the shared access-surface vector for
+NIP-07 over local service, so the npm-facing facade follows the same
+secretless route-selection and signer-unavailable behavior as specs and
+package tests. The
 changelog/release policy pins synchronized pre-release versioning plus npm
 provenance requirements. `docs/api.md` is generated from the actual public package
 entrypoints and checked in CI so exported symbols cannot drift invisibly.
@@ -366,9 +367,13 @@ The manual release rehearsal manifest records every tarball's filename, byte
 count, and SHA-256 digest before artifact upload.
 `@nsealr/sdk` now provides a platform-neutral facade over curated public
 namespaces without importing private test signing, Node-only fixtures, or host
-transport adapters. A manual package release rehearsal workflow now prepares
-and uploads checked tarball artifacts with byte counts and SHA-256 digests
-without publishing to npm.
+transport adapters. `@nsealr/sdk/browser` is the browser-safe subpath over the
+provider, `@nsealr/client/browser`, and pure core/policy/protocol/review helper
+packages, giving extension and web callers a reviewed SDK import that is
+checked by browser-runtime import hygiene. A manual package release rehearsal
+workflow now prepares and uploads
+checked tarball artifacts with byte counts and SHA-256 digests without
+publishing to npm.
 
 ## Later
 
@@ -626,7 +631,8 @@ without publishing to npm.
   package `dist` artifacts and exercises a minimal no-signer path. Package
   README files document purpose and trust boundaries. Packed-tarball smoke
   validates installable tarballs before publication. Executable SDK examples
-  prove common public package flows without test-only signer imports. Generated
+  prove common public package flows, including the browser-safe SDK facade,
+  without test-only signer imports. Generated
   API docs expose every public package entrypoint symbol and fail when stale.
   Package manifests include npm-facing metadata plus provenance publish config.
   Executable SDK examples now import every publishable public package at least

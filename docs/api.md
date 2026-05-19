@@ -333,6 +333,9 @@ Exports:
 - `review`
 - `smartcard`
 
+Additional package subpaths:
+- `@nsealr/sdk/browser`: `browserProvider`, `client`, `core`, `policy`, `protocol`, `review`
+
 ## @nsealr/smartcard
 
 APDU, PC/SC, and display-less smartcard signer boundary for nSealr.

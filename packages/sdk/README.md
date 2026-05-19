@@ -1,12 +1,17 @@
 # @nsealr/sdk
 
-Platform-neutral facade over the browser-safe and host-neutral nSealr companion
-packages.
+Platform-neutral facade over curated nSealr companion packages.
+
+Browser runtime code should import `@nsealr/sdk/browser`, which exposes only
+the browser-safe provider, local-service client, and pure core/policy/protocol/
+review helpers.
 
 ## Boundary
 
 - Export curated package namespaces for app, browser-extension, and companion
   integrations.
+- Export a browser-safe `./browser` subpath so extension and web callers do not
+  import the broader SDK root by accident.
 - Keep `@nsealr/dev-signer` out of the public SDK surface.
 - Keep Node-only fixture loading and host transport adapters in their own
   packages instead of importing them through this facade.
@@ -41,4 +46,24 @@ assert.equal(protocol.validateRequest({
   request_id: "readme-sdk-request",
   method: "get_public_key"
 }).ok, true);
+```
+
+```ts nsealr-readme-example
+import assert from "node:assert/strict";
+import { browserProvider, client, protocol } from "@nsealr/sdk/browser";
+
+const identity = client.parseLocalClientIdentity({
+  surface: "browser_extension",
+  origin: "https://example.com",
+  app_name: "README SDK Browser Example",
+  instance_id: "readme-sdk-browser"
+});
+
+assert.equal(browserProvider.NATIVE_HOST_NAME, client.NATIVE_HOST_NAME);
+assert.equal(protocol.validateRequest({
+  version: 1,
+  request_id: "readme-sdk-browser-request",
+  method: "get_public_key"
+}).ok, true);
+assert.equal(identity.origin, "https://example.com");
 ```

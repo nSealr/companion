@@ -53,6 +53,7 @@ import {
   SW_NO_ERROR
 } from "@nsealr/smartcard";
 import * as sdk from "@nsealr/sdk";
+import * as sdkBrowser from "@nsealr/sdk/browser";
 import { exchangeSerialLineRequest, type SerialLinePort } from "@nsealr/transport";
 
 const request: SignEventRequest = {
@@ -379,6 +380,13 @@ function sdkFacadeExample(): void {
   }).length, 64);
   assert.equal(typeof sdk.browserProvider.createNip07Provider, "function");
   assert.equal(typeof sdk.smartcard.CommandApdu, "function");
+  assert.equal(sdkBrowser.client.NATIVE_HOST_NAME, NATIVE_HOST_NAME);
+  assert.equal(typeof sdkBrowser.browserProvider.createNip07Provider, "function");
+  assert.equal(sdkBrowser.protocol.validateRequest({
+    version: 1,
+    request_id: "sdk-browser-facade-get-public-key",
+    method: "get_public_key"
+  }).ok, true);
 }
 
 function exampleGrant(): LocalClientGrant {

@@ -172,7 +172,11 @@ describe("fixture loading", () => {
       "policy-manual-only-qr-vault",
       "policy-scoped-automation-daily-use"
     ]));
-    expect(fixtures.grants.map((grant) => grant.grant_id)).toEqual(["grant-esp32-usb-kind-1-session"]);
+    const expectedGrantIds = readdirSync(resolve(resolveSpecsRoot(), "vectors/grants"))
+      .filter((file) => file.endsWith(".json"))
+      .map((file) => `grant-${file.replace(/\.json$/u, "")}`)
+      .sort();
+    expect(fixtures.grants.map((grant) => grant.grant_id)).toEqual(expectedGrantIds);
     for (const account of fixtures.accounts) {
       const policy = fixtures.policyProfiles.find((candidate) => candidate.policy_id === account.policy_profile_id);
       expect(policy?.route_types).toContain(account.signer_route.type);

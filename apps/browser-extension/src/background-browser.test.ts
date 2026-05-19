@@ -12,6 +12,8 @@ import {
   type BrowserExtensionRuntimeMessageListener,
   type BrowserExtensionRuntimeMessageResponder
 } from "./runtime-message.js";
+import { approveBrowserExtensionOriginPermissionReview } from "./pairing.js";
+import { createBrowserExtensionOriginPermissionStore } from "./origin-permission-store.js";
 
 const publicKey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
 const routeRequest = {
@@ -19,6 +21,7 @@ const routeRequest = {
   method: "sign_event",
   route_type: "esp32_usb_nip46" as const
 };
+const localPairingDigest = "c".repeat(64);
 
 function getPublicKeyRequest(requestId: string): unknown {
   return {
@@ -29,6 +32,23 @@ function getPublicKeyRequest(requestId: string): unknown {
   };
 }
 
+function signEventRequest(requestId: string): unknown {
+  return {
+    protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+    version: 1,
+    request_id: requestId,
+    method: "sign_event",
+    params: {
+      event_template: {
+        kind: 1,
+        created_at: 1_710_000_000,
+        tags: [],
+        content: "browser entrypoint origin permission denial"
+      }
+    }
+  };
+}
+
 function listPendingRequests(requestId: string): unknown {
   return {
     protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
@@ -36,6 +56,34 @@ function listPendingRequests(requestId: string): unknown {
     request_id: requestId,
     method: "list_pending_requests"
   };
+}
+
+function routeOnlyOriginPermissionStore(): unknown {
+  return createBrowserExtensionOriginPermissionStore([
+    approveBrowserExtensionOriginPermissionReview({
+      format: "nsealr-browser-origin-permission-review-v0",
+      origin: "https://example.com",
+      app_name: "nSealr Browser Extension",
+      extension_id: "extension@nsealr.dev",
+      requested_methods: [
+        {
+          method: "get_public_key",
+          label: "Read public key",
+          effect: "The page can read the selected account public key through the browser provider."
+        }
+      ],
+      local_pairing_digest: localPairingDigest,
+      requires_user_approval: true,
+      stores_production_secrets: false,
+      creates_grants: false,
+      injects_provider: false
+    }, {
+      reviewedLocalPairingDigest: localPairingDigest,
+      approvedAt: 1_900_000_050
+    })
+  ], {
+    updatedAt: 1_900_000_051
+  });
 }
 
 function routeSelectionResponse(request: LocalServiceRequest): unknown {
@@ -193,6 +241,46 @@ describe("browser extension background browser entrypoint", () => {
         pending_requests: [],
         stores_production_secrets: false,
         contains_secret_material: false
+      }
+    }]);
+    expect(runtime.nativeMessages).toEqual([]);
+    handle.dispose();
+  });
+
+  it("enforces injected origin permissions before browser native messaging", async () => {
+    const runtime = createInjectedRuntime();
+    const responses: unknown[] = [];
+    const handle = installBrowserExtensionBackgroundBrowserEntrypoint({
+      runtime: runtime.runtime,
+      routeRequest,
+      extensionId: "extension@nsealr.dev",
+      originPermissions: {
+        store: routeOnlyOriginPermissionStore(),
+        localPairingDigest
+      }
+    });
+
+    expect(runtime.emit(
+      signEventRequest("background-browser-origin-permission-denied"),
+      {
+        id: "extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      (response) => {
+        responses.push(response);
+      }
+    )).toBe(true);
+    await flushAsyncListeners();
+
+    expect(responses).toEqual([{
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "background-browser-origin-permission-denied",
+      ok: false,
+      error: {
+        code: "origin_permission_denied",
+        message: "browser extension origin permission denied",
+        retryable: false
       }
     }]);
     expect(runtime.nativeMessages).toEqual([]);

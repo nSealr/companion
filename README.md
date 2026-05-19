@@ -119,7 +119,8 @@ match the shared `contract_id`.
   effects, can maintain the approved-origin store through deterministic
   upsert/revoke helpers without choosing a browser storage backend, can enforce
   an injected approved-origin store before provider selection so denied methods
-  fail before native messaging, includes a pure
+  fail before native messaging, passes that gate through the browser-like
+  background entrypoint over explicit injected dependencies, includes a pure
   background-controller boundary over injected native messaging with optional
   response timeouts and request-scoped cancellation,
   includes a pure runtime-message adapter that maps raw browser sender metadata

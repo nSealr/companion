@@ -572,7 +572,9 @@ an injected authorization gate. When configured, it checks the exact
 origin/extension/pairing-digest/method tuple after request and sender parsing
 but before provider selection, native messaging, route selection, or signer
 dispatch. Denied, stale, or malformed origin-permission state returns
-`origin_permission_denied` deterministically.
+`origin_permission_denied` deterministically. The browser-like background
+entrypoint exposes the same injected gate, so packaged runtime handling can be
+tested without introducing browser storage or global browser APIs.
 Its manifest builder is intentionally restrictive: the default Chromium
 manifest omits host permissions, optional host permissions, content scripts,
 web-accessible resources, and storage; Firefox manifests require an explicit

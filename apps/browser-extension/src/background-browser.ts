@@ -7,6 +7,9 @@ import {
   type BrowserExtensionBackgroundController
 } from "./background.js";
 import {
+  type BrowserExtensionOriginPermissionAuthorization
+} from "./handler.js";
+import {
   installBrowserExtensionRuntimeMessageListener,
   type BrowserExtensionRuntimeMessageEventTarget,
   type BrowserExtensionRuntimeMessageListenerHandle
@@ -37,6 +40,7 @@ export type BrowserExtensionBackgroundBrowserEntrypointOptions = {
   nativeMessageTimeoutMs?: number;
   nativeMessageAbortSignal?: AbortSignal;
   pendingRequests?: BrowserExtensionPendingRequestLifecycle;
+  originPermissions?: BrowserExtensionOriginPermissionAuthorization;
   onError?: (error: unknown) => void;
 };
 
@@ -104,7 +108,8 @@ export function installBrowserExtensionBackgroundBrowserEntrypoint(
     ...(options.nativeMessageTimeoutMs !== undefined ? { nativeMessageTimeoutMs: options.nativeMessageTimeoutMs } : {}),
     ...(options.nativeMessageAbortSignal !== undefined
       ? { nativeMessageAbortSignal: options.nativeMessageAbortSignal }
-      : {})
+      : {}),
+    ...(options.originPermissions !== undefined ? { originPermissions: options.originPermissions } : {})
   });
   const listener = installBrowserExtensionRuntimeMessageListener({
     runtimeOnMessage: runtime.onMessage,

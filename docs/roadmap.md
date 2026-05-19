@@ -183,6 +183,11 @@ secretless `set_policy` proposal plus deterministic device-review pages and
 approval digest. This does not approve or persist device policy, create grants,
 enable relay sessions, or make the companion authoritative.
 
+Status note, 2026-05-19: the CLI now exposes that package-owned review path as
+`nsealr policy review-change --proposal <json> --out <json>`. The command is a
+file adapter only: it validates and renders review material, writes no output
+after rejection, and does not persist policy or grants.
+
 Status note, 2026-05-13: companion policy code now consumes shared
 route-selection vectors. The pure selector maps parsed account descriptors and
 requested methods to secretless route metadata, rejecting unknown accounts,

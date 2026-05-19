@@ -419,8 +419,13 @@ single-repository CI. Cross-repository drift remains guarded by
   fixtures, review-detail-page fixtures, QR review-transcript fixtures, NIP-46
   payload fixtures, NIP-46 policy-file fixtures, NIP-46 connection URI
   fixtures, account descriptors, policy profiles, grant descriptors,
-  policy-decision vectors, route-selection vectors, and access-surface vectors,
-  plus the shared implementation-limit profile and invalid hardening vectors.
+  policy-change review vectors, policy-decision vectors, route-selection
+  vectors, and access-surface vectors, plus the shared implementation-limit
+  profile and invalid hardening vectors.
+- CLI policy-change review tests covering
+  `nsealr policy review-change --proposal ... --out ...` against shared
+  policy-change vectors, including deterministic output and no output after a
+  rejected companion-authoritative proposal.
 - CLI fixture verification rejects review detail-page style drift, including
   unknown body-line style names and continuation lines that are not styled as
   `value`.

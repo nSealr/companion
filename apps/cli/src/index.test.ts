@@ -249,6 +249,41 @@ describe("nsealr CLI", () => {
     );
   });
 
+  it("renders policy-change review proposals without approving device policy", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-policy-review-"));
+    const vector = loadJson(
+      resolve(specsRoot, "vectors/policy-changes/custom-hardware-wallet-enable-kind-1-automation.json")
+    ) as { proposal: unknown; review: unknown };
+    const proposalPath = join(tempRoot, "proposal.json");
+    const reviewPath = join(tempRoot, "review.json");
+
+    writeFileSync(proposalPath, `${JSON.stringify(vector.proposal, null, 2)}\n`, "utf8");
+
+    await runCli(["policy", "review-change", "--proposal", proposalPath, "--out", reviewPath]);
+
+    expect(loadJson(reviewPath)).toEqual(vector.review);
+  });
+
+  it("rejects companion-authoritative policy changes before writing reviews", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-policy-review-reject-"));
+    const vector = loadJson(resolve(specsRoot, "vectors/policy-changes/esp32-usb-enable-kind-1-automation.json")) as {
+      proposal: Record<string, unknown>;
+    };
+    const proposalPath = join(tempRoot, "proposal.json");
+    const reviewPath = join(tempRoot, "review.json");
+
+    writeFileSync(
+      proposalPath,
+      `${JSON.stringify({ ...vector.proposal, companion_authoritative: true }, null, 2)}\n`,
+      "utf8"
+    );
+
+    await expect(runCli(["policy", "review-change", "--proposal", proposalPath, "--out", reviewPath])).rejects.toThrow(
+      /companion_authoritative must be false/u
+    );
+    expect(existsSync(reviewPath)).toBe(false);
+  });
+
   it("rejects NIP-46 permission policy fixture drift", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-invalid-nip46-policy-"));
     const tempSpecsRoot = join(tempRoot, "specs");

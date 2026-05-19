@@ -99,6 +99,10 @@ function writeJson(path: string, value: unknown): void {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
+function writeNewJson(path: string, value: unknown): void {
+  writeNewText(path, `${JSON.stringify(value, null, 2)}\n`);
+}
+
 function writeNewText(path: string, contents: string): void {
   if (existsSync(path)) throw new Error("output path already exists");
   writeFileSync(path, contents, { encoding: "utf8", flag: "wx" });
@@ -709,6 +713,18 @@ export function buildCli(options: BuildCliOptions = {}): Command {
       console.log(
         `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );
+    });
+
+  program
+    .command("policy")
+    .argument("<action>")
+    .requiredOption("--proposal <path>")
+    .requiredOption("--out <path>")
+    .description("Review secretless policy-change proposals")
+    .action((action: string, options: { proposal: string; out: string }) => {
+      if (action !== "review-change") throw new Error(`unsupported policy action: ${action}`);
+      const review = reviewPolicyChangeProposal(readJson(options.proposal));
+      writeNewJson(options.out, review);
     });
 
   program

@@ -33,11 +33,14 @@ match the shared `contract_id`.
 - `nsealr fixture verify` validates shared signing, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, NIP-46 connection URI, account descriptor,
-  policy profile, grant descriptor, policy-decision, and feature-matrix
-  fixtures from
+  policy profile, grant descriptor, policy-change review, policy-decision, and
+  feature-matrix fixtures from
   `nSealr/specs`, including NIP-46 permission policy checks, bridge
   decisions, implementation limits, feature conformance contracts, and invalid
   hardening vectors.
+- `nsealr policy review-change` renders deterministic review pages and an
+  approval digest for a secretless `set_policy` proposal. It does not approve
+  the change, persist policy, create grants, or dispatch signer I/O.
 - `nsealr request` creates signing requests from event templates and
   parameterless device requests for `get_capabilities`, `get_public_key`, and
   `get_signing_status`, with caller-supplied `--request-id` support for
@@ -434,6 +437,7 @@ pnpm nsealr request get-signing-status --request-id req-status-1 --out status-re
 pnpm nsealr request sign-event --event-template template.json --out request.qr --output-format qr
 pnpm nsealr review-request --request request.qr --request-format qr --out review.json
 pnpm nsealr review-request --request request.qr --request-format qr --detail-pages --max-compact-line-chars 48 --out review-detail-pages.json
+pnpm nsealr policy review-change --proposal policy-change-proposal.json --out policy-change-review.json
 pnpm nsealr local review-pairing --intent pairing-intent.json --out pairing-review.json
 pnpm nsealr local approve-pairing --intent pairing-intent.json --reviewed-pairing-digest <digest-hex> --approved-at 1900000000 --out pairing-approval.json
 pnpm nsealr local review-storage --grant-store "$PWD/local-grants.json" --grant-store-output "$PWD/local-grants-next.json" --out storage-review.json

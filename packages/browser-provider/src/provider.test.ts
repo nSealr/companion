@@ -176,6 +176,32 @@ describe("NIP-07 browser provider boundary", () => {
     }]);
   });
 
+  it("rejects wrong-route signer responses before browser callers trust signatures", async () => {
+    const wrongRoutePublicKey = "e".repeat(64);
+    const service = new LocalServiceClient({
+      exchange: (message) => handleLocalServiceRequest(message, {
+        accounts: fixtures.accounts.map((account) => account.account_id === routeVector.selection.account_id
+          ? { ...account, public_key: wrongRoutePublicKey }
+          : account),
+        grants: [localServiceGrant],
+        now: 1_900_000_000,
+        signerDispatcher: () => response
+      })
+    });
+    const provider = createNip07Provider({
+      backend: createLocalServiceBrowserProviderBackend({
+        service,
+        routeRequest: routeVector.request
+      }),
+      client,
+      nextRequestId: () => "req-kind-1-basic"
+    });
+
+    await expect(provider.signEvent(request.params.event_template)).rejects.toThrow(
+      /signer response public key does not match selected route/u
+    );
+  });
+
   it("creates browser native-messaging local-service clients over explicit senders", async () => {
     const sentHostNames: string[] = [];
     const service = createBrowserNativeMessagingLocalServiceClient({

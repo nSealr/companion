@@ -3,7 +3,8 @@ import {
 } from "./messages.js";
 import {
   type BrowserExtensionPendingRequestLifecycle,
-  type BrowserExtensionPendingRequestState
+  type BrowserExtensionPendingRequestState,
+  parseBrowserExtensionPendingRequestState
 } from "./pending-request.js";
 
 export const BROWSER_EXTENSION_CONTROL_PROTOCOL = "nsealr-browser-extension-control-v0";
@@ -29,7 +30,7 @@ export type BrowserExtensionControlRequest =
   | BrowserExtensionCancelPendingRequest
   | BrowserExtensionListPendingRequests;
 
-export type BrowserExtensionControlResponse = {
+export type BrowserExtensionCancelPendingResponse = {
   protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
   version: 1;
   request_id: string;
@@ -40,7 +41,9 @@ export type BrowserExtensionControlResponse = {
     stores_production_secrets: false;
     contains_secret_material: false;
   };
-} | {
+};
+
+export type BrowserExtensionListPendingResponse = {
   protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
   version: 1;
   request_id: string;
@@ -50,7 +53,9 @@ export type BrowserExtensionControlResponse = {
     stores_production_secrets: false;
     contains_secret_material: false;
   };
-} | {
+};
+
+export type BrowserExtensionControlErrorResponse = {
   protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
   version: 1;
   request_id: string;
@@ -61,6 +66,11 @@ export type BrowserExtensionControlResponse = {
     retryable: false;
   };
 };
+
+export type BrowserExtensionControlResponse =
+  | BrowserExtensionCancelPendingResponse
+  | BrowserExtensionListPendingResponse
+  | BrowserExtensionControlErrorResponse;
 
 export type BrowserExtensionControlSenderOptions = {
   extensionId?: string;
@@ -97,6 +107,20 @@ function requireErrorMessage(value: string): string {
     throw new Error("browser extension control error message is invalid");
   }
   return value;
+}
+
+function parseErrorCode(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new Error("browser extension control error code is invalid");
+  }
+  return requireErrorCode(value);
+}
+
+function parseErrorMessage(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new Error("browser extension control error message is invalid");
+  }
+  return requireErrorMessage(value);
 }
 
 function fallbackControlRequestId(value: unknown): string {
@@ -175,6 +199,79 @@ function parseCancelParams(value: unknown): BrowserExtensionCancelPendingRequest
   };
 }
 
+function parseCancelResult(value: unknown): BrowserExtensionCancelPendingResponse["result"] {
+  if (!isRecord(value)) {
+    throw new Error("browser extension control cancel result must be an object");
+  }
+  if (!hasOnlyKeys(value, [
+    "pending_request_id",
+    "cancelled",
+    "stores_production_secrets",
+    "contains_secret_material"
+  ])) {
+    throw new Error("browser extension control cancel result has unsupported fields");
+  }
+  if (value.cancelled !== true && value.cancelled !== false) {
+    throw new Error("browser extension control cancel result cancelled flag is invalid");
+  }
+  if (value.stores_production_secrets !== false || value.contains_secret_material !== false) {
+    throw new Error("browser extension control cancel result must be secretless");
+  }
+  return {
+    pending_request_id: requireRequestId(value.pending_request_id, "pending_request_id"),
+    cancelled: value.cancelled,
+    stores_production_secrets: false,
+    contains_secret_material: false
+  };
+}
+
+function parseListResult(value: unknown): BrowserExtensionListPendingResponse["result"] {
+  if (!isRecord(value)) {
+    throw new Error("browser extension control list result must be an object");
+  }
+  if (!hasOnlyKeys(value, [
+    "pending_requests",
+    "stores_production_secrets",
+    "contains_secret_material"
+  ])) {
+    throw new Error("browser extension control list result has unsupported fields");
+  }
+  if (!Array.isArray(value.pending_requests)) {
+    throw new Error("browser extension control list result pending_requests must be an array");
+  }
+  if (value.stores_production_secrets !== false || value.contains_secret_material !== false) {
+    throw new Error("browser extension control list result must be secretless");
+  }
+  return {
+    pending_requests: Object.freeze(value.pending_requests.map(parseBrowserExtensionPendingRequestState)),
+    stores_production_secrets: false,
+    contains_secret_material: false
+  };
+}
+
+function parseErrorResponse(value: Record<string, unknown>): BrowserExtensionControlErrorResponse {
+  if (!isRecord(value.error)) {
+    throw new Error("browser extension control error response error must be an object");
+  }
+  if (!hasOnlyKeys(value.error, ["code", "message", "retryable"])) {
+    throw new Error("browser extension control error response has unsupported error fields");
+  }
+  if (value.error.retryable !== false) {
+    throw new Error("browser extension control error response retryable flag is invalid");
+  }
+  return {
+    protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+    version: 1,
+    request_id: requireRequestId(value.request_id, "request_id"),
+    ok: false,
+    error: {
+      code: parseErrorCode(value.error.code),
+      message: parseErrorMessage(value.error.message),
+      retryable: false
+    }
+  };
+}
+
 export function isBrowserExtensionControlEnvelope(value: unknown): boolean {
   return isRecord(value) && value.protocol === BROWSER_EXTENSION_CONTROL_PROTOCOL;
 }
@@ -212,6 +309,53 @@ export function parseBrowserExtensionControlRequest(value: unknown): BrowserExte
     request_id: requireRequestId(value.request_id, "request_id"),
     method: "cancel_pending_request",
     params: parseCancelParams(value.params)
+  };
+}
+
+export function parseBrowserExtensionControlResponse(value: unknown): BrowserExtensionControlResponse {
+  if (!isRecord(value)) {
+    throw new Error("browser extension control response must be an object");
+  }
+  if (!hasOnlyKeys(value, ["protocol", "version", "request_id", "ok", "result", "error"])) {
+    throw new Error("browser extension control response has unsupported fields");
+  }
+  if (value.protocol !== BROWSER_EXTENSION_CONTROL_PROTOCOL) {
+    throw new Error("browser extension control response protocol is unsupported");
+  }
+  if (value.version !== 1) {
+    throw new Error("browser extension control response version is unsupported");
+  }
+  if (value.ok === false) {
+    if ("result" in value) {
+      throw new Error("browser extension control error response must not include result");
+    }
+    return parseErrorResponse(value);
+  }
+  if (value.ok !== true) {
+    throw new Error("browser extension control response ok flag is invalid");
+  }
+  if ("error" in value) {
+    throw new Error("browser extension control success response must not include error");
+  }
+  const result = value.result;
+  if (!isRecord(result)) {
+    throw new Error("browser extension control success response result must be an object");
+  }
+  if ("pending_requests" in result) {
+    return {
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: requireRequestId(value.request_id, "request_id"),
+      ok: true,
+      result: parseListResult(result)
+    };
+  }
+  return {
+    protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+    version: 1,
+    request_id: requireRequestId(value.request_id, "request_id"),
+    ok: true,
+    result: parseCancelResult(result)
   };
 }
 

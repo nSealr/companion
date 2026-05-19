@@ -407,7 +407,11 @@ and uploads checked tarball artifacts without publishing to npm.
   runtime-message boundary routes separate `nsealr-browser-extension-control-v0`
   `list_pending_requests` and `cancel_pending_request` messages from
   extension-internal senders only, so page-origin senders cannot list or cancel
-  active requests. A pure page-provider boundary now maps NIP-07
+  active requests. A popup-control client now wraps those internal messages
+  over injected `runtime.sendMessage`, validates secretless responses, and
+  gives future popup UI a tested list/cancel command surface without storage,
+  grants, native-host installation, or signer dispatch. A pure page-provider
+  boundary now maps NIP-07
   `getPublicKey` and `signEvent` calls to validated background requests,
   verifies signed responses, forwards cancellation signals, and installs on an
   explicit target without overwriting an existing provider. A pure page-bridge
@@ -486,8 +490,9 @@ and uploads checked tarball artifacts without publishing to npm.
   wildcard hosts, non-local `http`, duplicate matches, host-permission fields,
   and storage. Remaining work: reviewed bootstrap/config UX beyond the static
   developer route config, native-messaging installation, browser UI/storage
-  wiring for origin permission approvals, visible UI controls over the tested
-  internal list/cancel messages, and real dispatch after M4.7 gates. No local
+  wiring for origin permission approvals, packaged popup manifest/action plus
+  visible UI rendering over the tested popup-control client, and real dispatch
+  after M4.7 gates. No local
   production signing and no extension-side production key storage.
 - M4.9 npm SDK alpha after package APIs, docs, semver, provenance, and
   consumer-import tests are stable. Current package-consumer smoke imports the

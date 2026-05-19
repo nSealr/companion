@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { BROWSER_EXTENSION_MESSAGE_PROTOCOL } from "./handler.js";
 import {
   BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
-  createBrowserExtensionPendingRequestLifecycle
+  createBrowserExtensionPendingRequestLifecycle,
+  parseBrowserExtensionPendingRequestState
 } from "./pending-request.js";
 
 describe("browser extension pending request lifecycle", () => {
@@ -164,5 +165,40 @@ describe("browser extension pending request lifecycle", () => {
 
     expect(() => lifecycle.start(request, sender)).toThrow(/already active/u);
     expect(lifecycle.active()).toEqual([started]);
+  });
+
+  it("parses only secretless pending request state snapshots", () => {
+    const state = {
+      format: BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
+      request_id: "pending-parse",
+      method: "sign_event",
+      extension_id: "extension@nsealr.dev",
+      page_origin: "https://example.com",
+      app_name: "Reviewed Browser Extension",
+      status: "pending",
+      started_at: 1_900_000_020,
+      updated_at: 1_900_000_021,
+      stores_production_secrets: false,
+      includes_event_template: false
+    };
+
+    expect(parseBrowserExtensionPendingRequestState(state)).toEqual(state);
+    expect(() => parseBrowserExtensionPendingRequestState({
+      ...state,
+      includes_event_template: true
+    })).toThrow(/event templates/u);
+    expect(() => parseBrowserExtensionPendingRequestState({
+      ...state,
+      event_template: {
+        kind: 1,
+        created_at: 1_710_000_000,
+        tags: [],
+        content: "must stay hidden"
+      }
+    })).toThrow(/unsupported fields/u);
+    expect(() => parseBrowserExtensionPendingRequestState({
+      ...state,
+      started_at: 1.5
+    })).toThrow(/started_at/u);
   });
 });

@@ -528,7 +528,11 @@ in-memory lifecycle by default, and extension UI can query or cancel it through
 separate `nsealr-browser-extension-control-v0` `list_pending_requests` and
 `cancel_pending_request` runtime messages. Those messages accept
 extension-internal senders only; page-origin senders cannot list or cancel
-pending requests.
+pending requests. A popup-control client now wraps those messages over an
+injected `runtime.sendMessage`, validates response envelopes and secretless
+pending-state snapshots, rejects request-id mismatches, and exposes only
+list/cancel operations for future popup UI. The popup path is not a storage,
+grant, native-host installation, or signer-dispatch boundary.
 The runtime-message listener installer is a thin adapter over an injected
 `runtime.onMessage`-like target. It registers exactly one listener, returns
 `true` for asynchronous `sendResponse` delivery, sends deterministic responses

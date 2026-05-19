@@ -3,9 +3,13 @@ import { BROWSER_EXTENSION_MESSAGE_PROTOCOL } from "./handler.js";
 import {
   BROWSER_EXTENSION_CONTROL_PROTOCOL,
   handleBrowserExtensionControlMessage,
+  parseBrowserExtensionControlResponse,
   parseBrowserExtensionControlRequest
 } from "./pending-control.js";
-import { createBrowserExtensionPendingRequestLifecycle } from "./pending-request.js";
+import {
+  BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
+  createBrowserExtensionPendingRequestLifecycle
+} from "./pending-request.js";
 
 function cancelRequest(requestId: string, pendingRequestId: string): unknown {
   return {
@@ -119,6 +123,81 @@ describe("browser extension pending request control boundary", () => {
         contains_secret_material: false
       }
     });
+  });
+
+  it("parses only secretless control responses", () => {
+    const pendingState = {
+      format: BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
+      request_id: "pending-control-parse",
+      method: "get_public_key",
+      extension_id: "extension@nsealr.dev",
+      page_origin: "https://example.com",
+      status: "pending",
+      started_at: 1_900_000_200,
+      updated_at: 1_900_000_200,
+      stores_production_secrets: false,
+      includes_event_template: false
+    };
+    const listResponse = {
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-list-parse",
+      ok: true,
+      result: {
+        pending_requests: [pendingState],
+        stores_production_secrets: false,
+        contains_secret_material: false
+      }
+    };
+    const cancelResponse = {
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-cancel-parse",
+      ok: true,
+      result: {
+        pending_request_id: "pending-control-parse",
+        cancelled: true,
+        stores_production_secrets: false,
+        contains_secret_material: false
+      }
+    };
+
+    expect(parseBrowserExtensionControlResponse(listResponse)).toEqual(listResponse);
+    expect(parseBrowserExtensionControlResponse(cancelResponse)).toEqual(cancelResponse);
+    expect(parseBrowserExtensionControlResponse({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-error-parse",
+      ok: false,
+      error: {
+        code: "invalid_sender",
+        message: "browser extension control sender is invalid",
+        retryable: false
+      }
+    })).toMatchObject({
+      request_id: "control-error-parse",
+      ok: false,
+      error: {
+        code: "invalid_sender"
+      }
+    });
+    expect(() => parseBrowserExtensionControlResponse({
+      ...listResponse,
+      result: {
+        ...listResponse.result,
+        pending_requests: [{
+          ...pendingState,
+          includes_event_template: true
+        }]
+      }
+    })).toThrow(/event templates/u);
+    expect(() => parseBrowserExtensionControlResponse({
+      ...cancelResponse,
+      result: {
+        ...cancelResponse.result,
+        contains_secret_material: true
+      }
+    })).toThrow(/secretless/u);
   });
 
   it("cancels active pending requests only from extension-internal senders", () => {

@@ -3,6 +3,8 @@ import { type LocalServiceRequest } from "@nsealr/client";
 import { describe, expect, it } from "vitest";
 import { BROWSER_EXTENSION_MESSAGE_PROTOCOL, type BrowserExtensionResponse } from "./handler.js";
 import { type BrowserExtensionRequest } from "./messages.js";
+import { BROWSER_EXTENSION_CONTROL_PROTOCOL } from "./pending-control.js";
+import { BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT } from "./pending-request.js";
 import {
   BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL,
   type BrowserExtensionPageBridgeRequest,
@@ -22,6 +24,7 @@ import {
 import { installNsealrBackgroundEntrypoint } from "./nsealr-background-entrypoint.js";
 import { installNsealrContentScriptEntrypoint } from "./nsealr-content-script-entrypoint.js";
 import { installNsealrPageScriptEntrypoint } from "./nsealr-page-script-entrypoint.js";
+import { createNsealrPopupEntrypoint } from "./nsealr-popup-entrypoint.js";
 
 const publicKey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
 const routeRequest = {
@@ -355,6 +358,63 @@ describe("packaged browser extension entrypoints", () => {
     }]);
   });
 
+  it("wires the popup control entrypoint through browser.runtime without storage", async () => {
+    const runtimeMessages: unknown[] = [];
+    const controls = createNsealrPopupEntrypoint({
+      globalScope: {
+        browser: {
+          runtime: {
+            sendMessage(message: unknown): unknown {
+              runtimeMessages.push(message);
+              return {
+                protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+                version: 1,
+                request_id: "packaged-popup-list",
+                ok: true,
+                result: {
+                  pending_requests: [{
+                    format: BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
+                    request_id: "pending-popup-entrypoint",
+                    method: "get_public_key",
+                    extension_id: "extension@nsealr.dev",
+                    page_origin: "https://example.com",
+                    status: "pending",
+                    started_at: 1_900_000_400,
+                    updated_at: 1_900_000_400,
+                    stores_production_secrets: false,
+                    includes_event_template: false
+                  }],
+                  stores_production_secrets: false,
+                  contains_secret_material: false
+                }
+              };
+            }
+          }
+        }
+      },
+      nextRequestId: () => "packaged-popup-list"
+    });
+
+    await expect(controls.listPendingRequests()).resolves.toEqual([{
+      format: BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
+      request_id: "pending-popup-entrypoint",
+      method: "get_public_key",
+      extension_id: "extension@nsealr.dev",
+      page_origin: "https://example.com",
+      status: "pending",
+      started_at: 1_900_000_400,
+      updated_at: 1_900_000_400,
+      stores_production_secrets: false,
+      includes_event_template: false
+    }]);
+    expect(runtimeMessages).toEqual([{
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "packaged-popup-list",
+      method: "list_pending_requests"
+    }]);
+  });
+
   it("rejects ambiguous extension runtime globals before installing listeners or scripts", () => {
     const runtime = createRuntimeGlobal();
     const otherRuntime = createRuntimeGlobal();
@@ -379,5 +439,12 @@ describe("packaged browser extension entrypoints", () => {
       }
     })).toThrow(/ambiguous/u);
     expect(document.appended).toEqual([]);
+
+    expect(() => createNsealrPopupEntrypoint({
+      globalScope: {
+        browser: { runtime: runtime.runtime },
+        chrome: { runtime: otherRuntime.runtime }
+      }
+    })).toThrow(/ambiguous/u);
   });
 });

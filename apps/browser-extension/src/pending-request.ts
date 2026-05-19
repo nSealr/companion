@@ -1,4 +1,9 @@
-import { type BrowserExtensionRequest } from "./messages.js";
+import {
+  isBrowserExtensionRequestId,
+  type BrowserExtensionMethod,
+  type BrowserExtensionRequest
+} from "./messages.js";
+import { requireBrowserExtensionPageOrigin } from "./page-origin.js";
 import {
   browserExtensionClientContextFromSender,
   type BrowserExtensionSenderInput
@@ -40,9 +45,50 @@ export type BrowserExtensionPendingRequestLifecycleOptions = {
   onState?: (state: BrowserExtensionPendingRequestState) => void;
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasOnlyKeys(value: Record<string, unknown>, allowedKeys: string[]): boolean {
+  return Object.keys(value).every((key) => allowedKeys.includes(key));
+}
+
 function requireNonNegativeSafeInteger(value: number, label: string): number {
   if (!Number.isInteger(value) || !Number.isSafeInteger(value) || value < 0) {
     throw new Error(`${label} must be a non-negative safe integer`);
+  }
+  return value;
+}
+
+function requirePendingExtensionId(value: unknown): string {
+  if (typeof value !== "string" || !/^[A-Za-z0-9._@+-]{1,128}$/u.test(value)) {
+    throw new Error("browser extension pending request extension_id is invalid");
+  }
+  return value;
+}
+
+function requirePendingAppName(value: unknown): string {
+  if (typeof value !== "string" || value.length === 0 || value.length > 80) {
+    throw new Error("browser extension pending request app_name is invalid");
+  }
+  return value;
+}
+
+function requirePendingRequestMethod(value: unknown): BrowserExtensionMethod {
+  if (value !== "get_public_key" && value !== "sign_event") {
+    throw new Error("browser extension pending request method is invalid");
+  }
+  return value;
+}
+
+function requirePendingRequestStatus(value: unknown): BrowserExtensionPendingRequestStatus {
+  if (
+    value !== "pending" &&
+    value !== "resolved" &&
+    value !== "rejected" &&
+    value !== "cancelled"
+  ) {
+    throw new Error("browser extension pending request status is invalid");
   }
   return value;
 }
@@ -53,6 +99,65 @@ function emitState(
 ): BrowserExtensionPendingRequestState {
   onState?.(state);
   return state;
+}
+
+export function parseBrowserExtensionPendingRequestState(
+  value: unknown
+): BrowserExtensionPendingRequestState {
+  if (!isRecord(value)) {
+    throw new Error("browser extension pending request state must be an object");
+  }
+  if (!hasOnlyKeys(value, [
+    "format",
+    "request_id",
+    "method",
+    "extension_id",
+    "page_origin",
+    "app_name",
+    "status",
+    "started_at",
+    "updated_at",
+    "stores_production_secrets",
+    "includes_event_template"
+  ])) {
+    throw new Error("browser extension pending request state has unsupported fields");
+  }
+  if (value.format !== BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT) {
+    throw new Error("browser extension pending request state format is unsupported");
+  }
+  if (!isBrowserExtensionRequestId(value.request_id)) {
+    throw new Error("browser extension pending request state request_id is invalid");
+  }
+  if (value.stores_production_secrets !== false) {
+    throw new Error("browser extension pending request state must not store production secrets");
+  }
+  if (value.includes_event_template !== false) {
+    throw new Error("browser extension pending request state must not include event templates");
+  }
+  return Object.freeze({
+    format: BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
+    request_id: value.request_id,
+    method: requirePendingRequestMethod(value.method),
+    extension_id: requirePendingExtensionId(value.extension_id),
+    page_origin: requireBrowserExtensionPageOrigin(
+      value.page_origin,
+      "browser extension pending request page_origin is invalid"
+    ),
+    ...(value.app_name !== undefined
+      ? { app_name: requirePendingAppName(value.app_name) }
+      : {}),
+    status: requirePendingRequestStatus(value.status),
+    started_at: requireNonNegativeSafeInteger(
+      value.started_at as number,
+      "browser extension pending request started_at"
+    ),
+    updated_at: requireNonNegativeSafeInteger(
+      value.updated_at as number,
+      "browser extension pending request updated_at"
+    ),
+    stores_production_secrets: false,
+    includes_event_template: false
+  });
 }
 
 export function createBrowserExtensionPendingRequestLifecycle(

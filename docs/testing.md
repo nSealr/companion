@@ -145,7 +145,10 @@ single-repository CI. Cross-repository drift remains guarded by
   `list_pending_requests` and `cancel_pending_request` paths accept
   extension-internal senders, reject page-origin senders, never contact native
   messaging for control messages, and can use the background entrypoint's
-  default in-memory lifecycle. Page-provider tests prove
+  default in-memory lifecycle. Popup-control tests prove future visible UI can
+  call the same list/cancel protocol through injected `runtime.sendMessage`,
+  rejects mismatched or unsafe response envelopes, and remains secretless.
+  Page-provider tests prove
   NIP-07 `getPublicKey` and `signEvent`
   calls become validated background requests, unsafe templates fail before the
   background boundary, malformed responses are rejected, and cancellation is

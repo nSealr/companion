@@ -154,6 +154,8 @@ match the shared `contract_id`.
   snapshots for future UI without exposing event templates or key material,
   and can abort in-flight native messaging when that pending request is
   cancelled through extension-internal list/cancel control messages,
+  includes a popup-control client over injected `runtime.sendMessage` for
+  future visible UI to list/cancel those secretless pending requests,
   and can build either the default minimal no-host-permission manifest or an
   opt-in explicit-origin content-script manifest profile. The content-script
   profile still omits host-permission fields, broad URL matches, extension

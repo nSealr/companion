@@ -8,6 +8,7 @@ import { packageDirName, root, sourceManifest } from "./package_set.mjs";
 const browserRuntimeEntrypoints = [
   "apps/browser-extension/src/nsealr-background-entrypoint.ts",
   "apps/browser-extension/src/nsealr-content-script-entrypoint.ts",
+  "apps/browser-extension/src/nsealr-popup-entrypoint.ts",
   "apps/browser-extension/src/nsealr-page-script-entrypoint.ts",
   "packages/browser-provider/src/index.ts"
 ].map((path) => join(root, path));

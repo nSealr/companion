@@ -128,6 +128,9 @@ match the shared `contract_id`.
   material, routes extension-internal popup control messages for origin
   permission review through the background controller without approval,
   storage, grants, provider injection, signer dispatch, or key material,
+  includes a pure active-tab origin permission review orchestrator that binds
+  selected-tab origin, extension id, and app name to the returned review before
+  any rendering or approval,
   includes a pure
   background-controller boundary over injected native messaging with optional
   response timeouts and request-scoped cancellation,

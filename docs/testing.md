@@ -144,6 +144,13 @@ single-repository CI. Cross-repository drift remains guarded by
   development HTTP origins, rejects browser-internal pages, rejects ambiguous
   tabs, malformed ids, invalid extension ids, and invalid injected APIs, and
   still stores no browser secrets or key material.
+  Popup origin-permission orchestration tests prove selected active-tab
+  metadata is passed to the review-control boundary, returned review origin and
+  extension id plus app name must match the selected tab, unsupported result
+  fields and authorizing or secret-carrying control results are rejected,
+  unsupported active tabs fail before controls are contacted, and the result
+  remains storage-free,
+  grant-free, provider-injection-free, signer-dispatch-free, and secretless.
   Sender-aware handler and background-controller tests prove an injected
   approved-origin store can authorize exact `get_public_key` access while
   denying method-mismatched, stale-digest, or malformed-store requests before

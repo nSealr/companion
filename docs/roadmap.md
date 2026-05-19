@@ -410,7 +410,12 @@ and uploads checked tarball artifacts without publishing to npm.
   active-tab origin selector now resolves exactly one injected active tab into
   normalized sender/origin metadata for future approval UI, without adding
   manifest permissions, storage, grants, provider injection, signer dispatch,
-  or key material. The sender-aware
+  or key material. A pure active-tab origin permission review orchestrator now
+  binds that selected-tab metadata to the returned review and rejects origin or
+  extension-id mismatches, app-name mismatches, unsupported result fields, and
+  authorizing/secret-carrying control results before rendering or approval,
+  still without storage, grants, provider injection, signer dispatch, or key
+  material. The sender-aware
   browser request handler can now consume an injected approved-origin store and
   deny stale, malformed, or method-mismatched origin permissions before provider
   selection, native messaging, route selection, or signer dispatch; the

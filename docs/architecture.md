@@ -583,6 +583,14 @@ returns secretless page-origin metadata plus a sender object suitable for the
 existing background request path. It does not add manifest permissions, read or
 write browser storage, create grants, inject a provider, dispatch signers, or
 handle key material.
+The active-tab origin permission review orchestrator composes that selector
+with the popup control client. It requests review metadata for the normalized
+active-tab sender, parses the returned review, and rejects origin or extension
+id mismatches, app-name mismatches, unsupported result fields, or
+authorizing/secret-carrying control results before any card rendering or
+approval path can consume it. It is still review-only and does not write
+browser storage, create grants, inject a provider, dispatch a signer, or carry
+key material.
 The sender-aware request handler can also consume that approved-origin store as
 an injected authorization gate. When configured, it checks the exact
 origin/extension/pairing-digest/method tuple after request and sender parsing

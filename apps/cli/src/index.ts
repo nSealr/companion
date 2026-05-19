@@ -470,6 +470,7 @@ function validateInvalidHardeningFixture(fixture: {
   envelope?: string;
   frame?: string;
   request_message?: unknown;
+  uri?: string;
   policy_file?: unknown;
 }): void {
   if (fixture.category === "signing-request") {
@@ -509,6 +510,16 @@ function validateInvalidHardeningFixture(fixture: {
   if (fixture.category === "nip46") {
     expectFixtureRejection(fixture.name, fixture.expected_error, () => {
       decideNip46BridgeAction(fixture.request_message, []);
+    });
+    return;
+  }
+  if (fixture.category === "nip46-connection-uri") {
+    if (typeof fixture.uri !== "string") {
+      throw new Error(`invalid hardening fixture ${fixture.name}: uri must be a string`);
+    }
+    const uri = fixture.uri;
+    expectFixtureRejection(fixture.name, fixture.expected_error, () => {
+      parseNip46ConnectionUri(uri);
     });
     return;
   }

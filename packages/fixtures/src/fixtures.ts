@@ -285,13 +285,21 @@ export type SpecsFixtureSet = {
   invalidVectors: Array<{
     name: string;
     format: string;
-    category: "signing-request" | "response" | "qr-envelope" | "serial-frame" | "nip46" | "nip46-policy-file";
+    category:
+      | "signing-request"
+      | "response"
+      | "qr-envelope"
+      | "serial-frame"
+      | "nip46"
+      | "nip46-connection-uri"
+      | "nip46-policy-file";
     expected_error: string;
     request?: unknown;
     response?: unknown;
     envelope?: string;
     frame?: string;
     request_message?: unknown;
+    uri?: string;
     policy_file?: unknown;
   }>;
 };

@@ -502,7 +502,8 @@ single-repository CI. Cross-repository drift remains guarded by
   `nostrconnect://` descriptor parsing, relay validation, requested
   permissions, optional client metadata, required `nostrconnect` secret
   presence, unsupported parameter rejection, and proof that descriptor output
-  does not echo shared secret values.
+  does not echo shared secret values. Shared invalid hardening vectors cover
+  malformed connection URI schemes, relays, and missing `nostrconnect` secrets.
 - NIP-46 permission matching tests covering derived `sign_event:<kind>`
   requirements, broad `sign_event` grants, method-only grants, denied requests,
   and `connect` exclusion from post-connect request permissions. The CLI fixture
@@ -558,8 +559,9 @@ single-repository CI. Cross-repository drift remains guarded by
   values, resource-limit violations, malformed or ambiguous responses,
   malformed response request ids, contradictory or reason-less signing-status
   readiness, malformed QR/serial envelopes, malformed NIP-46 payloads, invalid
-  policy files, duplicate signing-status gate entries, and signed-event
-  response integer-safety, content, or tag violations.
+  NIP-46 connection URIs, invalid policy files, duplicate signing-status gate
+  entries, and signed-event response integer-safety, content, or tag
+  violations.
 - Nostr conformance oracle tests must compare companion event id/signature
   behavior with `nostr-tools` in tests, while keeping production code free of
   unnecessary oracle coupling.

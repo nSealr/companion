@@ -222,11 +222,21 @@ describe("NIP-46 bridge payloads", () => {
 
   it("rejects shared invalid NIP-46 hardening vectors deterministically", () => {
     const fixtures = loadSpecsFixtures(specsRoot);
-    const vectors = fixtures.invalidVectors.filter((vector) => vector.category === "nip46" || vector.category === "nip46-policy-file");
+    const vectors = fixtures.invalidVectors.filter(
+      (vector) =>
+        vector.category === "nip46" ||
+        vector.category === "nip46-connection-uri" ||
+        vector.category === "nip46-policy-file"
+    );
 
     expect(vectors.length).toBeGreaterThan(0);
     for (const vector of vectors) {
       const action = () => {
+        if (vector.category === "nip46-connection-uri") {
+          if (typeof vector.uri !== "string") throw new Error(`${vector.name}: uri must be a string`);
+          parseNip46ConnectionUri(vector.uri);
+          return;
+        }
         if (vector.category === "nip46-policy-file") {
           parseNip46PolicyFile(vector.policy_file);
           return;

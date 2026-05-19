@@ -403,13 +403,17 @@ describe("nsealr CLI", () => {
 
   it("rejects invalid NIP-46 connection URIs before writing output", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-invalid-nip46-connection-uri-"));
-    const uriPath = join(tempRoot, "token.txt");
-    const descriptorPath = join(tempRoot, "descriptor.json");
-    writeFileSync(uriPath, "nostrconnect://bad-pubkey?relay=wss%3A%2F%2Frelay.example.com&secret=secret\n", "utf8");
+    const vector = loadSpecsFixtures(specsRoot).invalidVectors.find(
+      (candidate) => candidate.name === "nip46-connection-uri-nostrconnect-missing-secret"
+    );
+    if (vector === undefined || vector.uri === undefined) throw new Error("missing shared invalid connection URI vector");
+    const uriPath = join(tempRoot, `${vector.name}.txt`);
+    const descriptorPath = join(tempRoot, `${vector.name}.json`);
+    writeFileSync(uriPath, `${vector.uri}\n`, "utf8");
 
     await expect(
       runCli(["nip46", "parse-connection-uri", "--uri-file", uriPath, "--out", descriptorPath])
-    ).rejects.toThrow("client pubkey");
+    ).rejects.toThrow(vector.expected_error);
     expect(existsSync(descriptorPath)).toBe(false);
   });
 

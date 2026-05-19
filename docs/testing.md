@@ -514,6 +514,10 @@ single-repository CI. Cross-repository drift remains guarded by
   shared permitted, denied, and `connect` bridge-decision vectors plus
   `nsealr nip46 review-connect` against the shared `connect` review-page vector
   without opening relay or signer transports.
+- CLI NIP-46 connection URI tests covering `nsealr nip46 parse-connection-uri`
+  against shared `bunker://` and `nostrconnect://` vectors, including
+  no-secret-echo output and invalid-token refusal before output files are
+  written.
 - CLI NIP-46 policy-file tests covering read-only
   `nsealr-nip46-policy-v0` permission input and rejection of ambiguous
   `--permissions` plus `--policy-file` usage. The positive case consumes the

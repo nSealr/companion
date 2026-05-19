@@ -974,6 +974,12 @@ secret value. Parsing a token does not subscribe to relays, derive a NIP-44
 session key, return a NIP-46 acknowledgement, create a grant, or choose a
 signer route.
 
+`nsealr nip46 parse-connection-uri` is only a file-backed harness over that
+package parser. It reads a local text file containing the token and writes the
+same descriptor JSON after validation. The command intentionally avoids a
+direct `--uri` argument so shared secrets are not encouraged into shell
+history, process lists, or copied logs.
+
 ## QR Envelope
 
 The companion follows the shared `nSealr/specs` QR v0 format:

@@ -285,6 +285,10 @@ match the shared `contract_id`.
   already-decrypted NIP-46 `connect` request. It shows the remote signer
   pubkey, whether a secret was provided, and requested permissions without
   echoing the secret value or approving the client.
+- `nsealr nip46 parse-connection-uri` reads a `bunker://` or
+  `nostrconnect://` token from a local file and writes descriptor-only metadata
+  without echoing the shared secret value. It does not open relays, acknowledge
+  `connect`, persist grants, or contact signer transports.
 - `packages/qr` implements the v0 `nsealr1:` QR envelope from
   `nSealr/specs`, including malformed/padded/invalid-UTF-8/oversized
   rejection. Encoding applies the same static decoded-JSON byte limit as

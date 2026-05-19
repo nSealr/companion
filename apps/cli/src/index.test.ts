@@ -384,6 +384,35 @@ describe("nsealr CLI", () => {
     expect(JSON.stringify(loadJson(connectReviewPath))).not.toContain("secret-1");
   });
 
+  it("writes NIP-46 connection URI descriptors without echoing secrets", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-nip46-connection-uri-"));
+    const fixtures = loadSpecsFixtures(specsRoot);
+
+    for (const vector of fixtures.nip46ConnectionUris) {
+      const uriPath = join(tempRoot, `${vector.name}.txt`);
+      const descriptorPath = join(tempRoot, `${vector.name}.json`);
+      writeFileSync(uriPath, `${vector.uri}\n`, "utf8");
+
+      await runCli(["nip46", "parse-connection-uri", "--uri-file", uriPath, "--out", descriptorPath]);
+
+      const descriptor = loadJson(descriptorPath);
+      expect(descriptor).toEqual(vector.expected_descriptor);
+      expect(JSON.stringify(descriptor)).not.toContain(vector.secret_probe);
+    }
+  });
+
+  it("rejects invalid NIP-46 connection URIs before writing output", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-invalid-nip46-connection-uri-"));
+    const uriPath = join(tempRoot, "token.txt");
+    const descriptorPath = join(tempRoot, "descriptor.json");
+    writeFileSync(uriPath, "nostrconnect://bad-pubkey?relay=wss%3A%2F%2Frelay.example.com&secret=secret\n", "utf8");
+
+    await expect(
+      runCli(["nip46", "parse-connection-uri", "--uri-file", uriPath, "--out", descriptorPath])
+    ).rejects.toThrow("client pubkey");
+    expect(existsSync(descriptorPath)).toBe(false);
+  });
+
   it("can read NIP-46 approved permissions from an explicit policy file", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-nip46-policy-file-"));
     const signEventVector = loadJson(resolve(specsRoot, "vectors/nip46/sign-event-kind-1-basic.json")) as {

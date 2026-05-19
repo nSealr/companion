@@ -98,6 +98,8 @@ production-grade browser/native USB/WebSerial binding.
 - Read-only policy-file input for the CLI decision harness.
 - Descriptor-only parsing for official `bunker://` and `nostrconnect://`
   connection tokens, without relay sessions or secret echo.
+- CLI descriptor harness for those connection tokens, reading from a local
+  token file instead of a shell argument.
 
 Status: the first decrypted-payload bridge is implemented in `packages/nip46`.
 It consumes shared `nSealr/specs` NIP-46 payload vectors through unit tests
@@ -118,7 +120,9 @@ the CLI as a file/argument adapter. These paths also do not add relay,
 encryption, or signer I/O. The package now also validates `bunker://` and
 `nostrconnect://` connection tokens into non-secret descriptors for later UI
 and session work; the parser records only whether a secret was present and does
-not acknowledge a connection, open relays, or create grants.
+not acknowledge a connection, open relays, or create grants. `nsealr nip46
+parse-connection-uri` exposes that parser as a file-backed CLI harness without
+putting tokens directly in the shell command line.
 Relay sessions, NIP-44 encryption/decryption, connection token responses,
 permission storage, grant review, and auth challenge UX remain future work.
 

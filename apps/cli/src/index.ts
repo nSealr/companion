@@ -1098,6 +1098,16 @@ export function buildCli(options: BuildCliOptions = {}): Command {
     });
 
   nip46
+    .command("parse-connection-uri")
+    .description("Write descriptor-only metadata for a bunker:// or nostrconnect:// token")
+    .requiredOption("--uri-file <path>", "Read a local text file containing the connection URI")
+    .requiredOption("--out <path>", "Write the non-secret connection URI descriptor JSON")
+    .action((options: { uriFile: string; out: string }) => {
+      const uri = readFileSync(options.uriFile, "utf8").trim();
+      writeJson(options.out, parseNip46ConnectionUri(uri));
+    });
+
+  nip46
     .command("decide")
     .requiredOption("--message <path>")
     .option("--permissions <value>", "Comma-separated approved NIP-46 permissions", "")

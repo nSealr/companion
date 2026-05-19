@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:ad509daf21c23e8e6bba49942742c2249e646e6dc5fb098aa00d50b8f1bb478b`
+API surface digest: `sha256:5b1bb6ae23db97d02f8a89f7bd4d5c14770d27382fa4a21a0bd25905fea8f912`
 
 Source: `docs/api.md`
 
@@ -59,8 +59,9 @@ approved/revoked local client grants, digest-bound storage-location review and
 approval artifacts for explicit grant/account/route-driver paths, approval
 coverage checks before grant-store output writes, secretless route selection,
 signer-request validation, grant-gated dispatch through an explicitly injected
-dispatcher, and signer-response verification. Browser runtime code uses the
-reviewed `./browser` subpath, while identity-only callers may use the smaller
+dispatcher, display-less external-review acknowledgement binding, and
+signer-response verification. Browser runtime code uses the reviewed
+`./browser` subpath, while identity-only callers may use the smaller
 `./client-identity` subpath. Request-id correlation, native-message framing,
 and malformed-response rejection are public helpers.
 `LocalServiceClient` also owns optional deterministic response timeouts,
@@ -80,6 +81,10 @@ does not include real transport drivers. The route-aware dispatcher registry is
 only a secretless host-wiring helper: it selects the most specific configured
 account/route/transport handler, reports missing route handlers as unavailable,
 and rejects ambiguous handler configuration without opening a signer transport.
+Display-less `sign_event` routes require a
+`nsealr-external-review-acknowledgement-v0` artifact with a matching
+`approval_digest` before the injected dispatcher is called, and the same
+artifact is rejected on routes with trusted device review.
 The async local-service handler is only an awaitable form of the same reviewed
 dispatch boundary for future host-owned I/O drivers; the synchronous handler
 rejects async dispatchers deterministically. File-backed service loading is now

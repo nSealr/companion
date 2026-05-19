@@ -2,7 +2,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
+import { approvalDigestForRequest } from "@nsealr/review";
 import {
+  EXTERNAL_REVIEW_ACKNOWLEDGEMENT_FORMAT,
   approvePairingIntent,
   clientIdForIdentity,
   createRouteDispatcher,
@@ -26,6 +28,8 @@ const externalNip46RouteVector = fixtures.routeSelections.find(
   (selection) => selection.name === "external-nip46-sign-event-bunker"
 );
 if (!externalNip46RouteVector) throw new Error("external NIP-46 route selection fixture is missing");
+const smartcardRouteVector = fixtures.routeSelections.find((selection) => selection.name === "smartcard-sign-event-slot-0");
+if (!smartcardRouteVector) throw new Error("smartcard route selection fixture is missing");
 const client: LocalClientIdentity = {
   surface: "browser_extension",
   origin: "https://example.com",
@@ -43,6 +47,17 @@ const routeGrant: LocalClientGrant = {
   ...grant,
   allowed_operations: ["select_account_route"]
 };
+
+function externalReviewAcknowledgement(approvalDigest = approvalDigestForRequest(request)) {
+  return {
+    format: EXTERNAL_REVIEW_ACKNOWLEDGEMENT_FORMAT,
+    acknowledged: true,
+    source: "external-review",
+    approval_digest: approvalDigest,
+    stores_production_secrets: false,
+    contains_secret_material: false
+  };
+}
 
 describe("local service boundary", () => {
   it("parses local client identities through the shared origin boundary", () => {
@@ -496,6 +511,163 @@ describe("local service boundary", () => {
       route_selection: routeVector.selection,
       request
     }]);
+  });
+
+  it("requires explicit external review acknowledgement for display-less smartcard dispatch", () => {
+    let called = false;
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-smartcard-dispatch-no-review",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: smartcardRouteVector.request,
+        request
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: () => {
+        called = true;
+        return response;
+      }
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "external_review_acknowledgement_required",
+        message: "display-less signer dispatch requires external review acknowledgement"
+      }
+    });
+    expect(called).toBe(false);
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-smartcard-dispatch-wrong-review",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: smartcardRouteVector.request,
+        request,
+        external_review_acknowledgement: externalReviewAcknowledgement("0".repeat(64))
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: () => {
+        called = true;
+        return response;
+      }
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "external_review_acknowledgement_mismatch",
+        message: "external review approval_digest does not match signer request"
+      }
+    });
+    expect(called).toBe(false);
+  });
+
+  it("passes acknowledged display-less smartcard requests through the injected dispatcher", () => {
+    const acknowledgement = externalReviewAcknowledgement();
+    const dispatched: unknown[] = [];
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-smartcard-dispatch-reviewed",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: smartcardRouteVector.request,
+        request,
+        external_review_acknowledgement: acknowledgement
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: (dispatchRequest) => {
+        dispatched.push(dispatchRequest);
+        return response;
+      }
+    })).toEqual({
+      version: 1,
+      request_id: "svc-smartcard-dispatch-reviewed",
+      ok: true,
+      result: {
+        signer_response: response
+      }
+    });
+    expect(dispatched).toEqual([{
+      client,
+      route_selection: smartcardRouteVector.selection,
+      request,
+      external_review_acknowledgement: acknowledgement
+    }]);
+  });
+
+  it("rejects external review acknowledgement on non-display-less dispatch routes", () => {
+    let called = false;
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-esp32-dispatch-unexpected-review",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request,
+        external_review_acknowledgement: externalReviewAcknowledgement()
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: () => {
+        called = true;
+        return response;
+      }
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "external_review_acknowledgement_unsupported",
+        message: "external review acknowledgement is only supported for display-less sign_event dispatch"
+      }
+    });
+    expect(called).toBe(false);
+  });
+
+  it("rejects malformed external review acknowledgements before route dispatch", () => {
+    let called = false;
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-smartcard-dispatch-malformed-review",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: smartcardRouteVector.request,
+        request,
+        external_review_acknowledgement: {
+          ...externalReviewAcknowledgement(),
+          contains_secret_material: true
+        }
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: () => {
+        called = true;
+        return response;
+      }
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_service_request",
+        message: "external review acknowledgement must not contain secret material"
+      }
+    });
+    expect(called).toBe(false);
   });
 
   it("keeps external NIP-46 routes as secretless adapter metadata", () => {

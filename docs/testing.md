@@ -67,7 +67,9 @@ single-repository CI. Cross-repository drift remains guarded by
   behavior when no dispatcher is configured, route-aware dispatcher registry
   selection, external NIP-46 route metadata as an injected-dispatch-only
   adapter path with no built-in relay/session driver, missing-route refusal,
-  ambiguous-handler rejection, async dispatch through
+  ambiguous-handler rejection, display-less smartcard dispatch refusal without
+  a matching external review acknowledgement, rejection of that acknowledgement
+  on trusted-review routes, async dispatch through
   `handleLocalServiceRequestAsync`, deterministic refusal when async dispatch
   is accidentally used through the synchronous handler, malformed dispatch
   response rejection, and native-messaging exchange wrapping before any real

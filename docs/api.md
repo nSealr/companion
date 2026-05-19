@@ -42,6 +42,8 @@ Source entrypoint: `packages/client/src/index.ts`
 
 Exports:
 - `ChromiumNativeHostManifest`
+- `EXTERNAL_REVIEW_ACKNOWLEDGEMENT_FORMAT`
+- `ExternalReviewAcknowledgement`
 - `FirefoxNativeHostManifest`
 - `LOCAL_CLIENT_SURFACES`
 - `LOCAL_GRANT_STORE_FORMAT`

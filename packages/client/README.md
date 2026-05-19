@@ -142,6 +142,11 @@ storage-location review and approval artifacts for explicit grant, account, and
 route-driver paths. Grant-store artifact builders can require those approvals
 before writing a new output path, while the artifacts themselves do not choose
 defaults, approve clients, or open signer transports.
+Display-less `sign_event` routes, such as smartcard slots, also require a
+`nsealr-external-review-acknowledgement-v0` artifact whose `approval_digest`
+matches the signer request before dispatch reaches the injected handler. The
+same acknowledgement is rejected on routes with their own trusted review UI, so
+external review cannot weaken device-local review requirements.
 `LocalServiceClient` owns response validation, request-id correlation, optional
 deterministic response timeout, and optional cancellation for any injected
 exchange. Browser adapters forward an `AbortSignal` into their injected

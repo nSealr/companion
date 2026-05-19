@@ -43,7 +43,8 @@
   "dependencies": {
     "@nsealr/core": "workspace:*",
     "@nsealr/policy": "workspace:*",
-    "@nsealr/protocol": "workspace:*"
+    "@nsealr/protocol": "workspace:*",
+    "@nsealr/review": "workspace:*"
   },
   "devDependencies": {
     "@nsealr/fixtures": "workspace:*"

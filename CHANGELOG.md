@@ -37,6 +37,10 @@ public npm release.
   grant-gated, validates the request, selects the route, calls only an
   explicitly injected dispatcher, verifies the signer response, and remains
   deterministically unavailable when no dispatcher is configured.
+- `@nsealr/client` external-review acknowledgement artifact for display-less
+  `sign_event` dispatch, requiring an `approval_digest` match before
+  smartcard-style routes reach an injected dispatcher and rejecting that
+  artifact on trusted-review routes.
 - `@nsealr/client` deterministic pairing-review projection for future local
   service approval UX.
 - `nsealr local review-pairing` for rendering deterministic pairing-review

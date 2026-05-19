@@ -7,6 +7,7 @@ import {
   type RouteSelectionRequest
 } from "@nsealr/policy";
 import { compactJsonUtf8ByteLength, NSEALR_V0_LIMITS, validateRequest, validateResponse } from "@nsealr/protocol";
+import { approvalDigestForRequest } from "@nsealr/review";
 import {
   parseLocalClientIdentity,
   type LocalClientIdentity,
@@ -25,6 +26,7 @@ export const LOCAL_SERVICE_NAME = "nsealr-companion-service";
 export const NATIVE_HOST_NAME = "dev.nsealr.companion";
 export const LOCAL_PAIRING_INTENT_FORMAT = "nsealr-local-pairing-intent-v0";
 export const LOCAL_PAIRING_APPROVAL_FORMAT = "nsealr-local-pairing-approval-v0";
+export const EXTERNAL_REVIEW_ACKNOWLEDGEMENT_FORMAT = "nsealr-external-review-acknowledgement-v0";
 export const MAX_SERVICE_JSON_BYTES = 16 * 1024;
 
 export const LOCAL_SERVICE_OPERATIONS = [
@@ -54,6 +56,7 @@ export type SignerDispatchRequest = {
   client: LocalClientIdentity;
   route_selection: RouteSelection;
   request: unknown;
+  external_review_acknowledgement?: ExternalReviewAcknowledgement;
 };
 
 export type SignerRequestDispatcher = (request: SignerDispatchRequest) => unknown | Promise<unknown>;
@@ -118,6 +121,15 @@ export type LocalPairingApproval = {
   stores_production_secrets: false;
 };
 
+export type ExternalReviewAcknowledgement = {
+  format: typeof EXTERNAL_REVIEW_ACKNOWLEDGEMENT_FORMAT;
+  acknowledged: true;
+  source: "external-review";
+  approval_digest: string;
+  stores_production_secrets: false;
+  contains_secret_material: false;
+};
+
 export type LocalServiceRequest =
   | {
       version: 1;
@@ -159,6 +171,7 @@ export type LocalServiceRequest =
         client: LocalClientIdentity;
         route_request: RouteSelectionRequest;
         request: unknown;
+        external_review_acknowledgement?: ExternalReviewAcknowledgement;
       };
     }
   | {
@@ -325,6 +338,66 @@ function validateRequestedOperations(value: unknown): { ok: true; operations: Pa
   return { ok: true, operations };
 }
 
+function requireLowerHex64(value: unknown, label: string): string {
+  if (typeof value !== "string" || !/^[0-9a-f]{64}$/u.test(value)) {
+    throw new Error(`${label} must be 32-byte lowercase hex`);
+  }
+  return value;
+}
+
+function parseExternalReviewAcknowledgement(value: unknown): ExternalReviewAcknowledgement {
+  if (!isRecord(value)) {
+    throw new Error("external review acknowledgement must be an object");
+  }
+  if (!hasOnlyKeys(value, [
+    "format",
+    "acknowledged",
+    "source",
+    "approval_digest",
+    "stores_production_secrets",
+    "contains_secret_material"
+  ])) {
+    throw new Error("external review acknowledgement has unsupported fields");
+  }
+  if (value.format !== EXTERNAL_REVIEW_ACKNOWLEDGEMENT_FORMAT) {
+    throw new Error("external review acknowledgement format is unsupported");
+  }
+  if (value.acknowledged !== true) {
+    throw new Error("external review acknowledgement must be explicitly acknowledged");
+  }
+  if (value.source !== "external-review") {
+    throw new Error("external review acknowledgement source is unsupported");
+  }
+  if (value.stores_production_secrets !== false) {
+    throw new Error("external review acknowledgement must not store production secrets");
+  }
+  if (value.contains_secret_material !== false) {
+    throw new Error("external review acknowledgement must not contain secret material");
+  }
+  return {
+    format: EXTERNAL_REVIEW_ACKNOWLEDGEMENT_FORMAT,
+    acknowledged: true,
+    source: "external-review",
+    approval_digest: requireLowerHex64(value.approval_digest, "external review acknowledgement approval_digest"),
+    stores_production_secrets: false,
+    contains_secret_material: false
+  };
+}
+
+function parseOptionalExternalReviewAcknowledgement(
+  value: unknown
+): { ok: true; acknowledgement?: ExternalReviewAcknowledgement } | { ok: false; error: string } {
+  if (value === undefined) return { ok: true };
+  try {
+    return { ok: true, acknowledgement: parseExternalReviewAcknowledgement(value) };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "external review acknowledgement is invalid"
+    };
+  }
+}
+
 function validateServiceRequest(value: unknown): { ok: true; request: LocalServiceRequest } | { ok: false; error: string } {
   if (!isRecord(value)) return { ok: false, error: "service request must be an object" };
   if (compactJsonUtf8ByteLength(value) > MAX_SERVICE_JSON_BYTES) {
@@ -385,6 +458,8 @@ function validateServiceRequest(value: unknown): { ok: true; request: LocalServi
     };
   }
   if (value.operation === "dispatch_signer_request" && "route_request" in value.params && "request" in value.params) {
+    const acknowledgement = parseOptionalExternalReviewAcknowledgement(value.params.external_review_acknowledgement);
+    if (!acknowledgement.ok) return acknowledgement;
     return {
       ok: true,
       request: {
@@ -394,7 +469,10 @@ function validateServiceRequest(value: unknown): { ok: true; request: LocalServi
         params: {
           client: client.client,
           route_request: value.params.route_request as RouteSelectionRequest,
-          request: value.params.request
+          request: value.params.request,
+          ...(acknowledgement.acknowledgement !== undefined
+            ? { external_review_acknowledgement: acknowledgement.acknowledgement }
+            : {})
         }
       }
     };
@@ -763,6 +841,40 @@ function prepareSignerDispatch(
     };
   }
 
+  const acknowledgement = request.params.external_review_acknowledgement;
+  const displayLessSignEvent = routeSelection.trusted_review === "display_less" && routeRequest.method === "sign_event";
+  if (displayLessSignEvent) {
+    if (acknowledgement === undefined) {
+      return {
+        ok: false,
+        response: errorResponse(
+          request,
+          "external_review_acknowledgement_required",
+          "display-less signer dispatch requires external review acknowledgement"
+        )
+      };
+    }
+    if (acknowledgement.approval_digest !== approvalDigestForRequest(request.params.request)) {
+      return {
+        ok: false,
+        response: errorResponse(
+          request,
+          "external_review_acknowledgement_mismatch",
+          "external review approval_digest does not match signer request"
+        )
+      };
+    }
+  } else if (acknowledgement !== undefined) {
+    return {
+      ok: false,
+      response: errorResponse(
+        request,
+        "external_review_acknowledgement_unsupported",
+        "external review acknowledgement is only supported for display-less sign_event dispatch"
+      )
+    };
+  }
+
   if (context.signerDispatcher === undefined) {
     return {
       ok: false,
@@ -776,7 +888,8 @@ function prepareSignerDispatch(
     dispatchRequest: {
       client: request.params.client,
       route_selection: routeSelection,
-      request: request.params.request
+      request: request.params.request,
+      ...(acknowledgement !== undefined ? { external_review_acknowledgement: acknowledgement } : {})
     }
   };
 }

@@ -142,7 +142,8 @@ packages, but it must not export test-only signing as a production path.
   secretless JSON grant-store contract, digest-bound storage-location review
   and approval artifacts, secretless account-route selection, signer-request
   validation, grant-gated signer-request dispatch through an explicitly injected
-  dispatcher, signer-response verification, response validation, and a
+  dispatcher, display-less `sign_event` external-review acknowledgement binding,
+  signer-response verification, response validation, and a
   high-level client wrapper. The wrapper checks request-id correlation,
   malformed responses, and operation-specific result types before callers can
   trust native-messaging responses. The dispatch operation remains unavailable
@@ -724,7 +725,12 @@ store production `nsec`, mnemonic, seed, passphrase, NIP-49 ciphertext, or raw
 private key material. Stateless QR vault routes remain manual-only and cannot
 receive persistent grants. Display-less smartcard routes also remain
 manual-only; they require explicit external review acknowledgement and cannot
-claim trusted device review or persistent grant automation.
+claim trusted device review or persistent grant automation. The local service
+accepts that acknowledgement only as
+`nsealr-external-review-acknowledgement-v0`, only for display-less
+`sign_event`, and only when its `approval_digest` equals the digest recomputed
+from the request; acknowledged metadata is rejected on routes with trusted
+device review.
 
 Route-selection vectors are also consumed through `packages/policy`. The
 selector is pure and secretless: it accepts parsed account descriptors plus a

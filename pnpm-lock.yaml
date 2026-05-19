@@ -245,6 +245,9 @@ importers:
       '@nsealr/protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@nsealr/review':
+        specifier: workspace:*
+        version: link:../review
     devDependencies:
       '@nsealr/fixtures':
         specifier: workspace:*
@@ -329,7 +332,11 @@ importers:
         specifier: workspace:*
         version: link:../fixtures
 
-  packages/review: {}
+  packages/review:
+    dependencies:
+      '@noble/hashes':
+        specifier: 2.2.0
+        version: 2.2.0
 
   packages/sdk:
     dependencies:

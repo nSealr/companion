@@ -217,6 +217,14 @@ real signer transport driver, no key custody, and no production signing claim.
 `@nsealr/browser-provider` now uses this service operation for NIP-07
 `signEvent` instead of duplicating validate/select/unavailable behavior.
 
+Status note, 2026-05-19: local-service dispatch now treats display-less
+`sign_event` routes as an explicit external-review boundary. Smartcard-style
+routes require a `nsealr-external-review-acknowledgement-v0` artifact whose
+`approval_digest` matches the signer request before the injected dispatcher is
+called; the same artifact is rejected on routes with trusted device review.
+This adds no trusted-host claim, no production signer driver, and no policy
+automation.
+
 Status note, 2026-05-18: `@nsealr/client` now includes a route-aware dispatcher
 registry helper. It chooses the most specific configured account/route/transport
 handler, reports missing route handlers as `signer_route_unavailable`, reports

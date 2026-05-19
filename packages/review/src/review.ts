@@ -1,4 +1,5 @@
-import { createHash } from "node:crypto";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
 export type EventReview = {
   kind: number;
@@ -79,8 +80,14 @@ function requireTemplate(value: unknown): {
   };
 }
 
+const UTF8_ENCODER = new TextEncoder();
+
 function utf8ByteLength(value: string): number {
-  return Buffer.byteLength(value, "utf8");
+  return UTF8_ENCODER.encode(value).length;
+}
+
+function sha256Utf8Hex(value: string): string {
+  return bytesToHex(sha256(utf8ToBytes(value)));
 }
 
 export function reviewEventTemplate(
@@ -352,7 +359,7 @@ function approvalDigestForScreenReview(
     review,
     pages
   };
-  return createHash("sha256").update(canonicalJson(payload), "utf8").digest("hex");
+  return sha256Utf8Hex(canonicalJson(payload));
 }
 
 export function screenReviewForRequest(

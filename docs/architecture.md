@@ -673,7 +673,10 @@ not another access surface and do not own production behavior. Their role is to
 prove that a consumer can use the built public package entrypoints for request
 validation, QR envelopes, local-service calls, browser-provider integration,
 and already-decrypted NIP-46 decisions without importing private test-only
-signing code or storing secrets.
+signing code or storing secrets. The browser-provider example consumes the
+shared access-surface vector, so SDK-facing examples stay pinned to the same
+secretless local-service route-selection and signer-unavailable contract as
+package tests.
 The public package import-hygiene gate checks production source separately from
 package manifests and tarball contents. It rejects `@nsealr/*` imports that do
 not resolve to reviewed public packages or exported subpaths, rejects relative

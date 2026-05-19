@@ -82,6 +82,9 @@ single-repository CI. Cross-repository drift remains guarded by
   client adaptation, shared native host name use, invalid native-host-name
   rejection, and rejection before backend contact when an event template
   contains forbidden signer-owned fields.
+- SDK examples also consume the shared browser-provider access-surface vector
+  through built public package entrypoints, so the npm-facing facade does not
+  drift into a separate browser/local-service behavior.
   The browser-runtime import hygiene check walks packaged browser-extension
   entrypoints plus `@nsealr/browser-provider` and fails if that runtime graph
   imports Node builtins, uses `Buffer`/`process`, or imports the Node-capable

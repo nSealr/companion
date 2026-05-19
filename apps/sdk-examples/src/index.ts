@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   NATIVE_HOST_NAME,
@@ -233,26 +233,25 @@ async function localServiceExample(): Promise<void> {
 
 async function browserProviderExample(): Promise<void> {
   const fixtures = loadSpecsFixtures(specsRootForExamples());
-  const routeVector = fixtures.routeSelections.find((candidate) => candidate.name === "esp32-usb-sign-event-slot-0");
+  const accessSurface = fixtures.accessSurfaces.find(
+    (candidate) => candidate.name === "browser-provider-local-service-esp32-usb-unavailable"
+  );
+  if (!accessSurface) throw new Error("browser provider example could not find an access-surface vector");
+  const routeVector = fixtures.routeSelections.find((candidate) => candidate.name === accessSurface.route_selection_vector);
   if (!routeVector) throw new Error("browser provider example could not find a route-selection vector");
-  const browserClient: LocalClientIdentity = {
-    surface: "browser_extension",
-    origin: "https://example.com",
-    app_name: "Example Nostr Client",
-    instance_id: "sdk-provider-1"
+  const browserClient = accessSurface.client as LocalClientIdentity;
+  const accessSurfaceRequest = JSON.parse(
+    readFileSync(resolve(specsRootForExamples(), accessSurface.sign_event_request_vector), "utf8")
+  ) as SignEventRequest;
+  const signerUnavailable = accessSurface.expected.sign_event_without_dispatcher.response as {
+    error: { message: string };
   };
   const service = createBrowserNativeMessagingLocalServiceClient({
     sendNativeMessage: (hostName, message) => {
       assert.equal(hostName, NATIVE_HOST_NAME);
       return handleLocalServiceRequest(message, {
         accounts: fixtures.accounts,
-        grants: [{
-          client_id: clientIdForIdentity(browserClient),
-          origin: browserClient.origin,
-          surface: browserClient.surface,
-          allowed_operations: ["select_account_route", "dispatch_signer_request"],
-          expires_at: 2_000_000_000
-        }],
+        grants: [accessSurface.client_grant as LocalClientGrant],
         now: 1_900_000_000
       });
     },
@@ -264,16 +263,15 @@ async function browserProviderExample(): Promise<void> {
     client: browserClient,
     backend: createLocalServiceBrowserProviderBackend({
       service,
-      routeRequest: routeVector.request,
-      signingUnavailableMessage: "example backend has no signer transport"
+      routeRequest: routeVector.request
     }),
-    nextRequestId: () => "sdk-provider-sign-event"
+    nextRequestId: () => accessSurfaceRequest.request_id
   });
 
-  assert.equal(await provider.getPublicKey(), routeVector.selection.public_key);
+  assert.equal(await provider.getPublicKey(), accessSurface.expected.get_public_key.public_key);
   await assert.rejects(
-    provider.signEvent(request.params.event_template as EventTemplate),
-    /example backend has no signer transport/u
+    provider.signEvent(accessSurfaceRequest.params.event_template as EventTemplate),
+    (error) => error instanceof Error && error.message.includes(signerUnavailable.error.message)
   );
 }
 

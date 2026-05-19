@@ -316,9 +316,12 @@ artifacts are generated before tests, package tarballs are restricted to `dist`
 plus README, consumer smokes import both workspace-built and packed package
 entrypoints, executable SDK examples now cover request/QR, local-service,
 browser-provider, already-decrypted NIP-46, fixtures, policy, review, framing,
-smartcard APDU, and serial-line transport flows, and the changelog/release
-policy pins synchronized pre-release versioning plus npm provenance
-requirements. `docs/api.md` is generated from the actual public package
+smartcard APDU, and serial-line transport flows. The browser-provider SDK
+example consumes the shared access-surface vector for NIP-07 over local
+service, so the npm-facing facade follows the same secretless route-selection
+and signer-unavailable behavior as specs and package tests. The
+changelog/release policy pins synchronized pre-release versioning plus npm
+provenance requirements. `docs/api.md` is generated from the actual public package
 entrypoints and checked in CI so exported symbols cannot drift invisibly.
 Package manifests now carry npm-facing descriptions, keywords, repository
 directories, issue tracker, homepage, MIT license, and public provenance

@@ -85,9 +85,14 @@ single-repository CI. Cross-repository drift remains guarded by
   entrypoints with `platform: browser` and browser-compatible IIFE output, and
   fails if bundled outputs contain Node builtin specifiers, `Buffer`, or
   `process`. Run it directly with
-  `make browser-runtime-bundle`. This is a bundlability gate only; installable
-  extension packaging still needs a reviewed packaged bootstrap/config
-  contract. Package-build tests cover the first private developer artifact
+  `make browser-runtime-bundle`. The browser-extension security audit runs with
+  `make browser-extension-security` and fails if the extension or
+  browser-provider runtime starts depending on test signing packages,
+  signing/key-generation libraries, browser storage APIs, or direct signing
+  helper calls. These gates keep the extension as a secretless NIP-07 access
+  surface over the local companion service. Installable extension packaging
+  still needs a reviewed packaged bootstrap/config contract. Package-build
+  tests cover the first private developer artifact
   builder: route-config tests require digest-bound review and approval for the
   secretless selected route; package-build requires that approval before
   embedding the route config, requires a new output directory, writes manifest

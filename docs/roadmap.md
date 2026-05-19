@@ -456,6 +456,10 @@ and uploads checked tarball artifacts without publishing to npm.
   packaged output filenames, and source launcher paths into a checked
   pre-bundling artifact, rejecting storage/host permissions or entrypoint drift
   before a bundle can be treated as reviewed. A private browser-extension
+  security audit now runs in CI and rejects extension/browser-provider
+  dependencies on test signing packages, signing/key-generation libraries,
+  browser storage APIs, and direct signing helper calls before package-build
+  work can drift into browser-side key custody. A private browser-extension
   `package-plan` script now emits that JSON to stdout only, with no output-path
   or installer behavior. Private `route-config-review` and
   `route-config-approve` scripts now create digest-bound approval artifacts for

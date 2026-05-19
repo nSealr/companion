@@ -120,13 +120,15 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("package.json must expose browser runtime import-hygiene checks")
     elif scripts.get("browser-runtime-bundle:check") != "node scripts/check_browser_runtime_bundle.mjs":
         errors.append("package.json must expose browser runtime bundle-smoke checks")
+    elif scripts.get("browser-extension-security:check") != "node scripts/check_browser_extension_security.mjs":
+        errors.append("package.json must expose browser extension security checks")
     elif scripts.get("public-imports:check") != "node scripts/check_public_imports.mjs":
         errors.append("package.json must expose public import-hygiene checks")
     elif scripts.get("pack-smoke") != "node scripts/pack_smoke.mjs":
         errors.append("package.json must expose the packed tarball smoke script")
     elif scripts.get("release-artifacts") != "node scripts/prepare_release_artifacts.mjs --out release-artifacts/packages":
         errors.append("package.json must expose release-artifacts preparation")
-    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm api-review:check && pnpm browser-runtime-imports:check && pnpm browser-runtime-bundle:check && pnpm public-imports:check && pnpm pack-smoke":
+    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm api-review:check && pnpm browser-runtime-imports:check && pnpm browser-runtime-bundle:check && pnpm browser-extension-security:check && pnpm public-imports:check && pnpm pack-smoke":
         errors.append("package.json ci must build package artifacts, API review, and import-hygiene checks")
 
     makefile = makefile_path.read_text(encoding="utf-8")
@@ -152,6 +154,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile must run the browser runtime import-hygiene check")
     if "browser-runtime-bundle:" not in makefile or "$(PNPM) browser-runtime-bundle:check" not in makefile:
         errors.append("Makefile must run the browser runtime bundle-smoke check")
+    if "browser-extension-security:" not in makefile or "$(PNPM) browser-extension-security:check" not in makefile:
+        errors.append("Makefile must run the browser extension security check")
     if "public-imports:" not in makefile or "$(PNPM) public-imports:check" not in makefile:
         errors.append("Makefile must run the public import-hygiene check")
     if "pack-smoke:" not in makefile or "$(PNPM) pack-smoke" not in makefile:
@@ -162,6 +166,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile ci must include the browser runtime import-hygiene check")
     if "ci:" not in makefile or "browser-runtime-bundle" not in makefile.split("ci:", 1)[1].splitlines()[0]:
         errors.append("Makefile ci must include the browser runtime bundle-smoke check")
+    if "ci:" not in makefile or "browser-extension-security" not in makefile.split("ci:", 1)[1].splitlines()[0]:
+        errors.append("Makefile ci must include the browser extension security check")
 
     if not changelog_path.exists() or "## Unreleased" not in changelog_path.read_text(encoding="utf-8"):
         errors.append("CHANGELOG.md must track unreleased package changes")
@@ -176,6 +182,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("missing companion browser runtime import-hygiene helper: scripts/check_browser_runtime_imports.mjs")
     if not (ROOT / "scripts" / "check_browser_runtime_bundle.mjs").exists():
         errors.append("missing companion browser runtime bundle-smoke helper: scripts/check_browser_runtime_bundle.mjs")
+    if not (ROOT / "scripts" / "check_browser_extension_security.mjs").exists():
+        errors.append("missing companion browser extension security helper: scripts/check_browser_extension_security.mjs")
     if not (ROOT / "scripts" / "check_readme_examples.mjs").exists():
         errors.append("missing companion README example drift helper: scripts/check_readme_examples.mjs")
     if not release_path.exists():

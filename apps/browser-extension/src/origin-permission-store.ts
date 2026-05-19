@@ -25,6 +25,16 @@ export type BrowserExtensionOriginPermissionStoreOptions = {
   updatedAt: number;
 };
 
+export type BrowserExtensionOriginPermissionStoreMutationOptions = {
+  updatedAt: number;
+};
+
+export type BrowserExtensionOriginPermissionApprovalKey = {
+  origin: string;
+  extensionId: string;
+  localPairingDigest: string;
+};
+
 export type BrowserExtensionOriginPermissionLookup = {
   origin: string;
   extensionId: string;
@@ -61,9 +71,10 @@ function requireOriginPermissionMethod(value: unknown): BrowserExtensionOriginPe
   return value;
 }
 
-function requireLookupIdentity(
-  lookup: BrowserExtensionOriginPermissionLookup
-): { origin: string; extensionId: string } {
+function requireLookupIdentity(lookup: {
+  origin: string;
+  extensionId: string;
+}): { origin: string; extensionId: string } {
   const identity = parseLocalClientIdentity({
     surface: "browser_extension",
     origin: lookup.origin,
@@ -81,6 +92,29 @@ function requireLookupIdentity(
 
 function approvalKey(approval: BrowserExtensionOriginPermissionApproval): string {
   return `${approval.origin}\u0000${approval.extension_id}\u0000${approval.local_pairing_digest}`;
+}
+
+function normalizeApprovalKey(
+  key: BrowserExtensionOriginPermissionApprovalKey
+): BrowserExtensionOriginPermissionApprovalKey {
+  const identity = requireLookupIdentity(key);
+  return {
+    origin: identity.origin,
+    extensionId: identity.extensionId,
+    localPairingDigest: requireHex64(
+      key.localPairingDigest,
+      "browser extension origin permission key localPairingDigest"
+    )
+  };
+}
+
+function approvalMatchesKey(
+  approval: BrowserExtensionOriginPermissionApproval,
+  key: BrowserExtensionOriginPermissionApprovalKey
+): boolean {
+  return approval.origin === key.origin
+    && approval.extension_id === key.extensionId
+    && approval.local_pairing_digest === key.localPairingDigest;
 }
 
 function compareApprovals(
@@ -185,6 +219,48 @@ export function parseBrowserExtensionOriginPermissionStore(
       value.updated_at,
       "browser extension origin permission store updated_at"
     )
+  );
+}
+
+function mutationUpdatedAt(
+  store: BrowserExtensionOriginPermissionStore,
+  options: BrowserExtensionOriginPermissionStoreMutationOptions
+): number {
+  const updatedAt = requireNonNegativeSafeInteger(
+    options.updatedAt,
+    "browser extension origin permission store mutation updatedAt"
+  );
+  if (updatedAt < store.updated_at) {
+    throw new Error("browser extension origin permission store mutation updatedAt must not move backward");
+  }
+  return updatedAt;
+}
+
+export function upsertBrowserExtensionOriginPermissionApproval(
+  store: unknown,
+  approval: unknown,
+  options: BrowserExtensionOriginPermissionStoreMutationOptions
+): BrowserExtensionOriginPermissionStore {
+  const parsedStore = parseBrowserExtensionOriginPermissionStore(store);
+  const parsedApproval = parseBrowserExtensionOriginPermissionApproval(approval);
+  const updatedAt = mutationUpdatedAt(parsedStore, options);
+  return buildOriginPermissionStore(parseApprovals([
+    ...parsedStore.approvals.filter((existing) => approvalKey(existing) !== approvalKey(parsedApproval)),
+    parsedApproval
+  ]), updatedAt);
+}
+
+export function revokeBrowserExtensionOriginPermissionApproval(
+  store: unknown,
+  key: BrowserExtensionOriginPermissionApprovalKey,
+  options: BrowserExtensionOriginPermissionStoreMutationOptions
+): BrowserExtensionOriginPermissionStore {
+  const parsedStore = parseBrowserExtensionOriginPermissionStore(store);
+  const normalizedKey = normalizeApprovalKey(key);
+  const updatedAt = mutationUpdatedAt(parsedStore, options);
+  return buildOriginPermissionStore(
+    parsedStore.approvals.filter((approval) => !approvalMatchesKey(approval, normalizedKey)),
+    updatedAt
   );
 }
 

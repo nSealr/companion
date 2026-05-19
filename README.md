@@ -116,8 +116,10 @@ match the shared `contract_id`.
   writing browser storage, creating grants, or dispatching signers, can render a
   pure origin-permission review card for future popup approval UX without
   performing storage, grant, provider-injection, or signer-dispatch side
-  effects, can enforce an injected approved-origin store before provider
-  selection so denied methods fail before native messaging, includes a pure
+  effects, can maintain the approved-origin store through deterministic
+  upsert/revoke helpers without choosing a browser storage backend, can enforce
+  an injected approved-origin store before provider selection so denied methods
+  fail before native messaging, includes a pure
   background-controller boundary over injected native messaging with optional
   response timeouts and request-scoped cancellation,
   includes a pure runtime-message adapter that maps raw browser sender metadata

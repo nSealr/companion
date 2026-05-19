@@ -9,7 +9,9 @@ import {
   createBrowserExtensionOriginPermissionStore,
   findBrowserExtensionOriginPermissionApproval,
   isBrowserExtensionOriginMethodAllowed,
-  parseBrowserExtensionOriginPermissionStore
+  parseBrowserExtensionOriginPermissionStore,
+  revokeBrowserExtensionOriginPermissionApproval,
+  upsertBrowserExtensionOriginPermissionApproval
 } from "./origin-permission-store.js";
 
 const digestA = "a".repeat(64);
@@ -169,6 +171,111 @@ describe("browser extension origin permission store contract", () => {
     expect(() => createBrowserExtensionOriginPermissionStore([first, second], {
       updatedAt: 1_900_000_003
     })).toThrow(/duplicated/u);
+  });
+
+  it("upserts exact approval keys without keeping stale method scopes", () => {
+    const routeOnly = approval("https://example.com", "extension@nsealr.dev", digestA, 1_900_000_001, [
+      {
+        method: "get_public_key",
+        label: "Read public key",
+        effect: "The page can read the selected account public key through the browser provider."
+      }
+    ]);
+    const fullAccess = approval("https://example.com", "extension@nsealr.dev", digestA, 1_900_000_003);
+    const otherOrigin = approval("https://other.example", "extension@nsealr.dev", digestB, 1_900_000_002);
+    const store = createBrowserExtensionOriginPermissionStore([routeOnly, otherOrigin], {
+      updatedAt: 1_900_000_004
+    });
+
+    const updated = upsertBrowserExtensionOriginPermissionApproval(store, fullAccess, {
+      updatedAt: 1_900_000_005
+    });
+
+    expect(updated.updated_at).toBe(1_900_000_005);
+    expect(updated.approvals).toHaveLength(2);
+    expect(updated.approvals.find((entry) => entry.origin === "https://example.com")).toMatchObject({
+      approved_at: 1_900_000_003,
+      approved_methods: ["get_public_key", "sign_event"]
+    });
+    expect(isBrowserExtensionOriginMethodAllowed(updated, {
+      origin: "https://example.com",
+      extensionId: "extension@nsealr.dev",
+      localPairingDigest: digestA,
+      method: "sign_event"
+    })).toBe(true);
+    expect(isBrowserExtensionOriginMethodAllowed(updated, {
+      origin: "https://other.example",
+      extensionId: "extension@nsealr.dev",
+      localPairingDigest: digestB,
+      method: "sign_event"
+    })).toBe(true);
+
+    const inserted = upsertBrowserExtensionOriginPermissionApproval(
+      updated,
+      approval("https://a.example", "extension@nsealr.dev", digestB, 1_900_000_006),
+      { updatedAt: 1_900_000_007 }
+    );
+    expect(inserted.approvals.map((entry) => entry.origin)).toEqual([
+      "https://a.example",
+      "https://example.com",
+      "https://other.example"
+    ]);
+  });
+
+  it("revokes exact approval keys without touching unrelated origins", () => {
+    const first = approval("https://example.com", "extension@nsealr.dev", digestA, 1_900_000_001);
+    const second = approval("https://other.example", "extension@nsealr.dev", digestB, 1_900_000_002);
+    const store = createBrowserExtensionOriginPermissionStore([first, second], {
+      updatedAt: 1_900_000_003
+    });
+
+    const revoked = revokeBrowserExtensionOriginPermissionApproval(store, {
+      origin: "https://example.com",
+      extensionId: "extension@nsealr.dev",
+      localPairingDigest: digestA
+    }, {
+      updatedAt: 1_900_000_004
+    });
+
+    expect(revoked.updated_at).toBe(1_900_000_004);
+    expect(revoked.approvals).toEqual([second]);
+    expect(isBrowserExtensionOriginMethodAllowed(revoked, {
+      origin: "https://example.com",
+      extensionId: "extension@nsealr.dev",
+      localPairingDigest: digestA,
+      method: "get_public_key"
+    })).toBe(false);
+    expect(isBrowserExtensionOriginMethodAllowed(revoked, {
+      origin: "https://other.example",
+      extensionId: "extension@nsealr.dev",
+      localPairingDigest: digestB,
+      method: "sign_event"
+    })).toBe(true);
+  });
+
+  it("rejects origin permission store mutations that move time backward or use malformed keys", () => {
+    const existing = approval("https://example.com", "extension@nsealr.dev", digestA, 1_900_000_001);
+    const store = createBrowserExtensionOriginPermissionStore([existing], {
+      updatedAt: 1_900_000_010
+    });
+
+    expect(() => upsertBrowserExtensionOriginPermissionApproval(store, existing, {
+      updatedAt: 1_900_000_009
+    })).toThrow(/move backward/u);
+    expect(() => revokeBrowserExtensionOriginPermissionApproval(store, {
+      origin: "https://example.com/path",
+      extensionId: "extension@nsealr.dev",
+      localPairingDigest: digestA
+    }, {
+      updatedAt: 1_900_000_011
+    })).toThrow(/origin/u);
+    expect(() => revokeBrowserExtensionOriginPermissionApproval(store, {
+      origin: "https://example.com",
+      extensionId: "extension@nsealr.dev",
+      localPairingDigest: "not-a-digest"
+    }, {
+      updatedAt: 1_900_000_011
+    })).toThrow(/localPairingDigest/u);
   });
 
   it("rejects malformed or secret-looking store artifacts", () => {

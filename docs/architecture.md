@@ -558,8 +558,9 @@ storage, inject a provider, or contain key material. The matching
 approved origin artifacts, sorts them deterministically, rejects duplicate
 `origin + extension_id + local_pairing_digest` records, and answers exact
 origin/extension/pairing-digest/method lookups. That store contract is still
-pure data validation: it does not call browser storage APIs, choose a
-persistence backend, create grants, dispatch signers, or store secrets.
+pure data validation: its upsert/revoke helpers replace or remove exact
+approved-origin records without calling browser storage APIs, choosing a
+persistence backend, creating grants, dispatching signers, or storing secrets.
 The matching origin-permission review card is also pure: it renders the
 already-validated review, the full pairing digest, requested method effects,
 and approve/reject actions over injected controls. It accepts approval only

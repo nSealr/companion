@@ -394,7 +394,10 @@ and uploads checked tarball artifacts without publishing to npm.
   deterministic secretless origin-permission store contract for exact
   origin/extension/pairing-digest/method lookup, while still not choosing a
   browser storage backend, creating local-service grants, dispatching signers,
-  or storing secret material. The private extension app now also has a pure
+  or storing secret material. The store contract now includes deterministic
+  upsert/revoke helpers for exact approved-origin records, so future popup
+  storage wiring does not need to invent mutation semantics. The private
+  extension app now also has a pure
   origin-permission review card for future popup approval UX: it renders the
   validated review, full pairing digest, requested method effects, and
   approve/reject actions over injected controls, and accepts only parsed

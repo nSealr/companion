@@ -124,8 +124,10 @@ single-repository CI. Cross-repository drift remains guarded by
   approved origin artifacts can be normalized into deterministic secretless
   records, exact origin/extension/pairing-digest/method lookup is required,
   route-only approvals cannot authorize `sign_event`, duplicate approvals are
-  rejected before shadowing, and malformed or secret-looking store fields fail
-  before any browser storage, grant, signer dispatch, or key material exists.
+  rejected before shadowing, exact approved-origin upsert/revoke mutations do
+  not keep stale method scopes or move the store clock backward, and malformed
+  or secret-looking store fields fail before any browser storage, grant, signer
+  dispatch, or key material exists.
   Origin-permission view tests prove the future popup approval card renders the
   validated origin, app name, full local-pairing digest, method effects, and
   no-key/no-grant/no-storage-write chips, passes the exact digest to injected

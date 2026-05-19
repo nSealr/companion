@@ -369,9 +369,9 @@
         },
         "session_source_generation": {
           "target": "required",
-          "current": "planned",
+          "current": "partial",
           "contract_id": "session-source-generation-v0",
-          "notes": "The ESP32 QR vault must match the Raspberry behavior for local RAM-only source generation, but host-core generation, backup/export UI, hardware review acceptance, and reset-loss evidence remain pending."
+          "notes": "Host-core can generate BIP-39 sources from 16- or 32-byte entropy and standalone nsec-equivalent private-key sources from valid secp256k1 scalar entropy into the same RAM-only source/review boundary. Hardware RNG wiring, backup/export UI, hardware review acceptance, reset-loss evidence, response QR output, and real signing remain pending."
         },
         "manual_only_policy": {
           "target": "required",

@@ -5,6 +5,7 @@ import {
   decidePolicyRequest,
   parseAccountDescriptor,
   parseGrantDescriptor,
+  parsePolicyDecisionRequest,
   parsePolicyProfile,
   parseRouteSelectionRequest,
   selectAccountRoute
@@ -145,6 +146,43 @@ describe("identity, recovery, and policy contracts", () => {
         request: vector.request
       })).toEqual(vector.decision);
     }
+  });
+
+  it("parses policy decision requests before evaluation", () => {
+    const vector = loadJson(resolve(specsRoot, "vectors/policy-decisions/grant-sign-event-kind-1-rate-limited.json")) as {
+      request: unknown;
+    };
+
+    expect(parsePolicyDecisionRequest(vector.request)).toMatchObject({
+      account_id: "acct-esp32-usb-slot-0",
+      route_type: "esp32_usb_nip46",
+      grant_usage: {
+        "grant-esp32-usb-kind-1-session": {
+          window_started_at: 1710000300,
+          uses: 5
+        }
+      }
+    });
+
+    expect(() => parsePolicyDecisionRequest({
+      ...(vector.request as Record<string, unknown>),
+      grant_usage: undefined
+    })).toThrow(/grant_usage must be an object/u);
+
+    expect(() => parsePolicyDecisionRequest({
+      ...(vector.request as Record<string, unknown>),
+      route_type: "raspberry_qr_vault"
+    })).toThrow(/persistent or external route/u);
+
+    expect(() => parsePolicyDecisionRequest({
+      ...(vector.request as Record<string, unknown>),
+      grant_usage: {
+        "grant-esp32-usb-kind-1-session": {
+          window_started_at: 1710000300,
+          uses: -1
+        }
+      }
+    })).toThrow(/uses must be a non-negative integer/u);
   });
 
   it("matches shared route-selection vectors without signer dispatch", () => {

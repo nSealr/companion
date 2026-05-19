@@ -172,6 +172,12 @@ const REVIEW_MODES = new Set(["device_display", "external_review", "external_pol
 const POLICY_SUPPORT_MODES = new Set(["manual_only", "scoped_automation", "external"]);
 const DEVICE_METHODS = new Set(["get_capabilities", "get_signing_status", "get_public_key", "sign_event"]);
 const DECRYPT_METHODS = new Set(["nip04_decrypt", "nip44_decrypt"]);
+const POLICY_DECISION_ROUTE_TYPES = new Set<RouteType>([
+  "esp32_usb_nip46",
+  "smartcard",
+  "custom_hardware_wallet",
+  "external_nip46"
+]);
 const SECRET_FIELD_NAMES = new Set([
   "secret_key",
   "private_key",
@@ -232,6 +238,13 @@ function requireXOnlyPubkey(value: unknown, field: string): string {
   return value;
 }
 
+function requireGrantId(value: unknown, field: string): string {
+  if (typeof value !== "string" || !/^grant-[A-Za-z0-9._:-]{1,122}$/u.test(value)) {
+    throw new Error(`${field} must be a grant-* stable string id`);
+  }
+  return value;
+}
+
 function requireBoolean(value: unknown, field: string): boolean {
   if (typeof value !== "boolean") throw new Error(`${field} must be boolean`);
   return value;
@@ -240,6 +253,13 @@ function requireBoolean(value: unknown, field: string): boolean {
 function requirePositiveInteger(value: unknown, field: string): number {
   if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
     throw new Error(`${field} must be a positive integer`);
+  }
+  return value;
+}
+
+function requireNonNegativeInteger(value: unknown, field: string): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new Error(`${field} must be a non-negative integer`);
   }
   return value;
 }
@@ -256,6 +276,11 @@ function requireStringArray(value: unknown, field: string): string[] {
     throw new Error(`${field} must be an array of strings`);
   }
   return value;
+}
+
+function requireGrantIdArray(value: unknown, field: string): string[] {
+  if (!Array.isArray(value)) throw new Error(`${field} must be an array of grant ids`);
+  return value.map((item, index) => requireGrantId(item, `${field}[${index}]`));
 }
 
 function parseSignerRoute(value: unknown): SignerRoute {
@@ -514,6 +539,29 @@ function parseGrantPermission(value: unknown): GrantPermission {
   return { method };
 }
 
+function parsePolicyDecisionPermission(value: unknown): GrantPermission {
+  assertRecord(value, "permission");
+  assertOnlyKeys(value, ["method", "parameter", "event_kind"], "permission");
+  if (value.method === "*" || value.parameter === "*") throw new Error("permission must not use wildcard values");
+  const method = requireString(value.method, "permission.method");
+  if (method === "sign_event") {
+    if (typeof value.parameter !== "string" || !/^[0-9]+$/u.test(value.parameter)) {
+      throw new Error("sign_event permission.parameter must be a decimal event kind");
+    }
+    if (typeof value.event_kind !== "number" || !Number.isInteger(value.event_kind) || value.event_kind < 0) {
+      throw new Error("sign_event permission.event_kind must be a non-negative integer");
+    }
+    if (Number(value.parameter) !== value.event_kind) {
+      throw new Error("sign_event permission parameter/event_kind mismatch");
+    }
+    return { method, parameter: value.parameter, event_kind: value.event_kind };
+  }
+  if ("parameter" in value || "event_kind" in value) {
+    throw new Error("non-sign_event permissions must not include parameters");
+  }
+  return { method };
+}
+
 export function parseGrantDescriptor(value: unknown): GrantDescriptor {
   rejectSecretFields(value);
   assertRecord(value, "grant descriptor");
@@ -548,6 +596,50 @@ export function parseGrantDescriptor(value: unknown): GrantDescriptor {
     requires_device_policy_confirmation: true,
     revocable: true,
     audit_event_format: "nsealr-grant-audit-event-v0"
+  };
+}
+
+function parseGrantUsageSnapshots(value: unknown): Record<string, GrantUsageSnapshot> {
+  assertRecord(value, "grant_usage");
+  const snapshots: Record<string, GrantUsageSnapshot> = {};
+  for (const [grantId, usage] of Object.entries(value)) {
+    requireGrantId(grantId, "grant_usage key");
+    assertRecord(usage, `grant_usage.${grantId}`);
+    assertOnlyKeys(usage, ["window_started_at", "uses"], `grant_usage.${grantId}`);
+    snapshots[grantId] = {
+      window_started_at: requirePositiveInteger(usage.window_started_at, `grant_usage.${grantId}.window_started_at`),
+      uses: requireNonNegativeInteger(usage.uses, `grant_usage.${grantId}.uses`)
+    };
+  }
+  return snapshots;
+}
+
+export function parsePolicyDecisionRequest(value: unknown): PolicyDecisionRequest {
+  rejectSecretFields(value);
+  assertRecord(value, "policy decision request");
+  assertOnlyKeys(value, [
+    "account_id",
+    "route_type",
+    "client_pubkey",
+    "permission",
+    "now",
+    "grant_ids",
+    "grant_usage",
+    "revoked_grant_ids"
+  ], "policy decision request");
+  const routeType = requireRouteType(value.route_type);
+  if (!POLICY_DECISION_ROUTE_TYPES.has(routeType)) {
+    throw new Error("policy decision route_type must be a persistent or external route");
+  }
+  return {
+    account_id: requireStringId(value.account_id, "account_id"),
+    route_type: routeType,
+    client_pubkey: requireXOnlyPubkey(value.client_pubkey, "client_pubkey"),
+    permission: parsePolicyDecisionPermission(value.permission),
+    now: requirePositiveInteger(value.now, "now"),
+    grant_ids: requireGrantIdArray(value.grant_ids, "grant_ids"),
+    grant_usage: parseGrantUsageSnapshots(value.grant_usage),
+    revoked_grant_ids: requireGrantIdArray(value.revoked_grant_ids, "revoked_grant_ids")
   };
 }
 
@@ -596,7 +688,8 @@ export function decidePolicyRequest(input: {
   grants: GrantDescriptor[];
   request: PolicyDecisionRequest;
 }): PolicyDecision {
-  const { policy, grants, request } = input;
+  const { policy, grants } = input;
+  const request = parsePolicyDecisionRequest(input.request);
   const method = request.permission.method;
   if (policy.forbidden_permissions.includes(method) || method === "export_secret") {
     return buildPolicyDecision(request, "deny", "forbidden_permission");

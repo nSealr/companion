@@ -109,9 +109,10 @@ packages, but it must not export test-only signing as a production path.
 - `packages/policy`: secretless account, route, recovery, policy, grant
   descriptor parsing, and pure policy-decision evaluation. This package owns
   anti-secret, anti-QR-automation, anti-decrypt-grant, and audit-event decision
-  checks, including deterministic expiry, revocation, and rate-limit decisions
-  from explicit grant-usage snapshots, so CLI code does not grow a parallel
-  policy parser. The package does not persist usage history or grants.
+  checks, including runtime policy-decision request parsing and deterministic
+  expiry, revocation, and rate-limit decisions from explicit grant-usage
+  snapshots, so CLI code does not grow a parallel policy parser. The package
+  does not persist usage history or grants.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: private test-only signing implementation,

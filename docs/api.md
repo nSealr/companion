@@ -251,6 +251,7 @@ Exports:
 - `decidePolicyRequest`
 - `parseAccountDescriptor`
 - `parseGrantDescriptor`
+- `parsePolicyDecisionRequest`
 - `parsePolicyProfile`
 - `parseRouteSelectionRequest`
 - `selectAccountRoute`

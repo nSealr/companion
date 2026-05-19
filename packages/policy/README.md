@@ -16,13 +16,13 @@ Secretless account, route, grant, and policy-decision descriptors.
 
 ```ts nsealr-readme-example
 import assert from "node:assert/strict";
-import { decidePolicyRequest, parsePolicyProfile } from "@nsealr/policy";
+import { decidePolicyRequest, parsePolicyDecisionRequest, parsePolicyProfile } from "@nsealr/policy";
 
 const policy = parsePolicyProfile({
   format: "nsealr-policy-profile-v0",
   policy_id: "policy-readme-manual",
   label: "Manual review",
-  route_types: ["raspberry_qr_vault"],
+  route_types: ["external_nip46"],
   mode: "manual_only",
   grants_allowed: false,
   manual_review_required: ["sign_event"],
@@ -32,19 +32,21 @@ const policy = parsePolicyProfile({
   }
 });
 
+const request = parsePolicyDecisionRequest({
+  account_id: "acct-readme",
+  route_type: "external_nip46",
+  client_pubkey: "2".repeat(64),
+  permission: { method: "sign_event", parameter: "1", event_kind: 1 },
+  now: 1_710_000_000,
+  grant_ids: [],
+  grant_usage: {},
+  revoked_grant_ids: []
+});
+
 const decision = decidePolicyRequest({
   policy,
   grants: [],
-  request: {
-    account_id: "acct-readme",
-    route_type: "raspberry_qr_vault",
-    client_pubkey: "2".repeat(64),
-    permission: { method: "sign_event", parameter: "1", event_kind: 1 },
-    now: 1_710_000_000,
-    grant_ids: [],
-    grant_usage: {},
-    revoked_grant_ids: []
-  }
+  request
 });
 
 assert.equal(decision.decision, "manual_review");

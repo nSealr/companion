@@ -1,7 +1,7 @@
 import {
-  createBrowserExtensionPopupPendingRequestControls,
+  createBrowserExtensionPopupControls,
   type BrowserExtensionPopupControlOptions,
-  type BrowserExtensionPopupPendingRequestControls
+  type BrowserExtensionPopupControls
 } from "./popup-control.js";
 import {
   requireBrowserExtensionPopupDocumentGlobal,
@@ -22,8 +22,8 @@ export type NsealrPopupEntrypointOptions = Omit<
 
 export function createNsealrPopupEntrypoint(
   options: NsealrPopupEntrypointOptions
-): BrowserExtensionPopupPendingRequestControls {
-  return createBrowserExtensionPopupPendingRequestControls({
+): BrowserExtensionPopupControls {
+  return createBrowserExtensionPopupControls({
     runtime: requireBrowserExtensionPopupRuntimeGlobal(options.globalScope),
     ...(options.nextRequestId !== undefined ? { nextRequestId: options.nextRequestId } : {}),
     ...(options.abortSignal !== undefined ? { abortSignal: options.abortSignal } : {})

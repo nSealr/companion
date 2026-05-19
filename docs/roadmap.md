@@ -440,8 +440,11 @@ and uploads checked tarball artifacts without publishing to npm.
   extension-internal senders only, so page-origin senders cannot list or cancel
   active requests. A popup-control client now wraps those internal messages
   over injected `runtime.sendMessage`, validates secretless responses, and
-  gives future popup UI a tested list/cancel command surface without storage,
-  grants, native-host installation, or signer dispatch. A pure page-provider
+  gives future popup UI a tested list/cancel command surface. The same control
+  path can request origin-permission review metadata for the selected active
+  page through the background controller, without approval, browser storage,
+  grants, native-host installation, provider injection, signer dispatch, or key
+  material. A pure page-provider
   boundary now maps NIP-07
   `getPublicKey` and `signEvent` calls to validated background requests,
   verifies signed responses, forwards cancellation signals, and installs on an

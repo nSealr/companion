@@ -6,7 +6,7 @@ import {
   BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT
 } from "./pending-request.js";
 import {
-  createBrowserExtensionPopupPendingRequestControls
+  createBrowserExtensionPopupControls
 } from "./popup-control.js";
 
 const pendingState = Object.freeze({
@@ -25,7 +25,7 @@ const pendingState = Object.freeze({
 describe("browser extension popup pending request controls", () => {
   it("lists pending requests through runtime.sendMessage without exposing hidden payloads", async () => {
     const sentMessages: unknown[] = [];
-    const controls = createBrowserExtensionPopupPendingRequestControls({
+    const controls = createBrowserExtensionPopupControls({
       runtime: {
         sendMessage(message: unknown): unknown {
           sentMessages.push(message);
@@ -56,7 +56,7 @@ describe("browser extension popup pending request controls", () => {
 
   it("cancels pending requests through the internal control protocol", async () => {
     const sentMessages: unknown[] = [];
-    const controls = createBrowserExtensionPopupPendingRequestControls({
+    const controls = createBrowserExtensionPopupControls({
       runtime: {
         sendMessage(message: unknown): unknown {
           sentMessages.push(message);
@@ -94,12 +94,86 @@ describe("browser extension popup pending request controls", () => {
     }]);
   });
 
+  it("requests origin permission review through the internal control protocol", async () => {
+    const sentMessages: unknown[] = [];
+    const controls = createBrowserExtensionPopupControls({
+      runtime: {
+        sendMessage(message: unknown): unknown {
+          sentMessages.push(message);
+          return {
+            protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+            version: 1,
+            request_id: "popup-origin-review-1",
+            ok: true,
+            result: {
+              origin_review: {
+                format: "nsealr-browser-origin-permission-review-v0",
+                origin: "https://example.com",
+                app_name: "Example App",
+                extension_id: "extension@nsealr.dev",
+                requested_methods: [
+                  {
+                    method: "get_public_key",
+                    label: "Read public key",
+                    effect: "The page can read the selected account public key through the browser provider."
+                  }
+                ],
+                local_pairing_digest: "a".repeat(64),
+                requires_user_approval: true,
+                stores_production_secrets: false,
+                creates_grants: false,
+                injects_provider: false
+              },
+              stores_production_secrets: false,
+              contains_secret_material: false,
+              creates_grants: false,
+              injects_provider: false
+            }
+          };
+        }
+      },
+      nextRequestId: () => "popup-origin-review-1"
+    });
+
+    await expect(controls.requestOriginPermissionReview({
+      extension_id: "extension@nsealr.dev",
+      page_origin: "https://example.com",
+      app_name: "Example App"
+    })).resolves.toMatchObject({
+      origin_review: {
+        origin: "https://example.com",
+        requested_methods: [
+          {
+            method: "get_public_key"
+          }
+        ]
+      },
+      stores_production_secrets: false,
+      contains_secret_material: false,
+      creates_grants: false,
+      injects_provider: false
+    });
+    expect(sentMessages).toEqual([{
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "popup-origin-review-1",
+      method: "request_origin_permission_review",
+      params: {
+        sender: {
+          extension_id: "extension@nsealr.dev",
+          page_origin: "https://example.com",
+          app_name: "Example App"
+        }
+      }
+    }]);
+  });
+
   it("rejects invalid runtime dependencies and invalid response envelopes", async () => {
-    expect(() => createBrowserExtensionPopupPendingRequestControls({
+    expect(() => createBrowserExtensionPopupControls({
       runtime: {} as never
     })).toThrow(/runtime/u);
 
-    const mismatched = createBrowserExtensionPopupPendingRequestControls({
+    const mismatched = createBrowserExtensionPopupControls({
       runtime: {
         sendMessage(): unknown {
           return {
@@ -119,7 +193,7 @@ describe("browser extension popup pending request controls", () => {
     });
     await expect(mismatched.listPendingRequests()).rejects.toThrow(/mismatch/u);
 
-    const unsafe = createBrowserExtensionPopupPendingRequestControls({
+    const unsafe = createBrowserExtensionPopupControls({
       runtime: {
         sendMessage(): unknown {
           return {
@@ -144,7 +218,7 @@ describe("browser extension popup pending request controls", () => {
   });
 
   it("surfaces deterministic control errors and local cancellation", async () => {
-    const denied = createBrowserExtensionPopupPendingRequestControls({
+    const denied = createBrowserExtensionPopupControls({
       runtime: {
         sendMessage(): unknown {
           return {
@@ -166,7 +240,7 @@ describe("browser extension popup pending request controls", () => {
 
     const abortController = new AbortController();
     abortController.abort();
-    const cancelled = createBrowserExtensionPopupPendingRequestControls({
+    const cancelled = createBrowserExtensionPopupControls({
       runtime: {
         sendMessage(): unknown {
           throw new Error("aborted popup control must not send");

@@ -34,7 +34,7 @@ export type BrowserExtensionRuntimeSenderOptions = {
 };
 
 export type BrowserExtensionRuntimeMessageOptions = BrowserExtensionRuntimeSenderOptions & {
-  controller: Pick<BrowserExtensionBackgroundController, "handleRequest">;
+  controller: Pick<BrowserExtensionBackgroundController, "handleRequest" | "requestOriginPermissionReview">;
   nativeMessageAbortSignal?: AbortSignal;
   pendingRequests?: BrowserExtensionPendingRequestLifecycle;
   onPendingRequestError?: (error: unknown) => void;
@@ -127,6 +127,7 @@ export async function handleBrowserExtensionRuntimeMessage(
   if (isBrowserExtensionControlEnvelope(value)) {
     return handleBrowserExtensionControlMessage(value, runtimeSender, {
       ...(options.extensionId !== undefined ? { extensionId: options.extensionId } : {}),
+      controller: options.controller,
       ...(options.pendingRequests !== undefined ? { pendingRequests: options.pendingRequests } : {})
     });
   }

@@ -5,6 +5,8 @@ import {
   type BrowserExtensionControlResponse
 } from "./pending-control.js";
 import { type BrowserExtensionPendingRequestState } from "./pending-request.js";
+import { type BrowserExtensionOriginPermissionReview } from "./pairing.js";
+import { type BrowserExtensionSenderInput } from "./sender.js";
 
 export type BrowserExtensionPopupRuntimeApi = {
   sendMessage(message: unknown): Promise<unknown> | unknown;
@@ -23,9 +25,21 @@ export type BrowserExtensionPopupCancelResult = {
   contains_secret_material: false;
 };
 
+export type BrowserExtensionPopupOriginPermissionReviewResult = {
+  origin_review: BrowserExtensionOriginPermissionReview;
+  stores_production_secrets: false;
+  contains_secret_material: false;
+  creates_grants: false;
+  injects_provider: false;
+};
+
 export type BrowserExtensionPopupPendingRequestControls = {
   listPendingRequests(): Promise<readonly BrowserExtensionPendingRequestState[]>;
   cancelPendingRequest(pendingRequestId: string): Promise<BrowserExtensionPopupCancelResult>;
+};
+
+export type BrowserExtensionPopupControls = BrowserExtensionPopupPendingRequestControls & {
+  requestOriginPermissionReview(sender: BrowserExtensionSenderInput): Promise<BrowserExtensionPopupOriginPermissionReviewResult>;
 };
 
 type BrowserExtensionPopupControlSuccessResponse = Exclude<
@@ -90,9 +104,9 @@ async function withAbortSignal<T>(
   }
 }
 
-export function createBrowserExtensionPopupPendingRequestControls(
+export function createBrowserExtensionPopupControls(
   options: BrowserExtensionPopupControlOptions
-): BrowserExtensionPopupPendingRequestControls {
+): BrowserExtensionPopupControls {
   const runtime = requirePopupRuntime(options.runtime);
   const nextRequestId = options.nextRequestId ?? defaultRequestIdFactory();
 
@@ -140,6 +154,25 @@ export function createBrowserExtensionPopupPendingRequestControls(
       }, requestId);
       if (!("pending_request_id" in response.result)) {
         throw new Error("browser extension popup control cancel response is invalid");
+      }
+      return response.result;
+    },
+
+    async requestOriginPermissionReview(
+      sender: BrowserExtensionSenderInput
+    ): Promise<BrowserExtensionPopupOriginPermissionReviewResult> {
+      const requestId = requireControlRequestId(nextRequestId());
+      const response = await sendControlRequest({
+        protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+        version: 1,
+        request_id: requestId,
+        method: "request_origin_permission_review",
+        params: {
+          sender
+        }
+      }, requestId);
+      if (!("origin_review" in response.result)) {
+        throw new Error("browser extension popup control origin permission response is invalid");
       }
       return response.result;
     }

@@ -172,12 +172,14 @@ single-repository CI. Cross-repository drift remains guarded by
   cancellation, and never exposes event templates, key material, extension
   storage, grants, or signer dispatch. Pending-control and runtime-message
   tests prove the separate `nsealr-browser-extension-control-v0`
-  `list_pending_requests` and `cancel_pending_request` paths accept
-  extension-internal senders, reject page-origin senders, never contact native
-  messaging for control messages, and can use the background entrypoint's
-  default in-memory lifecycle. Popup-control tests prove future visible UI can
-  call the same list/cancel protocol through injected `runtime.sendMessage`,
-  rejects mismatched or unsafe response envelopes, and remains secretless.
+  `list_pending_requests`, `cancel_pending_request`, and
+  `request_origin_permission_review` paths accept extension-internal senders,
+  reject page-origin senders, keep list/cancel operations away from native
+  messaging, route origin-review requests through the background controller,
+  and can use the background entrypoint's default in-memory lifecycle.
+  Popup-control tests prove future visible UI can call the same list/cancel and
+  origin-review protocol through injected `runtime.sendMessage`, rejects
+  mismatched or unsafe response envelopes, and remains secretless.
   Page-provider tests prove
   NIP-07 `getPublicKey` and `signEvent`
   calls become validated background requests, unsafe templates fail before the

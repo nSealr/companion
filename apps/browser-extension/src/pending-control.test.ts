@@ -32,6 +32,21 @@ function listRequest(requestId: string): unknown {
   };
 }
 
+function originPermissionReviewRequest(requestId: string): unknown {
+  return {
+    protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+    version: 1,
+    request_id: requestId,
+    method: "request_origin_permission_review",
+    params: {
+      sender: {
+        extension_id: "extension@nsealr.dev",
+        page_url: "https://example.com/app"
+      }
+    }
+  };
+}
+
 describe("browser extension pending request control boundary", () => {
   it("parses only the internal pending request control shapes", () => {
     expect(parseBrowserExtensionControlRequest(cancelRequest(
@@ -51,6 +66,19 @@ describe("browser extension pending request control boundary", () => {
       version: 1,
       request_id: "control-list-1",
       method: "list_pending_requests"
+    });
+    expect(parseBrowserExtensionControlRequest(originPermissionReviewRequest("control-origin-review-1"))).toEqual({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-origin-review-1",
+      method: "request_origin_permission_review",
+      params: {
+        sender: {
+          extension_id: "extension@nsealr.dev",
+          page_origin: "https://example.com",
+          app_name: "nSealr Browser Extension"
+        }
+      }
     });
 
     expect(() => parseBrowserExtensionControlRequest({
@@ -81,7 +109,7 @@ describe("browser extension pending request control boundary", () => {
     })).toThrow(/must not include params/u);
   });
 
-  it("lists active pending requests without exposing hidden request payloads", () => {
+  it("lists active pending requests without exposing hidden request payloads", async () => {
     const pendingRequests = createBrowserExtensionPendingRequestLifecycle();
     pendingRequests.start({
       protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
@@ -93,7 +121,7 @@ describe("browser extension pending request control boundary", () => {
       page_origin: "https://example.com"
     });
 
-    expect(handleBrowserExtensionControlMessage(
+    await expect(handleBrowserExtensionControlMessage(
       listRequest("control-list-active"),
       {
         id: "extension@nsealr.dev",
@@ -103,7 +131,7 @@ describe("browser extension pending request control boundary", () => {
         extensionId: "extension@nsealr.dev",
         pendingRequests
       }
-    )).toMatchObject({
+    )).resolves.toMatchObject({
       protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
       version: 1,
       request_id: "control-list-active",
@@ -161,9 +189,40 @@ describe("browser extension pending request control boundary", () => {
         contains_secret_material: false
       }
     };
+    const originPermissionReviewResponse = {
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-origin-review-parse",
+      ok: true,
+      result: {
+        origin_review: {
+          format: "nsealr-browser-origin-permission-review-v0",
+          origin: "https://example.com",
+          app_name: "nSealr Browser Extension",
+          extension_id: "extension@nsealr.dev",
+          requested_methods: [
+            {
+              method: "get_public_key",
+              label: "Read public key",
+              effect: "The page can read the selected account public key through the browser provider."
+            }
+          ],
+          local_pairing_digest: "a".repeat(64),
+          requires_user_approval: true,
+          stores_production_secrets: false,
+          creates_grants: false,
+          injects_provider: false
+        },
+        stores_production_secrets: false,
+        contains_secret_material: false,
+        creates_grants: false,
+        injects_provider: false
+      }
+    };
 
     expect(parseBrowserExtensionControlResponse(listResponse)).toEqual(listResponse);
     expect(parseBrowserExtensionControlResponse(cancelResponse)).toEqual(cancelResponse);
+    expect(parseBrowserExtensionControlResponse(originPermissionReviewResponse)).toEqual(originPermissionReviewResponse);
     expect(parseBrowserExtensionControlResponse({
       protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
       version: 1,
@@ -198,9 +257,16 @@ describe("browser extension pending request control boundary", () => {
         contains_secret_material: true
       }
     })).toThrow(/secretless/u);
+    expect(() => parseBrowserExtensionControlResponse({
+      ...originPermissionReviewResponse,
+      result: {
+        ...originPermissionReviewResponse.result,
+        creates_grants: true
+      }
+    })).toThrow(/non-authorizing/u);
   });
 
-  it("cancels active pending requests only from extension-internal senders", () => {
+  it("cancels active pending requests only from extension-internal senders", async () => {
     const states: unknown[] = [];
     const pendingRequests = createBrowserExtensionPendingRequestLifecycle({
       now: (() => {
@@ -221,7 +287,7 @@ describe("browser extension pending request control boundary", () => {
       page_origin: "https://example.com"
     });
 
-    expect(handleBrowserExtensionControlMessage(
+    await expect(handleBrowserExtensionControlMessage(
       cancelRequest("control-cancel-active", "pending-from-ui"),
       {
         id: "extension@nsealr.dev",
@@ -231,7 +297,7 @@ describe("browser extension pending request control boundary", () => {
         extensionId: "extension@nsealr.dev",
         pendingRequests
       }
-    )).toEqual({
+    )).resolves.toEqual({
       protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
       version: 1,
       request_id: "control-cancel-active",
@@ -256,7 +322,94 @@ describe("browser extension pending request control boundary", () => {
     expect(pendingRequests.active()).toEqual([]);
   });
 
-  it("returns deterministic control errors before page-origin senders can cancel", () => {
+  it("requests origin permission reviews only from extension-internal senders", async () => {
+    const requestedSenders: unknown[] = [];
+
+    await expect(handleBrowserExtensionControlMessage(
+      originPermissionReviewRequest("control-origin-review"),
+      {
+        id: "extension@nsealr.dev",
+        url: "chrome-extension://extension-id/popup.html"
+      },
+      {
+        extensionId: "extension@nsealr.dev",
+        controller: {
+          requestOriginPermissionReview(sender) {
+            requestedSenders.push(sender);
+            return {
+              originReview: {
+                format: "nsealr-browser-origin-permission-review-v0",
+                origin: "https://example.com",
+                app_name: "nSealr Browser Extension",
+                extension_id: "extension@nsealr.dev",
+                requested_methods: [
+                  {
+                    method: "get_public_key",
+                    label: "Read public key",
+                    effect: "The page can read the selected account public key through the browser provider."
+                  }
+                ],
+                local_pairing_digest: "b".repeat(64),
+                requires_user_approval: true,
+                stores_production_secrets: false,
+                creates_grants: false,
+                injects_provider: false
+              }
+            };
+          }
+        }
+      }
+    )).resolves.toMatchObject({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-origin-review",
+      ok: true,
+      result: {
+        origin_review: {
+          origin: "https://example.com",
+          extension_id: "extension@nsealr.dev",
+          requested_methods: [
+            {
+              method: "get_public_key"
+            }
+          ]
+        },
+        stores_production_secrets: false,
+        contains_secret_material: false,
+        creates_grants: false,
+        injects_provider: false
+      }
+    });
+    expect(requestedSenders).toEqual([{
+      extension_id: "extension@nsealr.dev",
+      page_origin: "https://example.com",
+      app_name: "nSealr Browser Extension"
+    }]);
+
+    await expect(handleBrowserExtensionControlMessage(
+      originPermissionReviewRequest("control-origin-review-page-sender"),
+      {
+        id: "extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      {
+        extensionId: "extension@nsealr.dev",
+        controller: {
+          requestOriginPermissionReview() {
+            throw new Error("page sender must not reach controller");
+          }
+        }
+      }
+    )).resolves.toMatchObject({
+      request_id: "control-origin-review-page-sender",
+      ok: false,
+      error: {
+        code: "invalid_sender"
+      }
+    });
+  });
+
+  it("returns deterministic control errors before page-origin senders can cancel", async () => {
     const pendingRequests = createBrowserExtensionPendingRequestLifecycle();
     pendingRequests.start({
       protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
@@ -268,7 +421,7 @@ describe("browser extension pending request control boundary", () => {
       page_origin: "https://example.com"
     });
 
-    expect(handleBrowserExtensionControlMessage(
+    await expect(handleBrowserExtensionControlMessage(
       cancelRequest("control-page-sender", "pending-page-cannot-cancel"),
       {
         id: "extension@nsealr.dev",
@@ -278,7 +431,7 @@ describe("browser extension pending request control boundary", () => {
         extensionId: "extension@nsealr.dev",
         pendingRequests
       }
-    )).toMatchObject({
+    )).resolves.toMatchObject({
       request_id: "control-page-sender",
       ok: false,
       error: {
@@ -287,7 +440,7 @@ describe("browser extension pending request control boundary", () => {
     });
     expect(pendingRequests.active()).toHaveLength(1);
 
-    expect(handleBrowserExtensionControlMessage(
+    await expect(handleBrowserExtensionControlMessage(
       {
         protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
         version: 1,
@@ -301,7 +454,7 @@ describe("browser extension pending request control boundary", () => {
         extensionId: "extension@nsealr.dev",
         pendingRequests
       }
-    )).toMatchObject({
+    )).resolves.toMatchObject({
       request_id: "invalid-browser-extension-control-request",
       ok: false,
       error: {
@@ -310,8 +463,8 @@ describe("browser extension pending request control boundary", () => {
     });
   });
 
-  it("reports unavailable or missing pending request state without creating grants", () => {
-    expect(handleBrowserExtensionControlMessage(
+  it("reports unavailable or missing pending request state without creating grants", async () => {
+    await expect(handleBrowserExtensionControlMessage(
       cancelRequest("control-unavailable", "pending-missing"),
       {
         id: "extension@nsealr.dev",
@@ -320,7 +473,7 @@ describe("browser extension pending request control boundary", () => {
       {
         extensionId: "extension@nsealr.dev"
       }
-    )).toMatchObject({
+    )).resolves.toMatchObject({
       request_id: "control-unavailable",
       ok: false,
       error: {
@@ -328,7 +481,7 @@ describe("browser extension pending request control boundary", () => {
       }
     });
 
-    expect(handleBrowserExtensionControlMessage(
+    await expect(handleBrowserExtensionControlMessage(
       cancelRequest("control-missing-pending", "pending-missing"),
       {
         id: "extension@nsealr.dev",
@@ -338,7 +491,7 @@ describe("browser extension pending request control boundary", () => {
         extensionId: "extension@nsealr.dev",
         pendingRequests: createBrowserExtensionPendingRequestLifecycle()
       }
-    )).toEqual({
+    )).resolves.toEqual({
       protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
       version: 1,
       request_id: "control-missing-pending",

@@ -89,6 +89,21 @@ function listPendingRequests(requestId: string): unknown {
   };
 }
 
+function requestOriginPermissionReview(requestId: string): unknown {
+  return {
+    protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+    version: 1,
+    request_id: requestId,
+    method: "request_origin_permission_review",
+    params: {
+      sender: {
+        extension_id: "extension@nsealr.dev",
+        page_url: "https://example.com/app"
+      }
+    }
+  };
+}
+
 function createInjectedRuntimeOnMessage(): {
   runtimeOnMessage: {
     addListener(listener: BrowserExtensionRuntimeMessageListener): void;
@@ -590,6 +605,56 @@ describe("browser extension runtime message boundary", () => {
       }
     });
     expect(pendingRequests.active()).toEqual([started]);
+  });
+
+  it("routes extension-internal control messages to origin permission review", async () => {
+    const nativeRequests: LocalServiceRequest[] = [];
+    const controller = createBrowserExtensionBackgroundController({
+      sendNativeMessage: nativeResponder(nativeRequests),
+      routeRequest,
+      nextServiceRequestId: () => "runtime-control-origin-review-service"
+    });
+
+    await expect(handleBrowserExtensionRuntimeMessage(
+      requestOriginPermissionReview("runtime-control-origin-review"),
+      {
+        id: "extension@nsealr.dev",
+        url: "chrome-extension://extension-id/popup.html"
+      },
+      {
+        controller,
+        extensionId: "extension@nsealr.dev"
+      }
+    )).resolves.toMatchObject({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "runtime-control-origin-review",
+      ok: true,
+      result: {
+        origin_review: {
+          format: "nsealr-browser-origin-permission-review-v0",
+          origin: "https://example.com",
+          extension_id: "extension@nsealr.dev",
+          requested_methods: [
+            {
+              method: "get_public_key"
+            },
+            {
+              method: "sign_event"
+            }
+          ],
+          requires_user_approval: true,
+          stores_production_secrets: false,
+          creates_grants: false,
+          injects_provider: false
+        },
+        stores_production_secrets: false,
+        contains_secret_material: false,
+        creates_grants: false,
+        injects_provider: false
+      }
+    });
+    expect(nativeRequests.map((request) => request.operation)).toEqual(["request_pairing"]);
   });
 
   it("rejects page-origin control messages before they can cancel pending requests", async () => {

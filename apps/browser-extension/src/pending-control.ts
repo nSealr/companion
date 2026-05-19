@@ -6,6 +6,14 @@ import {
   type BrowserExtensionPendingRequestState,
   parseBrowserExtensionPendingRequestState
 } from "./pending-request.js";
+import {
+  parseBrowserExtensionOriginPermissionReview,
+  type BrowserExtensionOriginPermissionReview
+} from "./pairing.js";
+import {
+  browserExtensionClientContextFromSender,
+  type BrowserExtensionSenderInput
+} from "./sender.js";
 
 export const BROWSER_EXTENSION_CONTROL_PROTOCOL = "nsealr-browser-extension-control-v0";
 
@@ -26,9 +34,20 @@ export type BrowserExtensionListPendingRequests = {
   method: "list_pending_requests";
 };
 
+export type BrowserExtensionRequestOriginPermissionReview = {
+  protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
+  version: 1;
+  request_id: string;
+  method: "request_origin_permission_review";
+  params: {
+    sender: BrowserExtensionSenderInput;
+  };
+};
+
 export type BrowserExtensionControlRequest =
   | BrowserExtensionCancelPendingRequest
-  | BrowserExtensionListPendingRequests;
+  | BrowserExtensionListPendingRequests
+  | BrowserExtensionRequestOriginPermissionReview;
 
 export type BrowserExtensionCancelPendingResponse = {
   protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
@@ -55,6 +74,20 @@ export type BrowserExtensionListPendingResponse = {
   };
 };
 
+export type BrowserExtensionOriginPermissionReviewResponse = {
+  protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
+  version: 1;
+  request_id: string;
+  ok: true;
+  result: {
+    origin_review: BrowserExtensionOriginPermissionReview;
+    stores_production_secrets: false;
+    contains_secret_material: false;
+    creates_grants: false;
+    injects_provider: false;
+  };
+};
+
 export type BrowserExtensionControlErrorResponse = {
   protocol: typeof BROWSER_EXTENSION_CONTROL_PROTOCOL;
   version: 1;
@@ -70,13 +103,21 @@ export type BrowserExtensionControlErrorResponse = {
 export type BrowserExtensionControlResponse =
   | BrowserExtensionCancelPendingResponse
   | BrowserExtensionListPendingResponse
+  | BrowserExtensionOriginPermissionReviewResponse
   | BrowserExtensionControlErrorResponse;
 
 export type BrowserExtensionControlSenderOptions = {
   extensionId?: string;
 };
 
+export type BrowserExtensionOriginPermissionReviewController = {
+  requestOriginPermissionReview(
+    sender: BrowserExtensionSenderInput
+  ): { originReview: BrowserExtensionOriginPermissionReview } | Promise<{ originReview: BrowserExtensionOriginPermissionReview }>;
+};
+
 export type BrowserExtensionControlHandlerOptions = BrowserExtensionControlSenderOptions & {
+  controller?: BrowserExtensionOriginPermissionReviewController;
   pendingRequests?: BrowserExtensionPendingRequestLifecycle;
 };
 
@@ -199,6 +240,23 @@ function parseCancelParams(value: unknown): BrowserExtensionCancelPendingRequest
   };
 }
 
+function parseSenderParams(value: unknown): BrowserExtensionRequestOriginPermissionReview["params"] {
+  if (!isRecord(value)) {
+    throw new Error("browser extension control params must be an object");
+  }
+  if (!hasOnlyKeys(value, ["sender"])) {
+    throw new Error("browser extension control params have unsupported fields");
+  }
+  const context = browserExtensionClientContextFromSender(value.sender);
+  return {
+    sender: {
+      extension_id: context.extension_id,
+      page_origin: context.page_origin,
+      ...(context.client.app_name !== undefined ? { app_name: context.client.app_name } : {})
+    }
+  };
+}
+
 function parseCancelResult(value: unknown): BrowserExtensionCancelPendingResponse["result"] {
   if (!isRecord(value)) {
     throw new Error("browser extension control cancel result must be an object");
@@ -222,6 +280,38 @@ function parseCancelResult(value: unknown): BrowserExtensionCancelPendingRespons
     cancelled: value.cancelled,
     stores_production_secrets: false,
     contains_secret_material: false
+  };
+}
+
+function parseOriginPermissionReviewResult(
+  value: unknown
+): BrowserExtensionOriginPermissionReviewResponse["result"] {
+  if (!isRecord(value)) {
+    throw new Error("browser extension control origin permission result must be an object");
+  }
+  if (!hasOnlyKeys(value, [
+    "origin_review",
+    "stores_production_secrets",
+    "contains_secret_material",
+    "creates_grants",
+    "injects_provider"
+  ])) {
+    throw new Error("browser extension control origin permission result has unsupported fields");
+  }
+  if (
+    value.stores_production_secrets !== false ||
+    value.contains_secret_material !== false ||
+    value.creates_grants !== false ||
+    value.injects_provider !== false
+  ) {
+    throw new Error("browser extension control origin permission result must be secretless and non-authorizing");
+  }
+  return {
+    origin_review: parseBrowserExtensionOriginPermissionReview(value.origin_review),
+    stores_production_secrets: false,
+    contains_secret_material: false,
+    creates_grants: false,
+    injects_provider: false
   };
 }
 
@@ -300,6 +390,15 @@ export function parseBrowserExtensionControlRequest(value: unknown): BrowserExte
       method: "list_pending_requests"
     };
   }
+  if (value.method === "request_origin_permission_review") {
+    return {
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: requireRequestId(value.request_id, "request_id"),
+      method: "request_origin_permission_review",
+      params: parseSenderParams(value.params)
+    };
+  }
   if (value.method !== "cancel_pending_request") {
     throw new Error("browser extension control method is unsupported");
   }
@@ -341,6 +440,15 @@ export function parseBrowserExtensionControlResponse(value: unknown): BrowserExt
   if (!isRecord(result)) {
     throw new Error("browser extension control success response result must be an object");
   }
+  if ("origin_review" in result) {
+    return {
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: requireRequestId(value.request_id, "request_id"),
+      ok: true,
+      result: parseOriginPermissionReviewResult(result)
+    };
+  }
   if ("pending_requests" in result) {
     return {
       protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
@@ -359,11 +467,11 @@ export function parseBrowserExtensionControlResponse(value: unknown): BrowserExt
   };
 }
 
-export function handleBrowserExtensionControlMessage(
+export async function handleBrowserExtensionControlMessage(
   value: unknown,
   runtimeSender: unknown,
   options: BrowserExtensionControlHandlerOptions
-): BrowserExtensionControlResponse {
+): Promise<BrowserExtensionControlResponse> {
   const requestId = fallbackControlRequestId(value);
   let request: BrowserExtensionControlRequest;
   try {
@@ -375,6 +483,37 @@ export function handleBrowserExtensionControlMessage(
     requireInternalSender(runtimeSender, options);
   } catch {
     return controlErrorResponse(request.request_id, "invalid_sender", "browser extension control sender is invalid");
+  }
+  if (request.method === "request_origin_permission_review") {
+    if (options.controller === undefined) {
+      return controlErrorResponse(
+        request.request_id,
+        "origin_permission_review_unavailable",
+        "browser extension origin permission review is unavailable"
+      );
+    }
+    try {
+      const result = await options.controller.requestOriginPermissionReview(request.params.sender);
+      return {
+        protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+        version: 1,
+        request_id: request.request_id,
+        ok: true,
+        result: parseOriginPermissionReviewResult({
+          origin_review: result.originReview,
+          stores_production_secrets: false,
+          contains_secret_material: false,
+          creates_grants: false,
+          injects_provider: false
+        })
+      };
+    } catch {
+      return controlErrorResponse(
+        request.request_id,
+        "origin_permission_review_failed",
+        "browser extension origin permission review failed"
+      );
+    }
   }
   if (options.pendingRequests === undefined) {
     return controlErrorResponse(request.request_id, "pending_requests_unavailable", "pending request control is unavailable");

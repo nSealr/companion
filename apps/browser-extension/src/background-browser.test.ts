@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { NATIVE_HOST_NAME } from "@nsealr/browser-provider";
-import { type LocalServiceRequest } from "@nsealr/client";
+import { handleLocalServiceRequest, type LocalServiceRequest } from "@nsealr/client";
 import {
   createBrowserExtensionBackgroundBrowserNativeMessageSender,
   installBrowserExtensionBackgroundBrowserEntrypoint
@@ -55,6 +55,21 @@ function listPendingRequests(requestId: string): unknown {
     version: 1,
     request_id: requestId,
     method: "list_pending_requests"
+  };
+}
+
+function requestOriginPermissionReview(requestId: string): unknown {
+  return {
+    protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+    version: 1,
+    request_id: requestId,
+    method: "request_origin_permission_review",
+    params: {
+      sender: {
+        extension_id: "extension@nsealr.dev",
+        page_url: "https://example.com/app"
+      }
+    }
   };
 }
 
@@ -138,6 +153,9 @@ function createInjectedRuntime(): {
       },
       sendNativeMessage(hostName: string, message: unknown): unknown {
         nativeMessages.push({ hostName, message });
+        if ((message as LocalServiceRequest).operation === "request_pairing") {
+          return handleLocalServiceRequest(message as LocalServiceRequest);
+        }
         return routeSelectionResponse(message as LocalServiceRequest);
       }
     },
@@ -244,6 +262,61 @@ describe("browser extension background browser entrypoint", () => {
       }
     }]);
     expect(runtime.nativeMessages).toEqual([]);
+    handle.dispose();
+  });
+
+  it("routes extension-internal origin permission review control to native pairing", async () => {
+    const runtime = createInjectedRuntime();
+    const responses: unknown[] = [];
+    const handle = installBrowserExtensionBackgroundBrowserEntrypoint({
+      runtime: runtime.runtime,
+      routeRequest,
+      extensionId: "extension@nsealr.dev",
+      nextServiceRequestId: () => "background-browser-origin-review-service"
+    });
+
+    expect(runtime.emit(
+      requestOriginPermissionReview("background-browser-origin-review"),
+      {
+        id: "extension@nsealr.dev",
+        url: "chrome-extension://extension-id/popup.html"
+      },
+      (response) => {
+        responses.push(response);
+      }
+    )).toBe(true);
+    await flushAsyncListeners();
+
+    expect(responses).toMatchObject([{
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "background-browser-origin-review",
+      ok: true,
+      result: {
+        origin_review: {
+          origin: "https://example.com",
+          extension_id: "extension@nsealr.dev",
+          requested_methods: [
+            {
+              method: "get_public_key"
+            },
+            {
+              method: "sign_event"
+            }
+          ],
+          stores_production_secrets: false,
+          creates_grants: false,
+          injects_provider: false
+        },
+        stores_production_secrets: false,
+        contains_secret_material: false,
+        creates_grants: false,
+        injects_provider: false
+      }
+    }]);
+    expect(runtime.nativeMessages.map((message) => (message.message as LocalServiceRequest).operation)).toEqual([
+      "request_pairing"
+    ]);
     handle.dispose();
   });
 

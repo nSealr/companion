@@ -7,6 +7,11 @@ public npm release.
 
 ### Added
 
+- Browser-extension package builds can now opt into a storage-backed
+  origin-approval profile that requests `activeTab` and `storage`, loads
+  approved origins through the reviewed storage adapter, and wires the packaged
+  popup to digest-confirmed approval without changing the minimal default
+  manifest.
 - Package boundary freeze with explicit `@nsealr/*` manifests, built `dist`
   exports, package README boundary docs, source and packed consumer smokes, and
   test-only signer isolation.

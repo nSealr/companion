@@ -193,12 +193,18 @@ match the shared `contract_id`.
   and can build either the default minimal no-host-permission manifest or an
   opt-in explicit-origin content-script manifest profile. The content-script
   profile still omits host-permission fields, broad URL matches, extension
-  storage, and provider grants. It can build an explicit developer package
-  artifact only after route-config review/approval. Content-script builds also
-  require a reviewed origin-permission store, which is embedded as secretless
-  background gate data; the build still does not install a browser extension,
-  write extension storage, persist browser storage, create grants, dispatch
-  signers, or hold key material.
+  storage, and provider grants by default. It can also build an explicit
+  storage-backed origin-approval profile: that opt-in profile requests
+  `activeTab` and `storage`, resolves the active tab only after the user opens
+  the action popup, loads the approved-origin store from the reviewed storage
+  adapter, and writes approvals only through the same digest-confirmed
+  background control path. It can build an explicit developer package artifact
+  only after route-config review/approval. Embedded-store content-script builds
+  still require a reviewed origin-permission store as secretless background
+  gate data; storage-backed builds start from browser extension storage instead
+  of embedding approvals. The build still does not install a browser extension,
+  write extension storage at build time, create grants, dispatch signers, or
+  hold key material.
 - `@nsealr/client` exposes the shared local-client identity parser, including
   the browser-safe `@nsealr/client/client-identity` subpath, used before
   pairing, route selection, signer-request validation, and response
@@ -362,7 +368,8 @@ match the shared `contract_id`.
   private extension scaffold now also has the sender/page-origin identity
   boundary and injected origin-permission storage adapter needed before
   content-script injection is considered. The packaged manifest still requests
-  no storage permission by default.
+  no storage permission by default; storage-backed popup approval is an
+  explicit browser package profile.
 - Public npm SDK alpha after package APIs, docs, semver, provenance, and
   third-party import tests are stable. Package README coverage and a
   built-artifact consumer smoke are now part of `make ci`; packed-tarball

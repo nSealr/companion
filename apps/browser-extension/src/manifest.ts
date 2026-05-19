@@ -10,6 +10,9 @@ export const BROWSER_EXTENSION_DESCRIPTION = "nSealr browser bridge for external
 export const BROWSER_EXTENSION_VERSION = "0.1.0";
 
 export type BrowserExtensionTarget = "chromium" | "firefox";
+export type BrowserExtensionPopupMode = "pending_requests" | "origin_permission_approval";
+export type BrowserExtensionOriginPermissionStorageMode = "none" | "extension";
+export type BrowserExtensionManifestPermission = "nativeMessaging" | "activeTab" | "storage";
 
 export type BrowserExtensionManifestOptions = {
   target: BrowserExtensionTarget;
@@ -18,6 +21,8 @@ export type BrowserExtensionManifestOptions = {
   version?: string;
   firefoxExtensionId?: string;
   contentScriptMatches?: string[];
+  popupMode?: BrowserExtensionPopupMode;
+  originPermissionStorageMode?: BrowserExtensionOriginPermissionStorageMode;
 };
 
 export type BrowserExtensionContentScriptManifest = {
@@ -38,7 +43,7 @@ export type BrowserExtensionManifest = {
   name: string;
   description: string;
   version: string;
-  permissions: ["nativeMessaging"];
+  permissions: BrowserExtensionManifestPermission[];
   background: {
     service_worker: typeof BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE;
     type: "module";
@@ -78,6 +83,24 @@ function requireVersion(value: string | undefined): string {
     throw new Error("browser extension version is invalid");
   }
   return version;
+}
+
+function requirePopupMode(value: BrowserExtensionPopupMode | undefined): BrowserExtensionPopupMode {
+  const popupMode = value ?? "pending_requests";
+  if (popupMode !== "pending_requests" && popupMode !== "origin_permission_approval") {
+    throw new Error("browser extension popup mode is unsupported");
+  }
+  return popupMode;
+}
+
+function requireOriginPermissionStorageMode(
+  value: BrowserExtensionOriginPermissionStorageMode | undefined
+): BrowserExtensionOriginPermissionStorageMode {
+  const mode = value ?? "none";
+  if (mode !== "none" && mode !== "extension") {
+    throw new Error("browser extension origin permission storage mode is unsupported");
+  }
+  return mode;
 }
 
 function requireFirefoxExtensionId(value: string | undefined): string {
@@ -129,12 +152,17 @@ function requireContentScriptMatches(value: string[] | undefined): string[] | un
 export function buildBrowserExtensionManifest(options: BrowserExtensionManifestOptions): BrowserExtensionManifest {
   const name = requireName(options.name);
   const contentScriptMatches = requireContentScriptMatches(options.contentScriptMatches);
+  const popupMode = requirePopupMode(options.popupMode);
+  const originPermissionStorageMode = requireOriginPermissionStorageMode(options.originPermissionStorageMode);
+  const permissions: BrowserExtensionManifestPermission[] = ["nativeMessaging"];
+  if (popupMode === "origin_permission_approval") permissions.push("activeTab");
+  if (originPermissionStorageMode === "extension") permissions.push("storage");
   const manifest: BrowserExtensionManifest = {
     manifest_version: 3,
     name,
     description: requireDescription(options.description),
     version: requireVersion(options.version),
-    permissions: ["nativeMessaging"],
+    permissions,
     background: {
       service_worker: BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
       type: "module"

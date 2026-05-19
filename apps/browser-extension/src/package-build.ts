@@ -30,12 +30,14 @@ import {
 import { browserExtensionPopupHtml } from "./popup-html.js";
 
 export const BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT = "nsealr-browser-extension-package-build-v0";
+export type BrowserExtensionPackageOriginPermissionMode = "embedded" | "extension_storage";
 
 export type BrowserExtensionPackageBuildOptions = BrowserExtensionManifestOptions & {
   outDir: string;
   routeConfig: unknown;
   routeConfigApproval: unknown;
   extensionId?: string;
+  originPermissionMode?: BrowserExtensionPackageOriginPermissionMode;
   originPermissionStore?: unknown;
   localPairingDigest?: string;
 };
@@ -63,6 +65,7 @@ export type BrowserExtensionPackageBuildResult = {
   stores_production_secrets: false;
   dispatches_signers: false;
   embeds_origin_permission_store: boolean;
+  uses_extension_origin_permission_storage: boolean;
 };
 
 const PACKAGE_OUTPUT_DIR = "browser-extension-package";
@@ -173,18 +176,50 @@ function packageExtensionId(options: BrowserExtensionPackageBuildOptions): strin
 }
 
 type BrowserExtensionPackageOriginPermissions = {
-  store: BrowserExtensionOriginPermissionStore;
+  mode: BrowserExtensionPackageOriginPermissionMode;
+  store?: BrowserExtensionOriginPermissionStore;
   localPairingDigest: string;
   extensionId: string;
 };
+
+function requireOriginPermissionMode(
+  value: BrowserExtensionPackageOriginPermissionMode | undefined
+): BrowserExtensionPackageOriginPermissionMode {
+  const mode = value ?? "embedded";
+  if (mode !== "embedded" && mode !== "extension_storage") {
+    throw new Error("browser extension package origin permission mode is unsupported");
+  }
+  return mode;
+}
+
+function requirePackageManifestProfile(
+  options: BrowserExtensionPackageBuildOptions,
+  originPermissionMode: BrowserExtensionPackageOriginPermissionMode
+): void {
+  if (originPermissionMode === "extension_storage") {
+    if (options.popupMode !== undefined && options.popupMode !== "origin_permission_approval") {
+      throw new Error("browser extension package extension-storage origin permissions require origin approval popup");
+    }
+    if (options.originPermissionStorageMode !== undefined && options.originPermissionStorageMode !== "extension") {
+      throw new Error("browser extension package extension-storage origin permissions require extension storage mode");
+    }
+    return;
+  }
+  if (options.popupMode === "origin_permission_approval" || options.originPermissionStorageMode === "extension") {
+    throw new Error("browser extension package origin approval popup requires extension-storage origin permission mode");
+  }
+}
 
 function originPermissionsForPackage(
   options: BrowserExtensionPackageBuildOptions,
   plan: BrowserExtensionPackagePlan
 ): BrowserExtensionPackageOriginPermissions | undefined {
   const origins = packagedContentScriptOrigins(plan);
+  const originPermissionMode = requireOriginPermissionMode(options.originPermissionMode);
   const hasOriginPermissionInput =
-    options.originPermissionStore !== undefined || options.localPairingDigest !== undefined;
+    options.originPermissionStore !== undefined ||
+    options.localPairingDigest !== undefined ||
+    options.originPermissionMode !== undefined;
   if (origins.length === 0) {
     if (hasOriginPermissionInput) {
       throw new Error("browser extension package origin permissions require content-script matches");
@@ -192,17 +227,31 @@ function originPermissionsForPackage(
     return undefined;
   }
   if (options.originPermissionStore === undefined || options.localPairingDigest === undefined) {
-    throw new Error("browser extension package origin permission store is required for content-script builds");
+    if (originPermissionMode === "embedded") {
+      throw new Error("browser extension package origin permission store is required for content-script builds");
+    }
+    if (options.localPairingDigest === undefined) {
+      throw new Error("browser extension package localPairingDigest is required for extension-storage origin permissions");
+    }
   }
   const extensionId = packageExtensionId(options);
   if (extensionId === undefined) {
     throw new Error("browser extension package extensionId is required for origin-permission gated content scripts");
   }
-  const store = parseBrowserExtensionOriginPermissionStore(options.originPermissionStore);
   const localPairingDigest = requireLowerHex64(
     options.localPairingDigest,
     "browser extension package localPairingDigest"
   );
+  if (originPermissionMode === "extension_storage") {
+    if (plan.popup_mode !== "origin_permission_approval" || !plan.uses_extension_storage) {
+      throw new Error("browser extension package extension-storage origin permissions require popup approval storage");
+    }
+    if (options.originPermissionStore !== undefined) {
+      throw new Error("browser extension package extension-storage origin permissions must start from browser storage");
+    }
+    return { mode: "extension_storage", localPairingDigest, extensionId };
+  }
+  const store = parseBrowserExtensionOriginPermissionStore(options.originPermissionStore);
   for (const origin of origins) {
     for (const method of ["get_public_key", "sign_event"] as const) {
       if (!isBrowserExtensionOriginMethodAllowed(store, {
@@ -215,7 +264,7 @@ function originPermissionsForPackage(
       }
     }
   }
-  return { store, localPairingDigest, extensionId };
+  return { mode: "embedded", store, localPairingDigest, extensionId };
 }
 
 function requireApprovedRouteConfig(routeConfig: unknown, approval: unknown): void {
@@ -233,9 +282,10 @@ function virtualEntrypointPlugin(
   routeConfig: unknown,
   originPermissions: BrowserExtensionPackageOriginPermissions | undefined
 ): Plugin {
+  const usesExtensionOriginPermissionStorage = originPermissions?.mode === "extension_storage";
   const backgroundOptionsJson = JSON.stringify({
     routeConfig,
-    ...(originPermissions !== undefined ? {
+    ...(originPermissions?.mode === "embedded" ? {
       extensionId: originPermissions.extensionId,
       originPermissions: {
         store: originPermissions.store,
@@ -253,13 +303,30 @@ function virtualEntrypointPlugin(
       build.onLoad({ filter: /background$/, namespace: "nsealr-browser-extension" }, () => ({
         loader: "ts",
         resolveDir: COMPANION_ROOT,
-        contents: `
-          import { installNsealrBackgroundEntrypoint } from "./apps/browser-extension/src/nsealr-background-entrypoint.ts";
-          installNsealrBackgroundEntrypoint({
-            globalScope: globalThis,
-            ...${backgroundOptionsJson}
-          });
-        `
+        contents: usesExtensionOriginPermissionStorage
+          ? `
+            import { installNsealrBackgroundEntrypoint } from "./apps/browser-extension/src/nsealr-background-entrypoint.ts";
+            import { requireBrowserExtensionOriginPermissionStorageGlobal } from "./apps/browser-extension/src/browser-globals.ts";
+            import { readBrowserExtensionOriginPermissionStoreFromStorage } from "./apps/browser-extension/src/origin-permission-storage.ts";
+            const originPermissionStorage = requireBrowserExtensionOriginPermissionStorageGlobal(globalThis);
+            installNsealrBackgroundEntrypoint({
+              globalScope: globalThis,
+              ...${backgroundOptionsJson},
+              extensionId: ${JSON.stringify(originPermissions?.extensionId)},
+              originPermissions: {
+                loadStore: () => readBrowserExtensionOriginPermissionStoreFromStorage(originPermissionStorage),
+                localPairingDigest: ${JSON.stringify(originPermissions?.localPairingDigest)}
+              },
+              originPermissionStorage
+            });
+          `
+          : `
+            import { installNsealrBackgroundEntrypoint } from "./apps/browser-extension/src/nsealr-background-entrypoint.ts";
+            installNsealrBackgroundEntrypoint({
+              globalScope: globalThis,
+              ...${backgroundOptionsJson}
+            });
+          `
       }));
       build.onLoad({ filter: /content-script$/, namespace: "nsealr-browser-extension" }, () => ({
         loader: "ts",
@@ -284,12 +351,20 @@ function virtualEntrypointPlugin(
       build.onLoad({ filter: /popup$/, namespace: "nsealr-browser-extension" }, () => ({
         loader: "ts",
         resolveDir: COMPANION_ROOT,
-        contents: `
-          import { installNsealrPopupEntrypoint } from "./apps/browser-extension/src/nsealr-popup-entrypoint.ts";
-          installNsealrPopupEntrypoint({
-            globalScope: globalThis
-          });
-        `
+        contents: usesExtensionOriginPermissionStorage
+          ? `
+            import { installNsealrPopupOriginPermissionEntrypoint } from "./apps/browser-extension/src/nsealr-popup-entrypoint.ts";
+            installNsealrPopupOriginPermissionEntrypoint({
+              globalScope: globalThis,
+              extensionId: ${JSON.stringify(originPermissions?.extensionId)}
+            });
+          `
+          : `
+            import { installNsealrPopupEntrypoint } from "./apps/browser-extension/src/nsealr-popup-entrypoint.ts";
+            installNsealrPopupEntrypoint({
+              globalScope: globalThis
+            });
+          `
       }));
     }
   };
@@ -365,7 +440,17 @@ export async function buildBrowserExtensionPackage(
   }
   const routeConfig = normalizedRouteConfig(options.routeConfig);
   requireApprovedRouteConfig(routeConfig, options.routeConfigApproval);
-  const plan = assertBrowserExtensionPackagePlan(buildBrowserExtensionPackagePlan(options));
+  const originPermissionMode = requireOriginPermissionMode(options.originPermissionMode);
+  requirePackageManifestProfile(options, originPermissionMode);
+  const plan = assertBrowserExtensionPackagePlan(buildBrowserExtensionPackagePlan({
+    ...options,
+    ...(originPermissionMode === "extension_storage"
+      ? {
+          popupMode: "origin_permission_approval",
+          originPermissionStorageMode: "extension"
+        }
+      : {})
+  }));
   const originPermissions = originPermissionsForPackage(options, plan);
   const buildResult = await esbuild({
     absWorkingDir: COMPANION_ROOT,
@@ -420,6 +505,7 @@ export async function buildBrowserExtensionPackage(
     writes_extension_storage: false,
     stores_production_secrets: false,
     dispatches_signers: false,
-    embeds_origin_permission_store: originPermissions !== undefined
+    embeds_origin_permission_store: originPermissions?.mode === "embedded",
+    uses_extension_origin_permission_storage: originPermissions?.mode === "extension_storage"
   });
 }

@@ -26,10 +26,18 @@ import { installNsealrContentScriptEntrypoint } from "./nsealr-content-script-en
 import { installNsealrPageScriptEntrypoint } from "./nsealr-page-script-entrypoint.js";
 import {
   createNsealrPopupEntrypoint,
-  installNsealrPopupEntrypoint
+  installNsealrPopupEntrypoint,
+  installNsealrPopupOriginPermissionEntrypoint
 } from "./nsealr-popup-entrypoint.js";
 import { approveBrowserExtensionOriginPermissionReview } from "./pairing.js";
-import { createBrowserExtensionOriginPermissionStore } from "./origin-permission-store.js";
+import {
+  BROWSER_EXTENSION_ORIGIN_PERMISSION_STORE_FORMAT,
+  createBrowserExtensionOriginPermissionStore
+} from "./origin-permission-store.js";
+import {
+  BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY,
+  BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_WRITE_FORMAT
+} from "./origin-permission-storage.js";
 import {
   BROWSER_EXTENSION_POPUP_LIST_ID,
   BROWSER_EXTENSION_POPUP_REFRESH_ID,
@@ -634,6 +642,127 @@ describe("packaged browser extension entrypoints", () => {
     expect(popup.status.textContent).toBe("1 pending");
     expect(popup.list.children).toHaveLength(1);
     expect(popup.list.children[0].children[0].children[0].textContent).toBe("Sign event");
+    handle.dispose();
+    expect(popup.refresh.listeners.get("click")).toEqual([]);
+  });
+
+  it("installs the packaged origin-permission popup view through runtime, tabs, and document globals", async () => {
+    const runtimeMessages: unknown[] = [];
+    const popup = createPopupDocument();
+    const originReview = {
+      format: "nsealr-browser-origin-permission-review-v0",
+      origin: "https://example.com",
+      app_name: "nSealr Browser Extension",
+      extension_id: "extension@nsealr.dev",
+      requested_methods: [
+        {
+          method: "get_public_key",
+          label: "Read public key",
+          effect: "The page can read the selected account public key through the browser provider."
+        },
+        {
+          method: "sign_event",
+          label: "Request event signatures",
+          effect: "The page can ask for Nostr event signatures; the selected signer route still enforces review, approval, and policy."
+        }
+      ],
+      local_pairing_digest: localPairingDigest,
+      requires_user_approval: true,
+      stores_production_secrets: false,
+      creates_grants: false,
+      injects_provider: false
+    };
+    const approval = approveBrowserExtensionOriginPermissionReview(originReview, {
+      reviewedLocalPairingDigest: localPairingDigest,
+      approvedAt: 1_900_000_420
+    });
+    const nextIds = ["packaged-origin-review", "packaged-origin-approve"];
+    const handle = installNsealrPopupOriginPermissionEntrypoint({
+      globalScope: {
+        browser: {
+          runtime: {
+            sendMessage(message: unknown): unknown {
+              runtimeMessages.push(message);
+              const request = message as { request_id: string; method: string };
+              if (request.method === "request_origin_permission_review") {
+                return {
+                  protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+                  version: 1,
+                  request_id: request.request_id,
+                  ok: true,
+                  result: {
+                    origin_review: originReview,
+                    stores_production_secrets: false,
+                    contains_secret_material: false,
+                    creates_grants: false,
+                    injects_provider: false
+                  }
+                };
+              }
+              if (request.method === "approve_origin_permission") {
+                return {
+                  protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+                  version: 1,
+                  request_id: request.request_id,
+                  ok: true,
+                  result: {
+                    approval,
+                    storage_write: {
+                      format: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_WRITE_FORMAT,
+                      storage_key: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORAGE_KEY,
+                      store_format: BROWSER_EXTENSION_ORIGIN_PERMISSION_STORE_FORMAT,
+                      updated_at: 1_900_000_420,
+                      approval_count: 1,
+                      requires_user_approval: true,
+                      reads_extension_storage: true,
+                      writes_extension_storage: true,
+                      creates_grants: false,
+                      dispatches_signers: false,
+                      stores_production_secrets: false,
+                      contains_secret_material: false
+                    },
+                    requires_user_approval: true,
+                    writes_extension_storage: true,
+                    creates_grants: false,
+                    dispatches_signers: false,
+                    stores_production_secrets: false,
+                    contains_secret_material: false
+                  }
+                };
+              }
+              throw new Error("unexpected popup control request");
+            }
+          },
+          tabs: {
+            query(queryInfo: unknown): unknown {
+              expect(queryInfo).toEqual({ active: true, currentWindow: true });
+              return [{
+                id: 7,
+                title: "Example",
+                url: "https://example.com/client"
+              }];
+            }
+          }
+        },
+        document: popup.document
+      },
+      extensionId: "extension@nsealr.dev",
+      nextRequestId: () => nextIds.shift() ?? "unexpected-popup-request"
+    });
+
+    await flushAsyncListeners();
+    expect(popup.root.attributes.get("data-nsealr-popup-origin-permission")).toBe("ready");
+    expect(popup.status.textContent).toBe("Review origin");
+    expect(popup.list.children).toHaveLength(1);
+    const approve = popup.list.children[0].children[4].children[1];
+    approve.listeners.get("click")?.[0]?.();
+    await flushAsyncListeners();
+
+    expect(popup.status.textContent).toBe("Approved");
+    expect(runtimeMessages.map((message) => (message as { method?: string }).method)).toEqual([
+      "request_origin_permission_review",
+      "approve_origin_permission"
+    ]);
     handle.dispose();
     expect(popup.refresh.listeners.get("click")).toEqual([]);
   });

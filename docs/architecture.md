@@ -486,8 +486,8 @@ page injection at a module that only exports helpers. It does not call global
 The browser-extension package-plan boundary is a deterministic pre-bundling
 artifact. It joins the reviewed manifest, packaged output filenames, and source
 launcher paths into `nsealr-browser-extension-package-plan-v0`, then rejects
-drift such as storage permission, host permissions, mismatched background
-output, mismatched popup output, or mismatched content-script output. It
+drift such as unprofiled storage permission, host permissions, mismatched
+background output, mismatched popup output, or mismatched content-script output. It
 deliberately does not build an installable extension, install native-host
 manifests, write browser storage, dispatch signers, or hold key material.
 The private `@nsealr/browser-extension` app exposes this boundary through
@@ -586,6 +586,12 @@ records every write as secretless extension-storage metadata. It still does not
 read global browser APIs, create grants, inject a provider, dispatch signers,
 or store production secrets; packaged manifests do not request storage
 permission by default.
+The packaged browser-global resolver is the only reviewed place that can adapt
+`browser.storage.local` or `chrome.storage.local` into that injected storage
+area. It rejects ambiguous `browser`/`chrome` globals, requires `get` and `set`
+methods, and keeps the storage key/parser boundary in the package-owned
+origin-permission storage module. Package builds use that resolver only for the
+explicit storage-backed origin-approval profile.
 The matching origin-permission review card is also pure: it renders the
 already-validated review, the full pairing digest, requested method effects,
 and approve/reject actions over injected controls. It accepts approval only
@@ -599,6 +605,10 @@ returns secretless page-origin metadata plus a sender object suitable for the
 existing background request path. It does not add manifest permissions, read or
 write browser storage, create grants, inject a provider, dispatch signers, or
 handle key material.
+The default package does not include this permission surface; the
+storage-backed origin-approval package profile requests `activeTab` explicitly
+so the popup can read the active tab URL only after the user opens the action
+popup.
 The active-tab origin permission review orchestrator composes that selector
 with the popup control client. It requests review metadata for the normalized
 active-tab sender, parses the returned review, and rejects origin or extension
@@ -630,6 +640,15 @@ The browser-like background entrypoint exposes the same injected gate, so
 packaged runtime handling can be tested without introducing browser storage or
 global browser APIs. The packaged background entrypoint forwards that option
 rather than dropping it at the launcher boundary.
+Package builds now have two origin-permission gate modes. The default embedded
+mode keeps the reviewed approved-origin store in secretless background gate
+data and requests no storage permission. The explicit `extension_storage` mode
+does not embed approvals: it requests `storage`, resolves the reviewed storage
+adapter at runtime, loads the store before provider selection, and lets the
+action popup write new approvals only through the digest-confirmed background
+approval path. Build-time side effects remain unchanged: package builds write
+only package files, never extension storage, grants, signer output, or native
+host manifests.
 Its manifest builder is intentionally restrictive: the default Chromium
 manifest omits host permissions, optional host permissions, content scripts,
 web-accessible resources, and storage; Firefox manifests require an explicit
@@ -638,11 +657,13 @@ boundary. An opt-in content-script profile may list explicit reviewed origins su
 `https://example.com/*` or local development origins such as
 `http://localhost:5173/*`, but it rejects `<all_urls>`, wildcard schemes,
 wildcard hosts, non-local `http`, duplicate matches, host-permission fields,
-and storage. When content scripts are enabled, the manifest exposes only the
-packaged page-script entrypoint as a web-accessible resource for those same
-explicit matches so page injection can work without granting wider host access.
-Origin injection and durable extension metadata remain blocked on permission UX
-and reviewed browser-storage policy.
+and implicit storage. When content scripts are enabled, the manifest exposes
+only the packaged page-script entrypoint as a web-accessible resource for those
+same explicit matches so page injection can work without granting wider host
+access. A separate explicit origin-approval profile may add only `activeTab`
+and `storage` for popup-mediated browser-origin approval; it still rejects host
+permission fields and broad URL access. Origin injection and durable extension
+metadata remain blocked on production permission UX.
 
 Executable SDK examples live in private app `@nsealr/sdk-examples`. They are
 not another access surface and do not own production behavior. Their role is to

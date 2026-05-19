@@ -133,7 +133,8 @@ describe("browser extension package build", () => {
         writes_extension_storage: false,
         stores_production_secrets: false,
         dispatches_signers: false,
-        embeds_origin_permission_store: true
+        embeds_origin_permission_store: true,
+        uses_extension_origin_permission_storage: false
       });
       for (const file of result.files) {
         const path = join(temp.outDir, file.path);
@@ -166,6 +167,46 @@ describe("browser extension package build", () => {
       const popupHtml = readFileSync(join(temp.outDir, BROWSER_EXTENSION_POPUP_HTML_FILE), "utf8");
       expect(popupHtml).toContain(BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE);
       expect(popupHtml).toContain("nsealr-popup-root");
+    } finally {
+      temp.cleanup();
+    }
+  });
+
+  it("writes an explicit storage-backed origin approval package artifact", async () => {
+    const temp = tempOutDir();
+    try {
+      const result = await buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: temp.outDir,
+        routeConfig,
+        routeConfigApproval,
+        contentScriptMatches: ["https://example.com/*"],
+        extensionId: chromiumExtensionId,
+        originPermissionMode: "extension_storage",
+        localPairingDigest
+      });
+
+      expect(result).toMatchObject({
+        format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
+        target: "chromium",
+        out_dir: temp.outDir,
+        installs_native_host_manifest: false,
+        writes_extension_storage: false,
+        stores_production_secrets: false,
+        dispatches_signers: false,
+        embeds_origin_permission_store: false,
+        uses_extension_origin_permission_storage: true
+      });
+      const manifest = JSON.parse(readFileSync(join(temp.outDir, "manifest.json"), "utf8"));
+      expect(manifest.permissions).toEqual(["nativeMessaging", "activeTab", "storage"]);
+      expect("host_permissions" in manifest).toBe(false);
+      expect("optional_host_permissions" in manifest).toBe(false);
+      const background = readFileSync(join(temp.outDir, BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE), "utf8");
+      const popup = readFileSync(join(temp.outDir, BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE), "utf8");
+      expect(background).toContain("originPermissionStorage");
+      expect(background).toContain(localPairingDigest);
+      expect(popup).toContain("active_tab");
+      expect(popup).toContain(chromiumExtensionId);
     } finally {
       temp.cleanup();
     }
@@ -205,6 +246,42 @@ describe("browser extension package build", () => {
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"]
       })).rejects.toThrow(/origin permission store/u);
+      expect(existsSync(invalidRoute.outDir)).toBe(false);
+      await expect(buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: invalidRoute.outDir,
+        routeConfig,
+        routeConfigApproval,
+        popupMode: "origin_permission_approval",
+        contentScriptMatches: ["https://example.com/*"],
+        extensionId: chromiumExtensionId,
+        originPermissionStore: originPermissionStore(),
+        localPairingDigest
+      })).rejects.toThrow(/extension-storage origin permission mode/u);
+      expect(existsSync(invalidRoute.outDir)).toBe(false);
+      await expect(buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: invalidRoute.outDir,
+        routeConfig,
+        routeConfigApproval,
+        contentScriptMatches: ["https://example.com/*"],
+        extensionId: chromiumExtensionId,
+        originPermissionMode: "extension_storage",
+        popupMode: "pending_requests",
+        localPairingDigest
+      })).rejects.toThrow(/origin approval popup/u);
+      expect(existsSync(invalidRoute.outDir)).toBe(false);
+      await expect(buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: invalidRoute.outDir,
+        routeConfig,
+        routeConfigApproval,
+        contentScriptMatches: ["https://example.com/*"],
+        extensionId: chromiumExtensionId,
+        originPermissionMode: "extension_storage",
+        originPermissionStore: originPermissionStore(),
+        localPairingDigest
+      })).rejects.toThrow(/start from browser storage/u);
       expect(existsSync(invalidRoute.outDir)).toBe(false);
       await expect(buildBrowserExtensionPackage({
         target: "chromium",

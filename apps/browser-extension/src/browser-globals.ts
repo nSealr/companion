@@ -8,6 +8,12 @@ import {
   type BrowserExtensionPopupRuntimeApi
 } from "./popup-control.js";
 import {
+  type BrowserExtensionOriginPermissionStorageArea
+} from "./origin-permission-storage.js";
+import {
+  type BrowserExtensionPopupTabsApi
+} from "./popup-tab.js";
+import {
   type BrowserExtensionPopupDocument
 } from "./popup-dom.js";
 import {
@@ -24,9 +30,13 @@ import {
 export type BrowserExtensionPackagedGlobalScope = {
   browser?: {
     runtime?: unknown;
+    storage?: unknown;
+    tabs?: unknown;
   };
   chrome?: {
     runtime?: unknown;
+    storage?: unknown;
+    tabs?: unknown;
   };
   document?: unknown;
   window?: unknown;
@@ -73,6 +83,63 @@ function requireExtensionRuntimeGlobal(
   return runtime;
 }
 
+function optionalStorageContainer(value: unknown, label: string): unknown {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) {
+    throw new Error(`${label} storage container is invalid`);
+  }
+  return value.storage;
+}
+
+function optionalTabsContainer(value: unknown, label: string): unknown {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) {
+    throw new Error(`${label} tabs container is invalid`);
+  }
+  return value.tabs;
+}
+
+function requireExtensionStorageLocalGlobal(
+  value: BrowserExtensionPackagedGlobalScope,
+  label: string
+): BrowserExtensionOriginPermissionStorageArea {
+  const globalScope = requireGlobalScope(value);
+  const browserStorage = optionalStorageContainer(globalScope.browser, "browser");
+  const chromeStorage = optionalStorageContainer(globalScope.chrome, "chrome");
+  if (browserStorage !== undefined && chromeStorage !== undefined && browserStorage !== chromeStorage) {
+    throw new Error(`${label} storage global is ambiguous`);
+  }
+  const storage = browserStorage ?? chromeStorage;
+  if (!isRecord(storage) || !isRecord(storage.local)) {
+    throw new Error(`${label} storage global is unavailable`);
+  }
+  const local = storage.local;
+  if (typeof local.get !== "function" || typeof local.set !== "function") {
+    throw new Error(`${label} storage local global is invalid`);
+  }
+  if (local.remove !== undefined && typeof local.remove !== "function") {
+    throw new Error(`${label} storage local remove global is invalid`);
+  }
+  return local as BrowserExtensionOriginPermissionStorageArea;
+}
+
+function requireExtensionTabsGlobal(
+  value: BrowserExtensionPackagedGlobalScope,
+  label: string
+): BrowserExtensionPopupTabsApi {
+  const globalScope = requireGlobalScope(value);
+  const browserTabs = optionalTabsContainer(globalScope.browser, "browser");
+  const chromeTabs = optionalTabsContainer(globalScope.chrome, "chrome");
+  if (browserTabs !== undefined && chromeTabs !== undefined && browserTabs !== chromeTabs) {
+    throw new Error(`${label} tabs global is ambiguous`);
+  }
+  const tabs = browserTabs ?? chromeTabs;
+  if (!isRecord(tabs) || typeof tabs.query !== "function") {
+    throw new Error(`${label} tabs global is unavailable`);
+  }
+  return tabs as BrowserExtensionPopupTabsApi;
+}
+
 export function requireBrowserExtensionBackgroundRuntimeGlobal(
   value: BrowserExtensionPackagedGlobalScope
 ): BrowserExtensionBackgroundBrowserRuntimeApi {
@@ -111,6 +178,38 @@ export function requireBrowserExtensionPopupRuntimeGlobal(
     throw new Error("browser extension popup runtime global is invalid");
   }
   return runtime as BrowserExtensionPopupRuntimeApi;
+}
+
+export function requireBrowserExtensionOriginPermissionStorageGlobal(
+  value: BrowserExtensionPackagedGlobalScope
+): BrowserExtensionOriginPermissionStorageArea {
+  const storage = requireExtensionStorageLocalGlobal(value, "browser extension origin permission");
+  return {
+    get(key) {
+      return storage.get(key);
+    },
+    set(items) {
+      return storage.set(items);
+    },
+    ...(storage.remove !== undefined
+      ? {
+          remove(key) {
+            return storage.remove?.(key);
+          }
+        }
+      : {})
+  };
+}
+
+export function requireBrowserExtensionPopupTabsGlobal(
+  value: BrowserExtensionPackagedGlobalScope
+): BrowserExtensionPopupTabsApi {
+  const tabs = requireExtensionTabsGlobal(value, "browser extension popup");
+  return {
+    query(queryInfo) {
+      return tabs.query(queryInfo);
+    }
+  };
 }
 
 export function requireBrowserExtensionPopupDocumentGlobal(

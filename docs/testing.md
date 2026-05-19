@@ -92,18 +92,22 @@ single-repository CI. Cross-repository drift remains guarded by
   `make browser-runtime-bundle`. The browser-extension security audit runs with
   `make browser-extension-security` and fails if the extension or
   browser-provider runtime starts depending on test signing packages,
-  signing/key-generation libraries, browser storage APIs, or direct signing
-  helper calls. These gates keep the extension as a secretless NIP-07 access
+  signing/key-generation libraries, unreviewed browser storage APIs, or direct
+  signing helper calls. The only storage path allowed by design is the
+  package-owned origin-permission storage adapter plus packaged-global
+  resolver. These gates keep the extension as a secretless NIP-07 access
   surface over the local companion service. Installable extension packaging
-  still needs a reviewed packaged bootstrap/config contract. Package-build
+  still needs a reviewed production bootstrap/config contract. Package-build
   tests cover the first private developer artifact
   builder: route-config tests require digest-bound review and approval for the
   secretless selected route; package-build requires that approval before
   embedding the route config, requires a new output directory, writes manifest,
   popup HTML, and bundled entrypoints only after successful in-memory bundling,
   returns a package digest plus per-file byte counts and SHA-256 hashes, and
-  still performs no native-host installation, browser storage writes, key
-  custody, or signer dispatch.
+  still performs no native-host installation, build-time browser storage
+  writes, key custody, or signer dispatch. A separate test covers the explicit
+  storage-backed origin-approval build profile and pins its `activeTab` plus
+  `storage` permissions.
 - Browser-extension app tests cover the private internal message parser for
   `get_public_key` and `sign_event`, including unsupported-method rejection,
   malformed-envelope rejection, and shared signer-request validation for event
@@ -170,6 +174,10 @@ single-repository CI. Cross-repository drift remains guarded by
   now prove digest-confirmed origin permission approval is routed through the
   extension-internal control protocol into an explicitly injected storage
   adapter, without native messaging, grants, signer dispatch, or key material.
+  Packaged-entrypoint tests now also prove the explicit origin-permission popup
+  launcher resolves only injected runtime, tabs, and document globals, renders
+  the active-tab review, and sends digest-confirmed approval back through the
+  same control protocol without signer dispatch or key material.
   Sender-aware handler and background-controller tests prove an injected
   approved-origin store can authorize exact `get_public_key` access while
   denying method-mismatched, stale-digest, or malformed-store requests before
@@ -308,9 +316,11 @@ single-repository CI. Cross-repository drift remains guarded by
   Manifest tests pin the minimal MV3 permission boundary: native messaging
   only, action popup, no host permission fields, no content scripts, no storage
   permission, and explicit Firefox extension ids. They also pin the opt-in
-  explicit-origin content-script manifest profile and reject broad URL access such as
+  explicit-origin content-script manifest profile and the separate
+  storage-backed origin-approval profile, where `activeTab` and `storage` are
+  explicit and still do not introduce host permissions. They reject broad URL access such as
   `<all_urls>`, wildcard hosts, non-local `http`, duplicate matches, host
-  permission fields, and storage.
+  permission fields, and implicit storage.
 - `make package-smoke` builds package artifacts, then runs the private
   `@nsealr/consumer-smoke` app. The smoke imports every public `@nsealr/*`
   package through its built package entrypoint plus the public

@@ -69,6 +69,19 @@ describe("browser extension manifest boundary", () => {
     expect(manifest.permissions).not.toContain("storage");
   });
 
+  it("builds an explicit popup-origin approval manifest without broad host access", () => {
+    const manifest = buildBrowserExtensionManifest({
+      target: "chromium",
+      popupMode: "origin_permission_approval",
+      originPermissionStorageMode: "extension",
+      contentScriptMatches: ["https://example.com/*"]
+    });
+    expect(manifest.permissions).toEqual(["nativeMessaging", "activeTab", "storage"]);
+    expect("host_permissions" in manifest).toBe(false);
+    expect("optional_host_permissions" in manifest).toBe(false);
+    expect(manifest.content_scripts?.[0].matches).toEqual(["https://example.com/*"]);
+  });
+
   it("builds a Firefox manifest only with an explicit reviewed extension id", () => {
     const manifest = buildBrowserExtensionManifest({
       target: "firefox",
@@ -129,5 +142,13 @@ describe("browser extension manifest boundary", () => {
       target: "chromium",
       contentScriptMatches: ["https://example.com/*", "https://example.com/*"]
     })).toThrow(/duplicated/u);
+    expect(() => buildBrowserExtensionManifest({
+      target: "chromium",
+      popupMode: "unsupported" as never
+    })).toThrow(/popup mode/u);
+    expect(() => buildBrowserExtensionManifest({
+      target: "chromium",
+      originPermissionStorageMode: "unsupported" as never
+    })).toThrow(/storage mode/u);
   });
 });

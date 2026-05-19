@@ -7,6 +7,7 @@ import {
 } from "./entrypoints.js";
 import {
   buildBrowserExtensionManifest,
+  type BrowserExtensionPopupMode,
   type BrowserExtensionManifest,
   type BrowserExtensionManifestOptions
 } from "./manifest.js";
@@ -36,6 +37,7 @@ export type BrowserExtensionPackageEntrypoint = {
 export type BrowserExtensionPackagePlan = {
   format: typeof BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT;
   target: BrowserExtensionManifestOptions["target"];
+  popup_mode: BrowserExtensionPopupMode;
   manifest: BrowserExtensionManifest;
   entrypoints: readonly [
     BrowserExtensionPackageEntrypoint,
@@ -45,6 +47,8 @@ export type BrowserExtensionPackagePlan = {
   ];
   installs_native_host_manifest: false;
   writes_extension_storage: false;
+  uses_extension_storage: boolean;
+  uses_active_tab_permission: boolean;
   stores_production_secrets: false;
   dispatches_signers: false;
 };
@@ -96,11 +100,24 @@ function assertEntrypoint(
   }
 }
 
-function assertNoHostOrStoragePermissions(manifest: BrowserExtensionManifest): void {
-  if ((manifest.permissions as readonly string[]).includes("storage")) {
-    throw new Error("browser extension package plan must not request storage permission");
+function assertPermissionProfile(plan: BrowserExtensionPackagePlan): void {
+  const permissions = plan.manifest.permissions as readonly string[];
+  if (plan.popup_mode !== "pending_requests" && plan.popup_mode !== "origin_permission_approval") {
+    throw new Error("browser extension package plan popup mode is unsupported");
   }
-  if ("host_permissions" in manifest || "optional_host_permissions" in manifest) {
+  if (permissions.includes("storage") !== plan.uses_extension_storage) {
+    throw new Error("browser extension package plan storage permission profile is invalid");
+  }
+  if (permissions.includes("activeTab") !== plan.uses_active_tab_permission) {
+    throw new Error("browser extension package plan activeTab permission profile is invalid");
+  }
+  if (plan.popup_mode === "origin_permission_approval" && !plan.uses_active_tab_permission) {
+    throw new Error("browser extension package plan origin approval popup must request activeTab");
+  }
+  if (plan.uses_extension_storage && !plan.uses_active_tab_permission) {
+    throw new Error("browser extension package plan extension storage requires activeTab review");
+  }
+  if ("host_permissions" in plan.manifest || "optional_host_permissions" in plan.manifest) {
     throw new Error("browser extension package plan must not request host permissions");
   }
 }
@@ -117,13 +134,19 @@ export function assertBrowserExtensionPackagePlan(
   if (plan.writes_extension_storage !== false) {
     throw new Error("browser extension package plan must not write extension storage");
   }
+  if (typeof plan.uses_extension_storage !== "boolean") {
+    throw new Error("browser extension package plan extension storage profile is invalid");
+  }
+  if (typeof plan.uses_active_tab_permission !== "boolean") {
+    throw new Error("browser extension package plan activeTab profile is invalid");
+  }
   if (plan.stores_production_secrets !== false) {
     throw new Error("browser extension package plan must not store production secrets");
   }
   if (plan.dispatches_signers !== false) {
     throw new Error("browser extension package plan must not dispatch signers");
   }
-  assertNoHostOrStoragePermissions(plan.manifest);
+  assertPermissionProfile(plan);
 
   const background = entrypointByRole(plan, "background_service_worker");
   assertEntrypoint(
@@ -181,13 +204,18 @@ export function assertBrowserExtensionPackagePlan(
 export function buildBrowserExtensionPackagePlan(
   options: BrowserExtensionManifestOptions
 ): BrowserExtensionPackagePlan {
+  const popupMode = options.popupMode ?? "pending_requests";
+  const usesExtensionStorage = options.originPermissionStorageMode === "extension";
   return assertBrowserExtensionPackagePlan(Object.freeze({
     format: BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT,
     target: options.target,
+    popup_mode: popupMode,
     manifest: buildBrowserExtensionManifest(options),
     entrypoints: packageEntrypoints(),
     installs_native_host_manifest: false,
     writes_extension_storage: false,
+    uses_extension_storage: usesExtensionStorage,
+    uses_active_tab_permission: popupMode === "origin_permission_approval",
     stores_production_secrets: false,
     dispatches_signers: false
   }));

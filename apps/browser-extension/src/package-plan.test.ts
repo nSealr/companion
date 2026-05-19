@@ -29,8 +29,11 @@ describe("browser extension package plan", () => {
     expect(plan).toMatchObject({
       format: BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT,
       target: "chromium",
+      popup_mode: "pending_requests",
       installs_native_host_manifest: false,
       writes_extension_storage: false,
+      uses_extension_storage: false,
+      uses_active_tab_permission: false,
       stores_production_secrets: false,
       dispatches_signers: false
     });
@@ -61,6 +64,22 @@ describe("browser extension package plan", () => {
         output: BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE
       }
     ]);
+  });
+
+  it("builds an explicit storage-backed origin approval popup package plan", () => {
+    const plan = buildBrowserExtensionPackagePlan({
+      target: "chromium",
+      popupMode: "origin_permission_approval",
+      originPermissionStorageMode: "extension",
+      contentScriptMatches: ["https://example.com/*"]
+    });
+
+    expect(plan.popup_mode).toBe("origin_permission_approval");
+    expect(plan.uses_extension_storage).toBe(true);
+    expect(plan.uses_active_tab_permission).toBe(true);
+    expect(plan.manifest.permissions).toEqual(["nativeMessaging", "activeTab", "storage"]);
+    expect("host_permissions" in plan.manifest).toBe(false);
+    expect(assertBrowserExtensionPackagePlan(plan)).toBe(plan);
   });
 
   it("keeps explicit content-script manifests aligned with the packaged output", () => {
@@ -115,7 +134,12 @@ describe("browser extension package plan", () => {
         ...plan.manifest,
         permissions: ["nativeMessaging", "storage"]
       }
-    }))).toThrow(/storage permission/u);
+    }))).toThrow(/storage permission profile/u);
+    expect(() => assertBrowserExtensionPackagePlan(tamperedPlan({
+      ...plan,
+      popup_mode: "origin_permission_approval",
+      uses_active_tab_permission: false
+    }))).toThrow(/activeTab/u);
     expect(() => assertBrowserExtensionPackagePlan(tamperedPlan({
       ...plan,
       manifest: {

@@ -2,7 +2,8 @@
 import { readFileSync, writeSync } from "node:fs";
 import {
   BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
-  buildBrowserExtensionPackage
+  buildBrowserExtensionPackage,
+  type BrowserExtensionPackageOriginPermissionMode
 } from "./package-build.js";
 import {
   BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT
@@ -21,6 +22,7 @@ type PackageBuildCliOptions = {
   routeType?: string;
   routeConfigApprovalPath?: string;
   extensionId?: string;
+  originPermissionMode?: BrowserExtensionPackageOriginPermissionMode;
   originPermissionStorePath?: string;
   localPairingDigest?: string;
 };
@@ -75,6 +77,16 @@ function parsePackageBuildArgs(args: string[]): PackageBuildCliOptions {
     } else if (arg === "--extension-id") {
       if (options.extensionId !== undefined) throw new Error("--extension-id must be specified only once");
       options.extensionId = takeOptionValue(normalizedArgs, index, arg);
+      index += 1;
+    } else if (arg === "--origin-permission-mode") {
+      if (options.originPermissionMode !== undefined) {
+        throw new Error("--origin-permission-mode must be specified only once");
+      }
+      const mode = takeOptionValue(normalizedArgs, index, arg);
+      if (mode !== "embedded" && mode !== "extension-storage") {
+        throw new Error("--origin-permission-mode must be embedded or extension-storage");
+      }
+      options.originPermissionMode = mode === "extension-storage" ? "extension_storage" : "embedded";
       index += 1;
     } else if (arg === "--origin-permission-store") {
       if (options.originPermissionStorePath !== undefined) {
@@ -136,6 +148,7 @@ export async function browserExtensionPackageBuildJsonFromArgs(args: string[]): 
     routeConfig: routeConfigFromCli(options),
     routeConfigApproval: readJsonFile(options.routeConfigApprovalPath, "browser extension route config approval"),
     ...(options.extensionId !== undefined ? { extensionId: options.extensionId } : {}),
+    ...(options.originPermissionMode !== undefined ? { originPermissionMode: options.originPermissionMode } : {}),
     ...(options.originPermissionStorePath !== undefined
       ? {
           originPermissionStore: readJsonFile(

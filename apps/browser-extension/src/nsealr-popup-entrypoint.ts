@@ -6,12 +6,18 @@ import {
 import {
   requireBrowserExtensionPopupDocumentGlobal,
   requireBrowserExtensionPopupRuntimeGlobal,
+  requireBrowserExtensionPopupTabsGlobal,
   type BrowserExtensionPackagedGlobalScope
 } from "./browser-globals.js";
 import {
   installBrowserExtensionPopupView,
   type BrowserExtensionPopupViewHandle
 } from "./popup-view.js";
+import {
+  installBrowserExtensionPopupOriginPermissionView,
+  type BrowserExtensionPopupOriginPermissionViewHandle,
+  type BrowserExtensionPopupOriginPermissionViewOptions
+} from "./popup-origin-permission-view.js";
 
 export type NsealrPopupEntrypointOptions = Omit<
   BrowserExtensionPopupControlOptions,
@@ -38,6 +44,37 @@ export function installNsealrPopupEntrypoint(
   return installBrowserExtensionPopupView({
     document: requireBrowserExtensionPopupDocumentGlobal(options.globalScope),
     controls: createNsealrPopupEntrypoint(options),
+    ...(options.onError !== undefined ? { onError: options.onError } : {})
+  });
+}
+
+export type NsealrPopupOriginPermissionEntrypointOptions = Omit<
+  BrowserExtensionPopupOriginPermissionViewOptions,
+  "document" | "controls" | "tabs"
+> &
+  NsealrPopupEntrypointOptions;
+
+export function installNsealrPopupOriginPermissionEntrypoint(
+  options: NsealrPopupOriginPermissionEntrypointOptions
+): BrowserExtensionPopupOriginPermissionViewHandle {
+  const controls = createNsealrPopupEntrypoint(options);
+  return installBrowserExtensionPopupOriginPermissionView({
+    document: requireBrowserExtensionPopupDocumentGlobal(options.globalScope),
+    controls: {
+      ...controls,
+      rejectOriginPermission(): void {
+        return undefined;
+      }
+    },
+    tabs: requireBrowserExtensionPopupTabsGlobal(options.globalScope),
+    extensionId: options.extensionId,
+    ...(options.appName !== undefined ? { appName: options.appName } : {}),
+    ...(options.rootId !== undefined ? { rootId: options.rootId } : {}),
+    ...(options.statusId !== undefined ? { statusId: options.statusId } : {}),
+    ...(options.listId !== undefined ? { listId: options.listId } : {}),
+    ...(options.refreshId !== undefined ? { refreshId: options.refreshId } : {}),
+    ...(options.onApproved !== undefined ? { onApproved: options.onApproved } : {}),
+    ...(options.onRejected !== undefined ? { onRejected: options.onRejected } : {}),
     ...(options.onError !== undefined ? { onError: options.onError } : {})
   });
 }

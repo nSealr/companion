@@ -117,7 +117,8 @@ describe("browser extension package-build CLI", () => {
         writes_extension_storage: false,
         stores_production_secrets: false,
         dispatches_signers: false,
-        embeds_origin_permission_store: true
+        embeds_origin_permission_store: true,
+        uses_extension_origin_permission_storage: false
       });
       expect(result.files).toEqual([
         expect.objectContaining({ path: "manifest.json", sha256: expect.stringMatching(/^[0-9a-f]{64}$/u) }),
@@ -142,6 +143,44 @@ describe("browser extension package-build CLI", () => {
           sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
         })
       ]);
+      expect(existsSync(join(temp.outDir, "manifest.json"))).toBe(true);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
+  it("writes a Chromium package build with extension-storage origin approval", async () => {
+    const temp = tempBuildRoot();
+    try {
+      const approvalPath = join(temp.root, "route-config-approval.json");
+      writeRouteConfigApproval(approvalPath);
+      const result = JSON.parse(await browserExtensionPackageBuildJsonFromArgs([
+        "--target",
+        "chromium",
+        "--out-dir",
+        temp.outDir,
+        "--route-account-id",
+        "esp32-usb-slot-0",
+        "--route-type",
+        "esp32_usb_nip46",
+        "--route-config-approval",
+        approvalPath,
+        "--extension-id",
+        chromiumExtensionId,
+        "--origin-permission-mode",
+        "extension-storage",
+        "--local-pairing-digest",
+        localPairingDigest,
+        "--content-script-match",
+        "https://example.com/*"
+      ]));
+
+      expect(result).toMatchObject({
+        format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
+        target: "chromium",
+        embeds_origin_permission_store: false,
+        uses_extension_origin_permission_storage: true
+      });
       expect(existsSync(join(temp.outDir, "manifest.json"))).toBe(true);
     } finally {
       temp.cleanup();

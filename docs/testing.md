@@ -240,6 +240,10 @@ single-repository CI. Cross-repository drift remains guarded by
   browser-extension script renders deterministic JSON from explicit target and
   content-script arguments, rejects incomplete or broad-match inputs, and has no
   output-path/install behavior.
+  Package-build tests require content-script artifacts to include an explicit
+  extension id, reviewed origin-permission store, and local pairing digest
+  before the packaged background embeds an origin gate. The result remains
+  extension-storage-free, grant-free, signer-dispatch-free, and secret-free.
   Content-script browser entrypoint tests prove explicit browser-like
   document/window/location/runtime dependencies compose into page-script
   injection, runtime messaging, response posting, and teardown without reading

@@ -69,17 +69,20 @@ packages, but it must not export test-only signing as a production path.
   permission, and an opt-in explicit-origin content-script manifest profile
   that exposes only the packaged page script to those explicit origins while
   still omitting host-permission fields, broad URL matches, extension storage,
-  grants, and key custody. It does not yet ship full extension
+  grants, and key custody. Content-script package builds must also embed a
+  reviewed origin-permission store covering the packaged origins and methods;
+  this is static developer-artifact data, not browser storage. It does not yet ship full extension
   packaging, automatic content-script/page-script injection, packaged
   bootstrap/config loading, native-host installation, permission UI, persistent
   grants, or signer dispatch. Its packaged runtime entrypoints are checked by
   source import hygiene and an esbuild browser bundle smoke before installable
   package generation is allowed. The first package-build CLI writes an explicit
   output directory only after successful in-memory bundling, embeds a
-  digest-approved secretless static route config in the background bundle,
-  returns a package digest plus per-file byte counts and SHA-256 hashes, writes
-  no extension storage, installs no native-host manifest, and remains a
-  developer artifact until a full bootstrap/config UX is reviewed.
+  digest-approved secretless static route config in the background bundle, and
+  requires reviewed origin-permission store data before content scripts can be
+  packaged. It returns a package digest plus per-file byte counts and SHA-256
+  hashes, writes no extension storage, installs no native-host manifest, and
+  remains a developer artifact until a full bootstrap/config UX is reviewed.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
   central nSealr v0 implementation limit profile used by companion parsers,

@@ -20,6 +20,9 @@ type PackageBuildCliOptions = {
   routeAccountId?: string;
   routeType?: string;
   routeConfigApprovalPath?: string;
+  extensionId?: string;
+  originPermissionStorePath?: string;
+  localPairingDigest?: string;
 };
 
 function takeOptionValue(args: string[], index: number, option: string): string {
@@ -69,6 +72,22 @@ function parsePackageBuildArgs(args: string[]): PackageBuildCliOptions {
       }
       options.routeConfigApprovalPath = takeOptionValue(normalizedArgs, index, arg);
       index += 1;
+    } else if (arg === "--extension-id") {
+      if (options.extensionId !== undefined) throw new Error("--extension-id must be specified only once");
+      options.extensionId = takeOptionValue(normalizedArgs, index, arg);
+      index += 1;
+    } else if (arg === "--origin-permission-store") {
+      if (options.originPermissionStorePath !== undefined) {
+        throw new Error("--origin-permission-store must be specified only once");
+      }
+      options.originPermissionStorePath = takeOptionValue(normalizedArgs, index, arg);
+      index += 1;
+    } else if (arg === "--local-pairing-digest") {
+      if (options.localPairingDigest !== undefined) {
+        throw new Error("--local-pairing-digest must be specified only once");
+      }
+      options.localPairingDigest = takeOptionValue(normalizedArgs, index, arg);
+      index += 1;
     } else {
       throw new Error(`unsupported browser-extension package-build option: ${arg}`);
     }
@@ -115,7 +134,17 @@ export async function browserExtensionPackageBuildJsonFromArgs(args: string[]): 
     ...manifestOptionsFromCli(options),
     outDir: options.outDir,
     routeConfig: routeConfigFromCli(options),
-    routeConfigApproval: readJsonFile(options.routeConfigApprovalPath, "browser extension route config approval")
+    routeConfigApproval: readJsonFile(options.routeConfigApprovalPath, "browser extension route config approval"),
+    ...(options.extensionId !== undefined ? { extensionId: options.extensionId } : {}),
+    ...(options.originPermissionStorePath !== undefined
+      ? {
+          originPermissionStore: readJsonFile(
+            options.originPermissionStorePath,
+            "browser extension origin permission store"
+          )
+        }
+      : {}),
+    ...(options.localPairingDigest !== undefined ? { localPairingDigest: options.localPairingDigest } : {})
   });
   return `${JSON.stringify(result, null, 2)}\n`;
 }

@@ -22,6 +22,11 @@ import {
   parseBrowserExtensionRouteConfig
 } from "./route-config.js";
 import { type BrowserExtensionManifestOptions } from "./manifest.js";
+import {
+  isBrowserExtensionOriginMethodAllowed,
+  parseBrowserExtensionOriginPermissionStore,
+  type BrowserExtensionOriginPermissionStore
+} from "./origin-permission-store.js";
 import { browserExtensionPopupHtml } from "./popup-html.js";
 
 export const BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT = "nsealr-browser-extension-package-build-v0";
@@ -30,6 +35,9 @@ export type BrowserExtensionPackageBuildOptions = BrowserExtensionManifestOption
   outDir: string;
   routeConfig: unknown;
   routeConfigApproval: unknown;
+  extensionId?: string;
+  originPermissionStore?: unknown;
+  localPairingDigest?: string;
 };
 
 export type BrowserExtensionPackageBuildFile = {
@@ -54,6 +62,7 @@ export type BrowserExtensionPackageBuildResult = {
   writes_extension_storage: false;
   stores_production_secrets: false;
   dispatches_signers: false;
+  embeds_origin_permission_store: boolean;
 };
 
 const PACKAGE_OUTPUT_DIR = "browser-extension-package";
@@ -86,6 +95,27 @@ function requireOutDir(value: string): string {
   return outDir;
 }
 
+function requireLowerHex64(value: unknown, label: string): string {
+  if (typeof value !== "string" || !/^[0-9a-f]{64}$/u.test(value)) {
+    throw new Error(`${label} must be 32-byte lowercase hex`);
+  }
+  return value;
+}
+
+function requireExtensionId(value: unknown, label: string): string {
+  if (typeof value !== "string" || !/^[A-Za-z0-9._@+-]{1,128}$/u.test(value)) {
+    throw new Error(`${label} is invalid`);
+  }
+  return value;
+}
+
+function requireChromiumExtensionId(value: unknown, label: string): string {
+  if (typeof value !== "string" || !/^[a-p]{32}$/u.test(value)) {
+    throw new Error(`${label} must be a Chromium extension id`);
+  }
+  return value;
+}
+
 function normalizedRouteConfig(value: unknown): {
   format: typeof BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT;
   account_id: string;
@@ -99,6 +129,95 @@ function normalizedRouteConfig(value: unknown): {
   };
 }
 
+function contentScriptMatchOrigin(match: string): string {
+  const wildcardSuffix = "/*";
+  if (!match.endsWith(wildcardSuffix)) {
+    throw new Error("browser extension package content-script match is unsupported");
+  }
+  const origin = match.slice(0, -wildcardSuffix.length);
+  try {
+    const url = new URL(origin);
+    if (url.origin !== origin || url.origin === "null") {
+      throw new Error("invalid origin");
+    }
+    return origin;
+  } catch {
+    throw new Error("browser extension package content-script match origin is invalid");
+  }
+}
+
+function packagedContentScriptOrigins(plan: BrowserExtensionPackagePlan): string[] {
+  return [...new Set((plan.manifest.content_scripts ?? []).flatMap((script) => (
+    script.matches.map(contentScriptMatchOrigin)
+  )))].sort();
+}
+
+function packageExtensionId(options: BrowserExtensionPackageBuildOptions): string | undefined {
+  if (options.extensionId !== undefined) {
+    const extensionId = options.target === "chromium"
+      ? requireChromiumExtensionId(options.extensionId, "browser extension package extensionId")
+      : requireExtensionId(options.extensionId, "browser extension package extensionId");
+    if (
+      options.target === "firefox" &&
+      options.firefoxExtensionId !== undefined &&
+      options.firefoxExtensionId !== extensionId
+    ) {
+      throw new Error("browser extension package extensionId must match firefoxExtensionId");
+    }
+    return extensionId;
+  }
+  if (options.target === "firefox" && options.firefoxExtensionId !== undefined) {
+    return requireExtensionId(options.firefoxExtensionId, "browser extension package firefoxExtensionId");
+  }
+  return undefined;
+}
+
+type BrowserExtensionPackageOriginPermissions = {
+  store: BrowserExtensionOriginPermissionStore;
+  localPairingDigest: string;
+  extensionId: string;
+};
+
+function originPermissionsForPackage(
+  options: BrowserExtensionPackageBuildOptions,
+  plan: BrowserExtensionPackagePlan
+): BrowserExtensionPackageOriginPermissions | undefined {
+  const origins = packagedContentScriptOrigins(plan);
+  const hasOriginPermissionInput =
+    options.originPermissionStore !== undefined || options.localPairingDigest !== undefined;
+  if (origins.length === 0) {
+    if (hasOriginPermissionInput) {
+      throw new Error("browser extension package origin permissions require content-script matches");
+    }
+    return undefined;
+  }
+  if (options.originPermissionStore === undefined || options.localPairingDigest === undefined) {
+    throw new Error("browser extension package origin permission store is required for content-script builds");
+  }
+  const extensionId = packageExtensionId(options);
+  if (extensionId === undefined) {
+    throw new Error("browser extension package extensionId is required for origin-permission gated content scripts");
+  }
+  const store = parseBrowserExtensionOriginPermissionStore(options.originPermissionStore);
+  const localPairingDigest = requireLowerHex64(
+    options.localPairingDigest,
+    "browser extension package localPairingDigest"
+  );
+  for (const origin of origins) {
+    for (const method of ["get_public_key", "sign_event"] as const) {
+      if (!isBrowserExtensionOriginMethodAllowed(store, {
+        origin,
+        extensionId,
+        localPairingDigest,
+        method
+      })) {
+        throw new Error(`browser extension package origin permission is missing ${method} for ${origin}`);
+      }
+    }
+  }
+  return { store, localPairingDigest, extensionId };
+}
+
 function requireApprovedRouteConfig(routeConfig: unknown, approval: unknown): void {
   const routeConfigDigest = browserExtensionRouteConfigDigest(routeConfig);
   const parsedApproval = parseBrowserExtensionRouteConfigApproval(approval);
@@ -110,8 +229,20 @@ function requireApprovedRouteConfig(routeConfig: unknown, approval: unknown): vo
   }
 }
 
-function virtualEntrypointPlugin(routeConfig: unknown): Plugin {
-  const routeConfigJson = JSON.stringify(routeConfig);
+function virtualEntrypointPlugin(
+  routeConfig: unknown,
+  originPermissions: BrowserExtensionPackageOriginPermissions | undefined
+): Plugin {
+  const backgroundOptionsJson = JSON.stringify({
+    routeConfig,
+    ...(originPermissions !== undefined ? {
+      extensionId: originPermissions.extensionId,
+      originPermissions: {
+        store: originPermissions.store,
+        localPairingDigest: originPermissions.localPairingDigest
+      }
+    } : {})
+  });
   return {
     name: "nsealr-browser-extension-package-entrypoints",
     setup(build): void {
@@ -126,7 +257,7 @@ function virtualEntrypointPlugin(routeConfig: unknown): Plugin {
           import { installNsealrBackgroundEntrypoint } from "./apps/browser-extension/src/nsealr-background-entrypoint.ts";
           installNsealrBackgroundEntrypoint({
             globalScope: globalThis,
-            routeConfig: ${routeConfigJson}
+            ...${backgroundOptionsJson}
           });
         `
       }));
@@ -235,6 +366,7 @@ export async function buildBrowserExtensionPackage(
   const routeConfig = normalizedRouteConfig(options.routeConfig);
   requireApprovedRouteConfig(routeConfig, options.routeConfigApproval);
   const plan = assertBrowserExtensionPackagePlan(buildBrowserExtensionPackagePlan(options));
+  const originPermissions = originPermissionsForPackage(options, plan);
   const buildResult = await esbuild({
     absWorkingDir: COMPANION_ROOT,
     bundle: true,
@@ -250,7 +382,7 @@ export async function buildBrowserExtensionPackage(
     logLevel: "silent",
     outdir: PACKAGE_OUTPUT_DIR,
     platform: "browser",
-    plugins: [virtualEntrypointPlugin(routeConfig)],
+    plugins: [virtualEntrypointPlugin(routeConfig, originPermissions)],
     sourcemap: false,
     target: "es2022",
     treeShaking: true,
@@ -287,6 +419,7 @@ export async function buildBrowserExtensionPackage(
     installs_native_host_manifest: false,
     writes_extension_storage: false,
     stores_production_secrets: false,
-    dispatches_signers: false
+    dispatches_signers: false,
+    embeds_origin_permission_store: originPermissions !== undefined
   });
 }

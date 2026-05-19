@@ -11,6 +11,12 @@ import {
   approveBrowserExtensionRouteConfigReview,
   createBrowserExtensionRouteConfigReview
 } from "./route-config.js";
+import {
+  approveBrowserExtensionOriginPermissionReview
+} from "./pairing.js";
+import {
+  createBrowserExtensionOriginPermissionStore
+} from "./origin-permission-store.js";
 
 function tempBuildRoot(): { root: string; outDir: string; cleanup(): void } {
   const root = mkdtempSync(join(tmpdir(), "nsealr-browser-extension-cli-"));
@@ -36,12 +42,51 @@ function writeRouteConfigApproval(path: string): void {
   writeFileSync(path, `${JSON.stringify(approval, null, 2)}\n`, "utf8");
 }
 
+const localPairingDigest = "d".repeat(64);
+const chromiumExtensionId = "abcdefghijklmnopabcdefghijklmnop";
+
+function writeOriginPermissionStore(path: string): void {
+  const store = createBrowserExtensionOriginPermissionStore([
+    approveBrowserExtensionOriginPermissionReview({
+      format: "nsealr-browser-origin-permission-review-v0",
+      origin: "https://example.com",
+      app_name: "nSealr Browser Extension",
+      extension_id: chromiumExtensionId,
+      requested_methods: [
+        {
+          method: "get_public_key",
+          label: "Read public key",
+          effect: "The page can read the selected account public key through the browser provider."
+        },
+        {
+          method: "sign_event",
+          label: "Request event signatures",
+          effect: "The page can ask for Nostr event signatures; the selected signer route still enforces review, approval, and policy."
+        }
+      ],
+      local_pairing_digest: localPairingDigest,
+      requires_user_approval: true,
+      stores_production_secrets: false,
+      creates_grants: false,
+      injects_provider: false
+    }, {
+      reviewedLocalPairingDigest: localPairingDigest,
+      approvedAt: 1_900_000_001
+    })
+  ], {
+    updatedAt: 1_900_000_002
+  });
+  writeFileSync(path, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+}
+
 describe("browser extension package-build CLI", () => {
   it("writes a Chromium package build from explicit args", async () => {
     const temp = tempBuildRoot();
     try {
       const approvalPath = join(temp.root, "route-config-approval.json");
+      const originStorePath = join(temp.root, "origin-permission-store.json");
       writeRouteConfigApproval(approvalPath);
+      writeOriginPermissionStore(originStorePath);
       const result = JSON.parse(await browserExtensionPackageBuildJsonFromArgs([
         "--target",
         "chromium",
@@ -53,6 +98,12 @@ describe("browser extension package-build CLI", () => {
         "esp32_usb_nip46",
         "--route-config-approval",
         approvalPath,
+        "--extension-id",
+        chromiumExtensionId,
+        "--origin-permission-store",
+        originStorePath,
+        "--local-pairing-digest",
+        localPairingDigest,
         "--content-script-match",
         "https://example.com/*"
       ]));
@@ -65,7 +116,8 @@ describe("browser extension package-build CLI", () => {
         installs_native_host_manifest: false,
         writes_extension_storage: false,
         stores_production_secrets: false,
-        dispatches_signers: false
+        dispatches_signers: false,
+        embeds_origin_permission_store: true
       });
       expect(result.files).toEqual([
         expect.objectContaining({ path: "manifest.json", sha256: expect.stringMatching(/^[0-9a-f]{64}$/u) }),

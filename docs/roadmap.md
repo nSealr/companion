@@ -520,8 +520,10 @@ and uploads checked tarball artifacts without publishing to npm.
   the secretless selected route before package build. A private `package-build`
   script now creates an explicit developer artifact in a new output directory
   only after successful in-memory bundling, embeds that approved secretless
-  static route config, returns a package digest plus per-file byte counts and
-  SHA-256 hashes, and still avoids
+  static route config, and requires a reviewed origin-permission store before
+  content scripts can be packaged. That store is embedded as secretless
+  background gate data, not browser storage. Package build returns a package
+  digest plus per-file byte counts and SHA-256 hashes, and still avoids
   native-host installation, extension storage writes, key custody, and signer
   dispatch. The browser-extension
   manifest builder can still build a minimal

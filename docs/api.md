@@ -316,7 +316,7 @@ Exports:
 
 ## @nsealr/smartcard
 
-APDU, PC/SC, simulator, and display-less smartcard signer boundary for nSealr.
+APDU, PC/SC, and display-less smartcard signer boundary for nSealr.
 
 Source entrypoint: `packages/smartcard/src/index.ts`
 
@@ -339,7 +339,6 @@ Exports:
 - `SmartcardApduTransport`
 - `SmartcardReviewAcknowledgement`
 - `SmartcardSigner`
-- `SmartcardSimulator`
 
 ## @nsealr/transport
 

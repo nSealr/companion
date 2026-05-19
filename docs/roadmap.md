@@ -507,7 +507,9 @@ and uploads checked tarball artifacts without publishing to npm.
 
 ## Smartcard Line
 
-- APDU codec and deterministic simulator: implemented.
+- APDU codec: implemented. The deterministic APDU simulator is implemented in
+  private `@nsealr/dev-signer` so the publishable smartcard package stays
+  secretless.
 - Shared APDU rejection status vectors: implemented for wrong `SIGN_EVENT_ID`
   length, unsupported CLA, and unsupported INS.
 - `SmartcardSigner` companion boundary: implemented for `GET_PUBLIC_KEY` plus

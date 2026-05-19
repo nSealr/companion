@@ -10,6 +10,7 @@ const reviewPath = join(root, "docs", "api-review.md");
 
 const apiDocs = readFileSync(apiDocsPath, "utf-8");
 const review = readFileSync(reviewPath, "utf-8");
+const normalizedReview = review.replace(/\s+/gu, " ");
 const digest = createHash("sha256").update(apiDocs).digest("hex");
 
 assert(
@@ -27,6 +28,15 @@ for (const packageName of publicPackages) {
 assert(
   review.includes("@nsealr/dev-signer") && review.includes("private and test-only"),
   "docs/api-review.md must keep @nsealr/dev-signer private and test-only"
+);
+assert(
+  !apiDocs.includes("SmartcardSimulator"),
+  "docs/api.md must not expose the test-only smartcard simulator through a public package"
+);
+assert(
+  normalizedReview.includes("Test-only APDU simulation lives in the private") &&
+    normalizedReview.includes("does not expose software signing helpers"),
+  "docs/api-review.md must record that smartcard simulation is private test-only code"
 );
 assert(
   review.includes("already-decrypted payloads only"),

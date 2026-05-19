@@ -16,8 +16,8 @@ const packageOrder = [
   "qr",
   "client",
   "fixtures",
-  "dev-signer",
   "smartcard",
+  "dev-signer",
   "transport",
   "browser-provider",
   "sdk"

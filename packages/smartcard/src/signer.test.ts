@@ -4,28 +4,50 @@ import { describe, expect, it, vi } from "vitest";
 import { verifySignedEventResponse, type SignEventRequest } from "@nsealr/core";
 import { resolveSpecsRoot } from "@nsealr/fixtures";
 import { approvalDigestForRequest } from "@nsealr/review";
-import { SmartcardSimulator } from "./apdu.js";
+import { CommandApdu, ResponseApdu, SIGN_EVENT_ID_INS } from "./apdu.js";
 import { SmartcardSigner } from "./signer.js";
 
 const specsRoot = resolveSpecsRoot();
 const key = JSON.parse(readFileSync(resolve(specsRoot, "vectors/keys/test-key-1.json"), "utf8")) as {
   public_key: string;
-  secret_key: string;
 };
 const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kind-1-basic.json"), "utf8")) as SignEventRequest;
+const signedResponse = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8")) as {
+  result: { event: { sig: string } };
+};
+const getPublicKeyVector = JSON.parse(readFileSync(resolve(specsRoot, "vectors/smartcard/get-public-key.json"), "utf8"));
+const signEventIdVector = JSON.parse(readFileSync(resolve(specsRoot, "vectors/smartcard/sign-event-id-kind-1-basic.json"), "utf8"));
 const unsafeTemplateVector = JSON.parse(
   readFileSync(resolve(specsRoot, "vectors/invalid/request-event-template-pubkey.json"), "utf8")
 ) as { request: SignEventRequest; expected_error: string };
 
+function vectorBackedTransport() {
+  return {
+    exchange: vi.fn(async (command: CommandApdu) => {
+      if (command.toHex() === getPublicKeyVector.command_hex) {
+        return ResponseApdu.fromHex(getPublicKeyVector.response_hex);
+      }
+      if (command.ins === SIGN_EVENT_ID_INS) {
+        expect(command.toHex()).toBe(signEventIdVector.command_hex);
+        return ResponseApdu.fromHex(`${signedResponse.result.event.sig}${signEventIdVector.expected_status_word}`);
+      }
+      throw new Error(`unexpected APDU command ${command.toHex()}`);
+    })
+  };
+}
+
 describe("SmartcardSigner", () => {
   it("refuses to sign unless an external review acknowledgement is supplied", async () => {
-    const signer = new SmartcardSigner(new SmartcardSimulator(key.secret_key));
+    const transport = vectorBackedTransport();
+    const signer = new SmartcardSigner(transport);
 
     await expect(signer.signEventRequest(request)).rejects.toThrow("smartcard signing requires explicit review acknowledgement");
+    expect(transport.exchange).not.toHaveBeenCalled();
   });
 
   it("rejects trusted-display acknowledgement for display-less smartcards", async () => {
-    const signer = new SmartcardSigner(new SmartcardSimulator(key.secret_key));
+    const transport = vectorBackedTransport();
+    const signer = new SmartcardSigner(transport);
     const trustedDisplayAcknowledgement = {
       acknowledged: true,
       source: "trusted-display"
@@ -34,6 +56,7 @@ describe("SmartcardSigner", () => {
     await expect(signer.signEventRequest(request, trustedDisplayAcknowledgement)).rejects.toThrow(
       "display-less smartcard signing requires external review acknowledgement"
     );
+    expect(transport.exchange).not.toHaveBeenCalled();
   });
 
   it("rejects mismatched approval digest before APDU exchange", async () => {
@@ -72,7 +95,8 @@ describe("SmartcardSigner", () => {
   });
 
   it("signs a Nostr event request through card APDUs after review acknowledgement", async () => {
-    const signer = new SmartcardSigner(new SmartcardSimulator(key.secret_key));
+    const transport = vectorBackedTransport();
+    const signer = new SmartcardSigner(transport);
 
     const response = await signer.signEventRequest(request, {
       acknowledged: true,
@@ -85,10 +109,12 @@ describe("SmartcardSigner", () => {
     expect(response.result.event.id).toHaveLength(64);
     expect(response.result.event.sig).toHaveLength(128);
     expect(verifySignedEventResponse(request, response).ok).toBe(true);
+    expect(transport.exchange).toHaveBeenCalledTimes(2);
   });
 
   it("rejects unsafe requests before sending an event id to the card", async () => {
-    const signer = new SmartcardSigner(new SmartcardSimulator(key.secret_key));
+    const transport = vectorBackedTransport();
+    const signer = new SmartcardSigner(transport);
 
     await expect(
       signer.signEventRequest(unsafeTemplateVector.request, {
@@ -97,5 +123,6 @@ describe("SmartcardSigner", () => {
         approvalDigest: "00".repeat(32)
       })
     ).rejects.toThrow(unsafeTemplateVector.expected_error);
+    expect(transport.exchange).not.toHaveBeenCalled();
   });
 });

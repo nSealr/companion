@@ -8,14 +8,10 @@ import {
   GET_PUBLIC_KEY_INS,
   NSEALR_CLA,
   ResponseApdu,
-  SIGN_EVENT_ID_INS,
-  SmartcardSimulator
+  SIGN_EVENT_ID_INS
 } from "./apdu.js";
 
 const specsRoot = resolveSpecsRoot();
-const key = JSON.parse(readFileSync(resolve(specsRoot, "vectors/keys/test-key-1.json"), "utf8")) as {
-  secret_key: string;
-};
 const getPublicKeyVector = JSON.parse(readFileSync(resolve(specsRoot, "vectors/smartcard/get-public-key.json"), "utf8"));
 const signEventIdVector = JSON.parse(readFileSync(resolve(specsRoot, "vectors/smartcard/sign-event-id-kind-1-basic.json"), "utf8"));
 const smartcardErrorVectors = ["sign-event-id-wrong-length", "unsupported-cla", "unsupported-ins"].map((name) =>
@@ -40,22 +36,9 @@ describe("smartcard APDU adapter", () => {
     expect(response.toHex()).toBe(getPublicKeyVector.response_hex);
   });
 
-  it("simulates get_public_key and sign_event_id commands", async () => {
-    const simulator = new SmartcardSimulator(key.secret_key);
-    const pubkeyResponse = await simulator.exchange(CommandApdu.fromHex(getPublicKeyVector.command_hex));
-    const signResponse = await simulator.exchange(CommandApdu.fromHex(signEventIdVector.command_hex));
-
-    expect(pubkeyResponse.toHex()).toBe(getPublicKeyVector.response_hex);
-    expect(signResponse.statusWordHex()).toBe(signEventIdVector.expected_status_word);
-    expect(signResponse.data.length).toBe(signEventIdVector.expected_data_length);
-    expect((await simulator.verifySignEventIdResponse(CommandApdu.fromHex(signEventIdVector.command_hex), signResponse)).ok).toBe(true);
-  });
-
-  it("simulates shared APDU rejection status vectors", async () => {
-    const simulator = new SmartcardSimulator(key.secret_key);
-
+  it("decodes shared APDU rejection status vectors", () => {
     for (const vector of smartcardErrorVectors) {
-      const response = await simulator.exchange(CommandApdu.fromHex(vector.command_hex));
+      const response = ResponseApdu.fromHex(vector.response_hex);
 
       expect(response.statusWordHex()).toBe(vector.expected_status_word);
       expect(response.toHex()).toBe(vector.response_hex);

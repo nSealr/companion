@@ -182,8 +182,9 @@ match the shared `contract_id`.
   screen-review pages, or complete constrained-display detail pages from a
   signing request for untrusted host-side previews and test harnesses.
 - `nsealr smartcard-sim-sign` exercises the smartcard APDU signing boundary with
-  a test-only simulator and requires `--review-acknowledged` before sending the
-  event id to the display-less signer.
+  a test-only simulator from the private `@nsealr/dev-signer` package and
+  requires `--review-acknowledged` before sending the event id to the
+  display-less signer.
 - `packages/smartcard` includes fake-reader PC/SC boundary tests that normalize
   malformed reader-list, setup, and APDU transmit failures without claiming
   real-card support.
@@ -269,12 +270,13 @@ match the shared `contract_id`.
   kept by companion. Policy records are internal nSealr records, not Nostr
   events, and the current scoped-automation vectors are conformance fixtures,
   not the final policy UX.
-- `packages/smartcard` implements the first APDU codec, simulator adapter,
-  provider-based PC/SC APDU transport boundary, and `SmartcardSigner` boundary
-  against shared smartcard vectors, including APDU rejection status words. The
-  PC/SC boundary validates transmit-result shape, response status bytes,
-  response data shape, and response data bytes before constructing response
-  APDUs, and rejects malformed reader-provider
+- `packages/smartcard` implements the first APDU codec, provider-based PC/SC
+  APDU transport boundary, and `SmartcardSigner` boundary against shared
+  smartcard vectors, including APDU rejection status words. The test-only APDU
+  simulator lives in private `@nsealr/dev-signer`, not in the publishable
+  smartcard package. The PC/SC boundary validates transmit-result shape,
+  response status bytes, response data shape, and response data bytes before
+  constructing response APDUs, and rejects malformed reader-provider
   output before reader connection.
 - `packages/nip46` implements the first decrypted NIP-46 payload bridge for
   `get_public_key`, `sign_event`, local `ping`, and nSealr response mapping.

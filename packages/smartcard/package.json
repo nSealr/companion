@@ -1,7 +1,7 @@
 {
   "name": "@nsealr/smartcard",
   "version": "0.1.0",
-  "description": "APDU, PC/SC, simulator, and display-less smartcard signer boundary for nSealr.",
+  "description": "APDU, PC/SC, and display-less smartcard signer boundary for nSealr.",
   "keywords": [
     "nostr",
     "nsealr",
@@ -33,7 +33,6 @@
   },
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@noble/curves": "2.2.0",
     "@nsealr/core": "workspace:*",
     "@nsealr/protocol": "workspace:*",
     "@nsealr/review": "workspace:*"

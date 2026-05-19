@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:3ee52a5fd0ed608efe9ff8b9d4932dcd5158fcad4faa2368b4769e2b7103963f`
+API surface digest: `sha256:881296e5906ba74eb2e12d4c10a91db12702e75153bf7553a7f54525bf489097`
 
 Source: `docs/api.md`
 
@@ -179,11 +179,12 @@ signer dispatch.
 
 Status: reviewed for pre-alpha.
 
-The smartcard package exposes APDU codecs, simulator helpers, PC/SC boundary
-normalization, and display-less signer helpers. Its signer path must remain
-bound to shared request validation and external review acknowledgement. It must
-not claim trusted event review because current smartcard routes have no
-display.
+The smartcard package exposes APDU codecs, PC/SC boundary normalization, and
+display-less signer helpers. Test-only APDU simulation lives in the private
+`@nsealr/dev-signer` package, so this publishable package does not expose
+software signing helpers. Its signer path must remain bound to shared request
+validation and external review acknowledgement. It must not claim trusted event
+review because current smartcard routes have no display.
 
 ## @nsealr/transport
 

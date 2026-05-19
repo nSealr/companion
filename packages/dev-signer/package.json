@@ -35,7 +35,8 @@
   "dependencies": {
     "@noble/curves": "2.2.0",
     "@nsealr/core": "workspace:*",
-    "@nsealr/protocol": "workspace:*"
+    "@nsealr/protocol": "workspace:*",
+    "@nsealr/smartcard": "workspace:*"
   },
   "devDependencies": {
     "@nsealr/fixtures": "workspace:*"

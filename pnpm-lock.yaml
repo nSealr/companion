@@ -274,6 +274,9 @@ importers:
       '@nsealr/protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@nsealr/smartcard':
+        specifier: workspace:*
+        version: link:../smartcard
     devDependencies:
       '@nsealr/fixtures':
         specifier: workspace:*
@@ -363,9 +366,6 @@ importers:
 
   packages/smartcard:
     dependencies:
-      '@noble/curves':
-        specifier: 2.2.0
-        version: 2.2.0
       '@nsealr/core':
         specifier: workspace:*
         version: link:../core

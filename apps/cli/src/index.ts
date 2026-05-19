@@ -22,7 +22,7 @@ import {
   type LocalClientSurface
 } from "@nsealr/client";
 import { verifySignedEventResponse, type SignEventRequest } from "@nsealr/core";
-import { devSignRequest } from "@nsealr/dev-signer";
+import { devSignRequest, SmartcardSimulator } from "@nsealr/dev-signer";
 import {
   loadSpecsFixtures,
   validateFeatureMatrixFixture,
@@ -57,7 +57,7 @@ import {
   screenReviewForRequest,
   type ReviewDetailPageLimits
 } from "@nsealr/review";
-import { SmartcardSigner, SmartcardSimulator } from "@nsealr/smartcard";
+import { SmartcardSigner } from "@nsealr/smartcard";
 import {
   SerialLineStreamPort,
   exchangeSerialLineRequest,

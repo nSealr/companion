@@ -107,18 +107,20 @@ packages, but it must not export test-only signing as a production path.
   checks so CLI code does not grow a parallel policy parser.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
-- `packages/dev-signer`: private test-only signing implementation and
-  development signer transport. It is not a production signer route and must
-  not become a dependency of publishable production packages.
+- `packages/dev-signer`: private test-only signing implementation,
+  deterministic smartcard APDU simulator, and development signer transport. It
+  is not a production signer route and must not become a dependency of
+  publishable production packages.
 - `packages/transport`: signer transport interface plus JSON file, JSON-lines
   stdio, serial-frame, and serial-line adapters. It is intentionally
   secretless and does not depend on `@nsealr/dev-signer`.
 - `packages/qr`: v0 `nsealr1:` QR envelope encoding and decoding.
 - `packages/framing`: checksum-protected serial line framing draft with the
   shared v0 serial-frame byte limit.
-- `packages/smartcard`: APDU codec, simulator adapter, provider-based PC/SC
-  APDU transport boundary, `SmartcardSigner` boundary, and response
-  verification for the display-less smartcard line.
+- `packages/smartcard`: APDU codec, provider-based PC/SC APDU transport
+  boundary, `SmartcardSigner` boundary, and response verification for the
+  display-less smartcard line. Test-only APDU simulation is private
+  `@nsealr/dev-signer` code, not public smartcard API.
 - `packages/nip46`: decrypted NIP-46 payload bridge for `get_public_key`,
   `sign_event`, local `ping`, and conversion from nSealr responses back to
   NIP-46 result/error strings. It also validates requested permission strings
@@ -748,10 +750,11 @@ package callers cannot bypass CLI validation with host-supplied `id`, `pubkey`,
 
 `nsealr review-request --screen-review` renders the same deterministic screen
 pages and `approval_digest` used by the shared vectors. `nsealr
-smartcard-sim-sign` exposes the APDU flow through a test-only simulator and
-requires `--approval-digest` whenever `--review-acknowledged` is used. Real
-PC/SC and NFC transports must implement the same APDU exchange interface
-without weakening the review acknowledgement requirement.
+smartcard-sim-sign` exposes the APDU flow through the private test-only
+simulator in `@nsealr/dev-signer` and requires `--approval-digest` whenever
+`--review-acknowledged` is used. Real PC/SC and NFC transports must implement
+the same APDU exchange interface without weakening the review acknowledgement
+requirement.
 
 The PC/SC boundary is provider-based: tests can inject fake readers and future
 desktop adapters can inject a real PC/SC provider without making a native card

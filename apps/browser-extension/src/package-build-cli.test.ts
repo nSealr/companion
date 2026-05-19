@@ -70,6 +70,10 @@ describe("browser extension package-build CLI", () => {
       expect(result.files).toEqual([
         expect.objectContaining({ path: "manifest.json", sha256: expect.stringMatching(/^[0-9a-f]{64}$/u) }),
         expect.objectContaining({
+          path: "nsealr-popup.html",
+          sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
+        }),
+        expect.objectContaining({
           path: "nsealr-background-entrypoint.js",
           sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
         }),
@@ -79,6 +83,10 @@ describe("browser extension package-build CLI", () => {
         }),
         expect.objectContaining({
           path: "nsealr-page-script-entrypoint.js",
+          sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
+        }),
+        expect.objectContaining({
+          path: "nsealr-popup-entrypoint.js",
           sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
         })
       ]);

@@ -34,6 +34,7 @@ describe("browser extension package-plan CLI", () => {
       resources: ["nsealr-page-script-entrypoint.js"],
       matches: ["https://example.com/*"]
     }]);
+    expect(plan.manifest.action.default_popup).toBe("nsealr-popup.html");
   });
 
   it("renders a Firefox package plan only with an explicit extension id", () => {

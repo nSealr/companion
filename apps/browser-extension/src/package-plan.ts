@@ -1,7 +1,9 @@
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
   BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
-  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
+  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_POPUP_HTML_FILE
 } from "./entrypoints.js";
 import {
   buildBrowserExtensionManifest,
@@ -16,11 +18,14 @@ export const BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_SOURCE =
   "apps/browser-extension/src/nsealr-content-script-entrypoint.ts";
 export const BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_SOURCE =
   "apps/browser-extension/src/nsealr-page-script-entrypoint.ts";
+export const BROWSER_EXTENSION_POPUP_ENTRYPOINT_SOURCE =
+  "apps/browser-extension/src/nsealr-popup-entrypoint.ts";
 
 export type BrowserExtensionPackageEntrypointRole =
   "background_service_worker" |
   "content_script" |
-  "page_script";
+  "page_script" |
+  "action_popup";
 
 export type BrowserExtensionPackageEntrypoint = {
   role: BrowserExtensionPackageEntrypointRole;
@@ -33,6 +38,7 @@ export type BrowserExtensionPackagePlan = {
   target: BrowserExtensionManifestOptions["target"];
   manifest: BrowserExtensionManifest;
   entrypoints: readonly [
+    BrowserExtensionPackageEntrypoint,
     BrowserExtensionPackageEntrypoint,
     BrowserExtensionPackageEntrypoint,
     BrowserExtensionPackageEntrypoint
@@ -59,6 +65,11 @@ function packageEntrypoints(): BrowserExtensionPackagePlan["entrypoints"] {
       role: "page_script" as const,
       source: BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_SOURCE,
       output: BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
+    }),
+    Object.freeze({
+      role: "action_popup" as const,
+      source: BROWSER_EXTENSION_POPUP_ENTRYPOINT_SOURCE,
+      output: BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE
     })
   ]);
 }
@@ -123,6 +134,16 @@ export function assertBrowserExtensionPackagePlan(
   );
   if (plan.manifest.background.service_worker !== background.output) {
     throw new Error("browser extension package plan background output does not match manifest");
+  }
+  const popup = entrypointByRole(plan, "action_popup");
+  assertEntrypoint(
+    popup,
+    "action_popup",
+    BROWSER_EXTENSION_POPUP_ENTRYPOINT_SOURCE,
+    BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE
+  );
+  if (plan.manifest.action.default_popup !== BROWSER_EXTENSION_POPUP_HTML_FILE) {
+    throw new Error("browser extension package plan popup html does not match manifest");
   }
   const contentScript = entrypointByRole(plan, "content_script");
   assertEntrypoint(

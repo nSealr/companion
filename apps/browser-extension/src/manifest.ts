@@ -1,7 +1,8 @@
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
   BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
-  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
+  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_POPUP_HTML_FILE
 } from "./entrypoints.js";
 
 export const BROWSER_EXTENSION_NAME = "nSealr";
@@ -44,6 +45,7 @@ export type BrowserExtensionManifest = {
   };
   action: {
     default_title: string;
+    default_popup: typeof BROWSER_EXTENSION_POPUP_HTML_FILE;
   };
   content_scripts?: [BrowserExtensionContentScriptManifest];
   web_accessible_resources?: [BrowserExtensionWebAccessibleResourcesManifest];
@@ -138,7 +140,8 @@ export function buildBrowserExtensionManifest(options: BrowserExtensionManifestO
       type: "module"
     },
     action: {
-      default_title: name
+      default_title: name,
+      default_popup: BROWSER_EXTENSION_POPUP_HTML_FILE
     }
   };
   if (contentScriptMatches !== undefined) {

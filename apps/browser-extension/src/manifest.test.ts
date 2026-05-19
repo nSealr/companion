@@ -9,7 +9,8 @@ import {
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
   BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
-  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
+  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_POPUP_HTML_FILE
 } from "./entrypoints.js";
 
 describe("browser extension manifest boundary", () => {
@@ -26,7 +27,8 @@ describe("browser extension manifest boundary", () => {
         type: "module"
       },
       action: {
-        default_title: BROWSER_EXTENSION_NAME
+        default_title: BROWSER_EXTENSION_NAME,
+        default_popup: BROWSER_EXTENSION_POPUP_HTML_FILE
       }
     });
     expect("host_permissions" in manifest).toBe(false);

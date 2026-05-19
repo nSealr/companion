@@ -6,7 +6,9 @@ import { build as esbuild, type Plugin } from "esbuild";
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
   BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
-  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
+  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_POPUP_HTML_FILE
 } from "./entrypoints.js";
 import {
   assertBrowserExtensionPackagePlan,
@@ -20,6 +22,7 @@ import {
   parseBrowserExtensionRouteConfig
 } from "./route-config.js";
 import { type BrowserExtensionManifestOptions } from "./manifest.js";
+import { browserExtensionPopupHtml } from "./popup-html.js";
 
 export const BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT = "nsealr-browser-extension-package-build-v0";
 
@@ -34,7 +37,9 @@ export type BrowserExtensionPackageBuildFile = {
     "manifest.json" |
     typeof BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE |
     typeof BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE |
-    typeof BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE;
+    typeof BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE |
+    typeof BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE |
+    typeof BROWSER_EXTENSION_POPUP_HTML_FILE;
   bytes: number;
   sha256: string;
 };
@@ -44,12 +49,7 @@ export type BrowserExtensionPackageBuildResult = {
   target: BrowserExtensionManifestOptions["target"];
   out_dir: string;
   package_digest: string;
-  files: readonly [
-    BrowserExtensionPackageBuildFile,
-    BrowserExtensionPackageBuildFile,
-    BrowserExtensionPackageBuildFile,
-    BrowserExtensionPackageBuildFile
-  ];
+  files: readonly BrowserExtensionPackageBuildFile[];
   installs_native_host_manifest: false;
   writes_extension_storage: false;
   stores_production_secrets: false;
@@ -115,7 +115,7 @@ function virtualEntrypointPlugin(routeConfig: unknown): Plugin {
   return {
     name: "nsealr-browser-extension-package-entrypoints",
     setup(build): void {
-      build.onResolve({ filter: /^nsealr:browser-extension\/(background|content-script|page-script)$/ }, (args) => ({
+      build.onResolve({ filter: /^nsealr:browser-extension\/(background|content-script|page-script|popup)$/ }, (args) => ({
         path: args.path,
         namespace: "nsealr-browser-extension"
       }));
@@ -146,6 +146,16 @@ function virtualEntrypointPlugin(routeConfig: unknown): Plugin {
         contents: `
           import { installNsealrPageScriptEntrypoint } from "./apps/browser-extension/src/nsealr-page-script-entrypoint.ts";
           installNsealrPageScriptEntrypoint({
+            globalScope: globalThis
+          });
+        `
+      }));
+      build.onLoad({ filter: /popup$/, namespace: "nsealr-browser-extension" }, () => ({
+        loader: "ts",
+        resolveDir: COMPANION_ROOT,
+        contents: `
+          import { installNsealrPopupEntrypoint } from "./apps/browser-extension/src/nsealr-popup-entrypoint.ts";
+          installNsealrPopupEntrypoint({
             globalScope: globalThis
           });
         `
@@ -186,6 +196,7 @@ function packageFile(path: BrowserExtensionPackageBuildFile["path"], source: str
 
 function buildPackageFileManifest(
   manifestJson: string,
+  popupHtml: string,
   bundles: Map<string, Uint8Array>
 ): BrowserExtensionPackageBuildResult["files"] {
   const decoder = new TextDecoder("utf-8", { fatal: true });
@@ -198,9 +209,11 @@ function buildPackageFileManifest(
   }
   return Object.freeze([
     packageFile("manifest.json", manifestJson),
+    packageFile(BROWSER_EXTENSION_POPUP_HTML_FILE, popupHtml),
     bundleFile(BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE),
     bundleFile(BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE),
-    bundleFile(BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE)
+    bundleFile(BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE),
+    bundleFile(BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE)
   ]);
 }
 
@@ -229,7 +242,8 @@ export async function buildBrowserExtensionPackage(
     entryPoints: [
       { in: "nsealr:browser-extension/background", out: BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE.replace(/\.js$/u, "") },
       { in: "nsealr:browser-extension/content-script", out: BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE.replace(/\.js$/u, "") },
-      { in: "nsealr:browser-extension/page-script", out: BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE.replace(/\.js$/u, "") }
+      { in: "nsealr:browser-extension/page-script", out: BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE.replace(/\.js$/u, "") },
+      { in: "nsealr:browser-extension/popup", out: BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE.replace(/\.js$/u, "") }
     ],
     format: "iife",
     legalComments: "none",
@@ -246,9 +260,11 @@ export async function buildBrowserExtensionPackage(
   assertBundleOutputs(bundles, plan);
 
   const manifestJson = `${JSON.stringify(plan.manifest, null, 2)}\n`;
-  const files = buildPackageFileManifest(manifestJson, bundles);
+  const popupHtml = browserExtensionPopupHtml();
+  const files = buildPackageFileManifest(manifestJson, popupHtml, bundles);
   await mkdir(outDir);
   await writeFile(join(outDir, "manifest.json"), manifestJson);
+  await writeFile(join(outDir, BROWSER_EXTENSION_POPUP_HTML_FILE), popupHtml);
   for (const entrypoint of plan.entrypoints) {
     const contents = bundles.get(entrypoint.output);
     if (contents === undefined) {

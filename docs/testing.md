@@ -81,10 +81,10 @@ single-repository CI. Cross-repository drift remains guarded by
   imports Node builtins, uses `Buffer`/`process`, or imports the Node-capable
   `@nsealr/client` root instead of `@nsealr/client/browser`. Run it directly
   with `make browser-runtime-imports`. The browser-runtime bundle smoke then
-  runs esbuild against the packaged background, content-script, and page-script
-  entrypoints with `platform: browser` and browser-compatible IIFE output, and
-  fails if bundled outputs contain Node builtin specifiers, `Buffer`, or
-  `process`. Run it directly with
+  runs esbuild against the packaged background, content-script, page-script,
+  and popup entrypoints with `platform: browser` and browser-compatible IIFE
+  output, and fails if bundled outputs contain Node builtin specifiers,
+  `Buffer`, or `process`. Run it directly with
   `make browser-runtime-bundle`. The browser-extension security audit runs with
   `make browser-extension-security` and fails if the extension or
   browser-provider runtime starts depending on test signing packages,
@@ -95,11 +95,11 @@ single-repository CI. Cross-repository drift remains guarded by
   tests cover the first private developer artifact
   builder: route-config tests require digest-bound review and approval for the
   secretless selected route; package-build requires that approval before
-  embedding the route config, requires a new output directory, writes manifest
-  and bundled entrypoints only after successful in-memory bundling, returns a
-  package digest plus per-file byte counts and SHA-256 hashes, and still
-  performs no native-host installation, browser storage writes, key custody, or
-  signer dispatch.
+  embedding the route config, requires a new output directory, writes manifest,
+  popup HTML, and bundled entrypoints only after successful in-memory bundling,
+  returns a package digest plus per-file byte counts and SHA-256 hashes, and
+  still performs no native-host installation, browser storage writes, key
+  custody, or signer dispatch.
 - Browser-extension app tests cover the private internal message parser for
   `get_public_key` and `sign_event`, including unsupported-method rejection,
   malformed-envelope rejection, and shared signer-request validation for event
@@ -180,17 +180,18 @@ single-repository CI. Cross-repository drift remains guarded by
   Packaged-entrypoint filename tests prove the manifest and page-injection
   defaults use filenames reserved for packaged entrypoint modules,
   distinct from internal pure modules that only export helper functions.
-  Packaged-entrypoint launcher tests prove the background, content-script, and
-  page-script packaged source modules call the reviewed browser adapters through
-  explicit packaged global scopes; they accept unambiguous `browser.runtime` or
-  `chrome.runtime`, reject ambiguous runtime globals before listener/script
-  installation, and continue to avoid storage, grants, signer dispatch, and key
-  custody.
+  Packaged-entrypoint launcher tests prove the background, content-script,
+  page-script, and popup packaged source modules call the reviewed browser
+  adapters through explicit packaged global scopes; they accept unambiguous
+  `browser.runtime` or `chrome.runtime`, reject ambiguous runtime globals before
+  listener/script installation, and continue to avoid storage, grants, signer
+  dispatch, and key custody.
   Package-plan tests prove the reviewed manifest, packaged output filenames,
   and source launcher paths stay aligned before bundle generation exists. They
   reject storage permission, host-permission, background-output,
-  content-script-output, and page-script web-accessible-resource drift without
-  installing native-host manifests or writing extension storage. Package-plan
+  popup-output, content-script-output, and page-script web-accessible-resource
+  drift without installing native-host manifests or writing extension storage.
+  Package-plan
   CLI tests prove the private
   browser-extension script renders deterministic JSON from explicit target and
   content-script arguments, rejects incomplete or broad-match inputs, and has no
@@ -235,9 +236,9 @@ single-repository CI. Cross-repository drift remains guarded by
   protocols, wrong URL paths, and missing parents while exposing explicit
   teardown.
   Manifest tests pin the minimal MV3 permission boundary: native messaging
-  only, no host permission fields, no content scripts, no storage permission,
-  and explicit Firefox extension ids. They also pin the opt-in explicit-origin
-  content-script manifest profile and reject broad URL access such as
+  only, action popup, no host permission fields, no content scripts, no storage
+  permission, and explicit Firefox extension ids. They also pin the opt-in
+  explicit-origin content-script manifest profile and reject broad URL access such as
   `<all_urls>`, wildcard hosts, non-local `http`, duplicate matches, host
   permission fields, and storage.
 - `make package-smoke` builds package artifacts, then runs the private

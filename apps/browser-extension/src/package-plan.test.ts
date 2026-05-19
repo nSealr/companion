@@ -2,13 +2,16 @@ import { describe, expect, it } from "vitest";
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
   BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
-  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
+  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_POPUP_HTML_FILE
 } from "./entrypoints.js";
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_SOURCE,
   BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_SOURCE,
   BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT,
   BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_SOURCE,
+  BROWSER_EXTENSION_POPUP_ENTRYPOINT_SOURCE,
   assertBrowserExtensionPackagePlan,
   browserExtensionPackagePlanJson,
   buildBrowserExtensionPackagePlan,
@@ -32,6 +35,7 @@ describe("browser extension package plan", () => {
       dispatches_signers: false
     });
     expect(plan.manifest.background.service_worker).toBe(BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE);
+    expect(plan.manifest.action.default_popup).toBe(BROWSER_EXTENSION_POPUP_HTML_FILE);
     expect(plan.manifest.permissions).toEqual(["nativeMessaging"]);
     expect("content_scripts" in plan.manifest).toBe(false);
     expect("host_permissions" in plan.manifest).toBe(false);
@@ -50,6 +54,11 @@ describe("browser extension package plan", () => {
         role: "page_script",
         source: BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_SOURCE,
         output: BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
+      },
+      {
+        role: "action_popup",
+        source: BROWSER_EXTENSION_POPUP_ENTRYPOINT_SOURCE,
+        output: BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE
       }
     ]);
   });
@@ -125,9 +134,32 @@ describe("browser extension package plan", () => {
         {
           ...plan.entrypoints[2],
           source: "apps/browser-extension/src/page-script.ts"
-        }
+        },
+        plan.entrypoints[3]
       ]
     }))).toThrow(/page_script entrypoint/u);
+    expect(() => assertBrowserExtensionPackagePlan(tamperedPlan({
+      ...plan,
+      manifest: {
+        ...plan.manifest,
+        action: {
+          ...plan.manifest.action,
+          default_popup: "popup.html"
+        }
+      }
+    }))).toThrow(/popup html/u);
+    expect(() => assertBrowserExtensionPackagePlan(tamperedPlan({
+      ...plan,
+      entrypoints: [
+        plan.entrypoints[0],
+        plan.entrypoints[1],
+        plan.entrypoints[2],
+        {
+          ...plan.entrypoints[3],
+          output: "popup.js"
+        }
+      ]
+    }))).toThrow(/action_popup entrypoint/u);
     expect(() => assertBrowserExtensionPackagePlan(tamperedPlan({
       ...plan,
       manifest: {

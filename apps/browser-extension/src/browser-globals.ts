@@ -8,6 +8,9 @@ import {
   type BrowserExtensionPopupRuntimeApi
 } from "./popup-control.js";
 import {
+  type BrowserExtensionPopupDocument
+} from "./popup-view.js";
+import {
   type BrowserExtensionContentScriptBrowserLocation,
   type BrowserExtensionContentScriptBrowserPageWindow
 } from "./content-browser.js";
@@ -108,6 +111,20 @@ export function requireBrowserExtensionPopupRuntimeGlobal(
     throw new Error("browser extension popup runtime global is invalid");
   }
   return runtime as BrowserExtensionPopupRuntimeApi;
+}
+
+export function requireBrowserExtensionPopupDocumentGlobal(
+  value: BrowserExtensionPackagedGlobalScope
+): BrowserExtensionPopupDocument {
+  const globalScope = requireGlobalScope(value);
+  if (
+    !isRecord(globalScope.document) ||
+    typeof globalScope.document.createElement !== "function" ||
+    typeof globalScope.document.getElementById !== "function"
+  ) {
+    throw new Error("browser extension popup document global is invalid");
+  }
+  return globalScope.document as BrowserExtensionPopupDocument;
 }
 
 export function requireBrowserExtensionDocumentGlobal(

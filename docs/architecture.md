@@ -476,9 +476,9 @@ The browser-extension package-plan boundary is a deterministic pre-bundling
 artifact. It joins the reviewed manifest, packaged output filenames, and source
 launcher paths into `nsealr-browser-extension-package-plan-v0`, then rejects
 drift such as storage permission, host permissions, mismatched background
-output, or mismatched content-script output. It deliberately does not build an
-installable extension, install native-host manifests, write browser storage,
-dispatch signers, or hold key material.
+output, mismatched popup output, or mismatched content-script output. It
+deliberately does not build an installable extension, install native-host
+manifests, write browser storage, dispatch signers, or hold key material.
 The private `@nsealr/browser-extension` app exposes this boundary through
 `pnpm --filter @nsealr/browser-extension package-plan -- --target ...`, which
 prints JSON to stdout only. The command has no output-path option and performs
@@ -492,10 +492,11 @@ supplied. Its `package-build` command then writes only a reviewed developer
 artifact to a new explicit output directory after in-memory bundling succeeds
 and the supplied route-config approval matches the embedded route config. The
 returned `nsealr-browser-extension-package-build-v0` result includes a package
-digest and per-file byte counts plus SHA-256 hashes so lab integration can
-verify the files that were actually written. It still installs no native-host
-manifest, writes no extension storage, creates no grants, dispatches no
-signers, and holds no key material.
+digest and per-file byte counts plus SHA-256 hashes for the manifest, packaged
+popup HTML, and bundled entrypoints so lab integration can verify the files that
+were actually written. It still installs no native-host manifest, writes no
+extension storage, creates no grants, dispatches no signers, and holds no key
+material.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,
@@ -531,8 +532,8 @@ extension-internal senders only; page-origin senders cannot list or cancel
 pending requests. A popup-control client now wraps those messages over an
 injected `runtime.sendMessage`, validates response envelopes and secretless
 pending-state snapshots, rejects request-id mismatches, and exposes only
-list/cancel operations for future popup UI. The popup path is not a storage,
-grant, native-host installation, or signer-dispatch boundary.
+list/cancel operations for the packaged action popup. The popup path is not a
+storage, grant, native-host installation, or signer-dispatch boundary.
 The runtime-message listener installer is a thin adapter over an injected
 `runtime.onMessage`-like target. It registers exactly one listener, returns
 `true` for asynchronous `sendResponse` delivery, sends deterministic responses

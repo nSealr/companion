@@ -1,0 +1,165 @@
+import {
+  BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE
+} from "./entrypoints.js";
+
+export const BROWSER_EXTENSION_POPUP_ROOT_ID = "nsealr-popup-root";
+export const BROWSER_EXTENSION_POPUP_STATUS_ID = "nsealr-popup-status";
+export const BROWSER_EXTENSION_POPUP_LIST_ID = "nsealr-popup-list";
+export const BROWSER_EXTENSION_POPUP_REFRESH_ID = "nsealr-popup-refresh";
+
+export function browserExtensionPopupHtml(): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>nSealr</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --nsealr-ink: #111315;
+      --nsealr-muted: #667085;
+      --nsealr-rule: #d7dde5;
+      --nsealr-panel: #f7f9fb;
+      --nsealr-accent: #0f766e;
+      --nsealr-danger: #b42318;
+      --nsealr-bg: #ffffff;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      width: 320px;
+      min-height: 220px;
+      font: 13px/1.4 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--nsealr-ink);
+      background: var(--nsealr-bg);
+    }
+    .nsealr-popup {
+      display: grid;
+      grid-template-rows: auto minmax(112px, 1fr) auto;
+      gap: 10px;
+      min-height: 220px;
+      padding: 12px;
+    }
+    .nsealr-popup__top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--nsealr-rule);
+    }
+    .nsealr-popup__brand {
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+    .nsealr-popup__status {
+      max-width: 170px;
+      overflow: hidden;
+      color: var(--nsealr-muted);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .nsealr-popup__list {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      min-width: 0;
+    }
+    .nsealr-popup__empty,
+    .nsealr-popup__request {
+      border: 1px solid var(--nsealr-rule);
+      border-radius: 8px;
+      background: var(--nsealr-panel);
+    }
+    .nsealr-popup__empty {
+      padding: 18px 12px;
+      color: var(--nsealr-muted);
+      text-align: center;
+    }
+    .nsealr-popup__request {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+    }
+    .nsealr-popup__request-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .nsealr-popup__method {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      font-weight: 650;
+    }
+    .nsealr-popup__badge {
+      flex: 0 0 auto;
+      border: 1px solid #99d6cf;
+      border-radius: 999px;
+      padding: 2px 7px;
+      color: var(--nsealr-accent);
+      font-size: 11px;
+      line-height: 1.25;
+      background: #e7f6f3;
+    }
+    .nsealr-popup__meta {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+      color: var(--nsealr-muted);
+      font-size: 12px;
+    }
+    .nsealr-popup__meta-line {
+      overflow-wrap: anywhere;
+    }
+    .nsealr-popup__actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .nsealr-popup__button {
+      min-height: 30px;
+      border: 1px solid var(--nsealr-rule);
+      border-radius: 7px;
+      padding: 5px 10px;
+      color: var(--nsealr-ink);
+      background: var(--nsealr-bg);
+      font: inherit;
+      cursor: pointer;
+    }
+    .nsealr-popup__button:hover {
+      border-color: #aeb8c5;
+    }
+    .nsealr-popup__button:disabled {
+      color: #9aa4b2;
+      cursor: default;
+    }
+    .nsealr-popup__button--danger {
+      color: var(--nsealr-danger);
+    }
+    .nsealr-popup__footer {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <main id="${BROWSER_EXTENSION_POPUP_ROOT_ID}" class="nsealr-popup">
+    <header class="nsealr-popup__top">
+      <span class="nsealr-popup__brand">nSealr</span>
+      <span id="${BROWSER_EXTENSION_POPUP_STATUS_ID}" class="nsealr-popup__status">Ready</span>
+    </header>
+    <section id="${BROWSER_EXTENSION_POPUP_LIST_ID}" class="nsealr-popup__list" aria-live="polite"></section>
+    <footer class="nsealr-popup__footer">
+      <button id="${BROWSER_EXTENSION_POPUP_REFRESH_ID}" class="nsealr-popup__button" type="button">Refresh</button>
+    </footer>
+  </main>
+  <script type="module" src="${BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE}"></script>
+</body>
+</html>
+`;
+}

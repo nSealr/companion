@@ -14,7 +14,9 @@ import {
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
   BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
-  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE
+  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_POPUP_HTML_FILE
 } from "./entrypoints.js";
 import { BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT } from "./route-config.js";
 
@@ -60,6 +62,10 @@ describe("browser extension package build", () => {
         files: [
           expect.objectContaining({ path: "manifest.json", sha256: expect.stringMatching(/^[0-9a-f]{64}$/u) }),
           expect.objectContaining({
+            path: BROWSER_EXTENSION_POPUP_HTML_FILE,
+            sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
+          }),
+          expect.objectContaining({
             path: BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
             sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
           }),
@@ -69,6 +75,10 @@ describe("browser extension package build", () => {
           }),
           expect.objectContaining({
             path: BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE,
+            sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
+          }),
+          expect.objectContaining({
+            path: BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE,
             sha256: expect.stringMatching(/^[0-9a-f]{64}$/u)
           })
         ],
@@ -93,6 +103,7 @@ describe("browser extension package build", () => {
       const manifest = JSON.parse(readFileSync(join(temp.outDir, "manifest.json"), "utf8"));
       expect(manifest.permissions).toEqual(["nativeMessaging"]);
       expect("host_permissions" in manifest).toBe(false);
+      expect(manifest.action.default_popup).toBe(BROWSER_EXTENSION_POPUP_HTML_FILE);
       expect(manifest.content_scripts[0].matches).toEqual(["https://example.com/*"]);
       expect(manifest.web_accessible_resources).toEqual([{
         resources: [BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE],
@@ -103,6 +114,9 @@ describe("browser extension package build", () => {
       expect(background).toContain("esp32-usb-slot-0");
       expect(background).not.toMatch(/(?:\bprocess\s*(?:\.|\[)|typeof\s+process|globalThis\.process)/u);
       expect(background).not.toMatch(/(?:\bBuffer\s*(?:\.|\[)|new\s+Buffer\b|typeof\s+Buffer|globalThis\.Buffer)/u);
+      const popupHtml = readFileSync(join(temp.outDir, BROWSER_EXTENSION_POPUP_HTML_FILE), "utf8");
+      expect(popupHtml).toContain(BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE);
+      expect(popupHtml).toContain("nsealr-popup-root");
     } finally {
       temp.cleanup();
     }

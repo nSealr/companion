@@ -561,6 +561,11 @@ origin/extension/pairing-digest/method lookups. That store contract is still
 pure data validation: its upsert/revoke helpers replace or remove exact
 approved-origin records without calling browser storage APIs, choosing a
 persistence backend, creating grants, dispatching signers, or storing secrets.
+The private browser-extension CLI exposes the same approval, empty-store,
+upsert, and revoke operations as stdout-only artifact commands. Those commands
+let operators and tests produce reviewed JSON without adding browser storage,
+default paths, grant creation, provider injection, signer dispatch, or key
+material.
 The matching origin-permission review card is also pure: it renders the
 already-validated review, the full pairing digest, requested method effects,
 and approve/reject actions over injected controls. It accepts approval only

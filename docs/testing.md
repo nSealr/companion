@@ -128,6 +128,11 @@ single-repository CI. Cross-repository drift remains guarded by
   not keep stale method scopes or move the store clock backward, and malformed
   or secret-looking store fields fail before any browser storage, grant, signer
   dispatch, or key material exists.
+  Origin-permission CLI tests prove private artifact commands can approve a
+  reviewed origin permission, create an empty store, upsert an approval, and
+  revoke an exact origin/pairing key through package-owned parsers while
+  rejecting digest mismatches, unsupported options, malformed approval inputs,
+  and backward store timestamps. The CLI writes JSON to stdout only.
   Origin-permission view tests prove the future popup approval card renders the
   validated origin, app name, full local-pairing digest, method effects, and
   no-key/no-grant/no-storage-write chips, passes the exact digest to injected

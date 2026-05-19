@@ -396,7 +396,11 @@ and uploads checked tarball artifacts without publishing to npm.
   browser storage backend, creating local-service grants, dispatching signers,
   or storing secret material. The store contract now includes deterministic
   upsert/revoke helpers for exact approved-origin records, so future popup
-  storage wiring does not need to invent mutation semantics. The private
+  storage wiring does not need to invent mutation semantics. A private
+  browser-extension origin-permission CLI now exposes approval, empty-store,
+  upsert, and revoke artifact commands over the same package-owned parsers,
+  writing JSON to stdout only and still avoiding browser storage, grants,
+  provider injection, signer dispatch, and key material. The private
   extension app now also has a pure
   origin-permission review card for future popup approval UX: it renders the
   validated review, full pairing digest, requested method effects, and

@@ -117,7 +117,9 @@ match the shared `contract_id`.
   pure origin-permission review card for future popup approval UX without
   performing storage, grant, provider-injection, or signer-dispatch side
   effects, can maintain the approved-origin store through deterministic
-  upsert/revoke helpers without choosing a browser storage backend, can enforce
+  upsert/revoke helpers without choosing a browser storage backend, exposes
+  private stdout-only origin-permission artifact commands for approval,
+  empty-store creation, upsert, and revoke, can enforce
   an injected approved-origin store before provider selection so denied methods
   fail before native messaging, passes that gate through both the browser-like
   background adapter and packaged background entrypoint over explicit injected

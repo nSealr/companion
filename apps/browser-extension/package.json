@@ -8,6 +8,10 @@
   "scripts": {
     "package-build": "node --no-warnings --import tsx/esm src/package-build-cli.ts",
     "package-plan": "node --no-warnings --import tsx/esm src/package-plan-cli.ts",
+    "origin-permission-approve": "node --no-warnings --import tsx/esm src/origin-permission-cli.ts approve",
+    "origin-permission-store-create": "node --no-warnings --import tsx/esm src/origin-permission-cli.ts store-create",
+    "origin-permission-store-revoke": "node --no-warnings --import tsx/esm src/origin-permission-cli.ts store-revoke",
+    "origin-permission-store-upsert": "node --no-warnings --import tsx/esm src/origin-permission-cli.ts store-upsert",
     "route-config-approve": "node --no-warnings --import tsx/esm src/route-config-cli.ts approve",
     "route-config-review": "node --no-warnings --import tsx/esm src/route-config-cli.ts review"
   },

@@ -150,8 +150,10 @@ match the shared `contract_id`.
   and `runtime.sendMessage` dependencies,
   uses one shared page-origin validator across page-window and content-window
   boundaries,
-  can emit secretless pending/resolved/rejected request-state snapshots for
-  future UI without exposing event templates or key material,
+  can emit secretless pending/resolved/rejected/cancelled request-state
+  snapshots for future UI without exposing event templates or key material,
+  and can abort in-flight native messaging when that pending request is
+  cancelled,
   and can build either the default minimal no-host-permission manifest or an
   opt-in explicit-origin content-script manifest profile. The content-script
   profile still omits host-permission fields, broad URL matches, extension

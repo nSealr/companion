@@ -520,7 +520,10 @@ It can emit `nsealr-browser-extension-pending-request-state-v0` snapshots
 through an injected lifecycle for future visible pending/cancel UI. Those
 snapshots expose only request id, method, extension id, page origin, optional
 app name, status, and timestamps; they do not include event templates, key
-material, grants, storage writes, or signer dispatch.
+material, grants, storage writes, or signer dispatch. The same lifecycle owns
+the per-request cancellation hook: cancelling an active snapshot aborts the
+in-flight native-message path and emits one `cancelled` state instead of
+leaking a later duplicate rejection.
 The runtime-message listener installer is a thin adapter over an injected
 `runtime.onMessage`-like target. It registers exactly one listener, returns
 `true` for asynchronous `sendResponse` delivery, sends deterministic responses

@@ -127,14 +127,16 @@ export async function handleBrowserExtensionRuntimeMessage(
       "browser runtime sender is invalid"
     );
   }
-  const requestOptions: BrowserExtensionBackgroundRequestOptions = {
-    ...(options.nativeMessageAbortSignal !== undefined
-      ? { nativeMessageAbortSignal: options.nativeMessageAbortSignal }
-      : {})
-  };
   const pending = startPendingRequest(value, sender, options);
+  const pendingAbortSignal = pending === undefined ? undefined : options.pendingRequests?.abortSignal(pending);
   try {
-    const response = await options.controller.handleRequest(value, sender, requestOptions);
+    const response = await withMergedAbortSignal(
+      options.nativeMessageAbortSignal,
+      pendingAbortSignal,
+      (nativeMessageAbortSignal) => options.controller.handleRequest(value, sender, {
+        ...(nativeMessageAbortSignal !== undefined ? { nativeMessageAbortSignal } : {})
+      })
+    );
     settlePendingRequest(pending, response, options);
     return response;
   } catch (error) {
@@ -146,6 +148,27 @@ export async function handleBrowserExtensionRuntimeMessage(
       }
     }
     throw error;
+  }
+}
+
+async function withMergedAbortSignal<T>(
+  first: AbortSignal | undefined,
+  second: AbortSignal | undefined,
+  operation: (abortSignal: AbortSignal | undefined) => Promise<T> | T
+): Promise<T> {
+  if (first === undefined || first === second) return operation(second ?? first);
+  if (second === undefined) return operation(first);
+
+  const abortController = new AbortController();
+  const abort = () => abortController.abort();
+  first.addEventListener("abort", abort, { once: true });
+  second.addEventListener("abort", abort, { once: true });
+  if (first.aborted || second.aborted) abort();
+  try {
+    return await operation(abortController.signal);
+  } finally {
+    first.removeEventListener("abort", abort);
+    second.removeEventListener("abort", abort);
   }
 }
 

@@ -396,6 +396,77 @@ describe("browser extension runtime message boundary", () => {
     expect(pendingRequests.active()).toEqual([]);
   });
 
+  it("lets pending request cancellation abort in-flight native messaging without a second rejected state", async () => {
+    const states: unknown[] = [];
+    const timestamps = [1_900_000_020, 1_900_000_021];
+    let seenSignal: AbortSignal | undefined;
+    const controller = createBrowserExtensionBackgroundController({
+      routeRequest,
+      sendNativeMessage: (_hostName, _message, options) => {
+        seenSignal = options.abortSignal;
+        return new Promise((_resolve, reject) => {
+          options.abortSignal?.addEventListener("abort", () => {
+            reject(new Error("native request cancelled by pending UI"));
+          }, { once: true });
+        });
+      }
+    });
+    const pendingRequests = createBrowserExtensionPendingRequestLifecycle({
+      now: () => timestamps.shift() ?? 1_900_000_021,
+      onState: (state) => {
+        states.push(state);
+      }
+    });
+
+    const response = handleBrowserExtensionRuntimeMessage(
+      getPublicKeyRequest("runtime-pending-ui-cancel"),
+      {
+        id: "extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      {
+        controller,
+        pendingRequests
+      }
+    );
+    await flushAsyncListeners();
+    expect(pendingRequests.active()).toHaveLength(1);
+    expect(seenSignal?.aborted).toBe(false);
+
+    const cancelled = pendingRequests.cancel("runtime-pending-ui-cancel");
+
+    expect(cancelled).toMatchObject({
+      request_id: "runtime-pending-ui-cancel",
+      status: "cancelled",
+      includes_event_template: false
+    });
+    expect(seenSignal?.aborted).toBe(true);
+    await expect(response).resolves.toEqual({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "runtime-pending-ui-cancel",
+      ok: false,
+      error: {
+        code: "provider_request_failed",
+        message: "browser provider get_public_key failed",
+        retryable: false
+      }
+    });
+    expect(states).toMatchObject([
+      {
+        request_id: "runtime-pending-ui-cancel",
+        status: "pending",
+        includes_event_template: false
+      },
+      {
+        request_id: "runtime-pending-ui-cancel",
+        status: "cancelled",
+        includes_event_template: false
+      }
+    ]);
+    expect(pendingRequests.active()).toEqual([]);
+  });
+
   it("installs an injected runtime message listener and sends accepted responses", async () => {
     const nativeRequests: LocalServiceRequest[] = [];
     const runtime = createInjectedRuntimeOnMessage();

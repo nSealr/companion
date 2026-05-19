@@ -103,4 +103,66 @@ describe("browser extension pending request lifecycle", () => {
     })).toThrow(/sink failed/u);
     expect(lifecycle.active()).toEqual([]);
   });
+
+  it("cancels active requests with a secretless cancelled state and abort signal", () => {
+    const states: unknown[] = [];
+    const timestamps = [1_900_000_010, 1_900_000_012];
+    const lifecycle = createBrowserExtensionPendingRequestLifecycle({
+      now: () => timestamps.shift() ?? 1_900_000_012,
+      onState: (state) => {
+        states.push(state);
+      }
+    });
+    const started = lifecycle.start({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "pending-cancel-sign-event",
+      method: "sign_event",
+      params: {
+        event_template: {
+          kind: 1,
+          created_at: 1_710_000_000,
+          tags: [],
+          content: "cancel me"
+        }
+      }
+    }, {
+      extension_id: "extension@nsealr.dev",
+      page_origin: "https://example.com"
+    });
+    const signal = lifecycle.abortSignal(started);
+    expect(signal?.aborted).toBe(false);
+
+    const cancelled = lifecycle.cancel("pending-cancel-sign-event");
+
+    expect(cancelled).toEqual({
+      ...started,
+      status: "cancelled",
+      updated_at: 1_900_000_012
+    });
+    expect(signal?.aborted).toBe(true);
+    expect(lifecycle.active()).toEqual([]);
+    expect(states).toEqual([started, cancelled]);
+    expect(lifecycle.settle(started, "rejected")).toBe(started);
+    expect(lifecycle.cancel("pending-cancel-sign-event")).toBeUndefined();
+  });
+
+  it("rejects duplicate active request ids before overwriting cancellation state", () => {
+    const lifecycle = createBrowserExtensionPendingRequestLifecycle();
+    const request = {
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "pending-duplicate",
+      method: "get_public_key"
+    } as const;
+    const sender = {
+      extension_id: "extension@nsealr.dev",
+      page_origin: "https://example.com"
+    };
+
+    const started = lifecycle.start(request, sender);
+
+    expect(() => lifecycle.start(request, sender)).toThrow(/already active/u);
+    expect(lifecycle.active()).toEqual([started]);
+  });
 });

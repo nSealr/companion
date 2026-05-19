@@ -3,6 +3,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import {
   assertPublicPackageTarball,
+  fileIntegrity,
   packageFilename,
   packageManagerCommand,
   publicPackages,
@@ -40,7 +41,8 @@ for (const packageName of publicPackages) {
   artifacts.push({
     name: packageName,
     version: expectedManifest.version,
-    file: basename(tarball)
+    file: basename(tarball),
+    ...fileIntegrity(tarball)
   });
 }
 

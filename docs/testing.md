@@ -363,8 +363,9 @@ single-repository CI. Cross-repository drift remains guarded by
   project, and imports them by package name.
 - `make release-artifacts` builds package artifacts, packs every public
   package, validates the same tarball boundaries, and writes
-  `release-artifacts/packages/manifest.json` for the manual package release
-  rehearsal workflow. It does not publish to npm.
+  `release-artifacts/packages/manifest.json` with each tarball filename, byte
+  count, and SHA-256 digest for the manual package release rehearsal workflow.
+  It does not publish to npm.
 - Service app tests prove the private native-messaging host scaffold stays a
   thin wrapper around `@nsealr/client`, passes injected in-memory authorization
   context to the local service, loads explicit read-only secretless

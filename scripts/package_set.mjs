@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -56,6 +57,14 @@ export function sourceManifest(packageName) {
 
 export function packageFilename(manifest) {
   return `${manifest.name.replace("@", "").replace("/", "-")}-${manifest.version}.tgz`;
+}
+
+export function fileIntegrity(path) {
+  const data = readFileSync(path);
+  return {
+    bytes: data.byteLength,
+    sha256: createHash("sha256").update(data).digest("hex")
+  };
 }
 
 export function assertNoWorkspaceProtocols(value, path = "package.json") {

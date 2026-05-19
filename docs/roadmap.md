@@ -318,10 +318,13 @@ directories, issue tracker, homepage, MIT license, and public provenance
 `publishConfig`. Package README examples are executable TypeScript snippets
 checked against built package entrypoints in CI. `docs/api-review.md` records a
 package-by-package public API review bound to the current `docs/api.md` digest.
+The manual release rehearsal manifest records every tarball's filename, byte
+count, and SHA-256 digest before artifact upload.
 `@nsealr/sdk` now provides a platform-neutral facade over curated public
 namespaces without importing private test signing, Node-only fixtures, or host
 transport adapters. A manual package release rehearsal workflow now prepares
-and uploads checked tarball artifacts without publishing to npm.
+and uploads checked tarball artifacts with byte counts and SHA-256 digests
+without publishing to npm.
 
 ## Later
 
@@ -589,8 +592,9 @@ and uploads checked tarball artifacts without publishing to npm.
   checked so production source cannot drift into private apps, unreviewed
   `@nsealr/*` subpaths, or the test-only signer package. Changelog and release
   policy are present. A manual release rehearsal workflow prepares checked
-  tarball artifacts without npm publication. Actual npm trusted
-  publishing/provenance activation remains pending.
+  tarball artifacts with byte counts and SHA-256 digests without npm
+  publication. Actual npm trusted publishing/provenance activation remains
+  pending.
 - M5 full NIP-46/Nostr Connect relay session integration.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and

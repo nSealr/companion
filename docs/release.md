@@ -60,7 +60,9 @@ It runs `make ci`, prepares checked package tarballs with
 GitHub Actions artifact.
 
 This workflow does not publish to npm. It is the reviewed artifact-preparation
-path that a later publication workflow must build on.
+path that a later publication workflow must build on. The uploaded manifest
+records every package name, version, tarball filename, byte count, and SHA-256
+digest so reviewers can verify downloaded rehearsal artifacts exactly.
 
 ## Provenance
 

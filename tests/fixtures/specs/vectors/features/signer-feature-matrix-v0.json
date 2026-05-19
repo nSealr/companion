@@ -553,9 +553,9 @@
         },
         "secure_boot_hardening": {
           "target": "required",
-          "current": "planned",
+          "current": "partial",
           "contract_id": "firmware-boot-hardening-v0",
-          "notes": "Secure boot, flash encryption, debug lock, provisioning, and recovery policy gate production signing."
+          "notes": "A validated development-only security profile and read-only eFuse audit path exist, and signing status reports secure_boot, flash_encryption, and debug_lock as blockers. Secure boot, flash encryption, debug locking, provisioning, recovery policy, persistent-secret storage, and production signing remain disabled or pending."
         },
         "response_verification": {
           "target": "required",

@@ -292,10 +292,22 @@ describe("browser extension package build", () => {
         outDir: invalidRoute.outDir,
         routeConfig: {
           format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
-          account_id: "bad account id"
+          account_id: "bad account id",
+          route_type: "esp32_usb_nip46"
         },
         routeConfigApproval
       })).rejects.toThrow(/account_id/u);
+      expect(existsSync(invalidRoute.outDir)).toBe(false);
+      await expect(buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: invalidRoute.outDir,
+        routeConfig: {
+          format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
+          account_id: "esp32-qr-account-0",
+          route_type: "esp32_qr_vault"
+        },
+        routeConfigApproval
+      })).rejects.toThrow(/browser-dispatchable/u);
       expect(existsSync(invalidRoute.outDir)).toBe(false);
       await expect(buildBrowserExtensionPackage({
         target: "chromium",

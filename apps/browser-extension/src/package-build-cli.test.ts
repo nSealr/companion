@@ -275,6 +275,28 @@ describe("browser extension package-build CLI", () => {
         temp.outDir,
         "--route-account-id",
         "esp32-usb-slot-0",
+        "--route-config-approval",
+        approvalPath
+      ])).rejects.toThrow(/route-type/u);
+      await expect(browserExtensionPackageBuildJsonFromArgs([
+        "--target",
+        "chromium",
+        "--out-dir",
+        temp.outDir,
+        "--route-account-id",
+        "esp32-qr-account-0",
+        "--route-type",
+        "esp32_qr_vault",
+        "--route-config-approval",
+        approvalPath
+      ])).rejects.toThrow(/browser-dispatchable/u);
+      await expect(browserExtensionPackageBuildJsonFromArgs([
+        "--target",
+        "chromium",
+        "--out-dir",
+        temp.outDir,
+        "--route-account-id",
+        "esp32-usb-slot-0",
         "--route-type",
         "esp32_usb_nip46",
         "--route-config-approval",

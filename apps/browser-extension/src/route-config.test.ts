@@ -33,18 +33,12 @@ describe("browser extension selected-route config", () => {
     });
   });
 
-  it("allows route type to be omitted for account-only route selection", () => {
-    expect(parseBrowserExtensionRouteConfig({
-      format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
-      account_id: "selected-account"
-    }).route_request).toEqual({
-      account_id: "selected-account",
-      method: "sign_event"
-    });
-  });
-
   it("rejects malformed, unsupported, or secret-looking route config fields", () => {
     expect(() => parseBrowserExtensionRouteConfig(null)).toThrow(/object/u);
+    expect(() => parseBrowserExtensionRouteConfig({
+      format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
+      account_id: "selected-account"
+    })).toThrow(/route_type is required/u);
     expect(() => parseBrowserExtensionRouteConfig({
       format: "nsealr-wrong-format",
       account_id: "selected-account"
@@ -54,6 +48,16 @@ describe("browser extension selected-route config", () => {
       account_id: "selected-account",
       route_type: "unknown"
     })).toThrow(/route_type/u);
+    expect(() => parseBrowserExtensionRouteConfig({
+      format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
+      account_id: "selected-account",
+      route_type: "raspberry_qr_vault"
+    })).toThrow(/not browser-dispatchable/u);
+    expect(() => parseBrowserExtensionRouteConfig({
+      format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
+      account_id: "selected-account",
+      route_type: "smartcard"
+    })).toThrow(/not browser-dispatchable/u);
     expect(() => parseBrowserExtensionRouteConfig({
       format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
       account_id: "selected-account",

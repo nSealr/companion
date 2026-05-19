@@ -398,7 +398,11 @@ match the shared `contract_id`.
   boundary and injected origin-permission storage adapter needed before
   content-script injection is considered. The packaged manifest still requests
   no storage permission by default; storage-backed popup approval is an
-  explicit browser package profile.
+  explicit browser package profile. Browser package route configuration must
+  name an explicit browser-dispatchable connected route type
+  (`esp32_usb_nip46`, `custom_hardware_wallet`, or future `external_nip46`);
+  stateless QR vaults, display-less smartcards, and account-only route
+  configs are rejected for this access surface.
 - Public npm SDK alpha after package APIs, docs, semver, provenance, and
   third-party import tests are stable. Package README coverage and a
   built-artifact consumer smoke are now part of `make ci`; packed-tarball

@@ -8,6 +8,11 @@ export const BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT = "nsealr-browser-extension-r
 export const BROWSER_EXTENSION_ROUTE_CONFIG_REVIEW_FORMAT = "nsealr-browser-extension-route-config-review-v0";
 export const BROWSER_EXTENSION_ROUTE_CONFIG_APPROVAL_FORMAT = "nsealr-browser-extension-route-config-approval-v0";
 export const BROWSER_EXTENSION_ROUTE_CONFIG_METHOD = "sign_event";
+const BROWSER_EXTENSION_ROUTE_CONFIG_ROUTE_TYPES = new Set([
+  "esp32_usb_nip46",
+  "custom_hardware_wallet",
+  "external_nip46"
+]);
 
 export type BrowserExtensionRouteConfig = {
   format: typeof BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT;
@@ -79,6 +84,21 @@ function routeRequestsEqual(left: RouteSelectionRequest, right: RouteSelectionRe
     && left.route_type === right.route_type;
 }
 
+function requireBrowserDispatchableRouteType(value: unknown): RouteSelectionRequest["route_type"] {
+  if (typeof value !== "string") {
+    throw new Error("browser extension route config route_type is required");
+  }
+  const routeType = parseRouteSelectionRequest({
+    account_id: "browser-extension-route-config-validation",
+    method: BROWSER_EXTENSION_ROUTE_CONFIG_METHOD,
+    route_type: value
+  }).route_type;
+  if (routeType === undefined || !BROWSER_EXTENSION_ROUTE_CONFIG_ROUTE_TYPES.has(routeType)) {
+    throw new Error("browser extension route config route_type is not browser-dispatchable");
+  }
+  return routeType;
+}
+
 export function normalizeBrowserExtensionRouteConfig(value: unknown): BrowserExtensionRouteConfig {
   if (!isRecord(value)) throw new Error("browser extension route config must be an object");
   if (!hasOnlyKeys(value, ["format", "account_id", "route_type"])) {
@@ -87,15 +107,16 @@ export function normalizeBrowserExtensionRouteConfig(value: unknown): BrowserExt
   if (value.format !== BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT) {
     throw new Error("browser extension route config format is unsupported");
   }
+  const routeType = requireBrowserDispatchableRouteType(value.route_type);
   const routeRequest = parseRouteSelectionRequest({
     account_id: value.account_id,
     method: BROWSER_EXTENSION_ROUTE_CONFIG_METHOD,
-    ...(value.route_type !== undefined ? { route_type: value.route_type } : {})
+    route_type: routeType
   });
   return Object.freeze({
     format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
     account_id: routeRequest.account_id,
-    ...(routeRequest.route_type !== undefined ? { route_type: routeRequest.route_type } : {})
+    route_type: routeType
   });
 }
 

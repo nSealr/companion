@@ -69,8 +69,20 @@ describe("browser extension route-config CLI", () => {
   it("rejects malformed review and approval options", () => {
     expect(() => browserExtensionRouteConfigReviewJsonFromArgs([
       "--route-account-id",
-      "bad account id"
+      "bad account id",
+      "--route-type",
+      "esp32_usb_nip46"
     ])).toThrow(/account_id/u);
+    expect(() => browserExtensionRouteConfigReviewJsonFromArgs([
+      "--route-account-id",
+      "esp32-usb-slot-0"
+    ])).toThrow(/route-type/u);
+    expect(() => browserExtensionRouteConfigReviewJsonFromArgs([
+      "--route-account-id",
+      "esp32-usb-slot-0",
+      "--route-type",
+      "esp32_qr_vault"
+    ])).toThrow(/browser-dispatchable/u);
     expect(() => browserExtensionRouteConfigReviewJsonFromArgs([
       "--review",
       "/tmp/review.json"

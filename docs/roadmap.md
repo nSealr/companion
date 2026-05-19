@@ -579,7 +579,10 @@ publishing to npm.
   dispatch. A secretless browser-extension route-config parser now derives the
   selected account `sign_event` route request before background listener
   installation, using package-owned policy route-request parsing instead of an
-  app-local route-shape fork. A pure page-script injection
+  app-local route-shape fork. That package route config now requires an
+  explicit browser-dispatchable connected route type and rejects account-only,
+  stateless QR-vault, and display-less smartcard routes before package review
+  or build. A pure page-script injection
   helper now injects the reviewed page-script resource through explicit
   document and extension-URL resolver dependencies with duplicate-target and
   URL checks. Packaged background, content-script, page-script, and popup source

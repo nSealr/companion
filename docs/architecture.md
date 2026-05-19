@@ -177,6 +177,13 @@ packages, but it must not export test-only signing as a production path.
   native-host name, calls an injected `sendNativeMessage`, and relies on
   `@nsealr/client` for shared local-service response validation, deterministic
   timeouts, cancellation, and request-id correlation.
+- `apps/browser-extension` route configuration is stricter than general
+  account-route selection. A packaged NIP-07 bridge must name an explicit
+  browser-dispatchable route type: `esp32_usb_nip46`,
+  `custom_hardware_wallet`, or future `external_nip46`. Account-only package
+  routes, stateless QR vault routes, and display-less smartcard routes are
+  rejected before package review or build so the extension cannot imply a
+  transport it cannot safely drive.
 - `packages/sdk`: public namespace facade for app, browser-extension, and
   companion integrations. It excludes private test signing from the public
   package surface. Browser runtime code must use the reviewed

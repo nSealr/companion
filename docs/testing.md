@@ -109,8 +109,10 @@ single-repository CI. Cross-repository drift remains guarded by
   still needs a reviewed production bootstrap/config contract. Package-build
   tests cover the first private developer artifact
   builder: route-config tests require digest-bound review and approval for the
-  secretless selected route; package-build requires that approval before
-  embedding the route config, requires a new output directory, writes manifest,
+  secretless selected route, and require that the route config name an explicit
+  browser-dispatchable route type instead of account-only, stateless QR-vault,
+  or display-less smartcard routing; package-build requires that approval
+  before embedding the route config, requires a new output directory, writes manifest,
   popup HTML, and bundled entrypoints only after successful in-memory bundling,
   returns explicit route, origin, extension, and pairing metadata plus a
   package digest and per-file byte counts plus SHA-256 hashes, and still

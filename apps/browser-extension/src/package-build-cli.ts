@@ -122,10 +122,11 @@ function manifestOptionsFromCli(options: PackageBuildCliOptions): BrowserExtensi
 
 function routeConfigFromCli(options: PackageBuildCliOptions): unknown {
   if (options.routeAccountId === undefined) throw new Error("--route-account-id is required");
+  if (options.routeType === undefined) throw new Error("--route-type is required");
   return {
     format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
     account_id: options.routeAccountId,
-    ...(options.routeType !== undefined ? { route_type: options.routeType } : {})
+    route_type: options.routeType
   };
 }
 

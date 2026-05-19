@@ -25,6 +25,8 @@ public npm release.
   test-only signer isolation.
 - Manual package release rehearsal workflow and checked tarball artifact
   preparation without npm publication.
+- Release artifact output safety checks that reject destructive output paths
+  before package artifact cleanup.
 - Generated public API surface docs and a CI drift check for every public
   package entrypoint.
 - npm-facing package manifest metadata and public provenance `publishConfig`

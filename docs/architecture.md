@@ -616,15 +616,16 @@ dispatch a signer, or handle key material. Future packaged popup approval can
 compose this view with the injected origin-permission storage adapter, but that
 must remain an explicit permissioned manifest/profile decision.
 The sender-aware request handler can also consume that approved-origin store as
-an injected authorization gate. When configured, it checks the exact
+an injected authorization gate. The gate accepts either a static reviewed store
+or an async injected store loader, then checks the exact
 origin/extension/pairing-digest/method tuple after request and sender parsing
 but before provider selection, native messaging, route selection, or signer
-dispatch. Denied, stale, or malformed origin-permission state returns
-`origin_permission_denied` deterministically. The browser-like background
-entrypoint exposes the same injected gate, so packaged runtime handling can be
-tested without introducing browser storage or global browser APIs. The
-packaged background entrypoint forwards that option rather than dropping it at
-the launcher boundary.
+dispatch. Denied, stale, malformed, ambiguous, or unavailable
+origin-permission state returns `origin_permission_denied` deterministically.
+The browser-like background entrypoint exposes the same injected gate, so
+packaged runtime handling can be tested without introducing browser storage or
+global browser APIs. The packaged background entrypoint forwards that option
+rather than dropping it at the launcher boundary.
 Its manifest builder is intentionally restrictive: the default Chromium
 manifest omits host permissions, optional host permissions, content scripts,
 web-accessible resources, and storage; Firefox manifests require an explicit

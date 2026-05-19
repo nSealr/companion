@@ -264,6 +264,84 @@ describe("browser extension request handler", () => {
     expect(selected).toBe(false);
   });
 
+  it("loads origin permissions asynchronously before provider selection", async () => {
+    let selected = false;
+    let loadCount = 0;
+    await expect(handleBrowserExtensionSenderRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "browser-origin-permission-loaded",
+      method: "get_public_key"
+    }, sender, {
+      providerForClient: () => {
+        selected = true;
+        return provider;
+      },
+      originPermissions: {
+        async loadStore() {
+          loadCount += 1;
+          return originPermissionStore(["get_public_key"]);
+        },
+        localPairingDigest
+      }
+    })).resolves.toMatchObject({
+      request_id: "browser-origin-permission-loaded",
+      ok: true
+    });
+    expect(loadCount).toBe(1);
+    expect(selected).toBe(true);
+
+    selected = false;
+    await expect(handleBrowserExtensionSenderRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "browser-origin-permission-loader-failed",
+      method: "get_public_key"
+    }, sender, {
+      providerForClient: () => {
+        selected = true;
+        return provider;
+      },
+      originPermissions: {
+        async loadStore() {
+          throw new Error("storage unavailable");
+        },
+        localPairingDigest
+      }
+    })).resolves.toMatchObject({
+      request_id: "browser-origin-permission-loader-failed",
+      ok: false,
+      error: {
+        code: "origin_permission_denied"
+      }
+    });
+    expect(selected).toBe(false);
+
+    await expect(handleBrowserExtensionSenderRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "browser-origin-permission-loader-ambiguous",
+      method: "get_public_key"
+    }, sender, {
+      providerForClient: () => {
+        selected = true;
+        return provider;
+      },
+      originPermissions: {
+        store: originPermissionStore(),
+        loadStore: () => originPermissionStore(),
+        localPairingDigest
+      } as never
+    })).resolves.toMatchObject({
+      request_id: "browser-origin-permission-loader-ambiguous",
+      ok: false,
+      error: {
+        code: "origin_permission_denied"
+      }
+    });
+    expect(selected).toBe(false);
+  });
+
   it("rejects stale or malformed origin permission stores before provider selection", async () => {
     let selected = false;
     await expect(handleBrowserExtensionSenderRequest({

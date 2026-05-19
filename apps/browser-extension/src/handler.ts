@@ -51,7 +51,20 @@ export type BrowserExtensionSenderHandlerOptions = {
 export type BrowserExtensionOriginPermissionAuthorization = {
   store: unknown;
   localPairingDigest: string;
+} | {
+  loadStore(): Promise<unknown> | unknown;
+  localPairingDigest: string;
 };
+
+type BrowserExtensionStaticOriginPermissionAuthorization = Extract<
+  BrowserExtensionOriginPermissionAuthorization,
+  { store: unknown }
+>;
+
+type BrowserExtensionLoadedOriginPermissionAuthorization = Extract<
+  BrowserExtensionOriginPermissionAuthorization,
+  { loadStore(): Promise<unknown> | unknown }
+>;
 
 const FALLBACK_REQUEST_ID = "invalid-browser-extension-request";
 
@@ -173,13 +186,44 @@ async function handleParsedBrowserExtensionRequest(
   return handleSignEvent(request, provider);
 }
 
-function assertOriginPermission(
+function hasOwnKey(value: object, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function hasStaticOriginPermissionStore(
+  authorization: BrowserExtensionOriginPermissionAuthorization
+): authorization is BrowserExtensionStaticOriginPermissionAuthorization {
+  return hasOwnKey(authorization, "store");
+}
+
+function hasLoadedOriginPermissionStore(
+  authorization: BrowserExtensionOriginPermissionAuthorization
+): authorization is BrowserExtensionLoadedOriginPermissionAuthorization {
+  return hasOwnKey(authorization, "loadStore");
+}
+
+async function originPermissionStore(
+  authorization: BrowserExtensionOriginPermissionAuthorization
+): Promise<unknown> {
+  const hasStaticStore = hasStaticOriginPermissionStore(authorization);
+  const hasStoreLoader = hasLoadedOriginPermissionStore(authorization);
+  if (hasStaticStore === hasStoreLoader) {
+    throw new Error("browser extension origin permission authorization source is invalid");
+  }
+  if (hasStaticStore) return authorization.store;
+  if (typeof authorization.loadStore !== "function") {
+    throw new Error("browser extension origin permission store loader is invalid");
+  }
+  return authorization.loadStore();
+}
+
+async function assertOriginPermission(
   request: BrowserExtensionRequest,
   context: BrowserExtensionClientContext,
   authorization: BrowserExtensionOriginPermissionAuthorization | undefined
-): boolean {
+): Promise<boolean> {
   if (authorization === undefined) return true;
-  return isBrowserExtensionOriginMethodAllowed(authorization.store, {
+  return isBrowserExtensionOriginMethodAllowed(await originPermissionStore(authorization), {
     origin: context.client.origin,
     extensionId: context.extension_id,
     localPairingDigest: authorization.localPairingDigest,
@@ -206,7 +250,7 @@ export async function handleBrowserExtensionSenderRequest(
     return errorResponse(requestId, "invalid_sender", "browser extension sender is invalid");
   }
   try {
-    if (!assertOriginPermission(request, context, options.originPermissions)) {
+    if (!await assertOriginPermission(request, context, options.originPermissions)) {
       return errorResponse(request.request_id, "origin_permission_denied", "browser extension origin permission denied");
     }
   } catch {

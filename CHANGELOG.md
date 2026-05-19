@@ -81,6 +81,10 @@ public npm release.
   upsert/revoke/remove writes, and explicit no-secret/no-grant/no-dispatch
   metadata. It does not read global browser APIs or change packaged manifest
   permissions.
+- Private browser-extension origin-permission authorization loader support, so
+  sender-aware request handling can use either a static reviewed store or an
+  async injected store loader and still deny malformed, stale, or unavailable
+  permissions before provider selection or native messaging.
 - Private browser-extension background-controller boundary that composes
   sender-aware request handling, pairing-intent requests, pairing review, and
   origin permission review over injected native messaging without using

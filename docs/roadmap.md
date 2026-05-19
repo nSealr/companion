@@ -436,12 +436,13 @@ and uploads checked tarball artifacts without publishing to npm.
   delegates digest-bound approval/rejection to injected controls, and still
   does not itself write browser storage, create grants, inject a provider,
   dispatch a signer, or handle key material. The sender-aware
-  browser request handler can now consume an injected approved-origin store and
-  deny stale, malformed, or method-mismatched origin permissions before provider
-  selection, native messaging, route selection, or signer dispatch; the
-  browser-like background entrypoint now forwards that same injected gate over
-  explicit runtime dependencies, and the packaged background entrypoint now
-  preserves that option instead of dropping it at the launcher boundary. A pure
+  browser request handler can now consume either a static approved-origin store
+  or an async injected store loader, denying stale, malformed,
+  method-mismatched, ambiguous, or unavailable origin permissions before
+  provider selection, native messaging, route selection, or signer dispatch;
+  the browser-like background entrypoint now forwards that same injected gate
+  over explicit runtime dependencies, and the packaged background entrypoint
+  now preserves that option instead of dropping it at the launcher boundary. A pure
   background-controller boundary now composes
   request handling, pairing-intent requests, pairing-review projection, and
   origin-permission review projection over injected native messaging without

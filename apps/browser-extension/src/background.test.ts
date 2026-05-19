@@ -227,6 +227,45 @@ describe("browser extension background controller boundary", () => {
     expect(requests).toEqual([]);
   });
 
+  it("can load origin permissions before browser native messaging", async () => {
+    const requests: LocalServiceRequest[] = [];
+    let loadCount = 0;
+    const controller = createBrowserExtensionBackgroundController({
+      routeRequest,
+      sendNativeMessage: nativeResponder(requests),
+      originPermissions: {
+        loadStore() {
+          loadCount += 1;
+          return routeOnlyOriginPermissionStore();
+        },
+        localPairingDigest
+      }
+    });
+
+    await expect(controller.handleRequest({
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "background-origin-permission-loader-denied",
+      method: "sign_event",
+      params: {
+        event_template: {
+          kind: 1,
+          created_at: 1_710_000_000,
+          tags: [],
+          content: "storage-backed denied before native messaging"
+        }
+      }
+    }, sender)).resolves.toMatchObject({
+      request_id: "background-origin-permission-loader-denied",
+      ok: false,
+      error: {
+        code: "origin_permission_denied"
+      }
+    });
+    expect(loadCount).toBe(1);
+    expect(requests).toEqual([]);
+  });
+
   it("projects pairing review metadata without browser storage or grants", async () => {
     const requests: LocalServiceRequest[] = [];
     const controller = createBrowserExtensionBackgroundController({

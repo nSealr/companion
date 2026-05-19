@@ -169,7 +169,10 @@ single-repository CI. Cross-repository drift remains guarded by
   Sender-aware handler and background-controller tests prove an injected
   approved-origin store can authorize exact `get_public_key` access while
   denying method-mismatched, stale-digest, or malformed-store requests before
-  provider selection or native messaging. Browser-entrypoint tests prove the
+  provider selection or native messaging. They also prove the same gate can
+  load the store through an async injected loader, denies loader failures and
+  ambiguous authorization sources, and still stops before provider selection or
+  native messaging. Browser-entrypoint tests prove the
   same gate is forwarded through browser-like runtime handling over injected
   dependencies without calling native messaging on denied methods. Packaged
   entrypoint tests prove the launcher preserves the same authorization option.

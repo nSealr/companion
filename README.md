@@ -123,10 +123,11 @@ match the shared `contract_id`.
   exposes
   private stdout-only origin-permission artifact commands for approval,
   empty-store creation, upsert, and revoke, can enforce
-  an injected approved-origin store before provider selection so denied methods
-  fail before native messaging, passes that gate through both the browser-like
-  background adapter and packaged background entrypoint over explicit injected
-  dependencies, includes a pure popup active-tab origin selector for future
+  either a static approved-origin store or an async injected store loader before
+  provider selection so denied methods fail before native messaging, passes
+  that gate through both the browser-like background adapter and packaged
+  background entrypoint over explicit injected dependencies, includes a pure
+  popup active-tab origin selector for future
   approval UI without storage, grants, manifest permission changes, or key
   material, routes extension-internal popup control messages for origin
   permission review through the background controller without approval,

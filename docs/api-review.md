@@ -38,10 +38,11 @@ signer access to an injected backend. The local-service adapter can read the
 selected account public key through authorized route selection and routes
 `signEvent` through the local-service dispatch operation, which returns
 deterministic signer-unavailable responses until an explicit signer route
-dispatcher is configured. The native-messaging adapter only wraps an explicit
-`sendNativeMessage` function, validates the host name, and delegates silent or
-cancelled exchange bounds to `@nsealr/client`; it does not install a native
-host or persist grants.
+dispatcher is configured. Dispatch verifies successful signer responses against
+the selected route public key before the provider can trust them. The
+native-messaging adapter only wraps an explicit `sendNativeMessage` function,
+validates the host name, and delegates silent or cancelled exchange bounds to
+`@nsealr/client`; it does not install a native host or persist grants.
 `signEvent` validates the generated nSealr request and verifies successful
 responses before returning a Nostr event. Keep future extension storage,
 native-host installation, origin grants, NIP-04, and NIP-44 outside this

@@ -7,6 +7,9 @@ public npm release.
 
 ### Added
 
+- Local-service dispatch now rejects successful `get_public_key` and
+  `sign_event` responses whose public key does not match the selected account
+  route.
 - Browser-extension package builds can now opt into a storage-backed
   origin-approval profile that requests `activeTab` and `storage`, loads
   approved origins through the reviewed storage adapter, and wires the packaged

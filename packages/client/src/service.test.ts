@@ -24,6 +24,7 @@ const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kin
 const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
 const routeVector = fixtures.routeSelections.find((selection) => selection.name === "esp32-usb-sign-event-slot-0");
 if (!routeVector) throw new Error("route selection fixture is missing");
+const routeAccountId = routeVector.selection.account_id;
 const externalNip46RouteVector = fixtures.routeSelections.find(
   (selection) => selection.name === "external-nip46-sign-event-bunker"
 );
@@ -57,6 +58,12 @@ function externalReviewAcknowledgement(approvalDigest = approvalDigestForRequest
     stores_production_secrets: false,
     contains_secret_material: false
   };
+}
+
+function accountsWithSelectedRoutePublicKey(publicKey: string) {
+  return fixtures.accounts.map((account) => account.account_id === routeAccountId
+    ? { ...account, public_key: publicKey }
+    : account);
 }
 
 describe("local service boundary", () => {
@@ -1011,6 +1018,62 @@ describe("local service boundary", () => {
       error: {
         code: "invalid_signer_response",
         message: "response request_id does not match request"
+      }
+    });
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-dispatch-wrong-route-pubkey",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request
+      }
+    }, {
+      accounts: accountsWithSelectedRoutePublicKey("dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"),
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: () => response
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_signer_response",
+        message: "signer response public key does not match selected route"
+      }
+    });
+
+    const publicKeyRequest = {
+      version: 1,
+      request_id: "req-route-pubkey",
+      method: "get_public_key"
+    };
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-dispatch-wrong-get-public-key",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: { ...routeVector.request, method: "get_public_key" },
+        request: publicKeyRequest
+      }
+    }, {
+      accounts: accountsWithSelectedRoutePublicKey("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"),
+      grants: [grant],
+      now: 1_900_000_000,
+      signerDispatcher: () => ({
+        version: 1,
+        request_id: "req-route-pubkey",
+        ok: true,
+        result: {
+          public_key: response.result.event.pubkey
+        }
+      })
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_signer_response",
+        message: "signer response public key does not match selected route"
       }
     });
   });

@@ -241,6 +241,10 @@ match the shared `contract_id`.
 - Transport exchanges now apply the same successful `sign_event` verification
   before returning a signed event response, so serial/file/stdio adapters cannot
   hand invalid signatures to higher layers as accepted output.
+- Local-service dispatch additionally checks successful `get_public_key` and
+  `sign_event` responses against the selected route public key before returning
+  them, so a configured dispatcher cannot silently answer for a different
+  account.
 - CLI request, dev-sign, and verify-response commands can read/write JSON or
   v0 `nsealr1:` QR envelopes.
 - `packages/transport` provides the first signer transport contract plus file,

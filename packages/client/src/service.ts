@@ -754,7 +754,8 @@ export async function handleLocalServiceRequestAsync(
 
 function verifySignerResponsePayload(
   signerRequestPayload: unknown,
-  signerResponsePayload: unknown
+  signerResponsePayload: unknown,
+  expectedPublicKey?: string
 ): { ok: true } | { ok: false; error: string } {
   const signerRequest = validateRequest(signerRequestPayload);
   if (!signerRequest.ok) {
@@ -782,7 +783,34 @@ function verifySignerResponsePayload(
       return { ok: false, error: verification.error ?? "signer response verification failed" };
     }
   }
+  if (expectedPublicKey !== undefined) {
+    const responsePublicKey = responsePublicKeyForRequest(signerRequestPayload, signerResponsePayload);
+    if (responsePublicKey !== undefined && responsePublicKey !== expectedPublicKey) {
+      return { ok: false, error: "signer response public key does not match selected route" };
+    }
+  }
   return { ok: true };
+}
+
+function responsePublicKeyForRequest(signerRequestPayload: unknown, signerResponsePayload: unknown): string | undefined {
+  if (!isRecord(signerRequestPayload) || !isRecord(signerResponsePayload) || signerResponsePayload.ok !== true) {
+    return undefined;
+  }
+  if (signerRequestPayload.method === "get_public_key" && isRecord(signerResponsePayload.result)) {
+    return typeof signerResponsePayload.result.public_key === "string"
+      ? signerResponsePayload.result.public_key
+      : undefined;
+  }
+  if (
+    signerRequestPayload.method === "sign_event" &&
+    isRecord(signerResponsePayload.result) &&
+    isRecord(signerResponsePayload.result.event)
+  ) {
+    return typeof signerResponsePayload.result.event.pubkey === "string"
+      ? signerResponsePayload.result.event.pubkey
+      : undefined;
+  }
+  return undefined;
 }
 
 function verifySignerResponse(request: Extract<LocalServiceRequest, { operation: "verify_signer_response" }>): LocalServiceResponse {
@@ -913,9 +941,10 @@ function dispatchFailureResponse(
 
 function dispatchSuccessResponse(
   request: Extract<LocalServiceRequest, { operation: "dispatch_signer_request" }>,
+  routeSelection: RouteSelection,
   signerResponse: unknown
 ): LocalServiceResponse {
-  const verification = verifySignerResponsePayload(request.params.request, signerResponse);
+  const verification = verifySignerResponsePayload(request.params.request, signerResponse, routeSelection.public_key);
   if (!verification.ok) {
     return errorResponse(request, "invalid_signer_response", verification.error);
   }
@@ -951,7 +980,7 @@ function dispatchSignerRequest(
       "async signer dispatcher requires handleLocalServiceRequestAsync"
     );
   }
-  return dispatchSuccessResponse(request, signerResponse);
+  return dispatchSuccessResponse(request, prepared.dispatchRequest.route_selection, signerResponse);
 }
 
 async function dispatchSignerRequestAsync(
@@ -967,5 +996,5 @@ async function dispatchSignerRequestAsync(
   } catch (error) {
     return dispatchFailureResponse(request, error);
   }
-  return dispatchSuccessResponse(request, signerResponse);
+  return dispatchSuccessResponse(request, prepared.dispatchRequest.route_selection, signerResponse);
 }

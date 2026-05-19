@@ -217,6 +217,12 @@ real signer transport driver, no key custody, and no production signing claim.
 `@nsealr/browser-provider` now uses this service operation for NIP-07
 `signEvent` instead of duplicating validate/select/unavailable behavior.
 
+Status note, 2026-05-19: local-service dispatch now also binds successful
+`get_public_key` and `sign_event` responses to the selected route public key.
+A dispatcher that returns a valid response for a different account is rejected
+as `invalid_signer_response` before browser-provider, SDK, native messaging, or
+CLI callers can trust it.
+
 Status note, 2026-05-19: local-service dispatch now treats display-less
 `sign_event` routes as an explicit external-review boundary. Smartcard-style
 routes require a `nsealr-external-review-acknowledgement-v0` artifact whose

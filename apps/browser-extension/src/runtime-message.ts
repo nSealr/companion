@@ -13,6 +13,11 @@ import {
   type BrowserExtensionPendingRequestState
 } from "./pending-request.js";
 import {
+  handleBrowserExtensionControlMessage,
+  isBrowserExtensionControlEnvelope,
+  type BrowserExtensionControlResponse
+} from "./pending-control.js";
+import {
   browserExtensionClientContextFromSender,
   type BrowserExtensionSenderInput
 } from "./sender.js";
@@ -35,7 +40,9 @@ export type BrowserExtensionRuntimeMessageOptions = BrowserExtensionRuntimeSende
   onPendingRequestError?: (error: unknown) => void;
 };
 
-export type BrowserExtensionRuntimeMessageResponder = (response: BrowserExtensionResponse) => void;
+export type BrowserExtensionRuntimeMessageResponse = BrowserExtensionResponse | BrowserExtensionControlResponse;
+
+export type BrowserExtensionRuntimeMessageResponder = (response: BrowserExtensionRuntimeMessageResponse) => void;
 
 export type BrowserExtensionRuntimeMessageListener = (
   value: unknown,
@@ -116,7 +123,13 @@ export async function handleBrowserExtensionRuntimeMessage(
   value: unknown,
   runtimeSender: unknown,
   options: BrowserExtensionRuntimeMessageOptions
-): Promise<BrowserExtensionResponse> {
+): Promise<BrowserExtensionRuntimeMessageResponse> {
+  if (isBrowserExtensionControlEnvelope(value)) {
+    return handleBrowserExtensionControlMessage(value, runtimeSender, {
+      ...(options.extensionId !== undefined ? { extensionId: options.extensionId } : {}),
+      ...(options.pendingRequests !== undefined ? { pendingRequests: options.pendingRequests } : {})
+    });
+  }
   let sender: BrowserExtensionSenderInput;
   try {
     sender = browserExtensionSenderFromRuntimeSender(runtimeSender, options);

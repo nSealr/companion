@@ -140,7 +140,11 @@ single-repository CI. Cross-repository drift remains guarded by
   active requests, rejects duplicate active ids, aborts the native-message
   signal for UI-driven cancellation, suppresses stale duplicate rejection after
   cancellation, and never exposes event templates, key material, extension
-  storage, grants, or signer dispatch. Page-provider tests prove
+  storage, grants, or signer dispatch. Pending-control and runtime-message
+  tests prove the separate `nsealr-browser-extension-control-v0`
+  `cancel_pending_request` path accepts extension-internal senders, rejects
+  page-origin senders, and never contacts native messaging for control
+  messages. Page-provider tests prove
   NIP-07 `getPublicKey` and `signEvent`
   calls become validated background requests, unsafe templates fail before the
   background boundary, malformed responses are rejected, and cancellation is

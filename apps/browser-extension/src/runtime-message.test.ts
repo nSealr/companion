@@ -11,6 +11,7 @@ import {
   type BrowserExtensionRuntimeMessageResponder
 } from "./runtime-message.js";
 import { createBrowserExtensionPendingRequestLifecycle } from "./pending-request.js";
+import { BROWSER_EXTENSION_CONTROL_PROTOCOL } from "./pending-control.js";
 
 const publicKey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
 const routeRequest = {
@@ -53,12 +54,29 @@ function nativeResponder(requests: LocalServiceRequest[]): BrowserNativeMessageS
   };
 }
 
-function getPublicKeyRequest(requestId: string): unknown {
+function getPublicKeyRequest(requestId: string): {
+  protocol: typeof BROWSER_EXTENSION_MESSAGE_PROTOCOL;
+  version: 1;
+  request_id: string;
+  method: "get_public_key";
+} {
   return {
     protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
     version: 1,
     request_id: requestId,
     method: "get_public_key"
+  };
+}
+
+function cancelPendingRequest(requestId: string, pendingRequestId: string): unknown {
+  return {
+    protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+    version: 1,
+    request_id: requestId,
+    method: "cancel_pending_request",
+    params: {
+      pending_request_id: pendingRequestId
+    }
   };
 }
 
@@ -465,6 +483,101 @@ describe("browser extension runtime message boundary", () => {
       }
     ]);
     expect(pendingRequests.active()).toEqual([]);
+  });
+
+  it("routes extension-internal control messages to the pending cancellation boundary", async () => {
+    const states: unknown[] = [];
+    const pendingRequests = createBrowserExtensionPendingRequestLifecycle({
+      onState: (state) => {
+        states.push(state);
+      }
+    });
+    pendingRequests.start(
+      getPublicKeyRequest("runtime-control-pending"),
+      {
+        extension_id: "extension@nsealr.dev",
+        page_origin: "https://example.com"
+      }
+    );
+    const controller = createBrowserExtensionBackgroundController({
+      routeRequest,
+      sendNativeMessage: () => {
+        throw new Error("control messages must not contact native messaging");
+      }
+    });
+
+    await expect(handleBrowserExtensionRuntimeMessage(
+      cancelPendingRequest("runtime-control-cancel", "runtime-control-pending"),
+      {
+        id: "extension@nsealr.dev",
+        url: "chrome-extension://extension-id/popup.html"
+      },
+      {
+        controller,
+        extensionId: "extension@nsealr.dev",
+        pendingRequests
+      }
+    )).resolves.toEqual({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "runtime-control-cancel",
+      ok: true,
+      result: {
+        pending_request_id: "runtime-control-pending",
+        cancelled: true,
+        stores_production_secrets: false,
+        contains_secret_material: false
+      }
+    });
+    expect(states).toMatchObject([
+      {
+        request_id: "runtime-control-pending",
+        status: "pending"
+      },
+      {
+        request_id: "runtime-control-pending",
+        status: "cancelled"
+      }
+    ]);
+    expect(pendingRequests.active()).toEqual([]);
+  });
+
+  it("rejects page-origin control messages before they can cancel pending requests", async () => {
+    const pendingRequests = createBrowserExtensionPendingRequestLifecycle();
+    const started = pendingRequests.start(
+      getPublicKeyRequest("runtime-page-control-pending"),
+      {
+        extension_id: "extension@nsealr.dev",
+        page_origin: "https://example.com"
+      }
+    );
+    const controller = createBrowserExtensionBackgroundController({
+      routeRequest,
+      sendNativeMessage: () => {
+        throw new Error("invalid control sender must not contact native messaging");
+      }
+    });
+
+    await expect(handleBrowserExtensionRuntimeMessage(
+      cancelPendingRequest("runtime-page-control-cancel", "runtime-page-control-pending"),
+      {
+        id: "extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      {
+        controller,
+        extensionId: "extension@nsealr.dev",
+        pendingRequests
+      }
+    )).resolves.toMatchObject({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      request_id: "runtime-page-control-cancel",
+      ok: false,
+      error: {
+        code: "invalid_sender"
+      }
+    });
+    expect(pendingRequests.active()).toEqual([started]);
   });
 
   it("installs an injected runtime message listener and sends accepted responses", async () => {

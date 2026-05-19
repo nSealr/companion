@@ -15,7 +15,10 @@ import {
   type BrowserExtensionPageScriptDocument
 } from "./page-injection.js";
 import { BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT } from "./route-config.js";
-import { type BrowserExtensionRuntimeMessageListener } from "./runtime-message.js";
+import {
+  type BrowserExtensionRuntimeMessageListener,
+  type BrowserExtensionRuntimeMessageResponse
+} from "./runtime-message.js";
 import { installNsealrBackgroundEntrypoint } from "./nsealr-background-entrypoint.js";
 import { installNsealrContentScriptEntrypoint } from "./nsealr-content-script-entrypoint.js";
 import { installNsealrPageScriptEntrypoint } from "./nsealr-page-script-entrypoint.js";
@@ -97,7 +100,11 @@ function createRuntimeGlobal(): {
   nativeMessages: Array<{ hostName: string; message: unknown }>;
   runtimeMessages: unknown[];
   resolvedPaths: string[];
-  emit(value: unknown, sender: unknown, sendResponse: (response: BrowserExtensionResponse) => void): true | undefined;
+  emit(
+    value: unknown,
+    sender: unknown,
+    sendResponse: (response: BrowserExtensionRuntimeMessageResponse) => void
+  ): true | undefined;
   listenerCount(): number;
 } {
   const listeners = new Set<BrowserExtensionRuntimeMessageListener>();
@@ -251,7 +258,7 @@ async function flushAsyncListeners(): Promise<void> {
 describe("packaged browser extension entrypoints", () => {
   it("wires the background packaged entrypoint through browser.runtime and secretless route config", async () => {
     const runtime = createRuntimeGlobal();
-    const responses: BrowserExtensionResponse[] = [];
+    const responses: BrowserExtensionRuntimeMessageResponse[] = [];
     const handle = installNsealrBackgroundEntrypoint({
       globalScope: { browser: { runtime: runtime.runtime } },
       routeConfig: routeConfig(),

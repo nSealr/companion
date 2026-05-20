@@ -28,6 +28,7 @@ import {
   validateAccessSurfaceFixture,
   validateFeatureMatrixFixture,
   validatePersistentSecretCustodyFixture,
+  validateRouteRefusalContractFixture,
   validateReviewTranscriptFixture
 } from "@nsealr/fixtures";
 import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
@@ -772,6 +773,9 @@ export function buildCli(options: BuildCliOptions = {}): Command {
       for (const accessSurface of fixtures.accessSurfaces) {
         validateAccessSurfaceFixture(accessSurface.name, accessSurface);
       }
+      for (const routeRefusal of fixtures.routeRefusals) {
+        validateRouteRefusalContractFixture(routeRefusal.name, routeRefusal);
+      }
       for (const connectionUri of fixtures.nip46ConnectionUris) {
         const actual = parseNip46ConnectionUri(connectionUri.uri);
         if (JSON.stringify(actual) !== JSON.stringify(connectionUri.expected_descriptor)) {
@@ -841,10 +845,12 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         fixtureCountLabel(fixtures.nip46Sessions.length, "NIP-46 session fixture");
       const sessionGateFixtureLabel =
         fixtureCountLabel(fixtures.nip46SessionGates.length, "NIP-46 session gate fixture");
+      const routeRefusalFixtureLabel =
+        fixtureCountLabel(fixtures.routeRefusals.length, "route-refusal contract");
       const custodyContractFixtureLabel =
         fixtureCountLabel(fixtures.custodyContracts.length, "persistent-secret custody contract");
       console.log(
-        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${relayStepFixtureLabel}, ${sessionFixtureLabel}, ${sessionGateFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, ${custodyContractFixtureLabel}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${relayStepFixtureLabel}, ${sessionFixtureLabel}, ${sessionGateFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${routeRefusalFixtureLabel}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, ${custodyContractFixtureLabel}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );
     });
 

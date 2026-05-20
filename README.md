@@ -77,7 +77,9 @@ match the shared `contract_id`.
   requires a matching external-review acknowledgement for display-less
   `sign_event` routes, rejects that acknowledgement on trusted-review routes,
   calls only the injected route dispatcher, and verifies the signer response
-  before returning it. The
+  before returning it. Shared route-refusal fixtures now pin those refusal
+  rules across every route-selection vector before any production signer driver
+  exists. The
   high-level client also binds each operation to its expected result type, so a
   native-messaging host cannot satisfy
   `request_pairing` with an unrelated valid service result.

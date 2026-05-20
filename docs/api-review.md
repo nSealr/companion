@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:5ca9e6c70a5388eb87f151d4c38ee6dc2e0cc8728592300bd7828fa100d57c8d`
+API surface digest: `sha256:3f7ddcdc7e800a4d48756c5562d3c57947a174f32fac80266266a9d43239a913`
 
 Source: `docs/api.md`
 
@@ -42,8 +42,11 @@ signer access to an injected backend. The local-service adapter can read the
 selected account public key through authorized route selection and routes
 `signEvent` through the local-service dispatch operation, which returns
 deterministic signer-unavailable responses until an explicit signer route
-dispatcher is configured. Dispatch verifies successful signer responses against
-the selected route public key before the provider can trust them. The
+dispatcher is configured. The shared route-refusal contract also pins
+display-less smartcard acknowledgement requirements and trusted-review
+acknowledgement rejection before browser code can fork route semantics.
+Dispatch verifies successful signer responses against the selected route public
+key before the provider can trust them. The
 native-messaging adapter only wraps an explicit `sendNativeMessage` function,
 validates the host name, and delegates silent or cancelled exchange bounds to
 `@nsealr/client`; it does not install a native host or persist grants.

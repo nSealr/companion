@@ -6,8 +6,8 @@ Shared fixture loading and conformance helpers for nSealr repositories.
 
 - Load shared vectors from `nSealr/specs`, including NIP-46 connection URI,
   relay-event, relay-step, session lifecycle, route-selection, source
-  public-key proof, persistent-secret custody contract, and access-surface
-  conformance data.
+  public-key proof, route-refusal, persistent-secret custody contract, and
+  access-surface conformance data.
 - Validate feature matrices, QR review transcript fixtures, and custom
   hardware-wallet custody contract fixtures.
 - Keep companion tests aligned with Raspberry, ESP32, smartcard, and hardware

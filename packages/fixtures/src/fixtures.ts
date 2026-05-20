@@ -300,6 +300,30 @@ export type SpecsFixtureSet = {
     request: RouteSelectionRequest;
     selection: RouteSelection;
   }>;
+  routeRefusals: Array<{
+    name: string;
+    format: "nsealr-route-refusal-contract-v0";
+    request_vector: string;
+    cases: Array<{
+      route_selection_vector: string;
+      route_type: RouteSelection["route_type"];
+      trusted_review: RouteSelection["trusted_review"];
+      without_dispatcher?: RouteRefusalErrorExpectation;
+      without_dispatcher_after_ack?: RouteRefusalErrorExpectation;
+      external_review_acknowledgement:
+        | {
+            mode: "unsupported";
+            unsupported_error: RouteRefusalErrorExpectation;
+          }
+        | {
+            mode: "required";
+            missing_error: RouteRefusalErrorExpectation;
+            mismatch_error: RouteRefusalErrorExpectation;
+          };
+    }>;
+    safety: Record<string, boolean>;
+    scope: string;
+  }>;
   sourcePublicKeyProofs: Array<{
     format: "nsealr-source-public-key-proof-v0";
     name: string;
@@ -445,6 +469,12 @@ export type SpecsFixtureSet = {
   }>;
 };
 
+type RouteRefusalErrorExpectation = {
+  error_code: string;
+  message: string;
+  retryable: false;
+};
+
 const REVIEW_TRANSCRIPT_BUTTONS = new Set(["next", "scroll", "approve", "reject"]);
 const REVIEW_TRANSCRIPT_BODY_LINE_STYLES = new Set<string>(REVIEW_DETAIL_BODY_LINE_STYLES);
 const FEATURE_TARGETS = new Set(["required", "optional", "not_applicable", "forbidden", "research"]);
@@ -466,6 +496,14 @@ const FEATURE_SOLUTION_IDS = new Set([
   "custom_hardware_wallet"
 ]);
 const ACCESS_SURFACE_SAFETY = {
+  stores_production_secrets: false,
+  contains_secret_material: false,
+  creates_grants: false,
+  dispatches_without_signer: false,
+  requires_shared_request_validation: true,
+  requires_signed_response_verification: true
+};
+const ROUTE_REFUSAL_SAFETY = {
   stores_production_secrets: false,
   contains_secret_material: false,
   creates_grants: false,
@@ -821,6 +859,106 @@ export function validateAccessSurfaceFixture(name: string, fixture: unknown): vo
   }
 }
 
+function validateRouteRefusalError(name: string, label: string, value: unknown, expectedCode: string): void {
+  if (!isRecord(value)) {
+    throw new Error(`invalid route-refusal contract ${name}: ${label} must be an object`);
+  }
+  const keys = Object.keys(value).sort();
+  if (JSON.stringify(keys) !== JSON.stringify(["error_code", "message", "retryable"])) {
+    throw new Error(`invalid route-refusal contract ${name}: ${label} has unsupported fields`);
+  }
+  if (value.error_code !== expectedCode) {
+    throw new Error(`invalid route-refusal contract ${name}: ${label} error_code drift`);
+  }
+  if (typeof value.message !== "string" || value.message.length === 0) {
+    throw new Error(`invalid route-refusal contract ${name}: ${label} message must be non-empty`);
+  }
+  if (value.retryable !== false) {
+    throw new Error(`invalid route-refusal contract ${name}: ${label} must be non-retryable`);
+  }
+}
+
+export function validateRouteRefusalContractFixture(name: string, fixture: unknown): void {
+  if (!isRecord(fixture)) {
+    throw new Error(`invalid route-refusal contract ${name}: fixture must be an object`);
+  }
+  if (fixture.format !== "nsealr-route-refusal-contract-v0") {
+    throw new Error(`invalid route-refusal contract ${name}: unsupported format`);
+  }
+  if (fixture.name !== name) throw new Error(`invalid route-refusal contract ${name}: name mismatch`);
+  if (typeof fixture.request_vector !== "string" || !fixture.request_vector.startsWith("examples/")) {
+    throw new Error(`invalid route-refusal contract ${name}: request_vector must point under examples`);
+  }
+  if (!Array.isArray(fixture.cases) || fixture.cases.length === 0) {
+    throw new Error(`invalid route-refusal contract ${name}: cases must be non-empty`);
+  }
+  for (const [index, routeCase] of (fixture.cases as unknown[]).entries()) {
+    if (!isRecord(routeCase)) {
+      throw new Error(`invalid route-refusal contract ${name}: case ${index} must be an object`);
+    }
+    if (typeof routeCase.route_selection_vector !== "string" || routeCase.route_selection_vector.length === 0) {
+      throw new Error(`invalid route-refusal contract ${name}: case ${index} route_selection_vector is invalid`);
+    }
+    if (typeof routeCase.route_type !== "string" || typeof routeCase.trusted_review !== "string") {
+      throw new Error(`invalid route-refusal contract ${name}: case ${index} route metadata is invalid`);
+    }
+    if (!isRecord(routeCase.external_review_acknowledgement)) {
+      throw new Error(`invalid route-refusal contract ${name}: case ${index} acknowledgement rule is invalid`);
+    }
+    if (routeCase.external_review_acknowledgement.mode === "required") {
+      validateRouteRefusalError(
+        name,
+        `case ${index} without_dispatcher_after_ack`,
+        routeCase.without_dispatcher_after_ack,
+        "signer_route_unavailable"
+      );
+      validateRouteRefusalError(
+        name,
+        `case ${index} missing_error`,
+        routeCase.external_review_acknowledgement.missing_error,
+        "external_review_acknowledgement_required"
+      );
+      validateRouteRefusalError(
+        name,
+        `case ${index} mismatch_error`,
+        routeCase.external_review_acknowledgement.mismatch_error,
+        "external_review_acknowledgement_mismatch"
+      );
+      if ("without_dispatcher" in routeCase) {
+        throw new Error(`invalid route-refusal contract ${name}: display-less case ${index} bypasses acknowledgement`);
+      }
+    } else if (routeCase.external_review_acknowledgement.mode === "unsupported") {
+      validateRouteRefusalError(
+        name,
+        `case ${index} without_dispatcher`,
+        routeCase.without_dispatcher,
+        "signer_route_unavailable"
+      );
+      validateRouteRefusalError(
+        name,
+        `case ${index} unsupported_error`,
+        routeCase.external_review_acknowledgement.unsupported_error,
+        "external_review_acknowledgement_unsupported"
+      );
+      if ("without_dispatcher_after_ack" in routeCase) {
+        throw new Error(`invalid route-refusal contract ${name}: trusted-review case ${index} uses display-less dispatcher rule`);
+      }
+    } else {
+      throw new Error(`invalid route-refusal contract ${name}: case ${index} acknowledgement mode is unsupported`);
+    }
+  }
+  if (JSON.stringify(fixture.safety) !== JSON.stringify(ROUTE_REFUSAL_SAFETY)) {
+    throw new Error(`invalid route-refusal contract ${name}: safety boundary drift`);
+  }
+  if (
+    typeof fixture.scope !== "string" ||
+    !fixture.scope.includes("Secretless route-refusal") ||
+    !fixture.scope.includes("not a signer family")
+  ) {
+    throw new Error(`invalid route-refusal contract ${name}: scope drift`);
+  }
+}
+
 export function validateSourcePublicKeyProofFixture(name: string, fixture: unknown): void {
   if (!isRecord(fixture)) throw new Error(`invalid source public-key proof ${name}: fixture must be an object`);
   if (fixture.format !== "nsealr-source-public-key-proof-v0") {
@@ -916,6 +1054,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const policyDecisionsRoot = resolve(specsRoot, "vectors/policy-decisions");
   const policyChangesRoot = resolve(specsRoot, "vectors/policy-changes");
   const routeSelectionsRoot = resolve(specsRoot, "vectors/route-selections");
+  const routeRefusalsRoot = resolve(specsRoot, "vectors/route-refusals");
   const sourcePublicKeyProofsRoot = resolve(specsRoot, "vectors/source-public-key-proofs");
   const accessSurfacesRoot = resolve(specsRoot, "vectors/access-surfaces");
   const featureMatricesRoot = resolve(specsRoot, "vectors/features");
@@ -976,6 +1115,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const routeSelectionFiles = readdirSync(routeSelectionsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const routeRefusalFiles = readdirSync(routeRefusalsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const sourcePublicKeyProofFiles = readdirSync(sourcePublicKeyProofsRoot)
@@ -1053,6 +1195,12 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     routeSelections: routeSelectionFiles.map(
       (file) => loadJson(resolve(routeSelectionsRoot, file)) as SpecsFixtureSet["routeSelections"][number]
     ),
+    routeRefusals: routeRefusalFiles.map((file) => {
+      const fixture = loadJson(resolve(routeRefusalsRoot, file));
+      const name = fileStem(file);
+      validateRouteRefusalContractFixture(name, fixture);
+      return fixture as SpecsFixtureSet["routeRefusals"][number];
+    }),
     sourcePublicKeyProofs: sourcePublicKeyProofFiles.map((file) => {
       const fixture = loadJson(resolve(sourcePublicKeyProofsRoot, file));
       const name = fileStem(file);

@@ -327,6 +327,13 @@ routes, so browser, SDK, desktop, CLI, and native-messaging hosts reuse the
 same service gate instead of creating a parallel smartcard dispatch path. This
 does not add a production smartcard transport or trusted-host review claim.
 
+Status note, 2026-05-20: local-service dispatch now consumes the shared
+route-refusal contract from `nSealr/specs`. The contract covers every
+route-selection vector, keeps no-driver dispatch as deterministic
+`signer_route_unavailable`, keeps smartcard-style display-less dispatch gated
+on a matching external-review acknowledgement, and keeps trusted-review routes
+from accepting that acknowledgement as host-side review authority.
+
 Status note, 2026-05-19: `@nsealr/browser-provider` now consumes the shared
 access-surface vector for NIP-07 over local companion service route selection.
 The vector pins `getPublicKey` to the selected ESP32 USB route and pins

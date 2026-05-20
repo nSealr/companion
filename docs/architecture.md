@@ -189,7 +189,12 @@ packages, but it must not export test-only signing as a production path.
   digest-bound external-review acknowledgement accepted by the service for
   display-less routes, so SDK, desktop, CLI, and native-messaging callers do
   not need to fork that smartcard safety gate. The dispatch operation remains
-  unavailable by default and adds no real transport driver by itself. The package also
+  unavailable by default and adds no real transport driver by itself. Shared
+  route-refusal fixtures now pin that behavior across every route-selection
+  vector: no dispatcher yields `signer_route_unavailable`, display-less
+  smartcard dispatch requires matching external review acknowledgement first,
+  and trusted-review routes reject that acknowledgement because review belongs
+  to the signer route. The package also
   exposes a route-aware dispatcher registry helper so host apps can attach
   multiple explicit account/route/transport handlers without putting
   route-selection conditionals in browser, SDK, or CLI access surfaces. This is

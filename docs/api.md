@@ -185,6 +185,7 @@ Exports:
 - `validateFeatureMatrixFixture`
 - `validatePersistentSecretCustodyFixture`
 - `validateReviewTranscriptFixture`
+- `validateRouteRefusalContractFixture`
 - `validateSourcePublicKeyProofFixture`
 
 Additional package subpaths:

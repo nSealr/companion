@@ -7,6 +7,7 @@ import {
   validateFeatureMatrixFixture,
   validatePersistentSecretCustodyFixture,
   validateReviewTranscriptFixture,
+  validateRouteRefusalContractFixture,
   validateSourcePublicKeyProofFixture
 } from "./fixtures.js";
 import { resolveSpecsRoot } from "./specs-root.js";
@@ -325,6 +326,22 @@ describe("fixture loading", () => {
     expect(fixtures.accessSurfaces[0].surface).toBe("browser_provider_nip07");
     expect(fixtures.accessSurfaces[0].safety.stores_production_secrets).toBe(false);
     expect(() => validateAccessSurfaceFixture(fixtures.accessSurfaces[0].name, fixtures.accessSurfaces[0])).not.toThrow();
+  });
+
+  it("loads route-refusal contract vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    const contract = fixtures.routeRefusals[0];
+
+    expect(fixtures.routeRefusals.map((fixture) => fixture.name)).toEqual(["signer-route-refusals-v0"]);
+    expect(contract.format).toBe("nsealr-route-refusal-contract-v0");
+    expect(contract.cases.map((routeCase) => routeCase.route_selection_vector).sort()).toEqual(
+      fixtures.routeSelections.map((selection) => selection.name).sort()
+    );
+    expect(contract.cases.find((routeCase) => routeCase.route_type === "smartcard")?.external_review_acknowledgement.mode)
+      .toBe("required");
+    expect(contract.cases.find((routeCase) => routeCase.route_type === "esp32_usb_nip46")?.external_review_acknowledgement.mode)
+      .toBe("unsupported");
+    expect(() => validateRouteRefusalContractFixture(contract.name, contract)).not.toThrow();
   });
 
   it("loads and validates signer feature matrix vectors from the specs repository", () => {

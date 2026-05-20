@@ -74,7 +74,8 @@ single-repository CI. Cross-repository drift remains guarded by
   client request-id correlation, malformed service-response rejection including
   pairing digest mismatch, grant-gated signer-request dispatch through an
   explicitly injected dispatcher, deterministic `signer_route_unavailable`
-  behavior when no dispatcher is configured, route-aware dispatcher registry
+  behavior when no dispatcher is configured, shared route-refusal fixture
+  coverage for every route-selection vector, route-aware dispatcher registry
   selection, external NIP-46 route metadata as an injected-dispatch-only
   adapter path with no built-in relay/session driver, missing-route refusal,
   ambiguous-handler rejection, display-less smartcard dispatch refusal without

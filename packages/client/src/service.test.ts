@@ -31,6 +31,8 @@ const externalNip46RouteVector = fixtures.routeSelections.find(
 if (!externalNip46RouteVector) throw new Error("external NIP-46 route selection fixture is missing");
 const smartcardRouteVector = fixtures.routeSelections.find((selection) => selection.name === "smartcard-sign-event-slot-0");
 if (!smartcardRouteVector) throw new Error("smartcard route selection fixture is missing");
+const routeRefusalContract = fixtures.routeRefusals.find((contract) => contract.name === "signer-route-refusals-v0");
+if (!routeRefusalContract) throw new Error("route-refusal contract fixture is missing");
 const client: LocalClientIdentity = {
   surface: "browser_extension",
   origin: "https://example.com",
@@ -642,6 +644,106 @@ describe("local service boundary", () => {
       }
     });
     expect(called).toBe(false);
+  });
+
+  it("matches the shared route-refusal contract for every signer route", () => {
+    for (const routeCase of routeRefusalContract.cases) {
+      const selectionVector = fixtures.routeSelections.find(
+        (candidate) => candidate.name === routeCase.route_selection_vector
+      );
+      if (selectionVector === undefined) throw new Error(`missing route selection ${routeCase.route_selection_vector}`);
+      const serviceRequestId = `svc-refusal-${routeCase.route_type}`;
+      const baseRequest = {
+        version: 1 as const,
+        request_id: serviceRequestId,
+        operation: "dispatch_signer_request" as const,
+        params: {
+          client,
+          route_request: selectionVector.request,
+          request
+        }
+      };
+
+      const withoutAcknowledgement = handleLocalServiceRequest(baseRequest, {
+        accounts: fixtures.accounts,
+        grants: [grant],
+        now: 1_900_000_000
+      });
+
+      if (routeCase.external_review_acknowledgement.mode === "required") {
+        expect(withoutAcknowledgement).toMatchObject({
+          ok: false,
+          error: {
+            code: routeCase.external_review_acknowledgement.missing_error.error_code,
+            message: routeCase.external_review_acknowledgement.missing_error.message,
+            retryable: routeCase.external_review_acknowledgement.missing_error.retryable
+          }
+        });
+        expect(handleLocalServiceRequest({
+          ...baseRequest,
+          params: {
+            ...baseRequest.params,
+            external_review_acknowledgement: externalReviewAcknowledgement("0".repeat(64))
+          }
+        }, {
+          accounts: fixtures.accounts,
+          grants: [grant],
+          now: 1_900_000_000
+        })).toMatchObject({
+          ok: false,
+          error: {
+            code: routeCase.external_review_acknowledgement.mismatch_error.error_code,
+            message: routeCase.external_review_acknowledgement.mismatch_error.message,
+            retryable: routeCase.external_review_acknowledgement.mismatch_error.retryable
+          }
+        });
+        expect(handleLocalServiceRequest({
+          ...baseRequest,
+          params: {
+            ...baseRequest.params,
+            external_review_acknowledgement: externalReviewAcknowledgement()
+          }
+        }, {
+          accounts: fixtures.accounts,
+          grants: [grant],
+          now: 1_900_000_000
+        })).toMatchObject({
+          ok: false,
+          error: {
+            code: routeCase.without_dispatcher_after_ack?.error_code,
+            message: routeCase.without_dispatcher_after_ack?.message,
+            retryable: routeCase.without_dispatcher_after_ack?.retryable
+          }
+        });
+      } else {
+        expect(withoutAcknowledgement).toMatchObject({
+          ok: false,
+          error: {
+            code: routeCase.without_dispatcher?.error_code,
+            message: routeCase.without_dispatcher?.message,
+            retryable: routeCase.without_dispatcher?.retryable
+          }
+        });
+        expect(handleLocalServiceRequest({
+          ...baseRequest,
+          params: {
+            ...baseRequest.params,
+            external_review_acknowledgement: externalReviewAcknowledgement()
+          }
+        }, {
+          accounts: fixtures.accounts,
+          grants: [grant],
+          now: 1_900_000_000
+        })).toMatchObject({
+          ok: false,
+          error: {
+            code: routeCase.external_review_acknowledgement.unsupported_error.error_code,
+            message: routeCase.external_review_acknowledgement.unsupported_error.message,
+            retryable: routeCase.external_review_acknowledgement.unsupported_error.retryable
+          }
+        });
+      }
+    }
   });
 
   it("rejects malformed external review acknowledgements before route dispatch", () => {

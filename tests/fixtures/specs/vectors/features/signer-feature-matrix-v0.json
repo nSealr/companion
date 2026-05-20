@@ -122,7 +122,7 @@
     {
       "id": "scoped_policy_automation",
       "contract_id": "scoped-policy-automation-v0",
-      "behavior": "Automation is limited to explicit account, route, method, kind, client, time, and revocation policy; denied or unknown cases return deterministic non-signing decisions."
+      "behavior": "nSealr-managed v0 automation is limited to an explicit device-approved grant for sign_event kind 1 on supported persistent routes; denied, unknown, broader-method, or broader-kind cases return deterministic non-signing decisions."
     },
     {
       "id": "persistent_secret_custody",
@@ -533,7 +533,7 @@
           "target": "required",
           "current": "planned",
           "contract_id": "scoped-policy-automation-v0",
-          "notes": "Scoped automation is planned only after the pre-signing hardening contract is complete."
+          "notes": "The only planned v0 grant is sign_event kind 1, and it remains disabled until device-reviewed policy change, custody, provisioning, review, and signing gates pass."
         },
         "persistent_secret_custody": {
           "target": "required",
@@ -805,7 +805,7 @@
           "target": "optional",
           "current": "planned",
           "contract_id": "scoped-policy-automation-v0",
-          "notes": "Automation must remain explicit, scoped, revocable, and off by default."
+          "notes": "Any future v0 automation is limited to explicit sign_event kind 1 grants, remains off by default, and must stay revocable and device-approved."
         },
         "persistent_secret_custody": {
           "target": "required",

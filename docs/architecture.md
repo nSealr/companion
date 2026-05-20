@@ -992,7 +992,10 @@ kind. Shared specs fixtures now include the derived requirement and
 positive/negative permission checks for conformance. The bridge decision helper
 uses the same matching result to produce signer routing, local `ping`, `connect`
 review, or permission-denied responses. Actual grant storage, revocation, auth
-challenges, and user approval UX remain future policy layers.
+challenges, and user approval UX remain future policy layers. This broad
+NIP-46 permission matching is a read-only decision harness boundary; it is not
+the nSealr-managed persistent grant descriptor menu, which remains limited to
+`sign_event` kind `1` in v0.
 
 `nsealr nip46 decide` exposes that boundary as a file-backed test harness for
 already-decrypted payloads. It writes the same deterministic decision JSON used

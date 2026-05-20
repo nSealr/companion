@@ -1,0 +1,28 @@
+{
+  "name": "relay-step-response-public-key-sender-mismatch",
+  "format": "pre-signing-invalid-vector-v0",
+  "category": "nip46-relay-step",
+  "expected_error": "public-key response does not match relay event sender",
+  "relay_step": {
+    "format": "nsealr-nip46-relay-response-step-v0",
+    "direction": "remote_signer_to_client",
+    "event": {
+      "kind": 24133,
+      "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+      "content": "nip44-v2-get-public-key-response-ciphertext-placeholder",
+      "tags": [
+        [
+          "p",
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        ]
+      ],
+      "id": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "created_at": 1710000002,
+      "sig": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    },
+    "decrypted_message": {
+      "id": "nip46-get-public-key-1",
+      "result": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  }
+}

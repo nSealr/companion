@@ -151,9 +151,10 @@ packages, but it must not export test-only signing as a production path.
   signer dispatch outside this package boundary. It also evaluates relay
   request and response steps only after a future NIP-44 layer provides
   plaintext, reusing the same bridge-decision path for requests and
-  shape-checking plaintext responses without opening relays, acknowledging
-  `connect`, creating grants, dispatching signers, verifying signatures, or
-  persisting session state.
+  shape-checking plaintext responses while binding public-key and signed-event
+  result pubkeys to the relay event sender. It still does this without opening
+  relays, acknowledging `connect`, creating grants, dispatching signers,
+  verifying signatures, or persisting session state.
   Permission matching is present as a pure boundary and is pinned by shared
   permission policy fixture checks. Bridge decision output is also present: a
   permitted request can become a signer request, `ping` can produce a local

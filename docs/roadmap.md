@@ -146,7 +146,8 @@ dispatching to signers. The next M5 relay boundaries are also package-owned:
 relay request-step evaluation combines that envelope with an already decrypted
 message and reviewed permissions, returning the same bridge decision as local
 decrypted payload handling, while relay response-step evaluation shape-checks
-already decrypted NIP-46 responses. Both avoid relay I/O, NIP-44 decryption,
+already decrypted NIP-46 responses and binds public-key/signed-event result
+pubkeys to the relay event sender. Both avoid relay I/O, NIP-44 decryption,
 `connect` acknowledgement, grant creation, signer dispatch, signature
 verification, or session persistence.
 Relay sessions, NIP-44 encryption/decryption,

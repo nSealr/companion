@@ -41,6 +41,7 @@
     },
     "result_type": "signed_event_result",
     "signed_event_shape_checked": true,
+    "result_pubkey_bound_to_sender": true,
     "decrypts_content": false,
     "opens_relay": false,
     "creates_grants": false,
@@ -50,5 +51,5 @@
     "stores_production_secrets": false,
     "persists_session_state": false
   },
-  "scope": "NIP-46 relay response step evaluation after external NIP-44 decryption. It validates the relay event envelope and plaintext response shape without opening relays, decrypting NIP-44 content, acknowledging connect, creating grants, dispatching a signer, verifying signatures, or persisting session state."
+  "scope": "NIP-46 relay response step evaluation after external NIP-44 decryption. It validates the relay event envelope, plaintext response shape, and signed-event pubkey binding to the relay event sender without opening relays, decrypting NIP-44 content, acknowledging connect, creating grants, dispatching a signer, verifying signatures, or persisting session state."
 }

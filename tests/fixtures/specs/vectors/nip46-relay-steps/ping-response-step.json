@@ -41,6 +41,7 @@
     },
     "result_type": "pong_result",
     "signed_event_shape_checked": false,
+    "result_pubkey_bound_to_sender": false,
     "decrypts_content": false,
     "opens_relay": false,
     "creates_grants": false,

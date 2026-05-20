@@ -90,6 +90,7 @@ export type Nip46RelayResponseStep = {
   response_message: Nip46ResponseMessage;
   result_type: Nip46RelayResponseResultType;
   signed_event_shape_checked: boolean;
+  result_pubkey_bound_to_sender: boolean;
   decrypts_content: false;
   opens_relay: false;
   creates_grants: false;
@@ -580,6 +581,7 @@ export function evaluateNip46RelayRequestStep(value: unknown): Nip46RelayRequest
 function relayResponseResultType(message: Nip46ResponseMessage): {
   resultType: Nip46RelayResponseResultType;
   signedEventShapeChecked: boolean;
+  resultPubkey?: string;
 } {
   if (message.error !== undefined) {
     return { resultType: "error", signedEventShapeChecked: false };
@@ -587,7 +589,7 @@ function relayResponseResultType(message: Nip46ResponseMessage): {
   const result = message.result;
   if (result === undefined) throw new Error("NIP-46 response message result is missing");
   if (X_ONLY_PUBKEY.test(result)) {
-    return { resultType: "public_key_result", signedEventShapeChecked: false };
+    return { resultType: "public_key_result", signedEventShapeChecked: false, resultPubkey: result };
   }
   if (result === "pong") {
     return { resultType: "pong_result", signedEventShapeChecked: false };
@@ -607,7 +609,10 @@ function relayResponseResultType(message: Nip46ResponseMessage): {
   if (!shape.ok) {
     throw new Error(shape.error ?? "NIP-46 signed-event response shape is invalid");
   }
-  return { resultType: "signed_event_result", signedEventShapeChecked: true };
+  if (!isRecord(event) || typeof event.pubkey !== "string" || !X_ONLY_PUBKEY.test(event.pubkey)) {
+    throw new Error("NIP-46 signed-event response pubkey is invalid");
+  }
+  return { resultType: "signed_event_result", signedEventShapeChecked: true, resultPubkey: event.pubkey };
 }
 
 export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayResponseStep {
@@ -618,7 +623,15 @@ export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayRespon
   }
   const envelope = parseNip46RelayEventEnvelope(value.event, direction);
   const responseMessage = requireResponseMessage(value.decrypted_message);
-  const { resultType, signedEventShapeChecked } = relayResponseResultType(responseMessage);
+  const { resultType, signedEventShapeChecked, resultPubkey } = relayResponseResultType(responseMessage);
+  const resultPubkeyBoundToSender = resultPubkey !== undefined && resultPubkey === envelope.sender_pubkey;
+  if (resultPubkey !== undefined && !resultPubkeyBoundToSender) {
+    throw new Error(
+      resultType === "public_key_result"
+        ? "NIP-46 public-key response does not match relay event sender"
+        : "NIP-46 signed-event response pubkey does not match relay event sender"
+    );
+  }
   return {
     format: "nsealr-nip46-relay-response-step-v0",
     envelope,
@@ -626,6 +639,7 @@ export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayRespon
     response_message: responseMessage,
     result_type: resultType,
     signed_event_shape_checked: signedEventShapeChecked,
+    result_pubkey_bound_to_sender: resultPubkeyBoundToSender,
     decrypts_content: false,
     opens_relay: false,
     creates_grants: false,

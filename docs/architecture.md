@@ -348,9 +348,10 @@ contains a matching account id, route type, and transport. That driver store
 does not contain keys, does not approve clients, does not choose default paths,
 does not make QR vaults connected signers, and rejects remote, relative, or
 whitespace-tainted serial path forms before opening only supported local serial
-device identifiers. Serial-line open, timeout, protocol, I/O, close, and
-fallback failures are normalized into deterministic local-service transport
-error codes before they cross the service boundary.
+device identifiers. Per-driver timeout and ignored-log controls are bounded at
+parse time. Serial-line open, timeout, protocol, I/O, close, and fallback
+failures are normalized into deterministic local-service transport error codes
+before they cross the service boundary.
 Install approvals still keep `writes_files=false`; install execution is a
 separate digest-confirmed gate that reports `writes_files=true` only after the
 reviewed manifest writer runs. Default storage locations, grant/account file

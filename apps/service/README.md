@@ -94,7 +94,10 @@ A route-driver store uses this shape:
 Route-driver files reject QR-vault route types, non-USB transports, empty route
 sets, duplicate account/route/transport entries, unsupported fields, broad or
 remote serial paths, and secret field names such as `nsec`, `mnemonic`, or
-`passphrase`. Accepted serial paths are local device identifiers only:
+`passphrase`. The parser also bounds `max_ignored_lines` to at most 128 and
+`response_timeout_ms` to at most 120,000, so an approved driver file cannot
+turn native-host dispatch into an unbounded wait or log-skip loop. Accepted
+serial paths are local device identifiers only:
 `/dev/cu*`, `/dev/tty*`, `/dev/serial/by-id/*`, `/dev/serial/by-path/*`,
 `COMn`, or Windows `\\.\COMn` paths encoded in JSON as `\\\\.\\COMn`.
 

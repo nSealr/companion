@@ -237,9 +237,11 @@ match the shared `contract_id`.
   print a digest-bound dry-run native-host install plan, digest-confirmed
   install approval JSON, and an explicit approval-bound install execution
   result that writes only the reviewed native-host manifest with `write_new`
-  semantics. It does not open relays, store keys, write grant/account files,
-  install native-host manifests without that explicit approval execution, or
-  contact signer transports by default.
+  semantics. Route-driver serial-line timing controls are bounded before
+  dispatch, so driver files cannot configure unbounded response waits or
+  ignored-log loops. It does not open relays, store keys, write grant/account
+  files, install native-host manifests without that explicit approval
+  execution, or contact signer transports by default.
 - `nsealr review-request` renders deterministic review JSON, digest-bound
   screen-review pages, or complete constrained-display detail pages from a
   signing request for untrusted host-side previews and test harnesses.

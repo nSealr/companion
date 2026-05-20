@@ -5,6 +5,8 @@ import { type SignerDispatchRequest } from "@nsealr/client";
 import { resolveSpecsRoot } from "@nsealr/fixtures";
 import { encodeSerialFrame } from "@nsealr/framing";
 import {
+  MAX_SERIAL_LINE_IGNORED_LINES,
+  MAX_SERIAL_LINE_RESPONSE_TIMEOUT_MS,
   SERVICE_ROUTE_DRIVER_STORE_FORMAT,
   createServiceRouteDispatcher,
   parseServiceRouteDriverStore
@@ -147,6 +149,34 @@ describe("service route drivers", () => {
         }
       }))).toThrow(/serial_line\.path/u);
     }
+  });
+
+  it("bounds serial-line route timing and ignored-log controls", () => {
+    expect(parseServiceRouteDriverStore(routeDriverStore({
+      serial_line: {
+        path: "/dev/cu.usbmodem-test",
+        max_ignored_lines: MAX_SERIAL_LINE_IGNORED_LINES,
+        response_timeout_ms: MAX_SERIAL_LINE_RESPONSE_TIMEOUT_MS
+      }
+    })).routes[0].serial_line).toEqual({
+      path: "/dev/cu.usbmodem-test",
+      max_ignored_lines: MAX_SERIAL_LINE_IGNORED_LINES,
+      response_timeout_ms: MAX_SERIAL_LINE_RESPONSE_TIMEOUT_MS
+    });
+
+    expect(() => parseServiceRouteDriverStore(routeDriverStore({
+      serial_line: {
+        path: "/dev/cu.usbmodem-test",
+        max_ignored_lines: MAX_SERIAL_LINE_IGNORED_LINES + 1
+      }
+    }))).toThrow(/max_ignored_lines exceeds max/u);
+
+    expect(() => parseServiceRouteDriverStore(routeDriverStore({
+      serial_line: {
+        path: "/dev/cu.usbmodem-test",
+        response_timeout_ms: MAX_SERIAL_LINE_RESPONSE_TIMEOUT_MS + 1
+      }
+    }))).toThrow(/response_timeout_ms exceeds max/u);
   });
 
   it("dispatches matching requests through an injected serial-line opener", async () => {

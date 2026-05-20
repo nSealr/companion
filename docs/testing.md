@@ -413,15 +413,15 @@ single-repository CI. Cross-repository drift remains guarded by
   covers the paths, rejects secret-bearing or malformed account-store files,
   parses explicit storage-approved secretless route-driver stores, rejects
   empty, duplicate, broad, secret-bearing, non-USB, QR-vault, and unsupported
-  serial-path driver mappings, rejects stale route-driver entries that do not
-  match the loaded account-store account id, route type, and transport,
-  dispatches matching developer serial-line requests only through an injected
-  opener or explicit route-driver file, maps serial-line open, timeout,
-  protocol, I/O, and close failures to deterministic transport error codes,
-  returns deterministic `signer_route_unavailable` for authorized dispatch
-  without a configured driver, awaits async dispatchers through the async
-  native-message helpers, and returns deterministic errors for malformed
-  native-message frames.
+  serial-path driver mappings, bounds serial-line timeout and ignored-log
+  controls, rejects stale route-driver entries that do not match the loaded
+  account-store account id, route type, and transport, dispatches matching
+  developer serial-line requests only through an injected opener or explicit
+  route-driver file, maps serial-line open, timeout, protocol, I/O, and close
+  failures to deterministic transport error codes, returns deterministic
+  `signer_route_unavailable` for authorized dispatch without a configured
+  driver, awaits async dispatchers through the async native-message helpers,
+  and returns deterministic errors for malformed native-message frames.
 - Local service tests cover deterministic pairing intent creation, digest-bound
   pairing-review projection, manual approval into a grant, strict secretless
   JSON grant-store parsing, serialization, persistent revocation history,

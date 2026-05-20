@@ -338,7 +338,10 @@ empty route sets, unsupported fields, and route-driver entries that do not
 match a loaded account-store account id, route type, and transport; it also
 rejects remote, relative, whitespace-tainted, or unsupported serial path forms
 before opening only the configured local serial device path through the
-package-owned serial-line exchange boundary. This is
+package-owned serial-line exchange boundary. Route-driver `max_ignored_lines`
+and `response_timeout_ms` are now bounded before dispatch, preventing an
+approved driver file from configuring unbounded native-host waits or
+log-skipping loops. This is
 developer/integration driver wiring only: it does not choose default paths,
 persist routes, approve clients, hold keys, make QR vaults connected signers,
 or claim production signer readiness.
@@ -473,7 +476,8 @@ counts, and SHA-256 digests, and still does not publish to npm.
   integration, only when a storage approval artifact covers every file-backed
   context path. Route-driver dispatch now maps serial-line open, timeout,
   protocol, I/O, close, and fallback failures to deterministic local-service
-  transport error codes. `@nsealr/client` now also owns digest-bound
+  transport error codes, and bounds route-driver timing/log-skip controls
+  before opening a port. `@nsealr/client` now also owns digest-bound
   storage-location review and approval artifacts for explicit
   grant/account/route-driver paths, and the CLI exposes them as
   `nsealr local review-storage` and `nsealr local approve-storage` without

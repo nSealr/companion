@@ -12,6 +12,8 @@ export const SERVICE_ROUTE_DRIVER_STORE_FORMAT = "nsealr-service-route-driver-st
 export const MAX_SERVICE_ROUTE_DRIVER_STORE_JSON_BYTES = 64 * 1024;
 export const MAX_SERVICE_ROUTE_DRIVERS = 64;
 export const MAX_SERIAL_LINE_PATH_LENGTH = 512;
+export const MAX_SERIAL_LINE_IGNORED_LINES = 128;
+export const MAX_SERIAL_LINE_RESPONSE_TIMEOUT_MS = 120_000;
 
 type ServiceSerialLineRouteDriver = {
   account_id: string;
@@ -94,6 +96,14 @@ function requirePositiveInteger(value: unknown, label: string): number {
   return value;
 }
 
+function requirePositiveIntegerAtMost(value: unknown, label: string, max: number): number {
+  const parsed = requirePositiveInteger(value, label);
+  if (parsed > max) {
+    throw new Error(`${label} exceeds max ${max}`);
+  }
+  return parsed;
+}
+
 function requireStableId(value: unknown, label: string): string {
   if (typeof value !== "string" || !/^[A-Za-z0-9._:-]{1,128}$/u.test(value)) {
     throw new Error(`${label} must be a stable string id`);
@@ -148,17 +158,19 @@ function parseSerialLineRouteDriver(value: Record<string, unknown>, index: numbe
       path: requireSerialLinePath(value.serial_line.path),
       ...(value.serial_line.max_ignored_lines !== undefined
         ? {
-            max_ignored_lines: requirePositiveInteger(
+            max_ignored_lines: requirePositiveIntegerAtMost(
               value.serial_line.max_ignored_lines,
-              `service route driver ${index} serial_line.max_ignored_lines`
+              `service route driver ${index} serial_line.max_ignored_lines`,
+              MAX_SERIAL_LINE_IGNORED_LINES
             )
           }
         : {}),
       ...(value.serial_line.response_timeout_ms !== undefined
         ? {
-            response_timeout_ms: requirePositiveInteger(
+            response_timeout_ms: requirePositiveIntegerAtMost(
               value.serial_line.response_timeout_ms,
-              `service route driver ${index} serial_line.response_timeout_ms`
+              `service route driver ${index} serial_line.response_timeout_ms`,
+              MAX_SERIAL_LINE_RESPONSE_TIMEOUT_MS
             )
           }
         : {})

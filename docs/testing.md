@@ -510,6 +510,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - Shared `nSealr/specs` smartcard APDU vector conformance tests, including
   deterministic APDU rejection status vectors for wrong length, non-zero P1/P2,
   unsupported Le, unsupported CLA, and unsupported INS.
+- Smartcard APDU codec tests covering deterministic rejection for non-integer
+  byte/status-word fields, non-`Uint8Array` payloads, invalid Le values, and
+  oversized short-APDU payloads before simulator or PC/SC transport.
 - Smartcard signer tests covering mandatory review acknowledgement, APDU-backed
   public-key retrieval, event-id signing, Schnorr verification, and standard
   signed-event response verification.

@@ -721,9 +721,11 @@ counts, and SHA-256 digests, and still does not publish to npm.
 
 ## Smartcard Line
 
-- APDU codec: implemented. The deterministic APDU simulator is implemented in
-  private `@nsealr/dev-signer` so the publishable smartcard package stays
-  secretless.
+- APDU codec: implemented. It rejects non-integer byte/status-word fields,
+  non-`Uint8Array` payloads, invalid Le values, and oversized short-APDU
+  payloads before simulator or PC/SC transport. The deterministic APDU
+  simulator is implemented in private `@nsealr/dev-signer` so the publishable
+  smartcard package stays secretless.
 - Shared APDU rejection status vectors: implemented for wrong `SIGN_EVENT_ID`
   length, non-zero P1/P2, unsupported Le, unsupported CLA, and unsupported INS.
 - `SmartcardSigner` companion boundary: implemented for `GET_PUBLIC_KEY` plus

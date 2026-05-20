@@ -138,7 +138,9 @@ packages, but it must not export test-only signing as a production path.
   opener.
 - `packages/smartcard`: APDU codec, provider-based PC/SC APDU transport
   boundary, `SmartcardSigner` boundary, and response verification for the
-  display-less smartcard line. Test-only APDU simulation is private
+  display-less smartcard line. The codec rejects non-integer byte/status-word
+  fields, non-`Uint8Array` payloads, and oversized short-APDU payloads before
+  simulator or PC/SC transport. Test-only APDU simulation is private
   `@nsealr/dev-signer` code, not public smartcard API.
 - `packages/nip46`: decrypted NIP-46 payload bridge for `get_public_key`,
   `sign_event`, local `ping`, and conversion from nSealr responses back to

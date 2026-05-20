@@ -9,14 +9,38 @@ export const SW_INCORRECT_P1P2 = 0x6a86;
 export const SW_CLA_NOT_SUPPORTED = 0x6e00;
 export const SW_INS_NOT_SUPPORTED = 0x6d00;
 
-function assertByte(value: number, name: string): void {
-  if (!Number.isInteger(value) || value < 0 || value > 0xff) {
+type ApduBytes = Uint8Array<ArrayBufferLike>;
+
+function byte(value: unknown, name: string): number {
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    throw new Error(`${name} must be an integer byte`);
+  }
+  if (value < 0 || value > 0xff) {
     throw new Error(`${name} must fit in one byte`);
   }
+  return value;
+}
+
+function statusWord(value: unknown): number {
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    throw new Error("status word must be an integer word");
+  }
+  if (value < 0 || value > 0xffff) {
+    throw new Error("status word must fit in two bytes");
+  }
+  return value;
+}
+
+function bytes(value: unknown, name: string): ApduBytes {
+  if (!(value instanceof Uint8Array)) {
+    throw new Error(`${name} must be a Uint8Array`);
+  }
+  return value;
 }
 
 function statusWordToBytes(statusWord: number): Uint8Array {
-  return Uint8Array.of((statusWord >> 8) & 0xff, statusWord & 0xff);
+  const word = statusWord;
+  return Uint8Array.of((word >> 8) & 0xff, word & 0xff);
 }
 
 export class CommandApdu {
@@ -25,11 +49,12 @@ export class CommandApdu {
     readonly ins: number,
     readonly p1 = 0,
     readonly p2 = 0,
-    readonly data = new Uint8Array(),
+    readonly data: ApduBytes = new Uint8Array(),
     readonly le?: number
   ) {}
 
-  static fromBytes(raw: Uint8Array): CommandApdu {
+  static fromBytes(raw: ApduBytes): CommandApdu {
+    raw = bytes(raw, "command APDU");
     if (raw.length < 4) throw new Error("command APDU must contain at least four header bytes");
     const [cla, ins, p1, p2] = raw;
     const rest = raw.slice(4);
@@ -48,18 +73,15 @@ export class CommandApdu {
   }
 
   toBytes(): Uint8Array {
-    for (const [name, value] of [
-      ["cla", this.cla],
-      ["ins", this.ins],
-      ["p1", this.p1],
-      ["p2", this.p2]
-    ] as const) {
-      assertByte(value, name);
-    }
-    if (this.data.length > 255) throw new Error("short APDU data cannot exceed 255 bytes");
-    const body = this.data.length > 0 ? [this.data.length, ...this.data] : [];
-    const le = this.le === undefined ? [] : [this.le];
-    return Uint8Array.from([this.cla, this.ins, this.p1, this.p2, ...body, ...le]);
+    const cla = byte(this.cla, "cla");
+    const ins = byte(this.ins, "ins");
+    const p1 = byte(this.p1, "p1");
+    const p2 = byte(this.p2, "p2");
+    const data = bytes(this.data, "command APDU data");
+    if (data.length > 255) throw new Error("short APDU data cannot exceed 255 bytes");
+    const body = data.length > 0 ? [data.length, ...data] : [];
+    const le = this.le === undefined ? [] : [byte(this.le, "le")];
+    return Uint8Array.from([cla, ins, p1, p2, ...body, ...le]);
   }
 
   toHex(): string {
@@ -68,9 +90,10 @@ export class CommandApdu {
 }
 
 export class ResponseApdu {
-  constructor(readonly data = new Uint8Array(), readonly statusWord = SW_NO_ERROR) {}
+  constructor(readonly data: ApduBytes = new Uint8Array(), readonly statusWord = SW_NO_ERROR) {}
 
-  static fromBytes(raw: Uint8Array): ResponseApdu {
+  static fromBytes(raw: ApduBytes): ResponseApdu {
+    raw = bytes(raw, "response APDU");
     if (raw.length < 2) throw new Error("response APDU must contain a status word");
     const statusWord = (raw[raw.length - 2] << 8) | raw[raw.length - 1];
     return new ResponseApdu(raw.slice(0, -2), statusWord);
@@ -81,7 +104,10 @@ export class ResponseApdu {
   }
 
   toBytes(): Uint8Array {
-    return Uint8Array.from([...this.data, ...statusWordToBytes(this.statusWord)]);
+    return Uint8Array.from([
+      ...bytes(this.data, "response APDU data"),
+      ...statusWordToBytes(statusWord(this.statusWord))
+    ]);
   }
 
   toHex(): string {

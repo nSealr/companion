@@ -5,6 +5,8 @@ Smartcard APDU codec, PC/SC boundary, and display-less signer helper.
 ## Purpose
 
 - Encode and decode nSealr smartcard APDUs.
+- Reject non-integer byte/status-word fields, non-`Uint8Array` payloads, and
+  oversized short-APDU payloads inside the codec before transport.
 - Normalize PC/SC reader and APDU transmit failures.
 - Bind display-less signing to an externally acknowledged review digest.
 

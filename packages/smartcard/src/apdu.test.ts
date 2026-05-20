@@ -33,12 +33,49 @@ describe("smartcard APDU adapter", () => {
     expect(command.toHex()).toBe(signEventIdVector.command_hex);
   });
 
+  it("rejects non-integer command header bytes deterministically", () => {
+    expect(() => new CommandApdu(0.5, SIGN_EVENT_ID_INS).toBytes()).toThrow(/cla must be an integer byte/u);
+    expect(() => new CommandApdu(true as unknown as number, SIGN_EVENT_ID_INS).toBytes()).toThrow(
+      /cla must be an integer byte/u
+    );
+  });
+
+  it("rejects invalid short APDU command payloads deterministically", () => {
+    expect(() => new CommandApdu(NSEALR_CLA, SIGN_EVENT_ID_INS, 0, 0, new Uint8Array(256)).toBytes()).toThrow(
+      /short APDU data cannot exceed 255 bytes/u
+    );
+    expect(() => new CommandApdu(NSEALR_CLA, SIGN_EVENT_ID_INS, 0, 0, [0] as unknown as Uint8Array).toBytes()).toThrow(
+      /command APDU data must be a Uint8Array/u
+    );
+    expect(() => new CommandApdu(NSEALR_CLA, SIGN_EVENT_ID_INS, 0, 0, new Uint8Array(), 0.5).toBytes()).toThrow(
+      /le must be an integer byte/u
+    );
+    expect(() => CommandApdu.fromBytes([NSEALR_CLA, SIGN_EVENT_ID_INS, 0, 0] as unknown as Uint8Array)).toThrow(
+      /command APDU must be a Uint8Array/u
+    );
+  });
+
   it("decodes response APDUs from shared get_public_key vector", () => {
     const response = ResponseApdu.fromHex(getPublicKeyVector.response_hex);
 
     expect(bytesToHex(response.data)).toBe(getPublicKeyVector.response_data_hex);
     expect(response.statusWordHex()).toBe(getPublicKeyVector.status_word);
     expect(response.toHex()).toBe(getPublicKeyVector.response_hex);
+  });
+
+  it("rejects invalid response APDU payloads and status words deterministically", () => {
+    expect(() => new ResponseApdu([0] as unknown as Uint8Array).toBytes()).toThrow(
+      /response APDU data must be a Uint8Array/u
+    );
+    expect(() => new ResponseApdu(new Uint8Array(), true as unknown as number).toBytes()).toThrow(
+      /status word must be an integer word/u
+    );
+    expect(() => new ResponseApdu(new Uint8Array(), 0x10000).toBytes()).toThrow(
+      /status word must fit in two bytes/u
+    );
+    expect(() => ResponseApdu.fromBytes([0x90, 0x00] as unknown as Uint8Array)).toThrow(
+      /response APDU must be a Uint8Array/u
+    );
   });
 
   it("decodes shared APDU rejection status vectors", () => {

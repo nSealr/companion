@@ -358,7 +358,9 @@ match the shared `contract_id`.
   device-reviewed policy-change proposal before they can become active policy.
 - `packages/smartcard` implements the first APDU codec, provider-based PC/SC
   APDU transport boundary, and `SmartcardSigner` boundary against shared
-  smartcard vectors, including APDU rejection status words. The test-only APDU
+  smartcard vectors, including APDU rejection status words. The codec rejects
+  non-integer byte/status-word fields, non-`Uint8Array` payloads, and oversized
+  short-APDU payloads before simulator or PC/SC transport. The test-only APDU
   simulator lives in private `@nsealr/dev-signer`, not in the publishable
   smartcard package. The PC/SC boundary validates transmit-result shape,
   response status bytes, response data shape, and response data bytes before

@@ -8,6 +8,7 @@
   "scripts": {
     "package-build": "node --no-warnings --import tsx/esm src/package-build-cli.ts",
     "package-plan": "node --no-warnings --import tsx/esm src/package-plan-cli.ts",
+    "package-verify": "node --no-warnings --import tsx/esm src/package-verify-cli.ts",
     "origin-permission-approve": "node --no-warnings --import tsx/esm src/origin-permission-cli.ts approve",
     "origin-permission-store-create": "node --no-warnings --import tsx/esm src/origin-permission-cli.ts store-create",
     "origin-permission-store-revoke": "node --no-warnings --import tsx/esm src/origin-permission-cli.ts store-revoke",

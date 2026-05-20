@@ -584,6 +584,10 @@ packaged popup HTML, and bundled entrypoints. Lab integration verifies both the
 explicit binding metadata and the files that were actually written. It still
 installs no native-host manifest, writes no extension storage, creates no
 grants, dispatches no signers, and holds no key material.
+`package-verify` is the package-owned audit path for an already written
+developer artifact: it parses the package-build result, recomputes the package
+digest, rechecks the manifest, popup HTML, file hashes, byte counts, and
+bundled JavaScript browser-runtime hygiene, and writes no files.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

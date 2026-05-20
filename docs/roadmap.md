@@ -715,7 +715,11 @@ counts, and SHA-256 digests, and still does not publish to npm.
   during package rehearsals. Package build returns explicit
   reviewed package-plan, route, manifest-permissions, popup-mode, activeTab,
   origin, optional embedded extension, and pairing metadata plus a package
-  digest and per-file byte counts and SHA-256 hashes, and still avoids
+  digest and per-file byte counts and SHA-256 hashes. A package-owned
+  `package-verify` command now validates that build result against the written
+  artifact directory, recomputes the digest, checks manifest/content-script
+  bindings, popup HTML, file hashes, and bundled JavaScript browser-runtime
+  hygiene, and still avoids
   native-host installation, extension storage writes, key custody, and signer
   dispatch.
   The browser-extension manifest builder can still build a minimal

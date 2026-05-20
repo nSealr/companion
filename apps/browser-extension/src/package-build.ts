@@ -1,4 +1,4 @@
-import { mkdir, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { sha256Utf8Hex } from "@nsealr/core";
@@ -92,6 +92,22 @@ const PACKAGE_DIGEST_INPUT_FORMAT = "nsealr-browser-extension-package-digest-v0"
 const nodeBufferReference = /(?:\bBuffer\s*(?:\.|\[)|new\s+Buffer\b|typeof\s+Buffer|globalThis\.Buffer)/u;
 const nodeProcessReference = /(?:\bprocess\s*(?:\.|\[)|typeof\s+process|globalThis\.process)/u;
 const textEncoder = new TextEncoder();
+const PACKAGE_BUILD_FILE_PATHS = Object.freeze([
+  "manifest.json",
+  BROWSER_EXTENSION_POPUP_HTML_FILE,
+  BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE,
+  BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE
+] as const);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasOnlyKeys(value: Record<string, unknown>, allowedKeys: readonly string[]): boolean {
+  return Object.keys(value).every((key) => allowedKeys.includes(key));
+}
 
 function isPathInside(root: string, candidate: string): boolean {
   const relativePath = relative(root, candidate);
@@ -136,6 +152,120 @@ function requireLowerHex64(value: unknown, label: string): string {
     throw new Error(`${label} must be 32-byte lowercase hex`);
   }
   return value;
+}
+
+function requirePositiveSafeInteger(value: unknown, label: string): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || !Number.isSafeInteger(value) || value <= 0) {
+    throw new Error(`${label} must be a positive safe integer`);
+  }
+  return value;
+}
+
+function requireAbsoluteResultPath(value: unknown, label: string): string {
+  if (typeof value !== "string" || value.length === 0 || !isAbsolute(value) || /[\0\r\n]/u.test(value)) {
+    throw new Error(`${label} must be an absolute path`);
+  }
+  return value;
+}
+
+function requireTarget(value: unknown): BrowserExtensionManifestOptions["target"] {
+  if (value !== "chromium" && value !== "firefox") {
+    throw new Error("browser extension package build target is unsupported");
+  }
+  return value;
+}
+
+function requirePopupMode(value: unknown): BrowserExtensionPackagePlan["popup_mode"] {
+  if (value !== "pending_requests" && value !== "origin_permission_approval") {
+    throw new Error("browser extension package build popup mode is unsupported");
+  }
+  return value;
+}
+
+function requirePackageBuildOriginPermissionMode(value: unknown): BrowserExtensionPackageBuildResult["origin_permission_mode"] {
+  if (value !== "none" && value !== "embedded" && value !== "extension_storage") {
+    throw new Error("browser extension package build origin permission mode is unsupported");
+  }
+  return value;
+}
+
+function requireFalse(value: unknown, label: string): false {
+  if (value !== false) {
+    throw new Error(`${label} must be false`);
+  }
+  return false;
+}
+
+function requireBoolean(value: unknown, label: string): boolean {
+  if (typeof value !== "boolean") {
+    throw new Error(`${label} must be boolean`);
+  }
+  return value;
+}
+
+function requireContentScriptOrigins(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    throw new Error("browser extension package build content_script_origins must be an array");
+  }
+  const origins = value.map((origin) => {
+    if (typeof origin !== "string") {
+      throw new Error("browser extension package build content script origin is invalid");
+    }
+    try {
+      const url = new URL(origin);
+      if (url.origin !== origin || url.origin === "null") {
+        throw new Error("invalid origin");
+      }
+      return origin;
+    } catch {
+      throw new Error("browser extension package build content script origin is invalid");
+    }
+  });
+  if (new Set(origins).size !== origins.length || [...origins].sort().join("\n") !== origins.join("\n")) {
+    throw new Error("browser extension package build content_script_origins must be sorted and unique");
+  }
+  return origins;
+}
+
+function requireManifestPermissions(value: unknown): BrowserExtensionManifestPermission[] {
+  if (!Array.isArray(value)) {
+    throw new Error("browser extension package build manifest_permissions must be an array");
+  }
+  const allowed = new Set(["nativeMessaging", "activeTab", "storage"]);
+  const permissions = value.map((permission) => {
+    if (typeof permission !== "string" || !allowed.has(permission)) {
+      throw new Error("browser extension package build manifest permission is unsupported");
+    }
+    return permission as BrowserExtensionManifestPermission;
+  });
+  if (new Set(permissions).size !== permissions.length) {
+    throw new Error("browser extension package build manifest_permissions must be unique");
+  }
+  return permissions;
+}
+
+function requirePackageFile(value: unknown, expectedPath: BrowserExtensionPackageBuildFile["path"]): BrowserExtensionPackageBuildFile {
+  if (!isRecord(value)) {
+    throw new Error("browser extension package build file entry must be an object");
+  }
+  if (!hasOnlyKeys(value, ["path", "bytes", "sha256"])) {
+    throw new Error("browser extension package build file entry has unsupported fields");
+  }
+  if (value.path !== expectedPath) {
+    throw new Error(`browser extension package build file entry must be ${expectedPath}`);
+  }
+  return Object.freeze({
+    path: expectedPath,
+    bytes: requirePositiveSafeInteger(value.bytes, `browser extension package build ${expectedPath} bytes`),
+    sha256: requireLowerHex64(value.sha256, `browser extension package build ${expectedPath} sha256`)
+  });
+}
+
+function requirePackageFiles(value: unknown): BrowserExtensionPackageBuildResult["files"] {
+  if (!Array.isArray(value) || value.length !== PACKAGE_BUILD_FILE_PATHS.length) {
+    throw new Error("browser extension package build files list is invalid");
+  }
+  return Object.freeze(PACKAGE_BUILD_FILE_PATHS.map((path, index) => requirePackageFile(value[index], path)));
 }
 
 function requireExtensionId(value: unknown, label: string): string {
@@ -469,6 +599,264 @@ function packageDigest(target: BrowserExtensionManifestOptions["target"], files:
     target,
     files
   }));
+}
+
+function assertPackageBuildModeConsistency(result: BrowserExtensionPackageBuildResult): void {
+  const expectedPermissions = result.origin_permission_mode === "extension_storage"
+    ? ["nativeMessaging", "activeTab", "storage"]
+    : ["nativeMessaging"];
+  if (JSON.stringify(result.manifest_permissions) !== JSON.stringify(expectedPermissions)) {
+    throw new Error("browser extension package build manifest permission metadata is inconsistent");
+  }
+  if (result.uses_active_tab_permission !== result.manifest_permissions.includes("activeTab")) {
+    throw new Error("browser extension package build activeTab metadata is inconsistent");
+  }
+  if (result.origin_permission_mode === "none") {
+    if (
+      result.content_script_origins.length !== 0 ||
+      "extension_id" in result ||
+      "local_pairing_digest" in result ||
+      result.embeds_origin_permission_store !== false ||
+      result.uses_extension_origin_permission_storage !== false
+    ) {
+      throw new Error("browser extension package build ungated origin metadata is inconsistent");
+    }
+    return;
+  }
+  if (result.content_script_origins.length === 0 || result.local_pairing_digest === undefined) {
+    throw new Error("browser extension package build gated origin metadata is incomplete");
+  }
+  if (result.origin_permission_mode === "embedded") {
+    if (
+      result.extension_id === undefined ||
+      result.embeds_origin_permission_store !== true ||
+      result.uses_extension_origin_permission_storage !== false
+    ) {
+      throw new Error("browser extension package build embedded origin metadata is inconsistent");
+    }
+    return;
+  }
+  if (
+    result.embeds_origin_permission_store !== false ||
+    result.uses_extension_origin_permission_storage !== true
+  ) {
+    throw new Error("browser extension package build extension-storage metadata is inconsistent");
+  }
+}
+
+export function parseBrowserExtensionPackageBuildResult(value: unknown): BrowserExtensionPackageBuildResult {
+  if (!isRecord(value)) {
+    throw new Error("browser extension package build result must be an object");
+  }
+  if (!hasOnlyKeys(value, [
+    "format",
+    "target",
+    "out_dir",
+    "package_plan_digest",
+    "route_config_digest",
+    "route_account_id",
+    "route_type",
+    "popup_mode",
+    "manifest_permissions",
+    "origin_permission_mode",
+    "extension_id",
+    "local_pairing_digest",
+    "content_script_origins",
+    "package_digest",
+    "files",
+    "installs_native_host_manifest",
+    "writes_extension_storage",
+    "stores_production_secrets",
+    "dispatches_signers",
+    "uses_active_tab_permission",
+    "embeds_origin_permission_store",
+    "uses_extension_origin_permission_storage"
+  ])) {
+    throw new Error("browser extension package build result has unsupported fields");
+  }
+  if (value.format !== BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT) {
+    throw new Error("browser extension package build result format is unsupported");
+  }
+  const target = requireTarget(value.target);
+  const routeConfig = normalizedRouteConfig({
+    format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
+    account_id: value.route_account_id,
+    route_type: value.route_type
+  });
+  const files = requirePackageFiles(value.files);
+  const result: BrowserExtensionPackageBuildResult = Object.freeze({
+    format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
+    target,
+    out_dir: requireAbsoluteResultPath(value.out_dir, "browser extension package build out_dir"),
+    package_plan_digest: requireLowerHex64(value.package_plan_digest, "browser extension package build package_plan_digest"),
+    route_config_digest: requireLowerHex64(value.route_config_digest, "browser extension package build route_config_digest"),
+    route_account_id: routeConfig.account_id,
+    route_type: routeConfig.route_type,
+    popup_mode: requirePopupMode(value.popup_mode),
+    manifest_permissions: Object.freeze(requireManifestPermissions(value.manifest_permissions)),
+    origin_permission_mode: requirePackageBuildOriginPermissionMode(value.origin_permission_mode),
+    ...(value.extension_id !== undefined ? {
+      extension_id: target === "chromium"
+        ? requireChromiumExtensionId(value.extension_id, "browser extension package build extension_id")
+        : requireExtensionId(value.extension_id, "browser extension package build extension_id")
+    } : {}),
+    ...(value.local_pairing_digest !== undefined ? {
+      local_pairing_digest: requireLowerHex64(
+        value.local_pairing_digest,
+        "browser extension package build local_pairing_digest"
+      )
+    } : {}),
+    content_script_origins: Object.freeze(requireContentScriptOrigins(value.content_script_origins)),
+    package_digest: requireLowerHex64(value.package_digest, "browser extension package build package_digest"),
+    files,
+    installs_native_host_manifest: requireFalse(
+      value.installs_native_host_manifest,
+      "browser extension package build installs_native_host_manifest"
+    ),
+    writes_extension_storage: requireFalse(
+      value.writes_extension_storage,
+      "browser extension package build writes_extension_storage"
+    ),
+    stores_production_secrets: requireFalse(
+      value.stores_production_secrets,
+      "browser extension package build stores_production_secrets"
+    ),
+    dispatches_signers: requireFalse(
+      value.dispatches_signers,
+      "browser extension package build dispatches_signers"
+    ),
+    uses_active_tab_permission: requireBoolean(
+      value.uses_active_tab_permission,
+      "browser extension package build uses_active_tab_permission"
+    ),
+    embeds_origin_permission_store: requireBoolean(
+      value.embeds_origin_permission_store,
+      "browser extension package build embeds_origin_permission_store"
+    ),
+    uses_extension_origin_permission_storage: requireBoolean(
+      value.uses_extension_origin_permission_storage,
+      "browser extension package build uses_extension_origin_permission_storage"
+    )
+  });
+  if (result.package_digest !== packageDigest(result.target, result.files)) {
+    throw new Error("browser extension package build package digest mismatch");
+  }
+  assertPackageBuildModeConsistency(result);
+  return result;
+}
+
+function assertManifestMatchesPackageBuild(
+  result: BrowserExtensionPackageBuildResult,
+  manifestJson: string
+): void {
+  let manifest: unknown;
+  try {
+    manifest = JSON.parse(manifestJson);
+  } catch (error) {
+    throw new Error(`browser extension package manifest JSON is invalid: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  if (!isRecord(manifest)) {
+    throw new Error("browser extension package manifest must be an object");
+  }
+  if (JSON.stringify(manifest.permissions) !== JSON.stringify(result.manifest_permissions)) {
+    throw new Error("browser extension package manifest permissions drifted");
+  }
+  if ("host_permissions" in manifest || "optional_host_permissions" in manifest) {
+    throw new Error("browser extension package manifest must not include host permissions");
+  }
+  if (!isRecord(manifest.background) || manifest.background.service_worker !== BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE) {
+    throw new Error("browser extension package manifest background entrypoint drifted");
+  }
+  if (!isRecord(manifest.action) || manifest.action.default_popup !== BROWSER_EXTENSION_POPUP_HTML_FILE) {
+    throw new Error("browser extension package manifest popup drifted");
+  }
+  if (result.target === "chromium" && "browser_specific_settings" in manifest) {
+    throw new Error("browser extension package Chromium manifest must not include Firefox settings");
+  }
+  if (result.target === "firefox") {
+    if (
+      !isRecord(manifest.browser_specific_settings) ||
+      !isRecord(manifest.browser_specific_settings.gecko) ||
+      typeof manifest.browser_specific_settings.gecko.id !== "string"
+    ) {
+      throw new Error("browser extension package Firefox settings drifted");
+    }
+    requireExtensionId(
+      manifest.browser_specific_settings.gecko.id,
+      "browser extension package Firefox extension id"
+    );
+    if (result.extension_id !== undefined && manifest.browser_specific_settings.gecko.id !== result.extension_id) {
+      throw new Error("browser extension package Firefox extension id metadata drifted");
+    }
+  }
+
+  if (result.content_script_origins.length === 0) {
+    if ("content_scripts" in manifest || "web_accessible_resources" in manifest) {
+      throw new Error("browser extension package ungated manifest must not include content-script resources");
+    }
+    return;
+  }
+
+  const matches = result.content_script_origins.map((origin) => `${origin}/*`);
+  const expectedContentScript = [{
+    matches,
+    js: [BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE],
+    run_at: "document_start",
+    all_frames: false,
+    match_about_blank: false
+  }];
+  if (JSON.stringify(manifest.content_scripts) !== JSON.stringify(expectedContentScript)) {
+    throw new Error("browser extension package manifest content-script drifted");
+  }
+  const expectedResources = [{
+    resources: [BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE],
+    matches
+  }];
+  if (JSON.stringify(manifest.web_accessible_resources) !== JSON.stringify(expectedResources)) {
+    throw new Error("browser extension package manifest page-script resource drifted");
+  }
+}
+
+export async function verifyBrowserExtensionPackageBuildDirectory(
+  value: unknown
+): Promise<BrowserExtensionPackageBuildResult> {
+  const result = parseBrowserExtensionPackageBuildResult(value);
+  const fileContents = new Map<string, string>();
+
+  for (const file of result.files) {
+    const source = await readFile(join(result.out_dir, file.path), "utf8");
+    if (textEncoder.encode(source).byteLength !== file.bytes) {
+      throw new Error(`browser extension package ${file.path} byte count mismatch`);
+    }
+    if (sha256Utf8Hex(source) !== file.sha256) {
+      throw new Error(`browser extension package ${file.path} sha256 mismatch`);
+    }
+    if (file.path.endsWith(".js") && (
+      nodeBufferReference.test(source) ||
+      nodeProcessReference.test(source) ||
+      /node:/u.test(source)
+    )) {
+      throw new Error(`browser extension package ${file.path} contains Node runtime references`);
+    }
+    fileContents.set(file.path, source);
+  }
+
+  const manifestJson = fileContents.get("manifest.json");
+  if (manifestJson === undefined) {
+    throw new Error("browser extension package manifest is missing");
+  }
+  assertManifestMatchesPackageBuild(result, manifestJson);
+
+  const popupHtml = fileContents.get(BROWSER_EXTENSION_POPUP_HTML_FILE);
+  if (
+    popupHtml === undefined ||
+    !popupHtml.includes(BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE) ||
+    !popupHtml.includes("nsealr-popup-root")
+  ) {
+    throw new Error("browser extension package popup HTML drifted");
+  }
+
+  return result;
 }
 
 export async function buildBrowserExtensionPackage(

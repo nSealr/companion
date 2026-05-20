@@ -5,6 +5,9 @@ import { describe, expect, it } from "vitest";
 import {
   browserExtensionPackageBuildJsonFromArgs
 } from "./package-build-cli.js";
+import {
+  browserExtensionPackageVerifyJsonFromArgs
+} from "./package-verify-cli.js";
 import { BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT } from "./package-build.js";
 import {
   BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
@@ -174,6 +177,12 @@ describe("browser extension package-build CLI", () => {
         })
       ]);
       expect(existsSync(join(temp.outDir, "manifest.json"))).toBe(true);
+      const buildResultPath = join(temp.root, "package-build-result.json");
+      writeFileSync(buildResultPath, `${JSON.stringify(result, null, 2)}\n`, "utf8");
+      await expect(browserExtensionPackageVerifyJsonFromArgs([
+        "--build-result",
+        buildResultPath
+      ])).resolves.toBe(`${JSON.stringify(result, null, 2)}\n`);
     } finally {
       temp.cleanup();
     }
@@ -332,6 +341,13 @@ describe("browser extension package-build CLI", () => {
         "--route-config-approval",
         approvalPath
       ])).rejects.toThrow(/route-type/u);
+      await expect(browserExtensionPackageVerifyJsonFromArgs([])).rejects.toThrow(/build-result is required/u);
+      await expect(browserExtensionPackageVerifyJsonFromArgs([
+        "--build-result",
+        "/tmp/missing-package-build-result.json",
+        "--build-result",
+        "/tmp/other-package-build-result.json"
+      ])).rejects.toThrow(/specified only once/u);
       await expect(browserExtensionPackageBuildJsonFromArgs([
         "--target",
         "chromium",

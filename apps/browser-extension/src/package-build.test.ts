@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { sha256Utf8Hex } from "@nsealr/core";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -6,7 +6,9 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
-  buildBrowserExtensionPackage
+  buildBrowserExtensionPackage,
+  parseBrowserExtensionPackageBuildResult,
+  verifyBrowserExtensionPackageBuildDirectory
 } from "./package-build.js";
 import {
   approveBrowserExtensionRouteConfigReview,
@@ -179,6 +181,8 @@ describe("browser extension package build", () => {
         expect(file.bytes).toBe(new TextEncoder().encode(source).byteLength);
         expect(file.sha256).toBe(sha256Utf8Hex(source));
       }
+      expect(parseBrowserExtensionPackageBuildResult(result)).toEqual(result);
+      await expect(verifyBrowserExtensionPackageBuildDirectory(result)).resolves.toEqual(result);
       expect(result.package_digest).toBe(sha256Utf8Hex(JSON.stringify({
         format: "nsealr-browser-extension-package-digest-v0",
         target: "chromium",
@@ -203,6 +207,44 @@ describe("browser extension package build", () => {
       const popupHtml = readFileSync(join(temp.outDir, BROWSER_EXTENSION_POPUP_HTML_FILE), "utf8");
       expect(popupHtml).toContain(BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE);
       expect(popupHtml).toContain("nsealr-popup-root");
+    } finally {
+      temp.cleanup();
+    }
+  });
+
+  it("verifies package-build reports against the written artifact directory", async () => {
+    const temp = tempOutDir();
+    try {
+      const result = await buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: temp.outDir,
+        packagePlanDigest: chromiumPackagePlanDigest,
+        routeConfig,
+        routeConfigApproval,
+        contentScriptMatches: ["https://example.com/*"],
+        extensionId: chromiumExtensionId,
+        originPermissionStore: originPermissionStore(),
+        localPairingDigest
+      });
+
+      await expect(verifyBrowserExtensionPackageBuildDirectory(result)).resolves.toEqual(result);
+      expect(() => parseBrowserExtensionPackageBuildResult({
+        ...result,
+        package_digest: "0".repeat(64)
+      })).toThrow(/package digest mismatch/u);
+      expect(() => parseBrowserExtensionPackageBuildResult({
+        ...result,
+        stores_production_secrets: true
+      })).toThrow(/stores_production_secrets/u);
+      expect(() => parseBrowserExtensionPackageBuildResult({
+        ...result,
+        origin_permission_mode: "none"
+      })).toThrow(/ungated origin metadata/u);
+
+      const manifestPath = join(temp.outDir, "manifest.json");
+      const originalManifest = readFileSync(manifestPath, "utf8");
+      writeFileSync(manifestPath, originalManifest.replace("\"nativeMessaging\"", "\"storage\""), "utf8");
+      await expect(verifyBrowserExtensionPackageBuildDirectory(result)).rejects.toThrow(/byte count mismatch/u);
     } finally {
       temp.cleanup();
     }
@@ -252,6 +294,34 @@ describe("browser extension package build", () => {
       });
       expect("content_scripts" in manifest).toBe(false);
       expect("host_permissions" in manifest).toBe(false);
+      await expect(verifyBrowserExtensionPackageBuildDirectory(result)).resolves.toEqual(result);
+
+      const manifestPath = join(temp.outDir, "manifest.json");
+      const originalManifest = readFileSync(manifestPath, "utf8");
+      writeFileSync(
+        manifestPath,
+        originalManifest.replace(`"id": "${firefoxExtensionId}"`, "\"id\": \"\""),
+        "utf8"
+      );
+      const tamperedManifest = readFileSync(manifestPath, "utf8");
+      const tamperedFiles = result.files.map((file) => (
+        file.path === "manifest.json"
+          ? {
+              ...file,
+              bytes: new TextEncoder().encode(tamperedManifest).byteLength,
+              sha256: sha256Utf8Hex(tamperedManifest)
+            }
+          : file
+      ));
+      await expect(verifyBrowserExtensionPackageBuildDirectory({
+        ...result,
+        files: tamperedFiles,
+        package_digest: sha256Utf8Hex(JSON.stringify({
+          format: "nsealr-browser-extension-package-digest-v0",
+          target: "firefox",
+          files: tamperedFiles
+        }))
+      })).rejects.toThrow(/Firefox extension id/u);
     } finally {
       temp.cleanup();
     }

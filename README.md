@@ -91,7 +91,8 @@ match the shared `contract_id`.
   object, not a grant store, and does not contact signer transports.
 - `nsealr local review-storage` renders digest-bound storage-location review
   metadata for explicit grant/account/route-driver paths. It does not choose
-  default paths, write storage files, approve clients, or contact signers.
+  default paths, accept duplicated path options, write storage files, approve
+  clients, or contact signers.
 - `nsealr local approve-storage` creates a storage-location approval artifact
   only when the caller supplies the reviewed storage digest. It still does not
   create, move, or activate storage files.

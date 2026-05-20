@@ -175,6 +175,15 @@ function addLocalStorageEntry(
   });
 }
 
+function singleValueOption(optionName: string): (value: string, previous: string | undefined) => string {
+  return (value: string, previous: string | undefined): string => {
+    if (previous !== undefined) {
+      throw new Error(`${optionName} is duplicated`);
+    }
+    return value;
+  };
+}
+
 function requireGrantStoreStorageApproval(options: {
   storageApproval: string;
   out: string;
@@ -960,10 +969,26 @@ export function buildCli(options: BuildCliOptions = {}): Command {
 
   local
     .command("review-storage")
-    .option("--grant-store <path>", "Review an existing local grant-store path for read-only service loading")
-    .option("--grant-store-output <path>", "Review a new local grant-store output path")
-    .option("--account-store <path>", "Review an existing service account-store path for read-only service loading")
-    .option("--route-driver-store <path>", "Review an existing service route-driver-store path for read-only service loading")
+    .option(
+      "--grant-store <path>",
+      "Review an existing local grant-store path for read-only service loading",
+      singleValueOption("--grant-store")
+    )
+    .option(
+      "--grant-store-output <path>",
+      "Review a new local grant-store output path",
+      singleValueOption("--grant-store-output")
+    )
+    .option(
+      "--account-store <path>",
+      "Review an existing service account-store path for read-only service loading",
+      singleValueOption("--account-store")
+    )
+    .option(
+      "--route-driver-store <path>",
+      "Review an existing service route-driver-store path for read-only service loading",
+      singleValueOption("--route-driver-store")
+    )
     .requiredOption("--out <path>", "Write deterministic storage-review metadata JSON")
     .description("Render local-service storage-location review metadata without choosing or writing storage")
     .action((options: {

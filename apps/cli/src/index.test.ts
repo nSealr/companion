@@ -1121,6 +1121,28 @@ describe("nsealr CLI", () => {
       ])
     ).rejects.toThrow(/absolute/u);
     expect(existsSync(reviewPath)).toBe(false);
+
+    for (const optionName of [
+      "--grant-store",
+      "--grant-store-output",
+      "--account-store",
+      "--route-driver-store"
+    ]) {
+      const duplicateReviewPath = join(tempRoot, `storage-review-${optionName.slice(2)}.json`);
+      await expect(
+        runCli([
+          "local",
+          "review-storage",
+          optionName,
+          join(tempRoot, "one.json"),
+          optionName,
+          join(tempRoot, "two.json"),
+          "--out",
+          duplicateReviewPath
+        ])
+      ).rejects.toThrow(new RegExp(`${optionName} is duplicated`, "u"));
+      expect(existsSync(duplicateReviewPath)).toBe(false);
+    }
   });
 
   it("creates local-service storage approval artifacts only after explicit digest confirmation", async () => {

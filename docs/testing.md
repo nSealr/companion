@@ -625,9 +625,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI local storage-review and approval tests covering
   `nsealr local review-storage` and `nsealr local approve-storage`, including
   digest-bound metadata for explicit grant/account/route-driver locations, no
-  creation of reviewed storage files, digest-confirmed approval artifacts, and
-  refusal to write review or approval metadata for ambiguous paths or mismatched
-  digests.
+  creation of reviewed storage files, duplicated storage-location option
+  rejection, digest-confirmed approval artifacts, and refusal to write review
+  or approval metadata for ambiguous paths or mismatched digests.
 - CLI local grant-store artifact tests covering
   `nsealr local grant-store append-approval`, including new-store creation,
   explicit input-store extension without input-file mutation, required

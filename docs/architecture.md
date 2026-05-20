@@ -786,11 +786,14 @@ Account, policy, and grant descriptors are loaded through `packages/policy`.
 The companion may keep labels, public keys, signer routes, recovery
 descriptors, capabilities, policy ids, and scoped grant metadata. It must not
 store production `nsec`, mnemonic, seed, passphrase, NIP-49 ciphertext, or raw
-private key material. Stateless QR vault routes remain manual-only and cannot
-receive persistent grants. Display-less smartcard routes also remain
-manual-only; they require explicit external review acknowledgement and cannot
-claim trusted device review or persistent grant automation. The local service
-accepts that acknowledgement only as
+private key material. The descriptor parser is closed-schema at the record,
+route, capability, policy-profile, grant, client, permission, and rate-limit
+levels, so unsigned metadata cannot silently alter route or policy meaning.
+Stateless QR vault routes remain manual-only and cannot receive persistent
+grants. Display-less smartcard routes also remain manual-only; they require
+explicit external review acknowledgement and cannot claim trusted device review
+or persistent grant automation. The local service accepts that acknowledgement
+only as
 `nsealr-external-review-acknowledgement-v0`, only for display-less
 `sign_event`, and only when its `approval_digest` equals the digest recomputed
 from the request; acknowledged metadata is rejected on routes with trusted

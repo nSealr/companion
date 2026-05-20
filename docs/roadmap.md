@@ -18,8 +18,10 @@ Policy-decision fixtures include explicit grant-usage snapshots for scoped autom
 rate-limit decisions before any persistent grant store exists. Policy-change
 review fixtures pin manual persistent-device defaults plus digest-bound
 `set_policy` proposals before any authoritative device policy mutation exists.
-The
-shared invalid-vector set now includes strict response-shape rejection for
+Account, route, policy-profile, grant, client, permission, capability, and
+rate-limit descriptor parsing is now closed-schema so route/policy metadata
+cannot carry ignored fields that later code might reinterpret. The shared
+invalid-vector set now includes strict response-shape rejection for
 ambiguous result payloads, error/result mixing, and unknown top-level response
 fields, plus contradictory signing-status readiness where a device claims
 `signing_enabled: true` while still listing missing gates, and reason-less

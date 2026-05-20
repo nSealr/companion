@@ -571,8 +571,9 @@ single-repository CI. Cross-repository drift remains guarded by
   smartcard policy, manual-only persistent-device defaults, scoped grants for
   ESP32 USB/NIP-46 and custom hardware-wallet routes, policy-change review
   pages and approval digests, wildcard/decrypt/export rejection, rejection of
-  stateless QR-vault grant targets, and deterministic policy-decision
-  transcripts for allowed, expired,
+  stateless QR-vault grant targets, closed-schema rejection for descriptor,
+  route, capability, policy-profile, grant, client, permission, and rate-limit
+  records, and deterministic policy-decision transcripts for allowed, expired,
   revoked, decrypt, export-secret, and unknown-method requests.
 - Pre-signing hardening tests must reject every shared invalid vector that
   reaches companion-owned parsing: unsafe event-template fields, unsafe integer

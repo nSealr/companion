@@ -353,6 +353,7 @@ function requireProposalId(value: unknown, field: string): string {
 
 function parseSignerRoute(value: unknown): SignerRoute {
   assertRecord(value, "signer_route");
+  assertOnlyKeys(value, ["type", "repository", "transport", "custody", "trusted_review", "policy_support"], "signer_route");
   const type = requireRouteType(value.type, "signer_route.type");
   const expectedRepository = ROUTE_REPOSITORIES.get(type);
   if (expectedRepository !== undefined && value.repository !== expectedRepository) {
@@ -504,9 +505,24 @@ function validateRouteSemantics(
 export function parseAccountDescriptor(value: unknown): AccountDescriptor {
   rejectSecretFields(value);
   assertRecord(value, "account descriptor");
+  assertOnlyKeys(value, [
+    "format",
+    "account_id",
+    "label",
+    "public_key",
+    "signer_route",
+    "recovery",
+    "capabilities",
+    "policy_profile_id"
+  ], "account descriptor");
   if (value.format !== "nsealr-account-descriptor-v0") throw new Error("account descriptor format mismatch");
   const route = parseSignerRoute(value.signer_route);
   assertRecord(value.capabilities, "capabilities");
+  assertOnlyKeys(
+    value.capabilities,
+    ["methods", "physical_review", "physical_approval", "persistent_grants"],
+    "capabilities"
+  );
   const methods = requireStringArray(value.capabilities.methods, "capabilities.methods");
   const unknownMethod = methods.find((method) => !DEVICE_METHODS.has(method));
   if (unknownMethod !== undefined) throw new Error(`capabilities.methods contains unknown method ${unknownMethod}`);
@@ -523,11 +539,8 @@ export function parseAccountDescriptor(value: unknown): AccountDescriptor {
       physical_approval: requireBoolean(value.capabilities.physical_approval, "capabilities.physical_approval"),
       persistent_grants: requireBoolean(value.capabilities.persistent_grants, "capabilities.persistent_grants")
     },
-    policy_profile_id: requireString(value.policy_profile_id, "policy_profile_id")
+    policy_profile_id: requirePolicyId(value.policy_profile_id, "policy_profile_id")
   };
-  if (!descriptor.policy_profile_id.startsWith("policy-")) {
-    throw new Error("policy_profile_id must reference a policy-* profile");
-  }
   validateRouteSemantics(route, descriptor.capabilities, value);
   return descriptor;
 }
@@ -535,6 +548,18 @@ export function parseAccountDescriptor(value: unknown): AccountDescriptor {
 export function parsePolicyProfile(value: unknown): PolicyProfile {
   rejectSecretFields(value);
   assertRecord(value, "policy profile");
+  assertOnlyKeys(value, [
+    "format",
+    "policy_id",
+    "label",
+    "route_types",
+    "mode",
+    "grants_allowed",
+    "manual_review_required",
+    "forbidden_permissions",
+    "grant_constraints",
+    "risk_tiers"
+  ], "policy profile");
   if (value.format !== "nsealr-policy-profile-v0") throw new Error("policy profile format mismatch");
   const routeTypes = requireStringArray(value.route_types, "route_types").map((route) => requireRouteType(route));
   const mode = requireString(value.mode, "mode");
@@ -552,6 +577,13 @@ export function parsePolicyProfile(value: unknown): PolicyProfile {
   if (mode === "manual_only" && grantsAllowed) throw new Error("manual_only profiles must not allow grants");
   if (grantsAllowed) {
     assertRecord(value.grant_constraints, "grant_constraints");
+    assertOnlyKeys(value.grant_constraints, [
+      "expiry_required",
+      "rate_limit_required",
+      "revocation_required",
+      "audit_log_required",
+      "device_confirmation_required"
+    ], "grant_constraints");
     for (const field of [
       "expiry_required",
       "rate_limit_required",
@@ -561,6 +593,8 @@ export function parsePolicyProfile(value: unknown): PolicyProfile {
     ]) {
       if (value.grant_constraints[field] !== true) throw new Error(`grant_constraints.${field} must be true`);
     }
+  } else if (value.grant_constraints !== undefined) {
+    throw new Error("grant_constraints must be absent when grants are not allowed");
   }
   assertRecord(value.risk_tiers, "risk_tiers");
   for (const [riskName, riskTier] of Object.entries(value.risk_tiers)) {
@@ -568,8 +602,7 @@ export function parsePolicyProfile(value: unknown): PolicyProfile {
       throw new Error(`risk_tiers.${riskName} must be a non-empty string`);
     }
   }
-  const policyId = requireString(value.policy_id, "policy_id");
-  if (!policyId.startsWith("policy-")) throw new Error("policy_id must start with policy-");
+  const policyId = requirePolicyId(value.policy_id, "policy_id");
   return {
     format: "nsealr-policy-profile-v0",
     policy_id: policyId,
@@ -586,6 +619,7 @@ export function parsePolicyProfile(value: unknown): PolicyProfile {
 
 function parseGrantPermission(value: unknown): GrantPermission {
   assertRecord(value, "permission");
+  assertOnlyKeys(value, ["method", "parameter", "event_kind"], "permission");
   if (value.method === "*" || value.parameter === "*") throw new Error("grant permission must not use wildcard values");
   const method = requireString(value.method, "permission.method");
   if (method === "export_secret") throw new Error("grant permission must not request secret export");
@@ -634,11 +668,27 @@ function parsePolicyDecisionPermission(value: unknown): GrantPermission {
 export function parseGrantDescriptor(value: unknown): GrantDescriptor {
   rejectSecretFields(value);
   assertRecord(value, "grant descriptor");
+  assertOnlyKeys(value, [
+    "format",
+    "grant_id",
+    "account_id",
+    "route_type",
+    "client",
+    "permission",
+    "decision",
+    "expires_at",
+    "rate_limit",
+    "requires_device_policy_confirmation",
+    "revocable",
+    "audit_event_format"
+  ], "grant descriptor");
   if (value.format !== "nsealr-grant-descriptor-v0") throw new Error("grant descriptor format mismatch");
   const routeType = requireRouteType(value.route_type);
   if (QR_ROUTE_TYPES.has(routeType)) throw new Error("grant route_type must not be a stateless QR vault");
   assertRecord(value.client, "client");
+  assertOnlyKeys(value.client, ["pubkey", "label"], "client");
   assertRecord(value.rate_limit, "rate_limit");
+  assertOnlyKeys(value.rate_limit, ["max_uses", "window_seconds"], "rate_limit");
   if (value.requires_device_policy_confirmation !== true) {
     throw new Error("requires_device_policy_confirmation must be true");
   }
@@ -648,7 +698,7 @@ export function parseGrantDescriptor(value: unknown): GrantDescriptor {
   if (decision !== "allow_once" && decision !== "allow_until_expiry") throw new Error("decision is unknown");
   return {
     format: "nsealr-grant-descriptor-v0",
-    grant_id: requireStringId(value.grant_id, "grant_id"),
+    grant_id: requireGrantId(value.grant_id, "grant_id"),
     account_id: requireStringId(value.account_id, "account_id"),
     route_type: routeType,
     client: {

@@ -85,6 +85,101 @@ describe("identity, recovery, and policy contracts", () => {
     expect(() => parseAccountDescriptor(account)).toThrow(/secret field recovery.mnemonic/u);
   });
 
+  it("rejects unsupported descriptor fields before policy or route use", () => {
+    const account = loadJson(resolve(specsRoot, "vectors/accounts/esp32-usb-device-slot-0.json")) as Record<
+      string,
+      unknown
+    >;
+    expect(() => parseAccountDescriptor({
+      ...account,
+      unsigned_metadata: "not allowed"
+    })).toThrow(/account descriptor has unsupported field unsigned_metadata/u);
+
+    expect(() => parseAccountDescriptor({
+      ...account,
+      signer_route: {
+        ...(account.signer_route as Record<string, unknown>),
+        display_hint: "not allowed"
+      }
+    })).toThrow(/signer_route has unsupported field display_hint/u);
+
+    expect(() => parseAccountDescriptor({
+      ...account,
+      capabilities: {
+        ...(account.capabilities as Record<string, unknown>),
+        autofill_policy: true
+      }
+    })).toThrow(/capabilities has unsupported field autofill_policy/u);
+
+    expect(() => parseAccountDescriptor({
+      ...account,
+      policy_profile_id: "manual-only"
+    })).toThrow(/policy_profile_id must be a policy-\* stable string id/u);
+
+    const policy = loadJson(resolve(specsRoot, "vectors/policies/scoped-automation-daily-use.json")) as Record<
+      string,
+      unknown
+    >;
+    expect(() => parsePolicyProfile({
+      ...policy,
+      notes: "not allowed"
+    })).toThrow(/policy profile has unsupported field notes/u);
+
+    expect(() => parsePolicyProfile({
+      ...policy,
+      grant_constraints: {
+        ...(policy.grant_constraints as Record<string, unknown>),
+        companion_override_allowed: false
+      }
+    })).toThrow(/grant_constraints has unsupported field companion_override_allowed/u);
+
+    const manualPolicy = loadJson(resolve(specsRoot, "vectors/policies/manual-only-persistent-device.json")) as Record<
+      string,
+      unknown
+    >;
+    expect(() => parsePolicyProfile({
+      ...manualPolicy,
+      grant_constraints: {
+        expiry_required: true
+      }
+    })).toThrow(/grant_constraints must be absent/u);
+
+    const grant = loadJson(resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json")) as Record<string, unknown>;
+    expect(() => parseGrantDescriptor({
+      ...grant,
+      unsigned_metadata: "not allowed"
+    })).toThrow(/grant descriptor has unsupported field unsigned_metadata/u);
+
+    expect(() => parseGrantDescriptor({
+      ...grant,
+      client: {
+        ...(grant.client as Record<string, unknown>),
+        origin: "https://example.com"
+      }
+    })).toThrow(/client has unsupported field origin/u);
+
+    expect(() => parseGrantDescriptor({
+      ...grant,
+      permission: {
+        ...(grant.permission as Record<string, unknown>),
+        reason: "not allowed"
+      }
+    })).toThrow(/permission has unsupported field reason/u);
+
+    expect(() => parseGrantDescriptor({
+      ...grant,
+      rate_limit: {
+        ...(grant.rate_limit as Record<string, unknown>),
+        burst: 1
+      }
+    })).toThrow(/rate_limit has unsupported field burst/u);
+
+    expect(() => parseGrantDescriptor({
+      ...grant,
+      grant_id: "kind-1-session"
+    })).toThrow(/grant_id must be a grant-\* stable string id/u);
+  });
+
   it("rejects malformed NIP-06 recovery source fingerprints", () => {
     const account = loadJson(resolve(specsRoot, "vectors/accounts/raspberry-qr-nip06-account-0.json")) as {
       recovery: Record<string, unknown>;

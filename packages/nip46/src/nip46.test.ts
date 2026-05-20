@@ -5,6 +5,7 @@ import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
 import { validateRequest } from "@nsealr/protocol";
 import {
   decideNip46BridgeAction,
+  evaluateNip46RelayRequestStep,
   isNip46RequestPermitted,
   nip46ResponseFromNSealr,
   nip46PermissionRequirementFromRequest,
@@ -208,6 +209,18 @@ describe("NIP-46 bridge payloads", () => {
     }
   });
 
+  it("matches shared NIP-46 relay request-step vectors", () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+
+    expect(fixtures.nip46RelaySteps.map((vector) => vector.name)).toEqual([
+      "ping-request-step",
+      "sign-event-request-step"
+    ]);
+    for (const vector of fixtures.nip46RelaySteps) {
+      expect(evaluateNip46RelayRequestStep(vector)).toEqual(vector.expected_step);
+    }
+  });
+
   it("rejects unsafe or ambiguous NIP-46 connection URIs", () => {
     const pubkey = "c".repeat(64);
 
@@ -255,6 +268,7 @@ describe("NIP-46 bridge payloads", () => {
         vector.category === "nip46" ||
         vector.category === "nip46-connection-uri" ||
         vector.category === "nip46-relay-event" ||
+        vector.category === "nip46-relay-step" ||
         vector.category === "nip46-policy-file"
     );
 
@@ -268,6 +282,10 @@ describe("NIP-46 bridge payloads", () => {
         }
         if (vector.category === "nip46-relay-event") {
           parseNip46RelayEventEnvelope(vector.relay_event, "client_to_remote_signer");
+          return;
+        }
+        if (vector.category === "nip46-relay-step") {
+          evaluateNip46RelayRequestStep(vector.relay_step);
           return;
         }
         if (vector.category === "nip46-policy-file") {

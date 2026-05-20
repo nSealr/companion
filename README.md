@@ -370,7 +370,10 @@ match the shared `contract_id`.
   later UX, validating relays, requested permissions, and client metadata while
   retaining only secret presence. It now parses NIP-46 `kind:24133` relay event
   envelopes into sender/recipient/content metadata without decrypting NIP-44
-  content, opening relays, or dispatching to signers. Shared specs vectors now
+  content, opening relays, or dispatching to signers. It also evaluates
+  metadata-only relay request steps after plaintext is supplied by a future
+  decryption layer, returning bridge decisions without relay I/O, grant
+  creation, signer dispatch, or session persistence. Shared specs vectors now
   pin the derived permission requirements, positive/negative permission checks,
   bridge decisions, `connect` review pages, and invalid payload rejection for
   signer routing, local response routing, `connect` review, and

@@ -40,7 +40,9 @@ assert(
 );
 assert(
   normalizedReview.includes("parses relay event envelopes") &&
-    normalizedReview.includes("does not verify signatures or decrypt NIP-44 content"),
+    normalizedReview.includes("evaluates relay request steps") &&
+    normalizedReview.includes("does not verify signatures or decrypt NIP-44 content") &&
+    normalizedReview.includes("without opening relays"),
   "docs/api-review.md must preserve the current NIP-46 boundary"
 );
 

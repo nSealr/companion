@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:294605fb2a2e42d8cefe3bceacae5993e0883d69715ded1cca78758f30333c13`
+API surface digest: `sha256:57dde67e213bc95e23d65f4b9b8d88ab56a41a43ee330aeea8a2297e821e9a13`
 
 Source: `docs/api.md`
 
@@ -138,13 +138,16 @@ deterministic local responses, parses connect review intents, parses
 descriptor-only `bunker://` and `nostrconnect://` connection URI metadata,
 parses relay event envelopes, parses requested-permission metadata, parses
 stricter approved-permission inputs, parses read-only policy files, and
-enforces permission checks. Approved `sign_event` inputs must be kind-scoped
-before signer routing. The connection URI parser records only secret presence,
-not the secret value. Relay event envelope parsing exposes only
-sender/recipient/content metadata and signed-field shape; it does not verify
-signatures or decrypt NIP-44 content. It deliberately excludes relay sessions,
-NIP-44 encryption/decryption, persistent grants, connect acknowledgement,
-browser storage, and signer I/O.
+enforces permission checks. It also evaluates relay request steps only after
+plaintext has been supplied by a future NIP-44 layer, returning deterministic
+bridge decisions without opening relays, acknowledging `connect`, creating
+grants, dispatching signers, or persisting session state. Approved `sign_event`
+inputs must be kind-scoped before signer routing. The connection URI parser
+records only secret presence, not the secret value. Relay event envelope
+parsing exposes only sender/recipient/content metadata and signed-field shape;
+it does not verify signatures or decrypt NIP-44 content. It deliberately
+excludes relay sessions, NIP-44 encryption/decryption, persistent grants,
+connect acknowledgement, browser storage, and signer I/O.
 
 ## @nsealr/policy
 

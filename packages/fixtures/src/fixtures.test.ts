@@ -166,6 +166,16 @@ describe("fixture loading", () => {
     expect(JSON.stringify(fixtures.nip46RelayEvents[0].expected_envelope)).toContain("decrypts_content");
   });
 
+  it("loads NIP-46 relay request-step vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    expect(fixtures.nip46RelaySteps.map((vector) => vector.name)).toEqual([
+      "ping-request-step",
+      "sign-event-request-step"
+    ]);
+    expect(fixtures.nip46RelaySteps[0].format).toBe("nsealr-nip46-relay-request-step-v0");
+    expect(JSON.stringify(fixtures.nip46RelaySteps[0].expected_step)).toContain("persists_session_state");
+  });
+
   it("loads identity, policy, and grant descriptors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
 

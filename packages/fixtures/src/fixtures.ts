@@ -212,6 +212,16 @@ export type SpecsFixtureSet = {
     expected_envelope: unknown;
     scope: string;
   }>;
+  nip46RelaySteps: Array<{
+    name: string;
+    format: "nsealr-nip46-relay-request-step-v0";
+    direction: "client_to_remote_signer" | "remote_signer_to_client";
+    event: unknown;
+    decrypted_message: unknown;
+    granted_permissions: unknown[];
+    expected_step: unknown;
+    scope: string;
+  }>;
   accounts: AccountDescriptor[];
   policyProfiles: PolicyProfile[];
   grants: GrantDescriptor[];
@@ -317,6 +327,7 @@ export type SpecsFixtureSet = {
       | "nip46"
       | "nip46-connection-uri"
       | "nip46-relay-event"
+      | "nip46-relay-step"
       | "nip46-policy-file";
     expected_error: string;
     request?: unknown;
@@ -326,6 +337,7 @@ export type SpecsFixtureSet = {
     request_message?: unknown;
     uri?: string;
     relay_event?: unknown;
+    relay_step?: unknown;
     policy_file?: unknown;
   }>;
 };
@@ -672,6 +684,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const nip46PolicyFilesRoot = resolve(specsRoot, "vectors/nip46-policy-files");
   const nip46ConnectionUrisRoot = resolve(specsRoot, "vectors/nip46-connection-uris");
   const nip46RelayEventsRoot = resolve(specsRoot, "vectors/nip46-relay-events");
+  const nip46RelayStepsRoot = resolve(specsRoot, "vectors/nip46-relay-steps");
   const accountsRoot = resolve(specsRoot, "vectors/accounts");
   const policyProfilesRoot = resolve(specsRoot, "vectors/policies");
   const grantsRoot = resolve(specsRoot, "vectors/grants");
@@ -710,6 +723,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const nip46RelayEventFiles = readdirSync(nip46RelayEventsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const nip46RelayStepFiles = readdirSync(nip46RelayStepsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const accountFiles = readdirSync(accountsRoot)
@@ -778,6 +794,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     ),
     nip46RelayEvents: nip46RelayEventFiles.map(
       (file) => loadJson(resolve(nip46RelayEventsRoot, file)) as SpecsFixtureSet["nip46RelayEvents"][number]
+    ),
+    nip46RelaySteps: nip46RelayStepFiles.map(
+      (file) => loadJson(resolve(nip46RelayStepsRoot, file)) as SpecsFixtureSet["nip46RelaySteps"][number]
     ),
     accounts,
     policyProfiles,

@@ -203,7 +203,7 @@ Exports:
 
 ## @nsealr/nip46
 
-Already-decrypted NIP-46 bridge, connection-token descriptor, relay-event envelope, and permission-review helpers for nSealr companion.
+Already-decrypted NIP-46 bridge, connection-token descriptor, relay-event envelope, relay-step, and permission-review helpers for nSealr companion.
 
 Source entrypoint: `packages/nip46/src/index.ts`
 
@@ -216,9 +216,11 @@ Exports:
 - `Nip46PermissionRequirement`
 - `Nip46RelayEventDirection`
 - `Nip46RelayEventEnvelope`
+- `Nip46RelayRequestStep`
 - `Nip46RequestMessage`
 - `Nip46ResponseMessage`
 - `decideNip46BridgeAction`
+- `evaluateNip46RelayRequestStep`
 - `isNip46RequestPermitted`
 - `nip46PermissionLabel`
 - `nip46PermissionRequirementFromRequest`

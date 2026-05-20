@@ -32,6 +32,7 @@ import {
 import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
 import {
   decideNip46BridgeAction,
+  evaluateNip46RelayRequestStep,
   isNip46RequestPermitted,
   nip46PermissionRequirementFromRequest,
   nip46ResponseFromNSealr,
@@ -478,6 +479,7 @@ function validateInvalidHardeningFixture(fixture: {
   request_message?: unknown;
   uri?: string;
   relay_event?: unknown;
+  relay_step?: unknown;
   policy_file?: unknown;
 }): void {
   if (fixture.category === "signing-request") {
@@ -533,6 +535,12 @@ function validateInvalidHardeningFixture(fixture: {
   if (fixture.category === "nip46-relay-event") {
     expectFixtureRejection(fixture.name, fixture.expected_error, () => {
       parseNip46RelayEventEnvelope(fixture.relay_event, "client_to_remote_signer");
+    });
+    return;
+  }
+  if (fixture.category === "nip46-relay-step") {
+    expectFixtureRejection(fixture.name, fixture.expected_error, () => {
+      evaluateNip46RelayRequestStep(fixture.relay_step);
     });
     return;
   }
@@ -718,6 +726,12 @@ export function buildCli(options: BuildCliOptions = {}): Command {
           throw new Error(`invalid NIP-46 relay event fixture ${relayEvent.name}: envelope mismatch`);
         }
       }
+      for (const relayStep of fixtures.nip46RelaySteps) {
+        const actual = evaluateNip46RelayRequestStep(relayStep);
+        if (JSON.stringify(actual) !== JSON.stringify(relayStep.expected_step)) {
+          throw new Error(`invalid NIP-46 relay request-step fixture ${relayStep.name}: step mismatch`);
+        }
+      }
       for (const featureMatrix of fixtures.featureMatrices) {
         validateFeatureMatrixFixture(featureMatrix.name, featureMatrix);
       }
@@ -730,8 +744,10 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         fixtureCountLabel(fixtures.nip46ConnectionUris.length, "NIP-46 connection URI fixture");
       const relayEventFixtureLabel =
         fixtureCountLabel(fixtures.nip46RelayEvents.length, "NIP-46 relay event fixture");
+      const relayStepFixtureLabel =
+        fixtureCountLabel(fixtures.nip46RelaySteps.length, "NIP-46 relay request-step fixture");
       console.log(
-        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${relayStepFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );
     });
 

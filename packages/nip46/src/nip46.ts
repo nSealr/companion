@@ -61,6 +61,20 @@ export type Nip46RelayEventEnvelope = {
   stores_production_secrets: false;
 };
 
+export type Nip46RelayRequestStep = {
+  format: "nsealr-nip46-relay-request-step-v0";
+  envelope: Nip46RelayEventEnvelope;
+  message_id: string;
+  bridge_decision: Nip46BridgeDecision;
+  decrypts_content: false;
+  opens_relay: false;
+  creates_grants: false;
+  acknowledges_connect: false;
+  dispatches_signer: false;
+  stores_production_secrets: false;
+  persists_session_state: false;
+};
+
 export type Nip46ConnectReview = {
   format: "nsealr-nip46-connect-review-v0";
   id: string;
@@ -424,6 +438,35 @@ export function parseNip46RelayEventEnvelope(
     opens_relay: false,
     creates_grants: false,
     stores_production_secrets: false
+  };
+}
+
+export function evaluateNip46RelayRequestStep(value: unknown): Nip46RelayRequestStep {
+  if (!isRecord(value)) throw new Error("NIP-46 relay request step must be an object");
+  const direction = requireNip46RelayDirection(value.direction);
+  if (direction !== "client_to_remote_signer") {
+    throw new Error("NIP-46 relay request step direction must be client_to_remote_signer");
+  }
+  const envelope = parseNip46RelayEventEnvelope(value.event, direction);
+  const message = requireMessage(value.decrypted_message);
+  if (!Array.isArray(value.granted_permissions)) {
+    throw new Error("NIP-46 relay request step granted_permissions must be a list");
+  }
+  const grantedPermissions = value.granted_permissions.map((permission) =>
+    parseNip46PolicyPermission(permission, "NIP-46 relay request step granted_permissions")
+  );
+  return {
+    format: "nsealr-nip46-relay-request-step-v0",
+    envelope,
+    message_id: message.id,
+    bridge_decision: decideNip46BridgeAction(message, grantedPermissions),
+    decrypts_content: false,
+    opens_relay: false,
+    creates_grants: false,
+    acknowledges_connect: false,
+    dispatches_signer: false,
+    stores_production_secrets: false,
+    persists_session_state: false
   };
 }
 

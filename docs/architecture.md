@@ -147,7 +147,10 @@ packages, but it must not export test-only signing as a production path.
   deterministic review pages for later policy work. It now parses NIP-46
   `kind:24133` relay event envelopes into sender/recipient/content metadata,
   while explicitly leaving relay I/O, NIP-44 decryption, grant creation, and
-  signer dispatch outside this package boundary.
+  signer dispatch outside this package boundary. It also evaluates relay
+  request steps only after a future NIP-44 layer provides plaintext, reusing
+  the same bridge-decision path without opening relays, acknowledging
+  `connect`, creating grants, dispatching signers, or persisting session state.
   Permission matching is present as a pure boundary and is pinned by shared
   permission policy fixture checks. Bridge decision output is also present: a
   permitted request can become a signer request, `ping` can produce a local

@@ -136,7 +136,12 @@ putting tokens directly in the shell command line. The first M5 relay boundary
 is now package-owned: NIP-46 `kind:24133` relay event envelopes are parsed into
 sender pubkey, recipient `p` tag, encrypted-content, and signed-field metadata
 without opening relays, decrypting NIP-44 content, creating grants, or
-dispatching to signers. Relay sessions, NIP-44 encryption/decryption,
+dispatching to signers. The second M5 relay boundary is also package-owned:
+relay request-step evaluation combines that envelope with an already decrypted
+message and reviewed permissions, returning the same bridge decision as local
+decrypted payload handling without relay I/O, NIP-44 decryption, `connect`
+acknowledgement, grant creation, signer dispatch, or session persistence.
+Relay sessions, NIP-44 encryption/decryption,
 connection token responses, permission storage, grant review, and auth
 challenge UX remain future work.
 

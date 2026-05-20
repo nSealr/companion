@@ -1,9 +1,11 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
 import { validateRequest } from "@nsealr/protocol";
 import {
+  approveNip46ConnectReview,
   decideNip46BridgeAction,
   evaluateNip46RelayRequestStep,
   isNip46RequestPermitted,
@@ -12,6 +14,7 @@ import {
   parseNip46ApprovedPermissions,
   parseNip46ConnectionUri,
   parseNip46ConnectIntent,
+  parseNip46ConnectReview,
   parseNip46PolicyFile,
   parseNip46RelayEventEnvelope,
   nsealrRequestFromNip46,
@@ -24,6 +27,32 @@ const specsRoot = resolveSpecsRoot();
 
 function load(rel: string): unknown {
   return JSON.parse(readFileSync(resolve(specsRoot, rel), "utf8"));
+}
+
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    const encoded = JSON.stringify(value);
+    if (encoded === undefined) throw new Error("unsupported digest value");
+    return encoded;
+  }
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`)
+      .join(",")}}`;
+  }
+  throw new Error("unsupported digest value");
+}
+
+function forgedConnectReviewDigest(reviewWithoutDigest: unknown): string {
+  return createHash("sha256")
+    .update(canonicalJson({
+      format: "nsealr-nip46-connect-digest-v0",
+      review: reviewWithoutDigest
+    }))
+    .digest("hex");
 }
 
 describe("NIP-46 bridge payloads", () => {
@@ -101,10 +130,17 @@ describe("NIP-46 bridge payloads", () => {
     const getPublicKey = fixtures.nip46Payloads.find((vector) => vector.name === "get-public-key");
     const ping = fixtures.nip46Payloads.find((vector) => vector.name === "ping");
 
+    if (connect?.connect_review === undefined || connect.connect_approval === undefined) {
+      throw new Error("missing connect review fixture");
+    }
     expect(parseNip46ConnectIntent(connect?.request_message)).toEqual(connect?.connect_intent);
-    expect(reviewNip46ConnectMessage(connect?.request_message)).toEqual(
-      (connect as { connect_review?: unknown } | undefined)?.connect_review
-    );
+    expect(reviewNip46ConnectMessage(connect?.request_message)).toEqual(connect.connect_review);
+    expect(
+      approveNip46ConnectReview(connect.connect_review, {
+        reviewedConnectDigest: connect.connect_review.connect_digest,
+        approvedAt: connect.connect_approval.approved_at
+      })
+    ).toEqual(connect.connect_approval);
     expect(nsealrRequestFromNip46(signEvent?.request_message)).toEqual(signEvent?.nsealr_request);
     expect(nip46ResponseFromNSealr(signEvent?.request_message.id ?? "", signEvent?.nsealr_response)).toEqual(
       signEvent?.response_message
@@ -347,9 +383,78 @@ describe("NIP-46 bridge payloads", () => {
           page_indicator: "Page 2/2",
           body_lines: ["sign_event:1", "nip44_encrypt"]
         }
-      ]
+      ],
+      connect_digest: "33425617fb26f264de60b825386701fd278676db71e3010f4230d8fa475f391b"
     });
     expect(JSON.stringify(review)).not.toContain("secret-1");
+  });
+
+  it("creates connect approval artifacts only after digest confirmation", () => {
+    const remoteSignerPubkey = "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa";
+    const review = reviewNip46ConnectMessage({
+      id: "connect-1",
+      method: "connect",
+      params: [remoteSignerPubkey, "secret-1", "sign_event:1,nip44_encrypt"]
+    });
+
+    expect(parseNip46ConnectReview(review)).toEqual(review);
+    expect(approveNip46ConnectReview(review, {
+      reviewedConnectDigest: review.connect_digest,
+      approvedAt: 1_900_000_001
+    })).toEqual({
+      format: "nsealr-nip46-connect-approval-v0",
+      id: "connect-1",
+      connect_digest: review.connect_digest,
+      approved_at: 1_900_000_001,
+      acknowledges_connect: false,
+      creates_grants: false,
+      opens_relay: false,
+      persists_session_state: false,
+      stores_production_secrets: false,
+      exposes_secret: false
+    });
+    expect(() =>
+      approveNip46ConnectReview(review, {
+        reviewedConnectDigest: "0".repeat(64),
+        approvedAt: 1_900_000_001
+      })
+    ).toThrow(/reviewed connect digest/u);
+    expect(() =>
+      parseNip46ConnectReview({
+        ...review,
+        pages: [
+          ...review.pages.slice(0, 1),
+          {
+            ...review.pages[1],
+            body_lines: ["sign_event:30023", "nip44_encrypt"]
+          }
+        ]
+      })
+    ).toThrow(/digest mismatch/u);
+    const nonCanonicalReview = {
+      ...review,
+      pages: [
+        {
+          ...review.pages[0],
+          body_lines: ["Remote signer", "hidden", "Secret: provided"]
+        },
+        review.pages[1]
+      ]
+    };
+    const reviewWithoutDigest = {
+      format: nonCanonicalReview.format,
+      id: nonCanonicalReview.id,
+      remote_signer_pubkey: nonCanonicalReview.remote_signer_pubkey,
+      secret_present: nonCanonicalReview.secret_present,
+      requested_permissions: nonCanonicalReview.requested_permissions,
+      pages: nonCanonicalReview.pages
+    };
+    expect(() =>
+      parseNip46ConnectReview({
+        ...reviewWithoutDigest,
+        connect_digest: forgedConnectReviewDigest(reviewWithoutDigest)
+      })
+    ).toThrow(/not canonical/u);
   });
 
   it("matches request permissions without granting policy", () => {

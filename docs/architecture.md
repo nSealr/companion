@@ -143,8 +143,9 @@ packages, but it must not export test-only signing as a production path.
 - `packages/nip46`: decrypted NIP-46 payload bridge for `get_public_key`,
   `sign_event`, local `ping`, and conversion from nSealr responses back to
   NIP-46 result/error strings. It also validates requested permission strings
-  and policy files, and parses `connect` messages into review intents and
-  deterministic review pages for later policy work. It now parses NIP-46
+  and policy files, and parses `connect` messages into review intents,
+  deterministic review pages, and digest-bound local approval artifacts for
+  later policy work. It now parses NIP-46
   `kind:24133` relay event envelopes into sender/recipient/content metadata,
   while explicitly leaving relay I/O, NIP-44 decryption, grant creation, and
   signer dispatch outside this package boundary. It also evaluates relay
@@ -1029,6 +1030,13 @@ already-decrypted `connect` request. It writes deterministic pages with the
 remote signer pubkey, secret presence, and requested permission labels. It does
 not echo the secret value, return `ack`, persist a grant, or authorize the
 client.
+
+`nsealr nip46 approve-connect` consumes that review projection and writes a
+local approval artifact only when the reviewed connect digest is supplied back
+to the CLI. The artifact binds the approval to the exact review pages while
+recording `acknowledges_connect: false`, `creates_grants: false`,
+`opens_relay: false`, `persists_session_state: false`, and
+`stores_production_secrets: false`.
 
 `connect` parsing is also intentionally non-committal. The bridge can extract
 the remote-signer pubkey, optional secret, and requested permissions into a

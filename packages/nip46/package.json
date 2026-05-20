@@ -1,7 +1,7 @@
 {
   "name": "@nsealr/nip46",
   "version": "0.1.0",
-  "description": "Already-decrypted NIP-46 bridge, connection-token descriptor, relay-event envelope, relay-step, and permission-review helpers for nSealr companion.",
+  "description": "Already-decrypted NIP-46 bridge, connect-review approval, connection-token descriptor, relay-event envelope, relay-step, and permission helpers for nSealr companion.",
   "keywords": [
     "nostr",
     "nsealr",
@@ -33,6 +33,7 @@
   },
   "types": "./dist/index.d.ts",
   "dependencies": {
+    "@noble/hashes": "2.2.0",
     "@nsealr/protocol": "workspace:*"
   },
   "devDependencies": {

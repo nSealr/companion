@@ -1,3 +1,5 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import { compactJsonUtf8ByteLength, NSEALR_V0_LIMITS, validateRequest, validateResponse } from "@nsealr/protocol";
 
 export type Nip46RequestMessage = {
@@ -86,6 +88,25 @@ export type Nip46ConnectReview = {
     page_indicator: string;
     body_lines: string[];
   }>;
+  connect_digest: string;
+};
+
+export type Nip46ConnectApproval = {
+  format: "nsealr-nip46-connect-approval-v0";
+  id: string;
+  connect_digest: string;
+  approved_at: number;
+  acknowledges_connect: false;
+  creates_grants: false;
+  opens_relay: false;
+  persists_session_state: false;
+  stores_production_secrets: false;
+  exposes_secret: false;
+};
+
+export type Nip46ConnectApprovalOptions = {
+  reviewedConnectDigest: string;
+  approvedAt: number;
 };
 
 export type Nip46BridgeDecision =
@@ -124,6 +145,7 @@ const NIP46_CONNECTION_URI_PARAMS = new Set(["relay", "secret", "perms", "name",
 const NIP46_RELAY_DIRECTIONS = new Set(["client_to_remote_signer", "remote_signer_to_client"]);
 const X_ONLY_PUBKEY = /^[0-9a-f]{64}$/u;
 const HEX_64_BYTE = /^[0-9a-f]{128}$/u;
+const CONNECT_REVIEW_DIGEST_FORMAT = "nsealr-nip46-connect-digest-v0";
 
 type NSealrBridgeRequest =
   | {
@@ -144,6 +166,32 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function assertOnlyKeys(value: Record<string, unknown>, allowedKeys: readonly string[], context: string): void {
+  const allowed = new Set(allowedKeys);
+  const unknown = Object.keys(value).filter((key) => !allowed.has(key));
+  if (unknown.length > 0) throw new Error(`${context} contains unknown fields: ${unknown.sort().join(", ")}`);
+}
+
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    const encoded = JSON.stringify(value);
+    if (encoded === undefined) throw new Error("unsupported value in NIP-46 digest");
+    return encoded;
+  }
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
+  if (isRecord(value)) {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
+      .join(",")}}`;
+  }
+  throw new Error("unsupported value in NIP-46 digest");
+}
+
+function sha256Utf8Hex(value: string): string {
+  return bytesToHex(sha256(utf8ToBytes(value)));
+}
+
 function requireNip46Id(value: unknown): string {
   if (typeof value !== "string" || !/^[A-Za-z0-9._:-]{1,128}$/u.test(value)) {
     throw new Error("NIP-46 request id is invalid");
@@ -151,11 +199,15 @@ function requireNip46Id(value: unknown): string {
   return value;
 }
 
-function requireXOnlyPubkey(value: unknown, label: string): string {
+function requireLowerHex64(value: unknown, label: string): string {
   if (typeof value !== "string" || !X_ONLY_PUBKEY.test(value)) {
-    throw new Error(`NIP-46 ${label} must be 32-byte lowercase hex`);
+    throw new Error(`${label} must be 32-byte lowercase hex`);
   }
   return value;
+}
+
+function requireXOnlyPubkey(value: unknown, label: string): string {
+  return requireLowerHex64(value, `NIP-46 ${label}`);
 }
 
 function requireNip46RelayDirection(value: unknown): Nip46RelayEventDirection {
@@ -287,7 +339,7 @@ export function parseNip46ApprovedPermissions(value: string): Nip46Permission[] 
   return permissions;
 }
 
-function parseNip46PolicyPermission(permission: unknown, context: string): Nip46Permission {
+function parseNip46PermissionObject(permission: unknown, context: string, approvedOnly: boolean): Nip46Permission {
   if (!isRecord(permission) || typeof permission.method !== "string") {
     throw new Error(`${context}: permission entries must include method`);
   }
@@ -296,6 +348,10 @@ function parseNip46PolicyPermission(permission: unknown, context: string): Nip46
   }
   if (permission.method === "sign_event") {
     if (permission.parameter === undefined) {
+      if (!approvedOnly) {
+        assertOnlyKeys(permission, ["method"], context);
+        return { method: "sign_event" };
+      }
       throw new Error(`${context}: approved sign_event permission must include parameter and event_kind`);
     }
     if (
@@ -320,6 +376,14 @@ function parseNip46PolicyPermission(permission: unknown, context: string): Nip46
     throw new Error(`${context}: non-sign_event permission must only include method`);
   }
   return { method: permission.method };
+}
+
+function parseNip46RequestedPermission(permission: unknown, context: string): Nip46Permission {
+  return parseNip46PermissionObject(permission, context, false);
+}
+
+function parseNip46PolicyPermission(permission: unknown, context: string): Nip46Permission {
+  return parseNip46PermissionObject(permission, context, true);
 }
 
 export function parseNip46PolicyFile(policy: unknown, context = "NIP-46 policy file"): Nip46Permission[] {
@@ -491,9 +555,46 @@ export function nip46PermissionLabel(permission: Nip46PermissionRequirement): st
   return permission.method;
 }
 
+type Nip46ConnectReviewWithoutDigest = Omit<Nip46ConnectReview, "connect_digest">;
+
+function connectDigestForReview(review: Nip46ConnectReviewWithoutDigest): string {
+  return sha256Utf8Hex(canonicalJson({
+    format: CONNECT_REVIEW_DIGEST_FORMAT,
+    review
+  }));
+}
+
+function parseConnectReviewPage(value: unknown, context: string): Nip46ConnectReview["pages"][number] {
+  if (!isRecord(value)) throw new Error(`${context} must be an object`);
+  assertOnlyKeys(value, ["title", "page_indicator", "body_lines"], context);
+  if (typeof value.title !== "string" || value.title.length === 0) throw new Error(`${context} title is invalid`);
+  if (typeof value.page_indicator !== "string" || value.page_indicator.length === 0) {
+    throw new Error(`${context} page_indicator is invalid`);
+  }
+  if (!Array.isArray(value.body_lines) || !value.body_lines.every((line) => typeof line === "string")) {
+    throw new Error(`${context} body_lines must be strings`);
+  }
+  return {
+    title: value.title,
+    page_indicator: value.page_indicator,
+    body_lines: value.body_lines
+  };
+}
+
+function requireSafeNonNegativeInteger(value: unknown, label: string): number {
+  if (
+    typeof value !== "number" ||
+    !Number.isSafeInteger(value) ||
+    value < 0
+  ) {
+    throw new Error(`${label} must be a safe non-negative integer`);
+  }
+  return value;
+}
+
 export function reviewNip46ConnectIntent(intent: Nip46ConnectIntent): Nip46ConnectReview {
   const permissionLines = intent.requested_permissions.map((permission) => nip46PermissionLabel(permission));
-  return {
+  const reviewWithoutDigest: Nip46ConnectReviewWithoutDigest = {
     format: "nsealr-nip46-connect-review-v0",
     id: intent.id,
     remote_signer_pubkey: intent.remote_signer_pubkey,
@@ -516,10 +617,98 @@ export function reviewNip46ConnectIntent(intent: Nip46ConnectIntent): Nip46Conne
       }
     ]
   };
+  return {
+    ...reviewWithoutDigest,
+    connect_digest: connectDigestForReview(reviewWithoutDigest)
+  };
 }
 
 export function reviewNip46ConnectMessage(value: unknown): Nip46ConnectReview {
   return reviewNip46ConnectIntent(parseNip46ConnectIntent(value));
+}
+
+export function parseNip46ConnectReview(value: unknown): Nip46ConnectReview {
+  if (!isRecord(value)) throw new Error("NIP-46 connect review must be an object");
+  assertOnlyKeys(
+    value,
+    [
+      "format",
+      "id",
+      "remote_signer_pubkey",
+      "secret_present",
+      "requested_permissions",
+      "pages",
+      "connect_digest"
+    ],
+    "NIP-46 connect review"
+  );
+  if (value.format !== "nsealr-nip46-connect-review-v0") {
+    throw new Error("NIP-46 connect review format is invalid");
+  }
+  const id = requireNip46Id(value.id);
+  const remoteSignerPubkey = requireXOnlyPubkey(value.remote_signer_pubkey, "connect review remote-signer pubkey");
+  if (typeof value.secret_present !== "boolean") throw new Error("NIP-46 connect review secret_present must be boolean");
+  if (!Array.isArray(value.requested_permissions)) {
+    throw new Error("NIP-46 connect review requested_permissions must be a list");
+  }
+  const requestedPermissions = value.requested_permissions.map((permission, index) =>
+    parseNip46RequestedPermission(permission, `NIP-46 connect review requested_permissions[${index}]`)
+  );
+  if (!Array.isArray(value.pages) || value.pages.length === 0) {
+    throw new Error("NIP-46 connect review pages must be a non-empty list");
+  }
+  const pages = value.pages.map((page, index) => parseConnectReviewPage(page, `NIP-46 connect review pages[${index}]`));
+  const connectDigest = requireLowerHex64(value.connect_digest, "NIP-46 connect review connect_digest");
+  const reviewWithoutDigest: Nip46ConnectReviewWithoutDigest = {
+    format: "nsealr-nip46-connect-review-v0",
+    id,
+    remote_signer_pubkey: remoteSignerPubkey,
+    secret_present: value.secret_present,
+    requested_permissions: requestedPermissions,
+    pages
+  };
+  if (connectDigest !== connectDigestForReview(reviewWithoutDigest)) {
+    throw new Error("NIP-46 connect review digest mismatch");
+  }
+  const canonicalReview = reviewNip46ConnectIntent({
+    id,
+    remote_signer_pubkey: remoteSignerPubkey,
+    ...(value.secret_present ? { secret: "redacted" } : {}),
+    requested_permissions: requestedPermissions
+  });
+  if (canonicalJson(canonicalReview) !== canonicalJson({ ...reviewWithoutDigest, connect_digest: connectDigest })) {
+    throw new Error("NIP-46 connect review is not canonical");
+  }
+  return {
+    ...reviewWithoutDigest,
+    connect_digest: connectDigest
+  };
+}
+
+export function approveNip46ConnectReview(
+  value: unknown,
+  options: Nip46ConnectApprovalOptions
+): Nip46ConnectApproval {
+  const review = parseNip46ConnectReview(value);
+  const reviewedConnectDigest = requireLowerHex64(
+    options.reviewedConnectDigest,
+    "reviewed NIP-46 connect digest"
+  );
+  if (reviewedConnectDigest !== review.connect_digest) {
+    throw new Error("reviewed connect digest does not match NIP-46 connect review");
+  }
+  return {
+    format: "nsealr-nip46-connect-approval-v0",
+    id: review.id,
+    connect_digest: review.connect_digest,
+    approved_at: requireSafeNonNegativeInteger(options.approvedAt, "NIP-46 connect approval approved_at"),
+    acknowledges_connect: false,
+    creates_grants: false,
+    opens_relay: false,
+    persists_session_state: false,
+    stores_production_secrets: false,
+    exposes_secret: false
+  };
 }
 
 export function nip46PermissionRequirementFromRequest(value: unknown): Nip46PermissionRequirement {

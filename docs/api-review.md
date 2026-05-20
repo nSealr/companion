@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:57dde67e213bc95e23d65f4b9b8d88ab56a41a43ee330aeea8a2297e821e9a13`
+API surface digest: `sha256:6dbd869a89ec2a64ccf5bb677858d26ce804ffe9fba5bdd97a3933fff3fc6440`
 
 Source: `docs/api.md`
 
@@ -23,10 +23,11 @@ Source: `docs/api.md`
 - Companion APIs may prepare requests, validate payloads, verify responses,
   render untrusted review previews, and route to signers. Trusted review and
   approval remain signer-route responsibilities.
-- NIP-46 APIs currently handle the already-decrypted payload bridge plus
-  descriptor-only connection URI parsing. Relay sessions, NIP-44 encryption,
-  `connect` acknowledgements, persistent grants, and browser extension
-  packaging remain outside this reviewed surface.
+- NIP-46 APIs currently handle the already-decrypted payload bridge,
+  digest-bound `connect` review/approval artifacts, and descriptor-only
+  connection URI parsing. Relay sessions, NIP-44 encryption, `connect`
+  acknowledgements, persistent grants, and browser extension packaging remain
+  outside this reviewed surface.
 
 ## @nsealr/browser-provider
 
@@ -134,11 +135,12 @@ CDC/UART/WebSerial experiments, but WebSerial/WebUSB exposure remains outside
 Status: reviewed for pre-alpha.
 
 The NIP-46 package converts already-decrypted messages into nSealr decisions or
-deterministic local responses, parses connect review intents, parses
-descriptor-only `bunker://` and `nostrconnect://` connection URI metadata,
-parses relay event envelopes, parses requested-permission metadata, parses
-stricter approved-permission inputs, parses read-only policy files, and
-enforces permission checks. It also evaluates relay request steps only after
+deterministic local responses, parses connect review intents, produces
+digest-bound connect review and approval artifacts, parses descriptor-only
+`bunker://` and `nostrconnect://` connection URI metadata, parses relay event
+envelopes, parses requested-permission metadata, parses stricter
+approved-permission inputs, parses read-only policy files, and enforces
+permission checks. It also evaluates relay request steps only after
 plaintext has been supplied by a future NIP-44 layer, returning deterministic
 bridge decisions without opening relays, acknowledging `connect`, creating
 grants, dispatching signers, or persisting session state. Approved `sign_event`
@@ -147,7 +149,8 @@ records only secret presence, not the secret value. Relay event envelope
 parsing exposes only sender/recipient/content metadata and signed-field shape;
 it does not verify signatures or decrypt NIP-44 content. It deliberately
 excludes relay sessions, NIP-44 encryption/decryption, persistent grants,
-connect acknowledgement, browser storage, and signer I/O.
+connect acknowledgement, browser storage, and signer I/O; connect approval
+artifacts explicitly preserve those false side-effect flags.
 
 ## @nsealr/policy
 

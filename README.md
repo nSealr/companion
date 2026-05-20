@@ -297,6 +297,9 @@ match the shared `contract_id`.
   already-decrypted NIP-46 `connect` request. It shows the remote signer
   pubkey, whether a secret was provided, and requested permissions without
   echoing the secret value or approving the client.
+- `nsealr nip46 approve-connect` writes a digest-bound local approval artifact
+  only after the reviewed connect digest is supplied back to the CLI. The
+  artifact records no `ack`, grant, relay session, signer dispatch, or secret.
 - `nsealr nip46 parse-connection-uri` reads a `bunker://` or
   `nostrconnect://` token from a local file and writes descriptor-only metadata
   without echoing the shared secret value. It does not open relays, acknowledge
@@ -363,9 +366,10 @@ match the shared `contract_id`.
   output before reader connection.
 - `packages/nip46` implements the first decrypted NIP-46 payload bridge for
   `get_public_key`, `sign_event`, local `ping`, and nSealr response mapping.
-  It also parses `connect` requests into policy-review intents and deterministic
-  review pages, validates requested permission strings, and owns the read-only
-  policy-file parser used by the CLI. It can also parse official `bunker://`
+  It also parses `connect` requests into policy-review intents, deterministic
+  review pages, and digest-bound local approval artifacts, validates requested
+  permission strings, and owns the read-only policy-file parser used by the
+  CLI. It can also parse official `bunker://`
   and `nostrconnect://` connection tokens into descriptor-only metadata for
   later UX, validating relays, requested permissions, and client metadata while
   retaining only secret presence. It now parses NIP-46 `kind:24133` relay event
@@ -480,6 +484,7 @@ pnpm nsealr local grant-store revoke-client --grant-store "$PWD/local-grants-nex
 pnpm nsealr nip46 decide --message nip46-message.json --permissions sign_event:1 --out decision.json
 pnpm nsealr nip46 decide --message nip46-message.json --policy-file policy.json --out decision.json
 pnpm nsealr nip46 review-connect --message nip46-connect.json --out connect-review.json
+pnpm nsealr nip46 approve-connect --review connect-review.json --reviewed-connect-digest <connect-digest-hex> --approved-at 1900000001 --out connect-approval.json
 pnpm nsealr smartcard-sim-sign --secret-key <test-only-hex> --request request.qr --request-format qr --review-acknowledged --approval-digest <approval-digest-hex> --out response.qr --output-format qr
 ```
 

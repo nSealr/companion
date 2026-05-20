@@ -31,6 +31,7 @@ import {
 } from "@nsealr/fixtures";
 import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
 import {
+  approveNip46ConnectReview,
   decideNip46BridgeAction,
   evaluateNip46RelayRequestStep,
   isNip46RequestPermitted,
@@ -435,6 +436,17 @@ function validateNip46PayloadFixture(name: string, fixture: unknown): void {
       reviewNip46ConnectMessage(fixture.request_message),
       fixture.connect_review,
       `invalid NIP-46 fixture ${name}: connect review mismatch`
+    );
+    if (!isRecord(fixture.connect_review) || !isRecord(fixture.connect_approval)) {
+      throw new Error(`invalid NIP-46 fixture ${name}: connect must include review and approval artifacts`);
+    }
+    assertJsonEqual(
+      approveNip46ConnectReview(fixture.connect_review, {
+        reviewedConnectDigest: String(fixture.connect_review.connect_digest),
+        approvedAt: Number(fixture.connect_approval.approved_at)
+      }),
+      fixture.connect_approval,
+      `invalid NIP-46 fixture ${name}: connect approval mismatch`
     );
     return;
   }
@@ -1164,6 +1176,21 @@ export function buildCli(options: BuildCliOptions = {}): Command {
     .requiredOption("--out <path>", "Write the connect review JSON")
     .action((options: { message: string; out: string }) => {
       writeJson(options.out, reviewNip46ConnectMessage(readJson(options.message)));
+    });
+
+  nip46
+    .command("approve-connect")
+    .description("Write a digest-bound local approval artifact for a reviewed NIP-46 connect request")
+    .requiredOption("--review <path>", "Read a NIP-46 connect review JSON file")
+    .requiredOption("--reviewed-connect-digest <hex>", "Digest read and confirmed by the user")
+    .requiredOption("--approved-at <unix>", "Unix timestamp recorded in the local approval artifact")
+    .requiredOption("--out <path>", "Write the connect approval JSON")
+    .action((options: { review: string; reviewedConnectDigest: string; approvedAt: string; out: string }) => {
+      const approval = approveNip46ConnectReview(readJson(options.review), {
+        reviewedConnectDigest: options.reviewedConnectDigest,
+        approvedAt: nonNegativeIntegerOption(options.approvedAt, "--approved-at")
+      });
+      writeNewJson(options.out, approval);
     });
 
   nip46

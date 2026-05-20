@@ -99,6 +99,8 @@ production-grade browser/native USB/WebSerial binding.
 - `connect` request parsing into explicit policy-review intents.
 - Deterministic `connect` review-page rendering without echoing secrets or
   creating grants.
+- Digest-bound local `connect` approval artifact generation without
+  acknowledging the client.
 - Request permission matching against explicit in-memory grant inputs.
 - Bridge decisions for permitted signer routing, local `ping`, `connect`
   review, and denied permissions.
@@ -120,8 +122,12 @@ pinned by shared specs vectors, including permission-denied NIP-46 responses
 before a request reaches signer transport. `nsealr nip46 decide` exposes those
 decisions as a file-backed CLI harness for integration tests. `nsealr nip46
 review-connect` exposes only the deterministic review pages for a `connect`
-message. The decision command can read explicit permissions from the command
-line or from a `nsealr-nip46-policy-v0` policy file pinned by shared specs
+message, and `nsealr nip46 approve-connect` can write a local approval artifact
+only when the reviewed connect digest is supplied back to the CLI. The approval
+artifact still records no acknowledgement, grant, relay session, signer
+dispatch, persisted session state, or secret material. The decision command can
+read explicit permissions from the command line or from a
+`nsealr-nip46-policy-v0` policy file pinned by shared specs
 vectors, but approved `sign_event` inputs must use explicit kind selectors;
 broad `sign_event` is accepted only as requested-permission metadata for
 review. Neither command creates, updates, approves, or persists grants by

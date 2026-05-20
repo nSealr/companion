@@ -374,7 +374,8 @@ describe("nsealr CLI", () => {
     };
     const connectVector = loadJson(resolve(specsRoot, "vectors/nip46/connect-policy-review.json")) as {
       request_message: unknown;
-      connect_review: unknown;
+      connect_review: { connect_digest: string };
+      connect_approval: { approved_at: number };
       bridge_decisions: Array<{
         decision: unknown;
       }>;
@@ -385,6 +386,8 @@ describe("nsealr CLI", () => {
     const deniedDecisionPath = join(tempRoot, "denied-decision.json");
     const connectDecisionPath = join(tempRoot, "connect-decision.json");
     const connectReviewPath = join(tempRoot, "connect-review.json");
+    const connectApprovalPath = join(tempRoot, "connect-approval.json");
+    const connectApprovalMismatchPath = join(tempRoot, "connect-approval-mismatch.json");
 
     writeFileSync(signEventMessagePath, `${JSON.stringify(signEventVector.request_message, null, 2)}\n`, "utf8");
     writeFileSync(connectMessagePath, `${JSON.stringify(connectVector.request_message, null, 2)}\n`, "utf8");
@@ -411,12 +414,40 @@ describe("nsealr CLI", () => {
     ]);
     await runCli(["nip46", "decide", "--message", connectMessagePath, "--out", connectDecisionPath]);
     await runCli(["nip46", "review-connect", "--message", connectMessagePath, "--out", connectReviewPath]);
+    await runCli([
+      "nip46",
+      "approve-connect",
+      "--review",
+      connectReviewPath,
+      "--reviewed-connect-digest",
+      connectVector.connect_review.connect_digest,
+      "--approved-at",
+      String(connectVector.connect_approval.approved_at),
+      "--out",
+      connectApprovalPath
+    ]);
 
     expect(loadJson(permittedDecisionPath)).toEqual(signEventVector.bridge_decisions[0].decision);
     expect(loadJson(deniedDecisionPath)).toEqual(signEventVector.bridge_decisions[1].decision);
     expect(loadJson(connectDecisionPath)).toEqual(connectVector.bridge_decisions[0].decision);
     expect(loadJson(connectReviewPath)).toEqual(connectVector.connect_review);
+    expect(loadJson(connectApprovalPath)).toEqual(connectVector.connect_approval);
     expect(JSON.stringify(loadJson(connectReviewPath))).not.toContain("secret-1");
+    await expect(
+      runCli([
+        "nip46",
+        "approve-connect",
+        "--review",
+        connectReviewPath,
+        "--reviewed-connect-digest",
+        "0".repeat(64),
+        "--approved-at",
+        String(connectVector.connect_approval.approved_at),
+        "--out",
+        connectApprovalMismatchPath
+      ])
+    ).rejects.toThrow(/reviewed connect digest/u);
+    expect(existsSync(connectApprovalMismatchPath)).toBe(false);
   });
 
   it("writes NIP-46 connection URI descriptors without echoing secrets", async () => {

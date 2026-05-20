@@ -6,7 +6,8 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
 
 - Convert already-decrypted `get_public_key` and `sign_event` payloads into
   nSealr requests or deterministic local responses.
-- Parse `connect` messages into review intents and deterministic review pages.
+- Parse `connect` messages into review intents, deterministic review pages, and
+  digest-bound local approval artifacts.
 - Parse `bunker://` and `nostrconnect://` connection URIs into descriptor-only
   metadata without echoing shared secrets.
 - Parse NIP-46 `kind:24133` relay event envelopes into sender/recipient/content
@@ -50,6 +51,11 @@ assert.equal(decision.type, "signer_request");
 Connection URI parsing is intentionally non-committal: it validates official
 NIP-46 token shape, relays, client metadata, and requested permissions, but it
 returns only `secret_present` instead of the secret value.
+
+Connect approval is also non-committal. The approval artifact proves that a
+specific connect review digest was manually confirmed, but it still records
+`acknowledges_connect: false`, `creates_grants: false`, `opens_relay: false`,
+and `persists_session_state: false`.
 
 Relay event envelope parsing is also non-committal. It validates the event kind,
 sender pubkey, exactly one recipient `p` tag, opaque encrypted content, and

@@ -185,6 +185,19 @@ export type SpecsFixtureSet = {
         page_indicator: string;
         body_lines: string[];
       }>;
+      connect_digest: string;
+    };
+    connect_approval?: {
+      format: "nsealr-nip46-connect-approval-v0";
+      id: string;
+      connect_digest: string;
+      approved_at: number;
+      acknowledges_connect: false;
+      creates_grants: false;
+      opens_relay: false;
+      persists_session_state: false;
+      stores_production_secrets: false;
+      exposes_secret: false;
     };
   }>;
   nip46PolicyFiles: Array<{

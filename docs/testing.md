@@ -537,7 +537,9 @@ single-repository CI. Cross-repository drift remains guarded by
   pubkey validation, optional secret capture, secret-presence display without
   secret-value echo, requested permissions, and rejection of signer-transport
   routing for `connect`. The shared specs fixture suite now includes a
-  `connect` policy-review intent and review-page vector.
+  `connect` policy-review intent, review-page vector, and digest-bound local
+  approval artifact that still records no `ack`, grant, relay, signer dispatch,
+  persisted session state, or production secret storage.
 - NIP-46 connection-token parser tests covering `bunker://` and
   `nostrconnect://` descriptor parsing, relay validation, requested
   permissions, optional client metadata, required `nostrconnect` secret
@@ -568,9 +570,11 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI NIP-46 decision and review tests covering `nsealr nip46 decide` against
   shared permitted, denied, and `connect` bridge-decision vectors plus
   `nsealr nip46 review-connect` against the shared `connect` review-page vector
+  and `nsealr nip46 approve-connect` against the shared connect approval vector
   without opening relay or signer transports. Approved decision inputs must use
   explicit `sign_event:<kind>` selectors; broad `sign_event` is accepted only
-  as requested-permission metadata for review.
+  as requested-permission metadata for review. Digest-mismatch approval
+  attempts fail before writing output.
 - CLI NIP-46 connection URI tests covering `nsealr nip46 parse-connection-uri`
   against shared `bunker://` and `nostrconnect://` vectors, including
   no-secret-echo output and invalid-token refusal before output files are

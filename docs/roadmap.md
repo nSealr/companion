@@ -693,15 +693,17 @@ counts, and SHA-256 digests, and still does not publish to npm.
   public `@nsealr/*` entrypoints through workspace package names after building
   package `dist` artifacts and exercises a minimal no-signer path. Package
   README files document purpose and trust boundaries. Packed-tarball smoke
-  validates installable tarballs before publication. Executable SDK examples
-  prove common public package flows, including the browser-safe SDK facade,
-  without test-only signer imports. Generated
+  validates installable tarballs before publication and now imports every
+  manifest-declared public export subpath from a temporary npm consumer.
+  Executable SDK examples prove common public package flows, including the
+  browser-safe SDK facade, without test-only signer imports. Generated
   API docs expose every public package entrypoint symbol and fail when stale.
   Package manifests include npm-facing metadata plus provenance publish config.
   Executable SDK examples now import every publishable public package at least
   once without importing `@nsealr/dev-signer`. Public package README snippets
-  are marked and executed through `make readme-examples`. The public API review
-  is digest-bound to generated API docs. Public package import hygiene is now
+  are marked and executed through
+  `make readme-examples`. The public API review is digest-bound to generated
+  API docs. Public package import hygiene is now
   checked so production source cannot drift into private apps, unreviewed
   `@nsealr/*` subpaths, or the test-only signer package. Changelog and release
   policy are present. The release-plan check emits a digest-bound review of the

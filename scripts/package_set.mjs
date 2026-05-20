@@ -39,6 +39,29 @@ export const privatePackages = workspacePackages
   .map(({ manifest }) => manifest.name)
   .sort();
 
+export function packageExportSubpaths(packageName) {
+  const manifest = sourceManifest(packageName);
+  const exports = manifest.exports;
+  if (!exports || typeof exports !== "object") {
+    return [""];
+  }
+  return Object.keys(exports)
+    .map((subpath) => {
+      if (subpath === ".") return "";
+      if (subpath.startsWith("./")) return subpath.slice(1);
+      throw new Error(`${packageName} export subpath ${subpath} is unsupported`);
+    })
+    .sort();
+}
+
+export function packageExportSpecifiers(packageName) {
+  return packageExportSubpaths(packageName).map((subpath) => `${packageName}${subpath}`);
+}
+
+export const publicPackageExportSpecifiers = publicPackages
+  .flatMap((packageName) => packageExportSpecifiers(packageName))
+  .sort();
+
 export function packageManagerCommand() {
   const npmExecPath = process.env.npm_execpath;
   if (npmExecPath?.endsWith(".js") || npmExecPath?.endsWith(".cjs")) {

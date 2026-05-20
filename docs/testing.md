@@ -672,10 +672,11 @@ single-repository CI. Cross-repository drift remains guarded by
   into injected exchanges, thrown native-host sender failures, and latest-grant
   revocation before browser callers trust route selection or signer dispatch.
 - Package consumer smoke currently runs against built JS/declaration artifacts,
-  packed tarballs, executable examples importing every publishable public
-  package, and the digest-bound package release plan. README snippets for every
-  publishable package are now executed from CI, and the public API review is
-  digest-bound to `docs/api.md`. The remaining npm-facing gate is
+  packed tarballs, every manifest-declared public export subpath from a
+  temporary npm consumer, executable examples importing every publishable
+  public package, and the digest-bound package release plan. README snippets
+  for every publishable package are now executed from CI, and the public API
+  review is digest-bound to `docs/api.md`. The remaining npm-facing gate is
   trusted-publishing/provenance activation.
 - Full NIP-46 relay-session tests with local relay fixtures after NIP-44
   session lifecycle and reviewed `connect` acknowledgement are specified.

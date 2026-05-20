@@ -7,6 +7,7 @@ import {
   assertPublicPackageTarball,
   packageFilename,
   packageManagerCommand,
+  publicPackageExportSpecifiers,
   publicPackages,
   run,
   sourceManifest
@@ -56,10 +57,12 @@ writeFileSync(join(consumerDir, "index.mjs"), `
 import assert from "node:assert/strict";
 
 const packages = ${JSON.stringify(publicPackages, null, 2)};
-for (const packageName of packages) {
-  const module = await import(packageName);
-  assert(Object.keys(module).length > 0, packageName + " must import from packed tarball");
+const packageExports = ${JSON.stringify(publicPackageExportSpecifiers, null, 2)};
+for (const specifier of packageExports) {
+  const module = await import(specifier);
+  assert(Object.keys(module).length > 0, specifier + " must import from packed tarball");
 }
+assert(packageExports.length >= packages.length, "packed smoke must cover every public package root and subpath export");
 
 const { computeEventId } = await import("@nsealr/core");
 const { validateRequest } = await import("@nsealr/protocol");

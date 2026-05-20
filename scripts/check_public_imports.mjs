@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import * as ts from "typescript";
-import { packageDirName, publicPackages, root, sourceManifest } from "./package_set.mjs";
+import { packageDirName, packageExportSubpaths, publicPackages, root } from "./package_set.mjs";
 
 const publicPackageSet = new Set(publicPackages);
 
@@ -23,25 +23,8 @@ function collectSourceFiles(directory) {
   return files.sort();
 }
 
-function publicExportSubpaths(packageName) {
-  const manifest = sourceManifest(packageName);
-  const exports = manifest.exports;
-  if (!exports || typeof exports !== "object") {
-    return new Set([""]);
-  }
-  const subpaths = new Set();
-  for (const subpath of Object.keys(exports)) {
-    if (subpath === ".") {
-      subpaths.add("");
-    } else if (subpath.startsWith("./")) {
-      subpaths.add(subpath.slice(1));
-    }
-  }
-  return subpaths;
-}
-
 const exportedSubpathsByPackage = new Map(
-  publicPackages.map((packageName) => [packageName, publicExportSubpaths(packageName)])
+  publicPackages.map((packageName) => [packageName, new Set(packageExportSubpaths(packageName))])
 );
 
 function nsealrPackageName(specifier) {

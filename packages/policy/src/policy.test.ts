@@ -160,6 +160,14 @@ describe("identity, recovery, and policy contracts", () => {
 
     expect(() => parseGrantDescriptor({
       ...grant,
+      client: {
+        ...(grant.client as Record<string, unknown>),
+        label: 123
+      }
+    })).toThrow(/client.label must be a non-empty string/u);
+
+    expect(() => parseGrantDescriptor({
+      ...grant,
       permission: {
         ...(grant.permission as Record<string, unknown>),
         reason: "not allowed"

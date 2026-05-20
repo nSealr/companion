@@ -703,7 +703,7 @@ export function parseGrantDescriptor(value: unknown): GrantDescriptor {
     route_type: routeType,
     client: {
       pubkey: requireXOnlyPubkey(value.client.pubkey, "client.pubkey"),
-      ...(typeof value.client.label === "string" ? { label: value.client.label } : {})
+      ...("label" in value.client ? { label: requireString(value.client.label, "client.label") } : {})
     },
     permission: parseGrantPermission(value.permission),
     decision,

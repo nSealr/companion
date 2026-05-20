@@ -694,7 +694,7 @@
           "target": "required",
           "current": "partial",
           "contract_id": "signed-response-verification-v0",
-          "notes": "The smartcard CLI verifies simulator and PC/SC SIGN_EVENT_ID success responses against the expected x-only public key before writing report output. Production real-card signed-event verification and companion return-path acceptance remain pending."
+          "notes": "The smartcard CLI verifies simulator and PC/SC SIGN_EVENT_ID success responses against the expected x-only public key before writing report output. Companion SmartcardSigner tests also reject invalid APDU signatures before returning simulator-backed signed-event responses. Production real-card PC/SC/NFC acceptance remains pending."
         }
       }
     },

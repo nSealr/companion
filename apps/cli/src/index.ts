@@ -1320,6 +1320,34 @@ export function buildCli(options: BuildCliOptions = {}): Command {
     });
 
   nip46
+    .command("gate-session-request")
+    .description("Write the deterministic gate result for a pending NIP-46 session request")
+    .requiredOption("--session <path>", "Read a NIP-46 session lifecycle checkpoint JSON file")
+    .requiredOption("--event <path>", "Read the kind:24133 relay event JSON file")
+    .requiredOption("--message <path>", "Read the already-decrypted NIP-46 request message JSON file")
+    .requiredOption("--evaluated-at <unix>", "Unix timestamp used for session expiry checks")
+    .option("--direction <value>", "Relay direction", "client_to_remote_signer")
+    .requiredOption("--out <path>", "Write the session request gate JSON")
+    .action((options: {
+      session: string;
+      event: string;
+      message: string;
+      evaluatedAt: string;
+      direction: string;
+      out: string;
+    }) => {
+      const gate = evaluateNip46SessionRequestGate({
+        format: "nsealr-nip46-session-request-gate-v0",
+        session: readJson(options.session),
+        evaluated_at: nonNegativeIntegerOption(options.evaluatedAt, "--evaluated-at"),
+        direction: options.direction,
+        event: readJson(options.event),
+        decrypted_message: readJson(options.message)
+      });
+      writeNewJson(options.out, gate);
+    });
+
+  nip46
     .command("parse-connection-uri")
     .description("Write descriptor-only metadata for a bunker:// or nostrconnect:// token")
     .requiredOption("--uri-file <path>", "Read a local text file containing the connection URI")

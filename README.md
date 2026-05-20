@@ -310,6 +310,10 @@ match the shared `contract_id`.
 - `nsealr nip46 approve-connect` writes a digest-bound local approval artifact
   only after the reviewed connect digest is supplied back to the CLI. The
   artifact records no `ack`, grant, relay session, signer dispatch, or secret.
+- `nsealr nip46 gate-session-request` writes the deterministic
+  `connect_ack_pending` result for a decrypted request bound to an
+  approved-but-unacknowledged session checkpoint. It does not use session
+  permissions, open relays, acknowledge `connect`, or dispatch a signer.
 - `nsealr nip46 parse-connection-uri` reads a `bunker://` or
   `nostrconnect://` token from a local file and writes descriptor-only metadata
   without echoing the shared secret value. It does not open relays, acknowledge
@@ -505,6 +509,7 @@ pnpm nsealr nip46 decide --message nip46-message.json --permissions sign_event:1
 pnpm nsealr nip46 decide --message nip46-message.json --policy-file policy.json --out decision.json
 pnpm nsealr nip46 review-connect --message nip46-connect.json --out connect-review.json
 pnpm nsealr nip46 approve-connect --review connect-review.json --reviewed-connect-digest <connect-digest-hex> --approved-at 1900000001 --out connect-approval.json
+pnpm nsealr nip46 gate-session-request --session session.json --event relay-event.json --message nip46-message.json --evaluated-at 1900000100 --out session-gate.json
 pnpm nsealr smartcard-sim-sign --secret-key <test-only-hex> --request request.qr --request-format qr --review-acknowledged --approval-digest <approval-digest-hex> --out response.qr --output-format qr
 ```
 

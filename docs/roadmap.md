@@ -160,7 +160,9 @@ The package now also evaluates a pending-session request gate for
 binding, derives the request permission requirement, and returns a deterministic
 `connect_ack_pending` rejection without using session permissions, acknowledging
 `connect`, opening relays, creating grants, dispatching signers, or persisting
-session state.
+session state. `nsealr nip46 gate-session-request` exposes this as a
+file-backed harness for integration tests without adding relay I/O or session
+persistence.
 Relay sessions, NIP-44 encryption/decryption,
 connection token responses, permission storage, grant review, and auth
 challenge UI remain future work.

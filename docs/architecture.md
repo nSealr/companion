@@ -1091,6 +1091,10 @@ request to the normal NIP-46 permission requirement logic, then returns a
 deterministic `connect_ack_pending` error. It does not use session permissions,
 acknowledge `connect`, open relays, derive NIP-44 keys, create grants, dispatch
 signers, store production secrets, or persist session state.
+`nsealr nip46 gate-session-request` is only a file-backed harness over that
+same package boundary. It reads a checkpoint, relay event, decrypted message,
+and evaluation timestamp from local files and writes the deterministic gate
+result without opening transports or creating session state.
 
 `connect` parsing is also intentionally non-committal. The bridge can extract
 the remote-signer pubkey, optional secret, and requested permissions into a

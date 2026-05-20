@@ -621,6 +621,9 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI NIP-46 session checkpoint tests covering `nsealr nip46
   create-session-checkpoint` from a review/approval pair, explicit relays,
   client pubkey, expiry, and policy-file approved permissions.
+- CLI NIP-46 session gate tests covering `nsealr nip46 gate-session-request`
+  against the shared `connect_ack_pending` vector and sender/session mismatch
+  rejection before output is written.
 - CLI NIP-46 policy-file tests covering read-only
   `nsealr-nip46-policy-v0` permission input and rejection of ambiguous
   `--permissions` plus `--policy-file` usage. The positive case consumes the

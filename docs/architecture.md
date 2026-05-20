@@ -531,6 +531,9 @@ digest-confirmed approval artifact after the reviewed route-config digest is
 supplied. Its `package-build` command then writes only a reviewed developer
 artifact to a new explicit output directory after in-memory bundling succeeds
 and the supplied route-config approval matches the embedded route config. The
+output directory must either be outside the companion source tree or a child of
+`release-artifacts/browser-extension/`, so a package rehearsal cannot create
+unreviewed files under `apps/`, `packages/`, docs, scripts, or tests. The
 returned `nsealr-browser-extension-package-build-v0` result includes the
 reviewed route-config digest, selected account/route, content-script origins,
 extension id, local pairing digest, origin-permission mode, package digest, and

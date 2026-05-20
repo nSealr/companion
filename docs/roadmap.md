@@ -629,7 +629,10 @@ publishing to npm.
   only after successful in-memory bundling, embeds that approved secretless
   static route config, and requires a reviewed origin-permission store before
   content scripts can be packaged. That store is embedded as secretless
-  background gate data, not browser storage. Package build returns explicit
+  background gate data, not browser storage. The output directory is now
+  constrained to paths outside the companion source tree or children of
+  `release-artifacts/browser-extension/`, preventing source-tree artifact drift
+  during package rehearsals. Package build returns explicit
   route, origin, extension, and pairing metadata plus a package digest and
   per-file byte counts and SHA-256 hashes, and still avoids native-host
   installation, extension storage writes, key custody, and signer dispatch.

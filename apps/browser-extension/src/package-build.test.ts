@@ -2,6 +2,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { sha256Utf8Hex } from "@nsealr/core";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
@@ -36,6 +37,8 @@ function tempOutDir(): { root: string; outDir: string; cleanup(): void } {
     }
   };
 }
+
+const companionRoot = fileURLToPath(new URL("../../..", import.meta.url));
 
 const routeConfig = {
   format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
@@ -223,6 +226,25 @@ describe("browser extension package build", () => {
     }
   });
 
+  it("allows reviewed release-artifact package output inside the repo", async () => {
+    const outDir = join(companionRoot, "release-artifacts", "browser-extension", `package-build-test-${process.pid}`);
+    rmSync(outDir, { recursive: true, force: true });
+    try {
+      const result = await buildBrowserExtensionPackage({
+        target: "firefox",
+        outDir,
+        routeConfig,
+        routeConfigApproval,
+        firefoxExtensionId: "extension@nsealr.dev"
+      });
+
+      expect(result.out_dir).toBe(outDir);
+      expect(existsSync(join(outDir, "manifest.json"))).toBe(true);
+    } finally {
+      rmSync(outDir, { recursive: true, force: true });
+    }
+  });
+
   it("writes an explicit storage-backed origin approval package artifact", async () => {
     const temp = tempOutDir();
     try {
@@ -385,6 +407,14 @@ describe("browser extension package build", () => {
         }
       })).rejects.toThrow(/digest mismatch/u);
       expect(existsSync(invalidRoute.outDir)).toBe(false);
+      const sourceTreeOutDir = join(companionRoot, "apps", "browser-extension", "src", "generated-extension");
+      await expect(buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: sourceTreeOutDir,
+        routeConfig,
+        routeConfigApproval
+      })).rejects.toThrow(/outside the companion source tree/u);
+      expect(existsSync(sourceTreeOutDir)).toBe(false);
     } finally {
       existing.cleanup();
       invalidRoute.cleanup();

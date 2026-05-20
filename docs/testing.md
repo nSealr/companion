@@ -117,8 +117,10 @@ single-repository CI. Cross-repository drift remains guarded by
   secretless selected route, and require that the route config name an explicit
   browser-dispatchable route type instead of account-only, stateless QR-vault,
   or display-less smartcard routing; package-build requires that approval
-  before embedding the route config, requires a new output directory, writes manifest,
-  popup HTML, and bundled entrypoints only after successful in-memory bundling,
+  before embedding the route config, requires a new output directory outside
+  the companion source tree unless it is under
+  `release-artifacts/browser-extension/`, writes manifest, popup HTML, and
+  bundled entrypoints only after successful in-memory bundling,
   returns explicit route, origin, extension, and pairing metadata plus a
   package digest and per-file byte counts plus SHA-256 hashes, and still
   performs no native-host installation, build-time browser storage writes, key

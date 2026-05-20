@@ -1,5 +1,5 @@
 import { mkdir, stat, writeFile } from "node:fs/promises";
-import { basename, join, resolve } from "node:path";
+import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { sha256Utf8Hex } from "@nsealr/core";
 import { build as esbuild, type Plugin } from "esbuild";
@@ -78,10 +78,21 @@ export type BrowserExtensionPackageBuildResult = {
 
 const PACKAGE_OUTPUT_DIR = "browser-extension-package";
 const COMPANION_ROOT = fileURLToPath(new URL("../../..", import.meta.url));
+const REVIEWED_REPO_OUTPUT_ROOT = resolve(COMPANION_ROOT, "release-artifacts/browser-extension");
 const PACKAGE_DIGEST_INPUT_FORMAT = "nsealr-browser-extension-package-digest-v0";
 const nodeBufferReference = /(?:\bBuffer\s*(?:\.|\[)|new\s+Buffer\b|typeof\s+Buffer|globalThis\.Buffer)/u;
 const nodeProcessReference = /(?:\bprocess\s*(?:\.|\[)|typeof\s+process|globalThis\.process)/u;
 const textEncoder = new TextEncoder();
+
+function isPathInside(root: string, candidate: string): boolean {
+  const relativePath = relative(root, candidate);
+  return relativePath === "" || (!relativePath.startsWith("..") && !isAbsolute(relativePath));
+}
+
+function isReviewedRepoOutputPath(outDir: string): boolean {
+  const relativePath = relative(REVIEWED_REPO_OUTPUT_ROOT, outDir);
+  return relativePath !== "" && !relativePath.startsWith("..") && !isAbsolute(relativePath);
+}
 
 async function pathExists(path: string): Promise<boolean> {
   try {
@@ -102,6 +113,11 @@ function requireOutDir(value: string): string {
   const outDir = resolve(value);
   if (outDir === "/" || outDir === process.cwd()) {
     throw new Error("browser extension package out-dir is unsafe");
+  }
+  if (isPathInside(COMPANION_ROOT, outDir) && !isReviewedRepoOutputPath(outDir)) {
+    throw new Error(
+      "browser extension package out-dir must be outside the companion source tree or a child of release-artifacts/browser-extension/"
+    );
   }
   return outDir;
 }
@@ -488,7 +504,7 @@ export async function buildBrowserExtensionPackage(
   const manifestJson = `${JSON.stringify(plan.manifest, null, 2)}\n`;
   const popupHtml = browserExtensionPopupHtml();
   const files = buildPackageFileManifest(manifestJson, popupHtml, bundles);
-  await mkdir(outDir);
+  await mkdir(outDir, { recursive: true });
   await writeFile(join(outDir, "manifest.json"), manifestJson);
   await writeFile(join(outDir, BROWSER_EXTENSION_POPUP_HTML_FILE), popupHtml);
   for (const entrypoint of plan.entrypoints) {

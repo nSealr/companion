@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
 import { validateRequest } from "@nsealr/protocol";
 import {
+  approveNip46AuthChallengeReview,
   approveNip46ConnectReview,
   createNip46SessionLifecycleCheckpoint,
   decideNip46BridgeAction,
@@ -15,6 +16,8 @@ import {
   nip46ResponseFromNSealr,
   nip46PermissionRequirementFromRequest,
   parseNip46ApprovedPermissions,
+  parseNip46AuthChallengeApproval,
+  parseNip46AuthChallengeReview,
   parseNip46ConnectionUri,
   parseNip46ConnectIntent,
   parseNip46ConnectApproval,
@@ -24,6 +27,7 @@ import {
   parseNip46SessionLifecycle,
   nsealrRequestFromNip46,
   parseNip46Permissions,
+  reviewNip46AuthChallengeStep,
   reviewNip46ConnectMessage,
   respondToLocalNip46Request
 } from "./nip46.js";
@@ -276,6 +280,37 @@ describe("NIP-46 bridge payloads", () => {
       dispatches_signer: false,
       persists_session_state: false
     });
+  });
+
+  it("matches shared NIP-46 auth challenge review and approval vectors", () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+
+    expect(fixtures.nip46AuthChallenges.map((vector) => vector.name)).toEqual([
+      "auth-challenge-review"
+    ]);
+    for (const vector of fixtures.nip46AuthChallenges) {
+      const sourceStep = fixtures.nip46RelaySteps.find(
+        (relayStep) => `vectors/nip46-relay-steps/${relayStep.name}.json` === vector.source_relay_step_vector
+      );
+      if (sourceStep === undefined) throw new Error(`missing source relay step for ${vector.name}`);
+      expect(reviewNip46AuthChallengeStep(sourceStep)).toEqual(vector.review);
+      expect(parseNip46AuthChallengeReview(vector.review)).toEqual(vector.review);
+      expect(
+        approveNip46AuthChallengeReview(vector.review, {
+          reviewedAuthChallengeDigest: (vector.review as { auth_challenge_digest: string }).auth_challenge_digest,
+          approvedAt: (vector.approval as { approved_at: number }).approved_at
+        })
+      ).toEqual(vector.approval);
+      expect(parseNip46AuthChallengeApproval(vector.approval)).toEqual(vector.approval);
+      expect(vector.approval).toMatchObject({
+        opens_url: false,
+        opens_relay: false,
+        acknowledges_connect: false,
+        creates_grants: false,
+        dispatches_signer: false,
+        persists_session_state: false
+      });
+    }
   });
 
   it("matches shared NIP-46 session lifecycle checkpoint vectors", () => {

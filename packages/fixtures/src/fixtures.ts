@@ -235,6 +235,14 @@ export type SpecsFixtureSet = {
     expected_step: unknown;
     scope: string;
   }>;
+  nip46AuthChallenges: Array<{
+    name: string;
+    format: "nsealr-nip46-auth-challenge-review-vector-v0";
+    source_relay_step_vector: string;
+    review: unknown;
+    approval: unknown;
+    scope: string;
+  }>;
   nip46Sessions: Array<{
     name: string;
     format: "nsealr-nip46-session-lifecycle-vector-v0";
@@ -1046,6 +1054,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const nip46ConnectionUrisRoot = resolve(specsRoot, "vectors/nip46-connection-uris");
   const nip46RelayEventsRoot = resolve(specsRoot, "vectors/nip46-relay-events");
   const nip46RelayStepsRoot = resolve(specsRoot, "vectors/nip46-relay-steps");
+  const nip46AuthChallengesRoot = resolve(specsRoot, "vectors/nip46-auth-challenges");
   const nip46SessionsRoot = resolve(specsRoot, "vectors/nip46-sessions");
   const nip46SessionGatesRoot = resolve(specsRoot, "vectors/nip46-session-gates");
   const accountsRoot = resolve(specsRoot, "vectors/accounts");
@@ -1091,6 +1100,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const nip46RelayStepFiles = readdirSync(nip46RelayStepsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const nip46AuthChallengeFiles = readdirSync(nip46AuthChallengesRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const nip46SessionFiles = readdirSync(nip46SessionsRoot)
@@ -1176,6 +1188,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     ),
     nip46RelaySteps: nip46RelayStepFiles.map(
       (file) => loadJson(resolve(nip46RelayStepsRoot, file)) as SpecsFixtureSet["nip46RelaySteps"][number]
+    ),
+    nip46AuthChallenges: nip46AuthChallengeFiles.map(
+      (file) => loadJson(resolve(nip46AuthChallengesRoot, file)) as SpecsFixtureSet["nip46AuthChallenges"][number]
     ),
     nip46Sessions: nip46SessionFiles.map(
       (file) => loadJson(resolve(nip46SessionsRoot, file)) as SpecsFixtureSet["nip46Sessions"][number]

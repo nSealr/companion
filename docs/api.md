@@ -211,6 +211,9 @@ Already-decrypted NIP-46 bridge, connect-review approval, connection-token descr
 Source entrypoint: `packages/nip46/src/index.ts`
 
 Exports:
+- `Nip46AuthChallengeApproval`
+- `Nip46AuthChallengeApprovalOptions`
+- `Nip46AuthChallengeReview`
 - `Nip46BridgeDecision`
 - `Nip46ConnectApproval`
 - `Nip46ConnectApprovalOptions`
@@ -229,6 +232,7 @@ Exports:
 - `Nip46SessionLifecycle`
 - `Nip46SessionLifecycleCheckpointOptions`
 - `Nip46SessionRequestGate`
+- `approveNip46AuthChallengeReview`
 - `approveNip46ConnectReview`
 - `createNip46SessionLifecycleCheckpoint`
 - `decideNip46BridgeAction`
@@ -241,6 +245,8 @@ Exports:
 - `nip46ResponseFromNSealr`
 - `nsealrRequestFromNip46`
 - `parseNip46ApprovedPermissions`
+- `parseNip46AuthChallengeApproval`
+- `parseNip46AuthChallengeReview`
 - `parseNip46ConnectApproval`
 - `parseNip46ConnectIntent`
 - `parseNip46ConnectReview`
@@ -250,6 +256,7 @@ Exports:
 - `parseNip46RelayEventEnvelope`
 - `parseNip46SessionLifecycle`
 - `respondToLocalNip46Request`
+- `reviewNip46AuthChallengeStep`
 - `reviewNip46ConnectIntent`
 - `reviewNip46ConnectMessage`
 

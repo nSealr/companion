@@ -19,6 +19,10 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
   and auth challenge responses expose only safe http(s) URL metadata without
   credentials or fragments for later UI, without relay I/O, signer dispatch,
   grant creation, signature verification, URL opening, or session persistence.
+- Render auth challenge URL metadata into deterministic review pages and
+  digest-bound approval artifacts without opening the URL, acknowledging
+  `connect`, creating grants, opening relays, dispatching signers, storing
+  secrets, or persisting session state.
 - Parse reviewed-but-not-active NIP-46 session lifecycle checkpoints that bind
   client/signer pubkeys, relays, connect digest, approval time, expiry, and an
   approved permission subset while keeping NIP-44 derivation, `connect`
@@ -90,6 +94,13 @@ http(s) URL without credentials or fragments in `error`; the package returns
 that URL as metadata and does not open it. Relay steps still do not decrypt
 NIP-44 content, open relays, acknowledge `connect`, create grants, dispatch a
 signer, verify signatures, or persist session state.
+
+Auth challenge review is the next manual boundary after response-step
+normalization. The package renders the remote signer pubkey, client pubkey, and
+auth URL into deterministic pages, computes `auth_challenge_digest`, and writes
+approval artifacts only when that digest is supplied back. The approval still
+records no URL opening, relay I/O, `connect` acknowledgement, grant creation,
+signer dispatch, secret storage, or session persistence.
 
 Session lifecycle parsing is a checkpoint contract, not a session engine. It
 accepts only the `approved_pending_ack` phase and rejects embedded secret

@@ -236,7 +236,7 @@ describe("nsealr CLI", () => {
     const fixtures = loadSpecsFixtures(specsRoot);
 
     await expect(collectCliOutput(["fixture", "verify", "--specs", specsRoot])).resolves.toEqual([
-      `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture")}, ${fixtureCountLabel(fixtures.nip46ConnectionUris.length, "NIP-46 connection URI fixture")}, ${fixtureCountLabel(fixtures.nip46RelayEvents.length, "NIP-46 relay event fixture")}, ${fixtureCountLabel(fixtures.nip46RelaySteps.length, "NIP-46 relay step fixture")}, ${fixtureCountLabel(fixtures.nip46Sessions.length, "NIP-46 session fixture")}, ${fixtureCountLabel(fixtures.nip46SessionGates.length, "NIP-46 session gate fixture")}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.routeRefusals.length, "route-refusal contract")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, ${fixtureCountLabel(fixtures.custodyContracts.length, "persistent-secret custody contract")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+      `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture")}, ${fixtureCountLabel(fixtures.nip46ConnectionUris.length, "NIP-46 connection URI fixture")}, ${fixtureCountLabel(fixtures.nip46RelayEvents.length, "NIP-46 relay event fixture")}, ${fixtureCountLabel(fixtures.nip46RelaySteps.length, "NIP-46 relay step fixture")}, ${fixtureCountLabel(fixtures.nip46AuthChallenges.length, "NIP-46 auth challenge fixture")}, ${fixtureCountLabel(fixtures.nip46Sessions.length, "NIP-46 session fixture")}, ${fixtureCountLabel(fixtures.nip46SessionGates.length, "NIP-46 session gate fixture")}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.routeRefusals.length, "route-refusal contract")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, ${fixtureCountLabel(fixtures.custodyContracts.length, "persistent-secret custody contract")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
     ]);
   });
 
@@ -426,10 +426,19 @@ describe("nsealr CLI", () => {
     const fixtures = loadSpecsFixtures(specsRoot);
     const sessionVector = fixtures.nip46Sessions[0];
     const gateVector = fixtures.nip46SessionGates[0];
+    const authChallengeVector = fixtures.nip46AuthChallenges[0];
+    const authChallengeStepVector = fixtures.nip46RelaySteps.find(
+      (relayStep) => `vectors/nip46-relay-steps/${relayStep.name}.json` === authChallengeVector.source_relay_step_vector
+    );
+    if (authChallengeStepVector === undefined) throw new Error("missing auth challenge source step fixture");
     const sessionPath = join(tempRoot, "session-checkpoint.json");
     const gateEventPath = join(tempRoot, "session-gate-event.json");
     const gateMessagePath = join(tempRoot, "session-gate-message.json");
     const gatePath = join(tempRoot, "session-gate.json");
+    const authChallengeStepPath = join(tempRoot, "auth-challenge-step.json");
+    const authChallengeReviewPath = join(tempRoot, "auth-challenge-review.json");
+    const authChallengeApprovalPath = join(tempRoot, "auth-challenge-approval.json");
+    const authChallengeApprovalMismatchPath = join(tempRoot, "auth-challenge-approval-mismatch.json");
     const invalidSessionPath = join(tempRoot, "invalid-session-checkpoint.json");
     const invalidGateVectors = fixtures.invalidVectors.filter((vector) => vector.category === "nip46-session-gate") as Array<{
       name: string;
@@ -447,6 +456,7 @@ describe("nsealr CLI", () => {
     writeFileSync(connectMessagePath, `${JSON.stringify(connectVector.request_message, null, 2)}\n`, "utf8");
     writeFileSync(gateEventPath, `${JSON.stringify(gateVector.event, null, 2)}\n`, "utf8");
     writeFileSync(gateMessagePath, `${JSON.stringify(gateVector.decrypted_message, null, 2)}\n`, "utf8");
+    writeFileSync(authChallengeStepPath, `${JSON.stringify(authChallengeStepVector, null, 2)}\n`, "utf8");
 
     await runCli([
       "nip46",
@@ -489,6 +499,37 @@ describe("nsealr CLI", () => {
     expect(loadJson(connectReviewPath)).toEqual(connectVector.connect_review);
     expect(loadJson(connectApprovalPath)).toEqual(connectVector.connect_approval);
     expect(JSON.stringify(loadJson(connectReviewPath))).not.toContain("secret-1");
+    await runCli(["nip46", "review-auth-challenge", "--step", authChallengeStepPath, "--out", authChallengeReviewPath]);
+    await runCli([
+      "nip46",
+      "approve-auth-challenge",
+      "--review",
+      authChallengeReviewPath,
+      "--reviewed-auth-challenge-digest",
+      (authChallengeVector.review as { auth_challenge_digest: string }).auth_challenge_digest,
+      "--approved-at",
+      String((authChallengeVector.approval as { approved_at: number }).approved_at),
+      "--out",
+      authChallengeApprovalPath
+    ]);
+    expect(loadJson(authChallengeReviewPath)).toEqual(authChallengeVector.review);
+    expect(loadJson(authChallengeApprovalPath)).toEqual(authChallengeVector.approval);
+    expect(JSON.stringify(loadJson(authChallengeReviewPath))).toContain("No automatic opening");
+    await expect(
+      runCli([
+        "nip46",
+        "approve-auth-challenge",
+        "--review",
+        authChallengeReviewPath,
+        "--reviewed-auth-challenge-digest",
+        "0".repeat(64),
+        "--approved-at",
+        String((authChallengeVector.approval as { approved_at: number }).approved_at),
+        "--out",
+        authChallengeApprovalMismatchPath
+      ])
+    ).rejects.toThrow(/reviewed auth challenge digest/u);
+    expect(existsSync(authChallengeApprovalMismatchPath)).toBe(false);
     await runCli([
       "nip46",
       "create-session-checkpoint",

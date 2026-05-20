@@ -155,6 +155,12 @@ opening the URL or treating arbitrary result/error pairs as valid. Both avoid
 relay I/O, NIP-44 decryption, `connect`
 acknowledgement, grant creation, signer dispatch, signature verification, or
 session persistence.
+The auth challenge boundary now also has deterministic review/approval
+artifacts: `packages/nip46` can render the remote signer pubkey, client pubkey,
+and URL into review pages, and `nsealr nip46 approve-auth-challenge` writes an
+approval only after the reviewed auth challenge digest is supplied back. This
+still does not open the URL, acknowledge `connect`, open relays, create grants,
+dispatch signers, store production secrets, or persist session state.
 The package now also evaluates a pending-session request gate for
 `approved_pending_ack` checkpoints: it validates the relay envelope and session
 binding, derives the request permission requirement, and returns a deterministic
@@ -166,8 +172,8 @@ persistence. The invalid vector set now pins sender mismatch, recipient
 mismatch, pre-approval evaluation, expiry, wrong direction, and attempted
 `connect` processing before output is written.
 Relay sessions, NIP-44 encryption/decryption,
-connection token responses, permission storage, grant review, and auth
-challenge UI remain future work.
+connection token responses, permission storage, grant review, browser URL
+opening UX, and active auth-flow session handling remain future work.
 
 ## M4.5: Pre-Signing Contract Hardening
 

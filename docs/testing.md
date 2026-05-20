@@ -595,6 +595,12 @@ single-repository CI. Cross-repository drift remains guarded by
   Neither opens relays, decrypts NIP-44 content, acknowledges `connect`,
   creates grants, dispatches signers, verifies signatures, or persists session
   state.
+- NIP-46 auth challenge review tests covering the shared auth URL review vector.
+  Package code renders the remote signer pubkey, client pubkey, and URL into
+  deterministic pages, binds them to `auth_challenge_digest`, writes approval
+  artifacts only after digest confirmation, and keeps URL opening, relay I/O,
+  `connect` acknowledgement, grants, signer dispatch, secret storage, and
+  session persistence disabled.
 - NIP-46 session lifecycle checkpoint tests covering shared
   `approved_pending_ack` vectors. The parser validates client/signer pubkeys,
   relay URLs, connect digest shape, approval/expiry safety, requested
@@ -623,8 +629,11 @@ single-repository CI. Cross-repository drift remains guarded by
 - CLI NIP-46 decision and review tests covering `nsealr nip46 decide` against
   shared permitted, denied, and `connect` bridge-decision vectors plus
   `nsealr nip46 review-connect` against the shared `connect` review-page vector
-  and `nsealr nip46 approve-connect` against the shared connect approval vector
-  without opening relay or signer transports. Approved decision inputs must use
+  and `nsealr nip46 approve-connect` against the shared connect approval vector.
+  They also cover `nsealr nip46 review-auth-challenge` and
+  `nsealr nip46 approve-auth-challenge` against the shared auth challenge
+  review/approval vector without opening URLs, relays, or signer transports.
+  Approved decision inputs must use
   explicit `sign_event:<kind>` selectors; broad `sign_event` is accepted only
   as requested-permission metadata for review. Digest-mismatch approval
   attempts fail before writing output.

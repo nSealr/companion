@@ -40,6 +40,7 @@ import {
 } from "@nsealr/fixtures";
 import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
 import {
+  approveNip46AuthChallengeReview,
   approveNip46ConnectReview,
   createNip46SessionLifecycleCheckpoint,
   decideNip46BridgeAction,
@@ -57,6 +58,7 @@ import {
   parseNip46Permissions,
   parseNip46RelayEventEnvelope,
   parseNip46SessionLifecycle,
+  reviewNip46AuthChallengeStep,
   reviewNip46ConnectMessage,
   type Nip46Permission,
   respondToLocalNip46Request
@@ -813,6 +815,27 @@ export function buildCli(options: BuildCliOptions = {}): Command {
           throw new Error(`invalid NIP-46 relay step fixture ${relayStep.name}: step mismatch`);
         }
       }
+      for (const authChallenge of fixtures.nip46AuthChallenges) {
+        const sourceStep = fixtures.nip46RelaySteps.find(
+          (relayStep) => `vectors/nip46-relay-steps/${relayStep.name}.json` === authChallenge.source_relay_step_vector
+        );
+        if (sourceStep === undefined) {
+          throw new Error(`invalid NIP-46 auth challenge fixture ${authChallenge.name}: source relay step missing`);
+        }
+        const review = reviewNip46AuthChallengeStep(sourceStep);
+        if (JSON.stringify(review) !== JSON.stringify(authChallenge.review)) {
+          throw new Error(`invalid NIP-46 auth challenge fixture ${authChallenge.name}: review mismatch`);
+        }
+        const expectedReview = authChallenge.review as { auth_challenge_digest?: unknown };
+        const expectedApproval = authChallenge.approval as { approved_at?: unknown };
+        const approval = approveNip46AuthChallengeReview(authChallenge.review, {
+          reviewedAuthChallengeDigest: String(expectedReview.auth_challenge_digest),
+          approvedAt: Number(expectedApproval.approved_at)
+        });
+        if (JSON.stringify(approval) !== JSON.stringify(authChallenge.approval)) {
+          throw new Error(`invalid NIP-46 auth challenge fixture ${authChallenge.name}: approval mismatch`);
+        }
+      }
       for (const session of fixtures.nip46Sessions) {
         const actual = parseNip46SessionLifecycle(session.session);
         if (JSON.stringify(actual) !== JSON.stringify(session.session)) {
@@ -855,6 +878,8 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         fixtureCountLabel(fixtures.nip46RelayEvents.length, "NIP-46 relay event fixture");
       const relayStepFixtureLabel =
         fixtureCountLabel(fixtures.nip46RelaySteps.length, "NIP-46 relay step fixture");
+      const authChallengeFixtureLabel =
+        fixtureCountLabel(fixtures.nip46AuthChallenges.length, "NIP-46 auth challenge fixture");
       const sessionFixtureLabel =
         fixtureCountLabel(fixtures.nip46Sessions.length, "NIP-46 session fixture");
       const sessionGateFixtureLabel =
@@ -864,7 +889,7 @@ export function buildCli(options: BuildCliOptions = {}): Command {
       const custodyContractFixtureLabel =
         fixtureCountLabel(fixtures.custodyContracts.length, "persistent-secret custody contract");
       console.log(
-        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${relayStepFixtureLabel}, ${sessionFixtureLabel}, ${sessionGateFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${routeRefusalFixtureLabel}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, ${custodyContractFixtureLabel}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${relayStepFixtureLabel}, ${authChallengeFixtureLabel}, ${sessionFixtureLabel}, ${sessionGateFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${routeRefusalFixtureLabel}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, ${custodyContractFixtureLabel}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );
     });
 
@@ -1429,6 +1454,30 @@ export function buildCli(options: BuildCliOptions = {}): Command {
     .action((options: { review: string; reviewedConnectDigest: string; approvedAt: string; out: string }) => {
       const approval = approveNip46ConnectReview(readJson(options.review), {
         reviewedConnectDigest: options.reviewedConnectDigest,
+        approvedAt: nonNegativeIntegerOption(options.approvedAt, "--approved-at")
+      });
+      writeNewJson(options.out, approval);
+    });
+
+  nip46
+    .command("review-auth-challenge")
+    .description("Write deterministic review pages for an already-decrypted NIP-46 auth_url response step")
+    .requiredOption("--step <path>", "Read a NIP-46 relay response-step input JSON file")
+    .requiredOption("--out <path>", "Write the auth challenge review JSON")
+    .action((options: { step: string; out: string }) => {
+      writeNewJson(options.out, reviewNip46AuthChallengeStep(readJson(options.step)));
+    });
+
+  nip46
+    .command("approve-auth-challenge")
+    .description("Write a digest-bound local approval artifact for a reviewed NIP-46 auth_url response step")
+    .requiredOption("--review <path>", "Read a NIP-46 auth challenge review JSON file")
+    .requiredOption("--reviewed-auth-challenge-digest <hex>", "Digest read and confirmed by the user")
+    .requiredOption("--approved-at <unix>", "Unix timestamp recorded in the local approval artifact")
+    .requiredOption("--out <path>", "Write the auth challenge approval JSON")
+    .action((options: { review: string; reviewedAuthChallengeDigest: string; approvedAt: string; out: string }) => {
+      const approval = approveNip46AuthChallengeReview(readJson(options.review), {
+        reviewedAuthChallengeDigest: options.reviewedAuthChallengeDigest,
         approvedAt: nonNegativeIntegerOption(options.approvedAt, "--approved-at")
       });
       writeNewJson(options.out, approval);

@@ -130,6 +130,45 @@ export type Nip46ConnectApproval = {
   exposes_secret: false;
 };
 
+export type Nip46AuthChallengeReview = {
+  format: "nsealr-nip46-auth-challenge-review-v0";
+  id: string;
+  remote_signer_pubkey: string;
+  client_pubkey: string;
+  auth_url: string;
+  pages: Array<{
+    title: string;
+    page_indicator: string;
+    body_lines: string[];
+  }>;
+  opens_url: false;
+  opens_relay: false;
+  acknowledges_connect: false;
+  creates_grants: false;
+  dispatches_signer: false;
+  persists_session_state: false;
+  stores_production_secrets: false;
+  exposes_secret: false;
+  contains_secret_material: false;
+  auth_challenge_digest: string;
+};
+
+export type Nip46AuthChallengeApproval = {
+  format: "nsealr-nip46-auth-challenge-approval-v0";
+  id: string;
+  auth_challenge_digest: string;
+  approved_at: number;
+  opens_url: false;
+  opens_relay: false;
+  acknowledges_connect: false;
+  creates_grants: false;
+  dispatches_signer: false;
+  persists_session_state: false;
+  stores_production_secrets: false;
+  exposes_secret: false;
+  contains_secret_material: false;
+};
+
 export type Nip46SessionLifecycle = {
   name: string;
   format: "nsealr-nip46-session-lifecycle-v0";
@@ -180,6 +219,11 @@ export type Nip46SessionRequestGate = {
 
 export type Nip46ConnectApprovalOptions = {
   reviewedConnectDigest: string;
+  approvedAt: number;
+};
+
+export type Nip46AuthChallengeApprovalOptions = {
+  reviewedAuthChallengeDigest: string;
   approvedAt: number;
 };
 
@@ -252,6 +296,18 @@ const NIP46_SESSION_SECRET_FIELDS = new Set([
 const X_ONLY_PUBKEY = /^[0-9a-f]{64}$/u;
 const HEX_64_BYTE = /^[0-9a-f]{128}$/u;
 const CONNECT_REVIEW_DIGEST_FORMAT = "nsealr-nip46-connect-digest-v0";
+const AUTH_CHALLENGE_REVIEW_DIGEST_FORMAT = "nsealr-nip46-auth-challenge-digest-v0";
+const NIP46_AUTH_CHALLENGE_FALSE_FIELDS = [
+  "opens_url",
+  "opens_relay",
+  "acknowledges_connect",
+  "creates_grants",
+  "dispatches_signer",
+  "persists_session_state",
+  "stores_production_secrets",
+  "exposes_secret",
+  "contains_secret_material"
+] as const;
 
 type NSealrBridgeRequest =
   | {
@@ -793,7 +849,7 @@ function connectDigestForReview(review: Nip46ConnectReviewWithoutDigest): string
   }));
 }
 
-function parseConnectReviewPage(value: unknown, context: string): Nip46ConnectReview["pages"][number] {
+function parseNip46ReviewPage(value: unknown, context: string): Nip46ConnectReview["pages"][number] {
   if (!isRecord(value)) throw new Error(`${context} must be an object`);
   assertOnlyKeys(value, ["title", "page_indicator", "body_lines"], context);
   if (typeof value.title !== "string" || value.title.length === 0) throw new Error(`${context} title is invalid`);
@@ -819,6 +875,235 @@ function requireSafeNonNegativeInteger(value: unknown, label: string): number {
     throw new Error(`${label} must be a safe non-negative integer`);
   }
   return value;
+}
+
+type Nip46AuthChallengeReviewWithoutDigest = Omit<Nip46AuthChallengeReview, "auth_challenge_digest">;
+
+function authChallengeDigestForReview(review: Nip46AuthChallengeReviewWithoutDigest): string {
+  return sha256Utf8Hex(canonicalJson({
+    format: AUTH_CHALLENGE_REVIEW_DIGEST_FORMAT,
+    review
+  }));
+}
+
+function authChallengeReviewForParts(input: {
+  id: string;
+  remoteSignerPubkey: string;
+  clientPubkey: string;
+  authUrl: string;
+}): Nip46AuthChallengeReview {
+  const reviewWithoutDigest: Nip46AuthChallengeReviewWithoutDigest = {
+    format: "nsealr-nip46-auth-challenge-review-v0",
+    id: input.id,
+    remote_signer_pubkey: input.remoteSignerPubkey,
+    client_pubkey: input.clientPubkey,
+    auth_url: input.authUrl,
+    pages: [
+      {
+        title: "Auth Challenge",
+        page_indicator: "Page 1/2",
+        body_lines: ["Remote signer", input.remoteSignerPubkey, "Client", input.clientPubkey]
+      },
+      {
+        title: "Auth URL",
+        page_indicator: "Page 2/2",
+        body_lines: [input.authUrl, "No automatic opening"]
+      }
+    ],
+    opens_url: false,
+    opens_relay: false,
+    acknowledges_connect: false,
+    creates_grants: false,
+    dispatches_signer: false,
+    persists_session_state: false,
+    stores_production_secrets: false,
+    exposes_secret: false,
+    contains_secret_material: false
+  };
+  return {
+    ...reviewWithoutDigest,
+    auth_challenge_digest: authChallengeDigestForReview(reviewWithoutDigest)
+  };
+}
+
+export function reviewNip46AuthChallengeStep(value: unknown): Nip46AuthChallengeReview {
+  const step = evaluateNip46RelayResponseStep(value);
+  if (step.result_type !== "auth_challenge" || step.auth_url === undefined) {
+    throw new Error("NIP-46 auth challenge review requires an auth_challenge response step");
+  }
+  return authChallengeReviewForParts({
+    id: step.message_id,
+    remoteSignerPubkey: step.envelope.sender_pubkey,
+    clientPubkey: step.envelope.recipient_pubkey,
+    authUrl: step.auth_url
+  });
+}
+
+function requireFalseAuthChallengeFlag(
+  value: Record<string, unknown>,
+  field: typeof NIP46_AUTH_CHALLENGE_FALSE_FIELDS[number],
+  context: "review" | "approval"
+): void {
+  if (value[field] !== false) throw new Error(`NIP-46 auth challenge ${context} ${field} must be false`);
+}
+
+export function parseNip46AuthChallengeReview(value: unknown): Nip46AuthChallengeReview {
+  if (!isRecord(value)) throw new Error("NIP-46 auth challenge review must be an object");
+  assertOnlyKeys(
+    value,
+    [
+      "format",
+      "id",
+      "remote_signer_pubkey",
+      "client_pubkey",
+      "auth_url",
+      "pages",
+      "opens_url",
+      "opens_relay",
+      "acknowledges_connect",
+      "creates_grants",
+      "dispatches_signer",
+      "persists_session_state",
+      "stores_production_secrets",
+      "exposes_secret",
+      "contains_secret_material",
+      "auth_challenge_digest"
+    ],
+    "NIP-46 auth challenge review"
+  );
+  if (value.format !== "nsealr-nip46-auth-challenge-review-v0") {
+    throw new Error("NIP-46 auth challenge review format is invalid");
+  }
+  const id = requireNip46Id(value.id);
+  const remoteSignerPubkey = requireXOnlyPubkey(value.remote_signer_pubkey, "auth challenge remote-signer pubkey");
+  const clientPubkey = requireXOnlyPubkey(value.client_pubkey, "auth challenge client pubkey");
+  if (typeof value.auth_url !== "string") throw new Error("NIP-46 auth challenge review auth_url must be a string");
+  const authUrl = requireNip46AuthUrl(value.auth_url);
+  if (!Array.isArray(value.pages) || value.pages.length === 0) {
+    throw new Error("NIP-46 auth challenge review pages must be a non-empty list");
+  }
+  const pages = value.pages.map((page, index) =>
+    parseNip46ReviewPage(page, `NIP-46 auth challenge review pages[${index}]`)
+  );
+  for (const field of NIP46_AUTH_CHALLENGE_FALSE_FIELDS) {
+    requireFalseAuthChallengeFlag(value, field, "review");
+  }
+  const authChallengeDigest = requireLowerHex64(
+    value.auth_challenge_digest,
+    "NIP-46 auth challenge review auth_challenge_digest"
+  );
+  const reviewWithoutDigest: Nip46AuthChallengeReviewWithoutDigest = {
+    format: "nsealr-nip46-auth-challenge-review-v0",
+    id,
+    remote_signer_pubkey: remoteSignerPubkey,
+    client_pubkey: clientPubkey,
+    auth_url: authUrl,
+    pages,
+    opens_url: false,
+    opens_relay: false,
+    acknowledges_connect: false,
+    creates_grants: false,
+    dispatches_signer: false,
+    persists_session_state: false,
+    stores_production_secrets: false,
+    exposes_secret: false,
+    contains_secret_material: false
+  };
+  if (authChallengeDigest !== authChallengeDigestForReview(reviewWithoutDigest)) {
+    throw new Error("NIP-46 auth challenge review digest mismatch");
+  }
+  const canonicalReview = authChallengeReviewForParts({
+    id,
+    remoteSignerPubkey,
+    clientPubkey,
+    authUrl
+  });
+  if (canonicalJson(canonicalReview) !== canonicalJson({ ...reviewWithoutDigest, auth_challenge_digest: authChallengeDigest })) {
+    throw new Error("NIP-46 auth challenge review is not canonical");
+  }
+  return {
+    ...reviewWithoutDigest,
+    auth_challenge_digest: authChallengeDigest
+  };
+}
+
+export function approveNip46AuthChallengeReview(
+  value: unknown,
+  options: Nip46AuthChallengeApprovalOptions
+): Nip46AuthChallengeApproval {
+  const review = parseNip46AuthChallengeReview(value);
+  const reviewedAuthChallengeDigest = requireLowerHex64(
+    options.reviewedAuthChallengeDigest,
+    "reviewed NIP-46 auth challenge digest"
+  );
+  if (reviewedAuthChallengeDigest !== review.auth_challenge_digest) {
+    throw new Error("reviewed auth challenge digest does not match NIP-46 auth challenge review");
+  }
+  return {
+    format: "nsealr-nip46-auth-challenge-approval-v0",
+    id: review.id,
+    auth_challenge_digest: review.auth_challenge_digest,
+    approved_at: requireSafeNonNegativeInteger(options.approvedAt, "NIP-46 auth challenge approval approved_at"),
+    opens_url: false,
+    opens_relay: false,
+    acknowledges_connect: false,
+    creates_grants: false,
+    dispatches_signer: false,
+    persists_session_state: false,
+    stores_production_secrets: false,
+    exposes_secret: false,
+    contains_secret_material: false
+  };
+}
+
+export function parseNip46AuthChallengeApproval(value: unknown): Nip46AuthChallengeApproval {
+  if (!isRecord(value)) throw new Error("NIP-46 auth challenge approval must be an object");
+  assertOnlyKeys(
+    value,
+    [
+      "format",
+      "id",
+      "auth_challenge_digest",
+      "approved_at",
+      "opens_url",
+      "opens_relay",
+      "acknowledges_connect",
+      "creates_grants",
+      "dispatches_signer",
+      "persists_session_state",
+      "stores_production_secrets",
+      "exposes_secret",
+      "contains_secret_material"
+    ],
+    "NIP-46 auth challenge approval"
+  );
+  if (value.format !== "nsealr-nip46-auth-challenge-approval-v0") {
+    throw new Error("NIP-46 auth challenge approval format is invalid");
+  }
+  const id = requireNip46Id(value.id);
+  const authChallengeDigest = requireLowerHex64(
+    value.auth_challenge_digest,
+    "NIP-46 auth challenge approval auth_challenge_digest"
+  );
+  const approvedAt = requireSafeNonNegativeInteger(value.approved_at, "NIP-46 auth challenge approval approved_at");
+  for (const field of NIP46_AUTH_CHALLENGE_FALSE_FIELDS) {
+    requireFalseAuthChallengeFlag(value, field, "approval");
+  }
+  return {
+    format: "nsealr-nip46-auth-challenge-approval-v0",
+    id,
+    auth_challenge_digest: authChallengeDigest,
+    approved_at: approvedAt,
+    opens_url: false,
+    opens_relay: false,
+    acknowledges_connect: false,
+    creates_grants: false,
+    dispatches_signer: false,
+    persists_session_state: false,
+    stores_production_secrets: false,
+    exposes_secret: false,
+    contains_secret_material: false
+  };
 }
 
 export function reviewNip46ConnectIntent(intent: Nip46ConnectIntent): Nip46ConnectReview {
@@ -886,7 +1171,7 @@ export function parseNip46ConnectReview(value: unknown): Nip46ConnectReview {
   if (!Array.isArray(value.pages) || value.pages.length === 0) {
     throw new Error("NIP-46 connect review pages must be a non-empty list");
   }
-  const pages = value.pages.map((page, index) => parseConnectReviewPage(page, `NIP-46 connect review pages[${index}]`));
+  const pages = value.pages.map((page, index) => parseNip46ReviewPage(page, `NIP-46 connect review pages[${index}]`));
   const connectDigest = requireLowerHex64(value.connect_digest, "NIP-46 connect review connect_digest");
   const reviewWithoutDigest: Nip46ConnectReviewWithoutDigest = {
     format: "nsealr-nip46-connect-review-v0",

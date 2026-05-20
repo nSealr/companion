@@ -1036,10 +1036,15 @@ The first NIP-46 module handles only already-decrypted JSON-RPC-like payloads
 from NIP-46 kind `24133` content plus descriptor-only parsing for official
 `bunker://` and `nostrconnect://` connection tokens. It does not implement
 relay subscriptions, NIP-44 encryption/decryption, connection
-acknowledgements, permission persistence, or auth challenge UX. Relay response
+acknowledgements, permission persistence, or active auth-flow browser UX. Relay response
 step evaluation accepts the official auth challenge shape only as normalized
 http(s) URL metadata without credentials or fragments; it never opens the URL
 or treats it as approval.
+The package can also project that metadata into deterministic auth-challenge
+review pages and a digest-bound local approval artifact. That approval proves
+which URL was reviewed, but still records `opens_url: false`,
+`acknowledges_connect: false`, `creates_grants: false`, `opens_relay: false`,
+`dispatches_signer: false`, and `persists_session_state: false`.
 
 The bridge maps `get_public_key` and `sign_event` messages into standard
 nSealr v1 requests so any signer transport can handle them behind the same
@@ -1092,6 +1097,14 @@ to the CLI. The artifact binds the approval to the exact review pages while
 recording `acknowledges_connect: false`, `creates_grants: false`,
 `opens_relay: false`, `persists_session_state: false`, and
 `stores_production_secrets: false`.
+
+`nsealr nip46 review-auth-challenge` and `nsealr nip46
+approve-auth-challenge` expose the same boundary for auth URL response steps:
+the first command renders the remote signer, client pubkey, and auth URL; the
+second writes an approval only after the reviewed auth challenge digest is
+supplied back. These commands are file-backed harnesses only. They do not open
+the URL, acknowledge `connect`, open relays, create grants, dispatch signers,
+store secrets, or persist session state.
 
 The NIP-46 package now also parses a shared session lifecycle checkpoint, but
 this remains a checkpoint rather than a session engine. The

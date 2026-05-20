@@ -319,6 +319,13 @@ match the shared `contract_id`.
 - `nsealr nip46 approve-connect` writes a digest-bound local approval artifact
   only after the reviewed connect digest is supplied back to the CLI. The
   artifact records no `ack`, grant, relay session, signer dispatch, or secret.
+- `nsealr nip46 review-auth-challenge` writes deterministic review pages for
+  an already-decrypted NIP-46 `auth_url` relay response step. It records the
+  remote signer pubkey, client pubkey, and URL without opening the URL.
+- `nsealr nip46 approve-auth-challenge` writes a digest-bound local approval
+  artifact only after the reviewed auth challenge digest is supplied back to
+  the CLI. The artifact records no URL opening, `ack`, grant, relay session,
+  signer dispatch, persisted state, or secret.
 - `nsealr nip46 gate-session-request` writes the deterministic
   `connect_ack_pending` result for a decrypted request bound to an
   approved-but-unacknowledged session checkpoint. It does not use session

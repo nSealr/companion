@@ -1,4 +1,5 @@
 import { sha256Utf8Hex } from "@nsealr/core";
+import { NATIVE_HOST_NAME } from "@nsealr/client";
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
   BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
@@ -43,6 +44,7 @@ export type BrowserExtensionPackagePlan = {
   format: typeof BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT;
   target: BrowserExtensionManifestOptions["target"];
   popup_mode: BrowserExtensionPopupMode;
+  native_host_name: typeof NATIVE_HOST_NAME;
   manifest: BrowserExtensionManifest;
   entrypoints: readonly [
     BrowserExtensionPackageEntrypoint,
@@ -144,6 +146,9 @@ export function assertBrowserExtensionPackagePlan(
   if (plan.format !== BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT) {
     throw new Error("browser extension package plan format is unsupported");
   }
+  if (plan.native_host_name !== NATIVE_HOST_NAME) {
+    throw new Error("browser extension package plan native host name drifted");
+  }
   if (plan.installs_native_host_manifest !== false) {
     throw new Error("browser extension package plan must not install native-host manifests");
   }
@@ -226,6 +231,7 @@ export function buildBrowserExtensionPackagePlan(
     format: BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT,
     target: options.target,
     popup_mode: popupMode,
+    native_host_name: NATIVE_HOST_NAME,
     manifest: buildBrowserExtensionManifest(options),
     entrypoints: packageEntrypoints(),
     installs_native_host_manifest: false,

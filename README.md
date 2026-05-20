@@ -224,9 +224,9 @@ match the shared `contract_id`.
   secretless background gate data; storage-backed builds start from browser
   extension storage instead of embedding approvals and treat any build-time
   extension id as optional metadata only. The build result exposes the selected
-  route, manifest permissions, content-script origin, optional embedded
-  extension id, local pairing digest, popup mode, activeTab usage, and
-  origin-permission mode it packaged,
+  route, shared native-host name, manifest permissions, content-script origin,
+  optional embedded extension id, local pairing digest, popup mode, activeTab
+  usage, and origin-permission mode it packaged,
   while still not installing a browser extension, writing extension storage at
   build time, creating grants, dispatching signers, or holding key material.
 - `@nsealr/client` exposes the shared local-client identity parser, including

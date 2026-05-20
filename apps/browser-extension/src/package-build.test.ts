@@ -1,4 +1,5 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { NATIVE_HOST_NAME } from "@nsealr/client";
 import { sha256Utf8Hex } from "@nsealr/core";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -136,6 +137,7 @@ describe("browser extension package build", () => {
         route_config_digest: routeConfigReview.route_config_digest,
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
+        native_host_name: NATIVE_HOST_NAME,
         popup_mode: "pending_requests",
         manifest_permissions: ["nativeMessaging"],
         origin_permission_mode: "embedded",
@@ -183,6 +185,9 @@ describe("browser extension package build", () => {
       }
       expect(parseBrowserExtensionPackageBuildResult(result)).toEqual(result);
       await expect(verifyBrowserExtensionPackageBuildDirectory(result)).resolves.toEqual(result);
+      expect(readFileSync(join(temp.outDir, BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE), "utf8")).toContain(
+        NATIVE_HOST_NAME
+      );
       expect(result.package_digest).toBe(sha256Utf8Hex(JSON.stringify({
         format: "nsealr-browser-extension-package-digest-v0",
         target: "chromium",
@@ -271,6 +276,7 @@ describe("browser extension package build", () => {
         route_config_digest: routeConfigReview.route_config_digest,
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
+        native_host_name: NATIVE_HOST_NAME,
         popup_mode: "pending_requests",
         manifest_permissions: ["nativeMessaging"],
         origin_permission_mode: "none",
@@ -369,6 +375,7 @@ describe("browser extension package build", () => {
         route_config_digest: routeConfigReview.route_config_digest,
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
+        native_host_name: NATIVE_HOST_NAME,
         popup_mode: "origin_permission_approval",
         manifest_permissions: ["nativeMessaging", "activeTab", "storage"],
         origin_permission_mode: "extension_storage",

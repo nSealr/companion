@@ -2,6 +2,7 @@ import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { sha256Utf8Hex } from "@nsealr/core";
+import { NATIVE_HOST_NAME } from "@nsealr/client";
 import { build as esbuild, type Plugin } from "esbuild";
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
@@ -68,6 +69,7 @@ export type BrowserExtensionPackageBuildResult = {
   route_config_digest: string;
   route_account_id: string;
   route_type: BrowserExtensionDispatchableRouteType;
+  native_host_name: typeof NATIVE_HOST_NAME;
   popup_mode: BrowserExtensionPackagePlan["popup_mode"];
   manifest_permissions: readonly BrowserExtensionManifestPermission[];
   origin_permission_mode: "none" | BrowserExtensionPackageOriginPermissionMode;
@@ -187,6 +189,13 @@ function requirePackageBuildOriginPermissionMode(value: unknown): BrowserExtensi
     throw new Error("browser extension package build origin permission mode is unsupported");
   }
   return value;
+}
+
+function requireNativeHostName(value: unknown): typeof NATIVE_HOST_NAME {
+  if (value !== NATIVE_HOST_NAME) {
+    throw new Error("browser extension package build native host name drifted");
+  }
+  return NATIVE_HOST_NAME;
 }
 
 function requireFalse(value: unknown, label: string): false {
@@ -656,6 +665,7 @@ export function parseBrowserExtensionPackageBuildResult(value: unknown): Browser
     "route_config_digest",
     "route_account_id",
     "route_type",
+    "native_host_name",
     "popup_mode",
     "manifest_permissions",
     "origin_permission_mode",
@@ -692,6 +702,7 @@ export function parseBrowserExtensionPackageBuildResult(value: unknown): Browser
     route_config_digest: requireLowerHex64(value.route_config_digest, "browser extension package build route_config_digest"),
     route_account_id: routeConfig.account_id,
     route_type: routeConfig.route_type,
+    native_host_name: requireNativeHostName(value.native_host_name),
     popup_mode: requirePopupMode(value.popup_mode),
     manifest_permissions: Object.freeze(requireManifestPermissions(value.manifest_permissions)),
     origin_permission_mode: requirePackageBuildOriginPermissionMode(value.origin_permission_mode),
@@ -856,6 +867,11 @@ export async function verifyBrowserExtensionPackageBuildDirectory(
     throw new Error("browser extension package popup HTML drifted");
   }
 
+  const backgroundSource = fileContents.get(BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE);
+  if (backgroundSource === undefined || !backgroundSource.includes(result.native_host_name)) {
+    throw new Error("browser extension package background native-host binding drifted");
+  }
+
   return result;
 }
 
@@ -940,6 +956,7 @@ export async function buildBrowserExtensionPackage(
     route_config_digest: browserExtensionRouteConfigDigest(routeConfig),
     route_account_id: routeConfig.account_id,
     route_type: routeConfig.route_type,
+    native_host_name: plan.native_host_name,
     popup_mode: plan.popup_mode,
     manifest_permissions: Object.freeze([...plan.manifest.permissions]),
     origin_permission_mode: originPermissions?.mode ?? "none",

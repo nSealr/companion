@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { NATIVE_HOST_NAME } from "@nsealr/client";
 import {
   BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT,
   BROWSER_EXTENSION_PACKAGE_PLAN_REVIEW_FORMAT
@@ -19,6 +20,7 @@ describe("browser extension package-plan CLI", () => {
     expect(plan).toMatchObject({
       format: BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT,
       target: "chromium",
+      native_host_name: NATIVE_HOST_NAME,
       installs_native_host_manifest: false,
       writes_extension_storage: false,
       stores_production_secrets: false,

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { NATIVE_HOST_NAME } from "@nsealr/client";
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
   BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
@@ -33,6 +34,7 @@ describe("browser extension package plan", () => {
       format: BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT,
       target: "chromium",
       popup_mode: "pending_requests",
+      native_host_name: NATIVE_HOST_NAME,
       installs_native_host_manifest: false,
       writes_extension_storage: false,
       uses_extension_storage: false,
@@ -157,6 +159,10 @@ describe("browser extension package plan", () => {
       contentScriptMatches: ["https://example.com/*"]
     });
 
+    expect(() => assertBrowserExtensionPackagePlan(tamperedPlan({
+      ...plan,
+      native_host_name: "dev.nsealr.tampered"
+    }))).toThrow(/native host/u);
     expect(() => assertBrowserExtensionPackagePlan(tamperedPlan({
       ...plan,
       writes_extension_storage: true

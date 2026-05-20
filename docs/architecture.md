@@ -80,12 +80,12 @@ packages, but it must not export test-only signing as a production path.
   output directory only after successful in-memory bundling, embeds a
   digest-approved secretless static route config in the background bundle, and
   requires reviewed origin-permission store data before content scripts can be
-  packaged. It returns explicit route, manifest permissions, popup mode,
-  activeTab usage, origin, optional embedded extension, and pairing metadata
-  plus a package digest and per-file byte counts plus SHA-256 hashes, writes no
-  extension
-  storage, installs no native-host manifest, and remains a developer artifact
-  until a full bootstrap/config UX is reviewed.
+  packaged. It returns the shared native-host name, explicit route, manifest
+  permissions, popup mode, activeTab usage, origin, optional embedded extension,
+  and pairing metadata plus a package digest and per-file byte counts plus
+  SHA-256 hashes, writes no extension storage, installs no native-host
+  manifest, and remains a developer artifact until a full bootstrap/config UX
+  is reviewed.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
   central nSealr v0 implementation limit profile used by companion parsers,
@@ -548,12 +548,14 @@ the internal pure modules such as `background.js`, `content-script.js`, and
 page injection at a module that only exports helpers. It does not call global
 `document`, `window`, `browser`, or `chrome` APIs directly.
 The browser-extension package-plan boundary is a deterministic pre-bundling
-artifact. It joins the reviewed manifest, packaged output filenames, and source
-launcher paths into `nsealr-browser-extension-package-plan-v0`, then rejects
-drift such as unprofiled storage permission, host permissions, mismatched
-background output, mismatched popup output, or mismatched content-script output. It
-deliberately does not build an installable extension, install native-host
-manifests, write browser storage, dispatch signers, or hold key material.
+artifact. It joins the reviewed manifest, shared native-host name, packaged
+output filenames, and source launcher paths into
+`nsealr-browser-extension-package-plan-v0`, then rejects drift such as
+unprofiled storage permission, host permissions, native-host name mismatch,
+mismatched background output, mismatched popup output, or mismatched
+content-script output. It deliberately does not build an installable extension,
+install native-host manifests, write browser storage, dispatch signers, or hold
+key material.
 The private `@nsealr/browser-extension` app exposes this boundary through
 `pnpm --filter @nsealr/browser-extension package-plan -- --target ...`, which
 prints JSON to stdout only. The command can now also render the explicit
@@ -577,17 +579,18 @@ output directory must either be outside the companion source tree or a child of
 unreviewed files under `apps/`, `packages/`, docs, scripts, or tests. The
 returned `nsealr-browser-extension-package-build-v0` result includes the
 reviewed package-plan digest, route-config digest, selected account/route,
-content-script origins, optional embedded extension id, local pairing digest,
-manifest permissions, popup mode, origin-permission mode, activeTab usage,
-package digest, and per-file byte counts plus SHA-256 hashes for the manifest,
-packaged popup HTML, and bundled entrypoints. Lab integration verifies both the
-explicit binding metadata and the files that were actually written. It still
-installs no native-host manifest, writes no extension storage, creates no
-grants, dispatches no signers, and holds no key material.
+shared native-host name, content-script origins, optional embedded extension
+id, local pairing digest, manifest permissions, popup mode, origin-permission
+mode, activeTab usage, package digest, and per-file byte counts plus SHA-256
+hashes for the manifest, packaged popup HTML, and bundled entrypoints. Lab
+integration verifies both the explicit binding metadata and the files that were
+actually written. It still installs no native-host manifest, writes no extension
+storage, creates no grants, dispatches no signers, and holds no key material.
 `package-verify` is the package-owned audit path for an already written
 developer artifact: it parses the package-build result, recomputes the package
-digest, rechecks the manifest, popup HTML, file hashes, byte counts, and
-bundled JavaScript browser-runtime hygiene, and writes no files.
+digest, rechecks the manifest, popup HTML, native-host binding in the packaged
+background script, file hashes, byte counts, and bundled JavaScript
+browser-runtime hygiene, and writes no files.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

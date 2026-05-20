@@ -1,4 +1,5 @@
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { NATIVE_HOST_NAME } from "@nsealr/client";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -137,6 +138,7 @@ describe("browser extension package-build CLI", () => {
         out_dir: temp.outDir,
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
+        native_host_name: NATIVE_HOST_NAME,
         popup_mode: "pending_requests",
         manifest_permissions: ["nativeMessaging"],
         origin_permission_mode: "embedded",
@@ -219,6 +221,7 @@ describe("browser extension package-build CLI", () => {
         target: "chromium",
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
+        native_host_name: NATIVE_HOST_NAME,
         popup_mode: "origin_permission_approval",
         manifest_permissions: ["nativeMessaging", "activeTab", "storage"],
         origin_permission_mode: "extension_storage",
@@ -263,6 +266,7 @@ describe("browser extension package-build CLI", () => {
         target: "firefox",
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
+        native_host_name: NATIVE_HOST_NAME,
         popup_mode: "pending_requests",
         manifest_permissions: ["nativeMessaging"],
         origin_permission_mode: "none",

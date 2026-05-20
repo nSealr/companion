@@ -687,9 +687,10 @@ counts, and SHA-256 digests, and still does not publish to npm.
   page-script, popup, and popup HTML filenames are now distinct from the
   internal pure module filenames, and the manifest/injection helpers use those
   packaged names. A deterministic package-plan boundary now binds the reviewed
-  manifest, packaged output filenames, and source launcher paths into a checked
-  pre-bundling artifact, rejecting storage/host permissions or entrypoint drift
-  before a bundle can be treated as reviewed. A private browser-extension
+  manifest, shared native-host name, packaged output filenames, and source
+  launcher paths into a checked pre-bundling artifact, rejecting storage/host
+  permissions, native-host name drift, or entrypoint drift before a bundle can
+  be treated as reviewed. A private browser-extension
   security audit now runs in CI and rejects extension/browser-provider
   dependencies on test signing packages, signing/key-generation libraries,
   browser storage APIs, and direct signing helper calls before package-build
@@ -713,13 +714,14 @@ counts, and SHA-256 digests, and still does not publish to npm.
   constrained to paths outside the companion source tree or children of
   `release-artifacts/browser-extension/`, preventing source-tree artifact drift
   during package rehearsals. Package build returns explicit
-  reviewed package-plan, route, manifest-permissions, popup-mode, activeTab,
-  origin, optional embedded extension, and pairing metadata plus a package
-  digest and per-file byte counts and SHA-256 hashes. A package-owned
+  reviewed package-plan, route, shared native-host name, manifest-permissions,
+  popup-mode, activeTab, origin, optional embedded extension, and pairing
+  metadata plus a package digest and per-file byte counts and SHA-256 hashes.
+  A package-owned
   `package-verify` command now validates that build result against the written
   artifact directory, recomputes the digest, checks manifest/content-script
-  bindings, popup HTML, file hashes, and bundled JavaScript browser-runtime
-  hygiene, and still avoids
+  bindings, popup HTML, native-host binding in the packaged background script,
+  file hashes, and bundled JavaScript browser-runtime hygiene, and still avoids
   native-host installation, extension storage writes, key custody, and signer
   dispatch.
   The browser-extension manifest builder can still build a minimal

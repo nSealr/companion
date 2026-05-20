@@ -70,7 +70,6 @@ export type GrantDescriptor = {
     label?: string;
   };
   permission: GrantPermission;
-  decision: "allow_once" | "allow_until_expiry";
   expires_at: number;
   rate_limit: {
     max_uses: number;
@@ -684,7 +683,6 @@ export function parseGrantDescriptor(value: unknown): GrantDescriptor {
     "route_type",
     "client",
     "permission",
-    "decision",
     "expires_at",
     "rate_limit",
     "requires_device_policy_confirmation",
@@ -703,8 +701,6 @@ export function parseGrantDescriptor(value: unknown): GrantDescriptor {
   }
   if (value.revocable !== true) throw new Error("revocable must be true");
   if (value.audit_event_format !== "nsealr-grant-audit-event-v0") throw new Error("audit_event_format mismatch");
-  const decision = requireString(value.decision, "decision");
-  if (decision !== "allow_once" && decision !== "allow_until_expiry") throw new Error("decision is unknown");
   return {
     format: "nsealr-grant-descriptor-v0",
     grant_id: requireGrantId(value.grant_id, "grant_id"),
@@ -715,7 +711,6 @@ export function parseGrantDescriptor(value: unknown): GrantDescriptor {
       ...("label" in value.client ? { label: requireString(value.client.label, "client.label") } : {})
     },
     permission: parseGrantPermission(value.permission),
-    decision,
     expires_at: requirePositiveInteger(value.expires_at, "expires_at"),
     rate_limit: {
       max_uses: requirePositiveInteger(value.rate_limit.max_uses, "rate_limit.max_uses"),

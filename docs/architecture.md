@@ -882,7 +882,9 @@ contact signer transports.
 
 The current scoped-automation fixtures are deliberately minimal conformance
 data. They prove bounded decisions, denial, manual-review routing, revocation,
-expiry, and audit-event shape before grant storage exists; they are not the
+expiry, rate limits, and audit-event shape before grant storage exists. They do
+not introduce a separate grant decision mode: one-use behavior is represented by
+a scoped grant whose rate limit allows one use. These fixtures are not the
 final product policy menu and should not grow into companion-owned rule-engine
 state. They also are not the default account policy for persistent nSealr
 devices; a reviewed policy-change proposal must activate them.

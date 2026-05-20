@@ -453,7 +453,10 @@ single-repository CI. Cross-repository drift remains guarded by
   fixtures, account descriptors, policy profiles, grant descriptors,
   policy-change review vectors, policy-decision vectors, route-selection
   vectors, source public-key proof vectors, and access-surface vectors, plus
-  the shared implementation-limit profile and invalid hardening vectors.
+  the shared implementation-limit profile and invalid hardening vectors. Grant
+  descriptor tests reject the removed `decision` field so the companion cannot
+  revive an ambiguous grant mode outside expiry, rate-limit, revocation, audit,
+  and device-confirmation semantics.
 - CLI policy-change review tests covering
   `nsealr policy review-change --proposal ... --out ...` against shared
   policy-change vectors, including deterministic output and no output after a

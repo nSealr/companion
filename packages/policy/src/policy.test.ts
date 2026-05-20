@@ -153,6 +153,11 @@ describe("identity, recovery, and policy contracts", () => {
 
     expect(() => parseGrantDescriptor({
       ...grant,
+      decision: "allow_until_expiry"
+    })).toThrow(/grant descriptor has unsupported field decision/u);
+
+    expect(() => parseGrantDescriptor({
+      ...grant,
       client: {
         ...(grant.client as Record<string, unknown>),
         origin: "https://example.com"

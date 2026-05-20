@@ -200,6 +200,12 @@ nSealr-managed grant menu from specs: grant descriptors may authorize only
 future-spec behavior, even if an access surface can parse the underlying
 NIP-46 method.
 
+Status note, 2026-05-20: companion policy parsing now rejects the removed grant
+`decision` field. v0 grants are temporary scoped session records governed by
+expiry, rate limits, revocation, audit, and device confirmation; one-use
+behavior must be represented by `rate_limit.max_uses: 1` rather than a second
+grant mode.
+
 Status note, 2026-05-19: companion policy parsing now accepts and validates the
 shared NIP-06 `recovery.source_fingerprint` field so secretless account
 descriptors stay aligned with QR vault source-review metadata. This does not

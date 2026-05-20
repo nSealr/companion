@@ -551,8 +551,9 @@ storage, create grants, or hold key material.
 It can emit `nsealr-browser-extension-pending-request-state-v0` snapshots
 through an injected lifecycle for future visible pending/cancel UI. Those
 snapshots expose only request id, method, extension id, page origin, optional
-app name, status, and timestamps; they do not include event templates, key
-material, grants, storage writes, or signer dispatch. The lifecycle has a
+app name, selected route account/type when configured, status, and timestamps;
+they do not include event templates, key material, grants, storage writes, or
+signer dispatch. The lifecycle has a
 small explicit active-request bound before publishing state. The same lifecycle
 owns the per-request cancellation hook: cancelling an active snapshot aborts
 the in-flight native-message path and emits one `cancelled` state instead of
@@ -566,7 +567,8 @@ injected `runtime.sendMessage`, validates response envelopes and secretless
 pending-state snapshots, rejects request-id mismatches, and exposes only
 list/cancel operations for the packaged action popup. The popup view renders
 only safe pending-state metadata: request id, method, status, page origin,
-optional app name, timestamps, and explicit no-key/no-event-payload chips. The
+optional app name, selected route account/type, timestamps, and explicit
+no-key/no-event-payload chips. The
 same internal control protocol can also request browser-origin permission
 review metadata from the background controller for an explicit sanitized page
 sender. That path does not approve the origin, write browser storage, create

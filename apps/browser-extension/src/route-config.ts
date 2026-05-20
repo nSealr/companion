@@ -8,22 +8,29 @@ export const BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT = "nsealr-browser-extension-r
 export const BROWSER_EXTENSION_ROUTE_CONFIG_REVIEW_FORMAT = "nsealr-browser-extension-route-config-review-v0";
 export const BROWSER_EXTENSION_ROUTE_CONFIG_APPROVAL_FORMAT = "nsealr-browser-extension-route-config-approval-v0";
 export const BROWSER_EXTENSION_ROUTE_CONFIG_METHOD = "sign_event";
+export type BrowserExtensionDispatchableRouteType =
+  | "esp32_usb_nip46"
+  | "custom_hardware_wallet"
+  | "external_nip46";
 const BROWSER_EXTENSION_ROUTE_CONFIG_ROUTE_TYPES = new Set([
   "esp32_usb_nip46",
   "custom_hardware_wallet",
   "external_nip46"
 ]);
+export type BrowserExtensionRouteRequest = RouteSelectionRequest & {
+  route_type: BrowserExtensionDispatchableRouteType;
+};
 
 export type BrowserExtensionRouteConfig = {
   format: typeof BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT;
   account_id: string;
-  route_type?: RouteSelectionRequest["route_type"];
+  route_type: BrowserExtensionDispatchableRouteType;
 };
 
 export type BrowserExtensionParsedRouteConfig = {
   format: typeof BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT;
   route_config: BrowserExtensionRouteConfig;
-  route_request: RouteSelectionRequest;
+  route_request: BrowserExtensionRouteRequest;
   stores_production_secrets: false;
 };
 
@@ -31,7 +38,7 @@ export type BrowserExtensionRouteConfigReview = {
   format: typeof BROWSER_EXTENSION_ROUTE_CONFIG_REVIEW_FORMAT;
   route_config_digest: string;
   route_config: BrowserExtensionRouteConfig;
-  route_request: RouteSelectionRequest;
+  route_request: BrowserExtensionRouteRequest;
   requires_user_approval: true;
   writes_extension_storage: false;
   creates_grants: false;
@@ -84,7 +91,9 @@ function routeRequestsEqual(left: RouteSelectionRequest, right: RouteSelectionRe
     && left.route_type === right.route_type;
 }
 
-function requireBrowserDispatchableRouteType(value: unknown): RouteSelectionRequest["route_type"] {
+export function requireBrowserExtensionDispatchableRouteType(
+  value: unknown
+): BrowserExtensionDispatchableRouteType {
   if (typeof value !== "string") {
     throw new Error("browser extension route config route_type is required");
   }
@@ -96,7 +105,7 @@ function requireBrowserDispatchableRouteType(value: unknown): RouteSelectionRequ
   if (routeType === undefined || !BROWSER_EXTENSION_ROUTE_CONFIG_ROUTE_TYPES.has(routeType)) {
     throw new Error("browser extension route config route_type is not browser-dispatchable");
   }
-  return routeType;
+  return routeType as BrowserExtensionDispatchableRouteType;
 }
 
 export function normalizeBrowserExtensionRouteConfig(value: unknown): BrowserExtensionRouteConfig {
@@ -107,7 +116,7 @@ export function normalizeBrowserExtensionRouteConfig(value: unknown): BrowserExt
   if (value.format !== BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT) {
     throw new Error("browser extension route config format is unsupported");
   }
-  const routeType = requireBrowserDispatchableRouteType(value.route_type);
+  const routeType = requireBrowserExtensionDispatchableRouteType(value.route_type);
   const routeRequest = parseRouteSelectionRequest({
     account_id: value.account_id,
     method: BROWSER_EXTENSION_ROUTE_CONFIG_METHOD,
@@ -130,12 +139,15 @@ export function parseBrowserExtensionRouteConfig(value: unknown): BrowserExtensi
   const routeRequest = parseRouteSelectionRequest({
     account_id: routeConfig.account_id,
     method: BROWSER_EXTENSION_ROUTE_CONFIG_METHOD,
-    ...(routeConfig.route_type !== undefined ? { route_type: routeConfig.route_type } : {})
+    route_type: routeConfig.route_type
   });
   return Object.freeze({
     format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
     route_config: routeConfig,
-    route_request: routeRequest,
+    route_request: {
+      ...routeRequest,
+      route_type: routeConfig.route_type
+    },
     stores_production_secrets: false
   });
 }

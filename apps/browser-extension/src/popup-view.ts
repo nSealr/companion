@@ -42,13 +42,16 @@ function statusLabel(value: BrowserExtensionPendingRequestState["status"]): stri
 }
 
 function pendingRequestMetaLines(state: BrowserExtensionPendingRequestState): string[] {
-  return [
+  const lines = [
     state.app_name ?? "nSealr",
     state.page_origin,
+    ...(state.route_account_id !== undefined ? [`Route account ${state.route_account_id}`] : []),
+    ...(state.route_type !== undefined ? [`Route type ${state.route_type}`] : []),
     `Request ${state.request_id}`,
     `Started ${state.started_at}`,
     `Updated ${state.updated_at}`
   ];
+  return lines;
 }
 
 export function installBrowserExtensionPopupView(

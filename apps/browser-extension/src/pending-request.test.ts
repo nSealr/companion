@@ -15,6 +15,10 @@ describe("browser extension pending request lifecycle", () => {
       now: () => timestamps.shift() ?? 1_900_000_003,
       onState: (state) => {
         states.push(state);
+      },
+      routeRequest: {
+        account_id: "esp32-usb-slot-0",
+        route_type: "esp32_usb_nip46"
       }
     });
 
@@ -36,6 +40,8 @@ describe("browser extension pending request lifecycle", () => {
       extension_id: "extension@nsealr.dev",
       page_origin: "https://example.com",
       app_name: "Reviewed Browser Extension",
+      route_account_id: "esp32-usb-slot-0",
+      route_type: "esp32_usb_nip46",
       status: "pending",
       started_at: 1_900_000_000,
       updated_at: 1_900_000_000,
@@ -209,6 +215,8 @@ describe("browser extension pending request lifecycle", () => {
       extension_id: "extension@nsealr.dev",
       page_origin: "https://example.com",
       app_name: "Reviewed Browser Extension",
+      route_account_id: "esp32-usb-slot-0",
+      route_type: "esp32_usb_nip46",
       status: "pending",
       started_at: 1_900_000_020,
       updated_at: 1_900_000_021,
@@ -217,6 +225,30 @@ describe("browser extension pending request lifecycle", () => {
     };
 
     expect(parseBrowserExtensionPendingRequestState(state)).toEqual(state);
+    expect(() => parseBrowserExtensionPendingRequestState({
+      ...state,
+      route_account_id: "esp32-qr-account-0",
+      route_type: "esp32_qr_vault"
+    })).toThrow(/browser-dispatchable/u);
+    const stateWithoutRouteAccount: Record<string, unknown> = { ...state };
+    delete stateWithoutRouteAccount.route_account_id;
+    expect(() => parseBrowserExtensionPendingRequestState({
+      ...stateWithoutRouteAccount,
+      route_type: "esp32_usb_nip46"
+    })).toThrow(/route_account_id/u);
+    const stateWithoutRouteType: Record<string, unknown> = { ...state };
+    delete stateWithoutRouteType.route_type;
+    expect(() => parseBrowserExtensionPendingRequestState(stateWithoutRouteType)).toThrow(/route_type/u);
+    expect(() => parseBrowserExtensionPendingRequestState({
+      ...state,
+      route_account_id: "bad account id",
+      route_type: "esp32_usb_nip46"
+    })).toThrow(/account_id/u);
+    expect(() => parseBrowserExtensionPendingRequestState({
+      ...state,
+      route_account_id: "esp32-usb-slot-0",
+      route_type: "unknown"
+    })).toThrow(/route_type/u);
     expect(() => parseBrowserExtensionPendingRequestState({
       ...state,
       includes_event_template: true

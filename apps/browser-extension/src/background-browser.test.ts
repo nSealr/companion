@@ -250,6 +250,12 @@ describe("browser extension background browser entrypoint", () => {
         responses.push(response);
       }
     )).toBe(true);
+    expect(handle.pendingRequests.active()).toMatchObject([{
+      request_id: "background-browser-get-public-key",
+      route_account_id: routeRequest.account_id,
+      route_type: routeRequest.route_type,
+      includes_event_template: false
+    }]);
     await flushAsyncListeners();
 
     expect(responses).toEqual([{
@@ -262,6 +268,7 @@ describe("browser extension background browser entrypoint", () => {
       }
     }]);
     expect(runtime.nativeMessages).toHaveLength(1);
+    expect(handle.pendingRequests.active()).toEqual([]);
     expect(runtime.nativeMessages[0]).toMatchObject({
       hostName: NATIVE_HOST_NAME,
       message: {

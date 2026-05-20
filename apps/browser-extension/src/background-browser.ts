@@ -101,7 +101,7 @@ export function installBrowserExtensionBackgroundBrowserEntrypoint(
 ): BrowserExtensionBackgroundBrowserEntrypointHandle {
   const runtime = requireBrowserRuntime(options.runtime);
   const routeRequest = routeRequestFromOptions(options);
-  const pendingRequests = options.pendingRequests ?? createBrowserExtensionPendingRequestLifecycle();
+  const pendingRequests = options.pendingRequests ?? createBrowserExtensionPendingRequestLifecycle({ routeRequest });
   const controller = createBrowserExtensionBackgroundController({
     sendNativeMessage: createBrowserExtensionBackgroundBrowserNativeMessageSender(runtime),
     routeRequest,

@@ -94,6 +94,8 @@ function pendingState(): BrowserExtensionPendingRequestState {
     extension_id: "extension@nsealr.dev",
     page_origin: "https://example.com",
     app_name: "Example",
+    route_account_id: "esp32-usb-slot-0",
+    route_type: "esp32_usb_nip46",
     status: "pending",
     started_at: 1_900_000_500,
     updated_at: 1_900_000_500,
@@ -138,6 +140,8 @@ describe("browser extension popup view", () => {
     expect(fake.list.children[0].children[1].children.map((child) => child.textContent)).toEqual([
       "Example",
       "https://example.com",
+      "Route account esp32-usb-slot-0",
+      "Route type esp32_usb_nip46",
       "Request pending-popup-view",
       "Started 1900000500",
       "Updated 1900000500"

@@ -524,9 +524,12 @@ publishing to npm.
   secretless `nsealr-browser-extension-pending-request-state-v0` snapshots
   through an injected lifecycle, giving future UI a
   pending/resolved/rejected/cancelled request source without exposing event
-  templates, keys, grants, storage writes, or signer dispatch. The lifecycle
-  also owns a per-request cancel hook that aborts the in-flight native-message
-  path and suppresses duplicate rejected-state drift after cancellation. The
+  templates, keys, grants, storage writes, or signer dispatch. The default
+  background-owned lifecycle now adds the selected route account/type from the
+  reviewed route config to those snapshots so the popup can show where a
+  request is going without exposing payloads or secrets. The lifecycle also
+  owns a per-request cancel hook that aborts the in-flight native-message path
+  and suppresses duplicate rejected-state drift after cancellation. The
   background entrypoint now owns an in-memory lifecycle by default, and the
   runtime-message boundary routes separate `nsealr-browser-extension-control-v0`
   `list_pending_requests` and `cancel_pending_request` messages from

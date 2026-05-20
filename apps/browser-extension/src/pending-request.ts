@@ -3,6 +3,14 @@ import {
   type BrowserExtensionMethod,
   type BrowserExtensionRequest
 } from "./messages.js";
+import {
+  parseRouteSelectionRequest,
+  type RouteSelectionRequest
+} from "@nsealr/policy";
+import {
+  requireBrowserExtensionDispatchableRouteType,
+  type BrowserExtensionDispatchableRouteType
+} from "./route-config.js";
 import { requireBrowserExtensionPageOrigin } from "./page-origin.js";
 import {
   browserExtensionClientContextFromSender,
@@ -23,6 +31,8 @@ export type BrowserExtensionPendingRequestState = {
   extension_id: string;
   page_origin: string;
   app_name?: string;
+  route_account_id?: string;
+  route_type?: BrowserExtensionDispatchableRouteType;
   status: BrowserExtensionPendingRequestStatus;
   started_at: number;
   updated_at: number;
@@ -45,6 +55,7 @@ export type BrowserExtensionPendingRequestLifecycleOptions = {
   now?: () => number;
   onState?: (state: BrowserExtensionPendingRequestState) => void;
   maxActiveRequests?: number;
+  routeRequest?: Pick<RouteSelectionRequest, "account_id" | "route_type">;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -102,6 +113,40 @@ function requirePendingRequestStatus(value: unknown): BrowserExtensionPendingReq
   return value;
 }
 
+function pendingRouteSummary(
+  routeRequest: BrowserExtensionPendingRequestLifecycleOptions["routeRequest"] | undefined
+): Pick<BrowserExtensionPendingRequestState, "route_account_id" | "route_type"> {
+  if (routeRequest === undefined) return {};
+  const routeType = requireBrowserExtensionDispatchableRouteType(routeRequest.route_type);
+  const parsed = parseRouteSelectionRequest({
+    account_id: routeRequest.account_id,
+    method: "sign_event",
+    route_type: routeType
+  });
+  return {
+    route_account_id: parsed.account_id,
+    route_type: routeType
+  };
+}
+
+function pendingRouteSummaryFromState(
+  value: Record<string, unknown>
+): Pick<BrowserExtensionPendingRequestState, "route_account_id" | "route_type"> {
+  if (value.route_account_id === undefined) {
+    if (value.route_type !== undefined) {
+      throw new Error("browser extension pending request route_account_id is required");
+    }
+    return {};
+  }
+  if (value.route_type === undefined) {
+    throw new Error("browser extension pending request route_type is required");
+  }
+  return pendingRouteSummary({
+    account_id: value.route_account_id as string,
+    route_type: value.route_type as RouteSelectionRequest["route_type"]
+  });
+}
+
 function emitState(
   onState: ((state: BrowserExtensionPendingRequestState) => void) | undefined,
   state: BrowserExtensionPendingRequestState
@@ -123,6 +168,8 @@ export function parseBrowserExtensionPendingRequestState(
     "extension_id",
     "page_origin",
     "app_name",
+    "route_account_id",
+    "route_type",
     "status",
     "started_at",
     "updated_at",
@@ -155,6 +202,7 @@ export function parseBrowserExtensionPendingRequestState(
     ...(value.app_name !== undefined
       ? { app_name: requirePendingAppName(value.app_name) }
       : {}),
+    ...pendingRouteSummaryFromState(value),
     status: requirePendingRequestStatus(value.status),
     started_at: requireNonNegativeSafeInteger(
       value.started_at as number,
@@ -179,6 +227,7 @@ export function createBrowserExtensionPendingRequestLifecycle(
     options.maxActiveRequests ?? BROWSER_EXTENSION_MAX_ACTIVE_PENDING_REQUESTS,
     "browser extension pending request maxActiveRequests"
   );
+  const routeSummary = pendingRouteSummary(options.routeRequest);
 
   function stateWithStatus(
     state: BrowserExtensionPendingRequestState,
@@ -209,6 +258,7 @@ export function createBrowserExtensionPendingRequestLifecycle(
         extension_id: context.extension_id,
         page_origin: context.page_origin,
         ...(context.client.app_name !== undefined ? { app_name: context.client.app_name } : {}),
+        ...routeSummary,
         status: "pending" as const,
         started_at: timestamp,
         updated_at: timestamp,

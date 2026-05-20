@@ -197,8 +197,8 @@ match the shared `contract_id`.
   cancelled through extension-internal list/cancel control messages,
   includes a packaged action popup HTML plus popup entrypoint over injected
   `runtime.sendMessage` so visible UI can list/cancel those secretless pending
-  requests while showing request id, timestamps, and explicit no-key/no-event
-  payload state,
+  requests while showing request id, selected route account/type, timestamps,
+  and explicit no-key/no-event payload state,
   and can build either the default minimal no-host-permission manifest or an
   opt-in explicit-origin content-script manifest profile. The content-script
   profile still omits host-permission fields, broad URL matches, extension

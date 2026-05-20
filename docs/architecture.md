@@ -709,9 +709,12 @@ data and requests no storage permission. The explicit `extension_storage` mode
 does not embed approvals: it requests `storage`, resolves the reviewed storage
 adapter at runtime, loads the store before provider selection, and lets the
 action popup write new approvals only through the digest-confirmed background
-approval path. Build-time side effects remain unchanged: package builds write
-only package files, never extension storage, grants, signer output, or native
-host manifests.
+approval path. Storage-backed packages bind approvals to the browser runtime's
+actual extension id at runtime, so unpacked Chromium development builds do not
+fail because their runtime id differs from reviewed package metadata.
+Build-time side effects remain unchanged: package builds write only package
+files, never extension storage, grants, signer output, or native host
+manifests.
 Its manifest builder is intentionally restrictive: the default Chromium
 manifest omits host permissions, optional host permissions, content scripts,
 web-accessible resources, and storage; Firefox manifests require an explicit

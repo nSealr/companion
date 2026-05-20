@@ -345,7 +345,6 @@ function virtualEntrypointPlugin(
             installNsealrBackgroundEntrypoint({
               globalScope: globalThis,
               ...${backgroundOptionsJson},
-              extensionId: ${JSON.stringify(originPermissions?.extensionId)},
               originPermissions: {
                 loadStore: () => readBrowserExtensionOriginPermissionStoreFromStorage(originPermissionStorage),
                 localPairingDigest: ${JSON.stringify(originPermissions?.localPairingDigest)}
@@ -388,8 +387,7 @@ function virtualEntrypointPlugin(
           ? `
             import { installNsealrPopupOriginPermissionEntrypoint } from "./apps/browser-extension/src/nsealr-popup-entrypoint.ts";
             installNsealrPopupOriginPermissionEntrypoint({
-              globalScope: globalThis,
-              extensionId: ${JSON.stringify(originPermissions?.extensionId)}
+              globalScope: globalThis
             });
           `
           : `

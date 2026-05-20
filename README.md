@@ -211,8 +211,9 @@ match the shared `contract_id`.
   storage-backed origin-approval profile: that opt-in profile requests
   `activeTab` and `storage`, resolves the active tab only after the user opens
   the action popup, loads the approved-origin store from the reviewed storage
-  adapter, and writes approvals only through the same digest-confirmed
-  background control path. It can build an explicit developer package artifact
+  adapter, binds approvals to the browser runtime's actual extension id, and
+  writes approvals only through the same digest-confirmed background control
+  path. It can build an explicit developer package artifact
   only after route-config review/approval. Embedded-store content-script builds
   still require a reviewed origin-permission store as secretless background
   gate data; storage-backed builds start from browser extension storage instead

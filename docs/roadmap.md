@@ -703,8 +703,10 @@ counts, and SHA-256 digests, and still does not publish to npm.
   has an explicit storage-backed origin-approval profile: it requests
   `activeTab` and `storage`, resolves active-tab and extension-storage globals
   only through reviewed adapters, loads the approved-origin store before
-  provider selection, and wires the packaged popup to the digest-confirmed
-  origin-permission approval path. Remaining work: reviewed
+  provider selection, binds approvals to the browser runtime's actual
+  extension id for unpacked Chromium development builds, and wires the
+  packaged popup to the digest-confirmed origin-permission approval path.
+  Remaining work: reviewed
   bootstrap/config UX beyond the static developer route config,
   native-messaging installation, production permission/onboarding UX around
   the explicit storage-backed origin-approval profile, and real dispatch after

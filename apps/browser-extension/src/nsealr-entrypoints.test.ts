@@ -250,6 +250,7 @@ function createRuntimeGlobal(): {
   const runtimeMessages: unknown[] = [];
   const resolvedPaths: string[] = [];
   const runtime = {
+    id: "extension@nsealr.dev",
     onMessage: {
       addListener(listener: BrowserExtensionRuntimeMessageListener): void {
         listeners.add(listener);
@@ -472,6 +473,45 @@ describe("packaged browser extension entrypoints", () => {
     handle.dispose();
   });
 
+  it("uses the browser runtime sender id when no static extension id is configured", async () => {
+    const runtime = createRuntimeGlobal();
+    const responses: BrowserExtensionRuntimeMessageResponse[] = [];
+    const handle = installNsealrBackgroundEntrypoint({
+      globalScope: { browser: { runtime: runtime.runtime } },
+      routeConfig: routeConfig(),
+      originPermissions: {
+        store: routeOnlyOriginPermissionStore(),
+        localPairingDigest
+      }
+    });
+
+    expect(runtime.emit(
+      getPublicKeyRequest("packaged-background-runtime-id"),
+      {
+        id: "actual-chromium-runtime-id",
+        url: "https://example.com/app"
+      },
+      (response) => {
+        responses.push(response);
+      }
+    )).toBe(true);
+    await flushAsyncListeners();
+
+    expect(responses).toEqual([{
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "packaged-background-runtime-id",
+      ok: false,
+      error: {
+        code: "origin_permission_denied",
+        message: "browser extension origin permission denied",
+        retryable: false
+      }
+    }]);
+    expect(runtime.nativeMessages).toEqual([]);
+    handle.dispose();
+  });
+
   it("wires the content-script packaged entrypoint through chrome.runtime without storage", async () => {
     const runtime = createRuntimeGlobal();
     const document = createDocument();
@@ -539,6 +579,7 @@ describe("packaged browser extension entrypoints", () => {
       globalScope: {
         browser: {
           runtime: {
+            id: "extension@nsealr.dev",
             sendMessage(message: unknown): unknown {
               runtimeMessages.push(message);
               return {
@@ -597,6 +638,7 @@ describe("packaged browser extension entrypoints", () => {
       globalScope: {
         browser: {
           runtime: {
+            id: "extension@nsealr.dev",
             sendMessage(message: unknown): unknown {
               runtimeMessages.push(message);
               return {
@@ -681,6 +723,7 @@ describe("packaged browser extension entrypoints", () => {
       globalScope: {
         browser: {
           runtime: {
+            id: "extension@nsealr.dev",
             sendMessage(message: unknown): unknown {
               runtimeMessages.push(message);
               const request = message as { request_id: string; method: string };
@@ -746,7 +789,6 @@ describe("packaged browser extension entrypoints", () => {
         },
         document: popup.document
       },
-      extensionId: "extension@nsealr.dev",
       nextRequestId: () => nextIds.shift() ?? "unexpected-popup-request"
     });
 

@@ -83,6 +83,13 @@ function requireExtensionRuntimeGlobal(
   return runtime;
 }
 
+function requireRuntimeId(value: unknown, label: string): string {
+  if (typeof value !== "string" || !/^[A-Za-z0-9._@+-]{1,128}$/u.test(value)) {
+    throw new Error(`${label} runtime id is invalid`);
+  }
+  return value;
+}
+
 function optionalStorageContainer(value: unknown, label: string): unknown {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
@@ -178,6 +185,16 @@ export function requireBrowserExtensionPopupRuntimeGlobal(
     throw new Error("browser extension popup runtime global is invalid");
   }
   return runtime as BrowserExtensionPopupRuntimeApi;
+}
+
+export function requireBrowserExtensionRuntimeIdGlobal(
+  value: BrowserExtensionPackagedGlobalScope
+): string {
+  const runtime = requireExtensionRuntimeGlobal(value, "browser extension");
+  if (!isRecord(runtime)) {
+    throw new Error("browser extension runtime global is invalid");
+  }
+  return requireRuntimeId(runtime.id, "browser extension");
 }
 
 export function requireBrowserExtensionOriginPermissionStorageGlobal(

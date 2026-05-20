@@ -6,6 +6,7 @@ import {
 import {
   requireBrowserExtensionPopupDocumentGlobal,
   requireBrowserExtensionPopupRuntimeGlobal,
+  requireBrowserExtensionRuntimeIdGlobal,
   requireBrowserExtensionPopupTabsGlobal,
   type BrowserExtensionPackagedGlobalScope
 } from "./browser-globals.js";
@@ -50,9 +51,11 @@ export function installNsealrPopupEntrypoint(
 
 export type NsealrPopupOriginPermissionEntrypointOptions = Omit<
   BrowserExtensionPopupOriginPermissionViewOptions,
-  "document" | "controls" | "tabs"
+  "document" | "controls" | "extensionId" | "tabs"
 > &
-  NsealrPopupEntrypointOptions;
+  NsealrPopupEntrypointOptions & {
+    extensionId?: string;
+  };
 
 export function installNsealrPopupOriginPermissionEntrypoint(
   options: NsealrPopupOriginPermissionEntrypointOptions
@@ -67,7 +70,7 @@ export function installNsealrPopupOriginPermissionEntrypoint(
       }
     },
     tabs: requireBrowserExtensionPopupTabsGlobal(options.globalScope),
-    extensionId: options.extensionId,
+    extensionId: options.extensionId ?? requireBrowserExtensionRuntimeIdGlobal(options.globalScope),
     ...(options.appName !== undefined ? { appName: options.appName } : {}),
     ...(options.rootId !== undefined ? { rootId: options.rootId } : {}),
     ...(options.statusId !== undefined ? { statusId: options.statusId } : {}),

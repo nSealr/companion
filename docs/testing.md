@@ -196,10 +196,12 @@ single-repository CI. Cross-repository drift remains guarded by
   now prove digest-confirmed origin permission approval is routed through the
   extension-internal control protocol into an explicitly injected storage
   adapter, without native messaging, grants, signer dispatch, or key material.
-  Packaged-entrypoint tests now also prove the explicit origin-permission popup
-  launcher resolves only injected runtime, tabs, and document globals, renders
-  the active-tab review, and sends digest-confirmed approval back through the
-  same control protocol without signer dispatch or key material.
+  Packaged-entrypoint tests now also prove the storage-backed origin-permission
+  launcher uses the browser runtime sender id when no static extension id is
+  configured, the explicit origin-permission popup launcher resolves only
+  injected runtime, tabs, and document globals, renders the active-tab review,
+  and sends digest-confirmed approval back through the same control protocol
+  without signer dispatch or key material.
   Sender-aware handler and background-controller tests prove an injected
   approved-origin store can authorize exact `get_public_key` access while
   denying method-mismatched, stale-digest, or malformed-store requests before

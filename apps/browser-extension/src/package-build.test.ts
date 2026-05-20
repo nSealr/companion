@@ -322,8 +322,9 @@ describe("browser extension package build", () => {
       const popup = readFileSync(join(temp.outDir, BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE), "utf8");
       expect(background).toContain("originPermissionStorage");
       expect(background).toContain(localPairingDigest);
+      expect(background).not.toContain(chromiumExtensionId);
       expect(popup).toContain("active_tab");
-      expect(popup).toContain(chromiumExtensionId);
+      expect(popup).not.toContain(chromiumExtensionId);
     } finally {
       temp.cleanup();
     }

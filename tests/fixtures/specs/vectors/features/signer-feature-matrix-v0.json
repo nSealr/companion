@@ -811,7 +811,7 @@
           "target": "required",
           "current": "research",
           "contract_id": "persistent-secret-custody-v0",
-          "notes": "Rev A now has a checked key-material lifecycle in hardware requirements: no plaintext secrets at rest, wrapped or encrypted storage before persistent custody, ESP32-S3 RAM only after TROPIC01-assisted unlock, mandatory wipe events, MAC-and-Destroy PIN hardening, and disabled-by-default backup/export behind device review plus physical approval. TROPIC01 secure channel, TRNG, pairing lifecycle, key wrapping/unlock material, and device authenticity remain research gates."
+          "notes": "Rev A now consumes the shared persistent-secret-custody-v0 lifecycle contract: no plaintext secrets at rest, wrapped or encrypted storage before persistent custody, ESP32-S3 RAM only after TROPIC01-assisted unlock, mandatory wipe events, MAC-and-Destroy PIN hardening, and disabled-by-default backup/export behind device review plus physical approval. TROPIC01 secure channel, TRNG, pairing lifecycle, key wrapping/unlock material, and device authenticity remain research gates."
         },
         "smartcard_apdu": {
           "target": "not_applicable",

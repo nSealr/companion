@@ -169,8 +169,10 @@ list, reducing snapshot drift as the shared contract grows.
 Status note, 2026-05-11: companion fixture verification now consumes the shared
 account-descriptor, policy-profile, and grant-descriptor vectors. The package
 parser rejects embedded secret fields, QR-vault automation, wildcard grants,
-and stateless QR-vault grant targets. This is policy metadata validation only;
-it does not add local-service grant persistence or a browser/relay session.
+external NIP-46 nSealr-managed automation, and grant targets outside ESP32
+USB/NIP-46 plus custom hardware-wallet persistent policy routes. This is policy
+metadata validation only; it does not add local-service grant persistence or a
+browser/relay session.
 
 Status note, 2026-05-19: companion policy parsing now accepts and validates the
 shared NIP-06 `recovery.source_fingerprint` field so secretless account

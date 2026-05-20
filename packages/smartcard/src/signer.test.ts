@@ -112,6 +112,30 @@ describe("SmartcardSigner", () => {
     expect(transport.exchange).toHaveBeenCalledTimes(2);
   });
 
+  it("rejects invalid card signatures before returning a response", async () => {
+    const transport = {
+      exchange: vi.fn(async (command: CommandApdu) => {
+        if (command.toHex() === getPublicKeyVector.command_hex) {
+          return ResponseApdu.fromHex(getPublicKeyVector.response_hex);
+        }
+        if (command.ins === SIGN_EVENT_ID_INS) {
+          return new ResponseApdu(new Uint8Array(64));
+        }
+        throw new Error(`unexpected APDU command ${command.toHex()}`);
+      })
+    };
+    const signer = new SmartcardSigner(transport);
+
+    await expect(
+      signer.signEventRequest(request, {
+        acknowledged: true,
+        source: "external-review",
+        approvalDigest: approvalDigestForRequest(request)
+      })
+    ).rejects.toThrow("smartcard Schnorr signature is invalid");
+    expect(transport.exchange).toHaveBeenCalledTimes(2);
+  });
+
   it("rejects unsafe requests before sending an event id to the card", async () => {
     const transport = vectorBackedTransport();
     const signer = new SmartcardSigner(transport);

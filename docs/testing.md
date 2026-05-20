@@ -534,7 +534,8 @@ single-repository CI. Cross-repository drift remains guarded by
   oversized short-APDU payloads before simulator or PC/SC transport.
 - Smartcard signer tests covering mandatory review acknowledgement, APDU-backed
   public-key retrieval, event-id signing, Schnorr verification, and standard
-  signed-event response verification.
+  signed-event response verification, including rejection of invalid card
+  signatures before returning a response.
 - Smartcard signer negative tests covering shared unsafe request rejection
   before an event id is sent to a card transport and rejection of
   `trusted-display` acknowledgement plus missing or mismatched

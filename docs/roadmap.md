@@ -463,7 +463,8 @@ counts, and SHA-256 digests, and still does not publish to npm.
   artifact generation, plus the strict secretless JSON grant-store contract for
   approved and revoked local client grants; the private service app only parses
   manifest/install-plan/install-approval CLI arguments and renders JSON to
-  stdout. The CLI can render pairing-review metadata,
+  stdout, rejecting duplicated singleton options before artifact rendering.
+  The CLI can render pairing-review metadata,
   create digest-confirmed approval artifacts, and build explicit output
   grant-store artifacts from approval artifacts or latest-client revocations
   without default storage paths or input-file mutation. `@nsealr/client` now

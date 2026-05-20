@@ -47,6 +47,13 @@ function takeOptionValue(args: string[], index: number, option: string): string 
   return value;
 }
 
+function setSingletonOption<T>(current: T | undefined, value: T, option: string): T {
+  if (current !== undefined) {
+    throw new Error(`${option} is duplicated`);
+  }
+  return value;
+}
+
 export function nativeHostManifestFromArgs(args: string[]): NativeHostManifest {
   const normalizedArgs = args[0] === "--" ? args.slice(1) : args;
   let browser: NativeHostBrowser | undefined;
@@ -63,22 +70,22 @@ export function nativeHostManifestFromArgs(args: string[]): NativeHostManifest {
       if (value !== "chromium" && value !== "firefox") {
         throw new Error("native host manifest browser must be chromium or firefox");
       }
-      browser = value;
+      browser = setSingletonOption(browser, value, arg);
       index += 1;
     } else if (arg === "--host-path") {
-      hostPath = takeOptionValue(normalizedArgs, index, arg);
+      hostPath = setSingletonOption(hostPath, takeOptionValue(normalizedArgs, index, arg), arg);
       index += 1;
     } else if (arg === "--manifest-path") {
-      manifestPath = takeOptionValue(normalizedArgs, index, arg);
+      manifestPath = setSingletonOption(manifestPath, takeOptionValue(normalizedArgs, index, arg), arg);
       index += 1;
     } else if (arg === "--extension-id") {
       extensionIds.push(takeOptionValue(normalizedArgs, index, arg));
       index += 1;
     } else if (arg === "--host-name") {
-      name = takeOptionValue(normalizedArgs, index, arg);
+      name = setSingletonOption(name, takeOptionValue(normalizedArgs, index, arg), arg);
       index += 1;
     } else if (arg === "--description") {
-      description = takeOptionValue(normalizedArgs, index, arg);
+      description = setSingletonOption(description, takeOptionValue(normalizedArgs, index, arg), arg);
       index += 1;
     } else {
       throw new Error(`unsupported service option: ${arg}`);
@@ -117,24 +124,24 @@ export function nativeHostInstallPlanFromArgs(args: string[]): NativeHostInstall
       if (value !== "chromium" && value !== "firefox") {
         throw new Error("native host install-plan browser must be chromium or firefox");
       }
-      browser = value;
+      browser = setSingletonOption(browser, value, arg);
       index += 1;
     } else if (arg === "--native-host-manifest") {
       throw new Error("--native-host-manifest is only supported without --native-host-install-plan");
     } else if (arg === "--host-path") {
-      hostPath = takeOptionValue(normalizedArgs, index, arg);
+      hostPath = setSingletonOption(hostPath, takeOptionValue(normalizedArgs, index, arg), arg);
       index += 1;
     } else if (arg === "--manifest-path") {
-      manifestPath = takeOptionValue(normalizedArgs, index, arg);
+      manifestPath = setSingletonOption(manifestPath, takeOptionValue(normalizedArgs, index, arg), arg);
       index += 1;
     } else if (arg === "--extension-id") {
       extensionIds.push(takeOptionValue(normalizedArgs, index, arg));
       index += 1;
     } else if (arg === "--host-name") {
-      name = takeOptionValue(normalizedArgs, index, arg);
+      name = setSingletonOption(name, takeOptionValue(normalizedArgs, index, arg), arg);
       index += 1;
     } else if (arg === "--description") {
-      description = takeOptionValue(normalizedArgs, index, arg);
+      description = setSingletonOption(description, takeOptionValue(normalizedArgs, index, arg), arg);
       index += 1;
     } else {
       throw new Error(`unsupported service option: ${arg}`);
@@ -194,13 +201,21 @@ export function nativeHostInstallApprovalFromArgs(args: string[]): NativeHostIns
   for (let index = 0; index < normalizedArgs.length; index += 1) {
     const arg = normalizedArgs[index];
     if (arg === "--native-host-install-approval") {
-      planPath = takeOptionValue(normalizedArgs, index, arg);
+      planPath = setSingletonOption(planPath, takeOptionValue(normalizedArgs, index, arg), arg);
       index += 1;
     } else if (arg === "--reviewed-install-digest") {
-      reviewedInstallDigest = requireLowerHex64(takeOptionValue(normalizedArgs, index, arg), arg);
+      reviewedInstallDigest = setSingletonOption(
+        reviewedInstallDigest,
+        requireLowerHex64(takeOptionValue(normalizedArgs, index, arg), arg),
+        arg
+      );
       index += 1;
     } else if (arg === "--approved-at") {
-      approvedAt = requireNonNegativeSafeInteger(takeOptionValue(normalizedArgs, index, arg), arg);
+      approvedAt = setSingletonOption(
+        approvedAt,
+        requireNonNegativeSafeInteger(takeOptionValue(normalizedArgs, index, arg), arg),
+        arg
+      );
       index += 1;
     } else {
       throw new Error(`unsupported service option: ${arg}`);
@@ -233,10 +248,14 @@ export async function nativeHostInstallExecutionFromArgs(
   for (let index = 0; index < normalizedArgs.length; index += 1) {
     const arg = normalizedArgs[index];
     if (arg === "--native-host-install-execute") {
-      approvalPath = takeOptionValue(normalizedArgs, index, arg);
+      approvalPath = setSingletonOption(approvalPath, takeOptionValue(normalizedArgs, index, arg), arg);
       index += 1;
     } else if (arg === "--reviewed-install-digest") {
-      reviewedInstallDigest = requireLowerHex64(takeOptionValue(normalizedArgs, index, arg), arg);
+      reviewedInstallDigest = setSingletonOption(
+        reviewedInstallDigest,
+        requireLowerHex64(takeOptionValue(normalizedArgs, index, arg), arg),
+        arg
+      );
       index += 1;
     } else {
       throw new Error(`unsupported service option: ${arg}`);

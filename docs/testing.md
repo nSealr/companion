@@ -684,8 +684,9 @@ single-repository CI. Cross-repository drift remains guarded by
   artifact generation in `@nsealr/client`, explicit approval-bound
   install-execution through a write-new adapter, multi-message native-host stdio
   behavior, and the private service CLI wrapper that renders
-  manifests/plans/approvals and can write an approved manifest path without
-  overwriting existing files. Current service
+  manifests/plans/approvals, rejects duplicated singleton install options, and
+  can write an approved manifest path without overwriting existing files.
+  Current service
   route-driver tests cover the developer serial-line dispatch boundary through
   fake ports and supported local serial path forms only; hardware serial smoke
   remains a later gate before production driver acceptance.

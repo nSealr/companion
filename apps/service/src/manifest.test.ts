@@ -240,4 +240,93 @@ describe("native host manifest CLI args", () => {
       writeFileNew() {}
     })).rejects.toThrow(/reviewed-install-digest/u);
   });
+
+  it("rejects duplicated singleton native-host CLI options", async () => {
+    expect(() => nativeHostManifestJsonFromArgs([
+      "--native-host-manifest",
+      "chromium",
+      "--native-host-manifest",
+      "firefox",
+      "--host-path",
+      hostPath,
+      "--extension-id",
+      chromiumExtensionId
+    ])).toThrow(/native-host-manifest is duplicated/u);
+    expect(() => nativeHostInstallPlanJsonFromArgs([
+      "--native-host-install-plan",
+      "chromium",
+      "--host-path",
+      hostPath,
+      "--host-path",
+      "/Applications/nSealr/other-service",
+      "--manifest-path",
+      manifestPath,
+      "--extension-id",
+      chromiumExtensionId
+    ])).toThrow(/host-path is duplicated/u);
+    expect(() => nativeHostInstallPlanJsonFromArgs([
+      "--native-host-install-plan",
+      "chromium",
+      "--host-path",
+      hostPath,
+      "--manifest-path",
+      manifestPath,
+      "--manifest-path",
+      "/Users/example/Library/Application Support/Google/Chrome/NativeMessagingHosts/other.json",
+      "--extension-id",
+      chromiumExtensionId
+    ])).toThrow(/manifest-path is duplicated/u);
+    expect(() => nativeHostInstallApprovalJsonFromArgs([
+      "--native-host-install-approval",
+      "/tmp/install-plan-a.json",
+      "--native-host-install-approval",
+      "/tmp/install-plan-b.json",
+      "--reviewed-install-digest",
+      "0".repeat(64),
+      "--approved-at",
+      "1900000000"
+    ])).toThrow(/native-host-install-approval is duplicated/u);
+    expect(() => nativeHostInstallApprovalJsonFromArgs([
+      "--native-host-install-approval",
+      "/tmp/install-plan.json",
+      "--reviewed-install-digest",
+      "0".repeat(64),
+      "--reviewed-install-digest",
+      "1".repeat(64),
+      "--approved-at",
+      "1900000000"
+    ])).toThrow(/reviewed-install-digest is duplicated/u);
+    expect(() => nativeHostInstallApprovalJsonFromArgs([
+      "--native-host-install-approval",
+      "/tmp/install-plan.json",
+      "--reviewed-install-digest",
+      "0".repeat(64),
+      "--approved-at",
+      "1900000000",
+      "--approved-at",
+      "1900000001"
+    ])).toThrow(/approved-at is duplicated/u);
+    await expect(nativeHostInstallExecutionJsonFromArgs([
+      "--native-host-install-execute",
+      "/tmp/install-approval-a.json",
+      "--native-host-install-execute",
+      "/tmp/install-approval-b.json",
+      "--reviewed-install-digest",
+      "0".repeat(64)
+    ], {
+      ensureDirectory() {},
+      writeFileNew() {}
+    })).rejects.toThrow(/native-host-install-execute is duplicated/u);
+    await expect(nativeHostInstallExecutionJsonFromArgs([
+      "--native-host-install-execute",
+      "/tmp/install-approval.json",
+      "--reviewed-install-digest",
+      "0".repeat(64),
+      "--reviewed-install-digest",
+      "1".repeat(64)
+    ], {
+      ensureDirectory() {},
+      writeFileNew() {}
+    })).rejects.toThrow(/reviewed-install-digest is duplicated/u);
+  });
 });

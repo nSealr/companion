@@ -239,7 +239,9 @@ match the shared `contract_id`.
   print a digest-bound dry-run native-host install plan, digest-confirmed
   install approval JSON, and an explicit approval-bound install execution
   result that writes only the reviewed native-host manifest with `write_new`
-  semantics. Route-driver serial-line timing controls are bounded before
+  semantics. Native-host manifest/install CLI singleton options reject
+  duplicates before artifacts are rendered. Route-driver serial-line timing
+  controls are bounded before
   dispatch, so driver files cannot configure unbounded response waits or
   ignored-log loops. It does not open relays, store keys, write grant/account
   files, install native-host manifests without that explicit approval

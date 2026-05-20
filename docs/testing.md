@@ -601,6 +601,13 @@ single-repository CI. Cross-repository drift remains guarded by
   artifacts only after digest confirmation, and keeps URL opening, relay I/O,
   `connect` acknowledgement, grants, signer dispatch, secret storage, and
   session persistence disabled.
+- NIP-46 connection token response tests covering the shared `nostrconnect://`
+  response vector. Package code verifies the returned secret against the
+  original local token while keeping the output secretless, binds the response
+  recipient to the client pubkey, discovers the remote signer pubkey from the
+  response envelope, and keeps relay I/O, NIP-44 derivation, `connect`
+  acknowledgement, grant creation, signer dispatch, secret storage, and session
+  persistence disabled.
 - NIP-46 session lifecycle checkpoint tests covering shared
   `approved_pending_ack` vectors. The parser validates client/signer pubkeys,
   relay URLs, connect digest shape, approval/expiry safety, requested

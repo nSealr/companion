@@ -29,7 +29,8 @@ import {
   parseNip46Permissions,
   reviewNip46AuthChallengeStep,
   reviewNip46ConnectMessage,
-  respondToLocalNip46Request
+  respondToLocalNip46Request,
+  verifyNip46ConnectionTokenResponse
 } from "./nip46.js";
 
 const specsRoot = resolveSpecsRoot();
@@ -239,6 +240,32 @@ describe("NIP-46 bridge payloads", () => {
       const descriptor = parseNip46ConnectionUri(vector.uri);
       expect(descriptor).toEqual(vector.expected_descriptor);
       expect(JSON.stringify(descriptor)).not.toContain(vector.secret_probe);
+    }
+  });
+
+  it("matches shared NIP-46 connection token response vectors without echoing secrets", () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+
+    expect(fixtures.nip46ConnectionTokenResponses.map((vector) => vector.name)).toEqual([
+      "nostrconnect-client-secret-response"
+    ]);
+    for (const vector of fixtures.nip46ConnectionTokenResponses) {
+      const sourceToken = fixtures.nip46ConnectionUris.find(
+        (connectionUri) => `vectors/nip46-connection-uris/${connectionUri.name}.json` === vector.source_connection_uri_vector
+      );
+      if (sourceToken === undefined) throw new Error(`missing source token for ${vector.name}`);
+      const verified = verifyNip46ConnectionTokenResponse({
+        connectionUri: sourceToken.uri,
+        responseStep: vector.response_step
+      });
+      expect(verified).toEqual(vector.expected_response);
+      expect(JSON.stringify(verified)).not.toContain(sourceToken.secret_probe);
+      expect(() =>
+        verifyNip46ConnectionTokenResponse({
+          connectionUri: sourceToken.uri.replace(sourceToken.secret_probe, "wrong-secret"),
+          responseStep: vector.response_step
+        })
+      ).toThrow(/secret mismatch/u);
     }
   });
 

@@ -1040,6 +1040,13 @@ acknowledgements, permission persistence, or active auth-flow browser UX. Relay 
 step evaluation accepts the official auth challenge shape only as normalized
 http(s) URL metadata without credentials or fragments; it never opens the URL
 or treats it as approval.
+For client-initiated `nostrconnect://` flows, the package can also verify an
+already decrypted connection-token response against the original local token
+secret without storing or echoing that secret. The output is secretless
+metadata that binds the response recipient to the client pubkey and discovers
+the remote signer pubkey from the response envelope; it does not open relays,
+derive NIP-44 keys, acknowledge `connect`, create grants, dispatch signers, or
+persist session state.
 The package can also project that metadata into deterministic auth-challenge
 review pages and a digest-bound local approval artifact. That approval proves
 which URL was reviewed, but still records `opens_url: false`,

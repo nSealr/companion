@@ -236,7 +236,7 @@ describe("nsealr CLI", () => {
     const fixtures = loadSpecsFixtures(specsRoot);
 
     await expect(collectCliOutput(["fixture", "verify", "--specs", specsRoot])).resolves.toEqual([
-      `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture")}, ${fixtureCountLabel(fixtures.nip46ConnectionUris.length, "NIP-46 connection URI fixture")}, ${fixtureCountLabel(fixtures.nip46RelayEvents.length, "NIP-46 relay event fixture")}, ${fixtureCountLabel(fixtures.nip46RelaySteps.length, "NIP-46 relay step fixture")}, ${fixtureCountLabel(fixtures.nip46AuthChallenges.length, "NIP-46 auth challenge fixture")}, ${fixtureCountLabel(fixtures.nip46Sessions.length, "NIP-46 session fixture")}, ${fixtureCountLabel(fixtures.nip46SessionGates.length, "NIP-46 session gate fixture")}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.routeRefusals.length, "route-refusal contract")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, ${fixtureCountLabel(fixtures.custodyContracts.length, "persistent-secret custody contract")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+      `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture")}, ${fixtureCountLabel(fixtures.nip46ConnectionUris.length, "NIP-46 connection URI fixture")}, ${fixtureCountLabel(fixtures.nip46ConnectionTokenResponses.length, "NIP-46 connection token response fixture")}, ${fixtureCountLabel(fixtures.nip46RelayEvents.length, "NIP-46 relay event fixture")}, ${fixtureCountLabel(fixtures.nip46RelaySteps.length, "NIP-46 relay step fixture")}, ${fixtureCountLabel(fixtures.nip46AuthChallenges.length, "NIP-46 auth challenge fixture")}, ${fixtureCountLabel(fixtures.nip46Sessions.length, "NIP-46 session fixture")}, ${fixtureCountLabel(fixtures.nip46SessionGates.length, "NIP-46 session gate fixture")}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.routeRefusals.length, "route-refusal contract")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, ${fixtureCountLabel(fixtures.custodyContracts.length, "persistent-secret custody contract")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
     ]);
   });
 
@@ -426,6 +426,11 @@ describe("nsealr CLI", () => {
     const fixtures = loadSpecsFixtures(specsRoot);
     const sessionVector = fixtures.nip46Sessions[0];
     const gateVector = fixtures.nip46SessionGates[0];
+    const tokenResponseVector = fixtures.nip46ConnectionTokenResponses[0];
+    const tokenResponseSource = fixtures.nip46ConnectionUris.find(
+      (connectionUri) => `vectors/nip46-connection-uris/${connectionUri.name}.json` === tokenResponseVector.source_connection_uri_vector
+    );
+    if (tokenResponseSource === undefined) throw new Error("missing connection token source fixture");
     const authChallengeVector = fixtures.nip46AuthChallenges[0];
     const authChallengeStepVector = fixtures.nip46RelaySteps.find(
       (relayStep) => `vectors/nip46-relay-steps/${relayStep.name}.json` === authChallengeVector.source_relay_step_vector
@@ -439,6 +444,11 @@ describe("nsealr CLI", () => {
     const authChallengeReviewPath = join(tempRoot, "auth-challenge-review.json");
     const authChallengeApprovalPath = join(tempRoot, "auth-challenge-approval.json");
     const authChallengeApprovalMismatchPath = join(tempRoot, "auth-challenge-approval-mismatch.json");
+    const tokenUriPath = join(tempRoot, "nostrconnect-token.txt");
+    const tokenMismatchUriPath = join(tempRoot, "nostrconnect-token-mismatch.txt");
+    const tokenResponseStepPath = join(tempRoot, "nostrconnect-token-response-step.json");
+    const tokenResponsePath = join(tempRoot, "nostrconnect-token-response.json");
+    const tokenResponseMismatchPath = join(tempRoot, "nostrconnect-token-response-mismatch.json");
     const invalidSessionPath = join(tempRoot, "invalid-session-checkpoint.json");
     const invalidGateVectors = fixtures.invalidVectors.filter((vector) => vector.category === "nip46-session-gate") as Array<{
       name: string;
@@ -457,6 +467,13 @@ describe("nsealr CLI", () => {
     writeFileSync(gateEventPath, `${JSON.stringify(gateVector.event, null, 2)}\n`, "utf8");
     writeFileSync(gateMessagePath, `${JSON.stringify(gateVector.decrypted_message, null, 2)}\n`, "utf8");
     writeFileSync(authChallengeStepPath, `${JSON.stringify(authChallengeStepVector, null, 2)}\n`, "utf8");
+    writeFileSync(tokenUriPath, `${tokenResponseSource.uri}\n`, "utf8");
+    writeFileSync(
+      tokenMismatchUriPath,
+      `${tokenResponseSource.uri.replace(tokenResponseSource.secret_probe, "wrong-secret")}\n`,
+      "utf8"
+    );
+    writeFileSync(tokenResponseStepPath, `${JSON.stringify(tokenResponseVector.response_step, null, 2)}\n`, "utf8");
 
     await runCli([
       "nip46",
@@ -530,6 +547,31 @@ describe("nsealr CLI", () => {
       ])
     ).rejects.toThrow(/reviewed auth challenge digest/u);
     expect(existsSync(authChallengeApprovalMismatchPath)).toBe(false);
+    await runCli([
+      "nip46",
+      "verify-connection-token-response",
+      "--uri-file",
+      tokenUriPath,
+      "--step",
+      tokenResponseStepPath,
+      "--out",
+      tokenResponsePath
+    ]);
+    expect(loadJson(tokenResponsePath)).toEqual(tokenResponseVector.expected_response);
+    expect(JSON.stringify(loadJson(tokenResponsePath))).not.toContain(tokenResponseSource.secret_probe);
+    await expect(
+      runCli([
+        "nip46",
+        "verify-connection-token-response",
+        "--uri-file",
+        tokenMismatchUriPath,
+        "--step",
+        tokenResponseStepPath,
+        "--out",
+        tokenResponseMismatchPath
+      ])
+    ).rejects.toThrow(/secret mismatch/u);
+    expect(existsSync(tokenResponseMismatchPath)).toBe(false);
     await runCli([
       "nip46",
       "create-session-checkpoint",

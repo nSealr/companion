@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:cdc82eb90ca1023e4fee7e7f7e4e1fd25aba7167fd874d78c8ef453f546d856e`
+API surface digest: `sha256:450cc599c998cb271044362118fe95bc7fab713fb98eac9a58c703cfcc718430`
 
 Source: `docs/api.md`
 
@@ -25,9 +25,10 @@ Source: `docs/api.md`
   approval remain signer-route responsibilities.
 - NIP-46 APIs currently handle the already-decrypted payload bridge,
   digest-bound `connect` and auth-challenge review/approval artifacts,
-  descriptor-only connection URI parsing, relay event envelopes, and
-  metadata-only relay request/response steps, plus pending-session request
-  gates that block signer dispatch with `connect_ack_pending` for
+  descriptor-only connection URI parsing, secretless connection-token response
+  verification, relay event envelopes, and metadata-only relay request/response
+  steps, plus pending-session request gates that block signer dispatch with
+  `connect_ack_pending` for
   approved-but-unacknowledged session checkpoints. Relay sessions, NIP-44
   encryption, `connect` acknowledgements, browser URL opening, persistent
   grants, and browser extension packaging remain outside this reviewed surface.
@@ -148,10 +149,12 @@ The NIP-46 package converts already-decrypted messages into nSealr decisions or
 deterministic local responses, parses connect review intents, produces
 digest-bound connect review and approval artifacts, produces digest-bound auth
 challenge review and approval artifacts, parses descriptor-only `bunker://` and
-`nostrconnect://` connection URI metadata, parses relay event envelopes, parses
-and creates reviewed-but-not-active session lifecycle checkpoints, parses
-requested-permission metadata, parses stricter approved-permission inputs,
-parses read-only policy files, and enforces permission checks. It also evaluates
+`nostrconnect://` connection URI metadata, verifies already decrypted
+`nostrconnect://` token responses without echoing or storing the returned
+secret, parses relay event envelopes, parses and creates reviewed-but-not-active
+session lifecycle checkpoints, parses requested-permission metadata, parses
+stricter approved-permission inputs, parses read-only policy files, and
+enforces permission checks. It also evaluates
 relay request and response steps only
 after plaintext has been
 supplied by a future NIP-44 layer: request steps return deterministic bridge
@@ -162,6 +165,11 @@ Auth challenge review renders only the remote signer pubkey, client pubkey, and
 auth URL, and approval requires the reviewed auth challenge digest while
 recording false side-effect flags for URL opening, relay opening, connect
 acknowledgement, grant creation, signer dispatch, secret storage, and session
+persistence.
+Connection-token response verification returns only secretless metadata for
+client pubkey binding, discovered remote signer pubkey, relays, and requested
+permissions while recording no relay opening, NIP-44 key derivation, connect
+acknowledgement, grant creation, signer dispatch, secret storage, or session
 persistence.
 Approved `sign_event` inputs must be kind-scoped before signer routing. The
 connection URI parser records only secret presence, not the secret value. Relay

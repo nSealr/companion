@@ -60,6 +60,7 @@ import {
   parseNip46SessionLifecycle,
   reviewNip46AuthChallengeStep,
   reviewNip46ConnectMessage,
+  verifyNip46ConnectionTokenResponse,
   type Nip46Permission,
   respondToLocalNip46Request
 } from "@nsealr/nip46";
@@ -801,6 +802,24 @@ export function buildCli(options: BuildCliOptions = {}): Command {
           throw new Error(`invalid NIP-46 connection URI fixture ${connectionUri.name}: secret echo`);
         }
       }
+      for (const tokenResponse of fixtures.nip46ConnectionTokenResponses) {
+        const sourceToken = fixtures.nip46ConnectionUris.find(
+          (connectionUri) => `vectors/nip46-connection-uris/${connectionUri.name}.json` === tokenResponse.source_connection_uri_vector
+        );
+        if (sourceToken === undefined) {
+          throw new Error(`invalid NIP-46 connection token response fixture ${tokenResponse.name}: source token missing`);
+        }
+        const actual = verifyNip46ConnectionTokenResponse({
+          connectionUri: sourceToken.uri,
+          responseStep: tokenResponse.response_step
+        });
+        if (JSON.stringify(actual) !== JSON.stringify(tokenResponse.expected_response)) {
+          throw new Error(`invalid NIP-46 connection token response fixture ${tokenResponse.name}: response mismatch`);
+        }
+        if (JSON.stringify(actual).includes(sourceToken.secret_probe)) {
+          throw new Error(`invalid NIP-46 connection token response fixture ${tokenResponse.name}: secret echo`);
+        }
+      }
       for (const relayEvent of fixtures.nip46RelayEvents) {
         const actual = parseNip46RelayEventEnvelope(relayEvent.event, relayEvent.direction);
         if (JSON.stringify(actual) !== JSON.stringify(relayEvent.expected_envelope)) {
@@ -874,6 +893,8 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture");
       const connectionUriFixtureLabel =
         fixtureCountLabel(fixtures.nip46ConnectionUris.length, "NIP-46 connection URI fixture");
+      const connectionTokenResponseFixtureLabel =
+        fixtureCountLabel(fixtures.nip46ConnectionTokenResponses.length, "NIP-46 connection token response fixture");
       const relayEventFixtureLabel =
         fixtureCountLabel(fixtures.nip46RelayEvents.length, "NIP-46 relay event fixture");
       const relayStepFixtureLabel =
@@ -889,7 +910,7 @@ export function buildCli(options: BuildCliOptions = {}): Command {
       const custodyContractFixtureLabel =
         fixtureCountLabel(fixtures.custodyContracts.length, "persistent-secret custody contract");
       console.log(
-        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${relayStepFixtureLabel}, ${authChallengeFixtureLabel}, ${sessionFixtureLabel}, ${sessionGateFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${routeRefusalFixtureLabel}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, ${custodyContractFixtureLabel}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${connectionTokenResponseFixtureLabel}, ${relayEventFixtureLabel}, ${relayStepFixtureLabel}, ${authChallengeFixtureLabel}, ${sessionFixtureLabel}, ${sessionGateFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${routeRefusalFixtureLabel}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, ${custodyContractFixtureLabel}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );
     });
 
@@ -1562,6 +1583,20 @@ export function buildCli(options: BuildCliOptions = {}): Command {
     .action((options: { uriFile: string; out: string }) => {
       const uri = readFileSync(options.uriFile, "utf8").trim();
       writeJson(options.out, parseNip46ConnectionUri(uri));
+    });
+
+  nip46
+    .command("verify-connection-token-response")
+    .description("Verify a nostrconnect:// token response secret without writing the secret")
+    .requiredOption("--uri-file <path>", "Read the original local nostrconnect:// token file")
+    .requiredOption("--step <path>", "Read a NIP-46 relay response-step input JSON file")
+    .requiredOption("--out <path>", "Write the secretless token response verification JSON")
+    .action((options: { uriFile: string; step: string; out: string }) => {
+      const uri = readFileSync(options.uriFile, "utf8").trim();
+      writeNewJson(options.out, verifyNip46ConnectionTokenResponse({
+        connectionUri: uri,
+        responseStep: readJson(options.step)
+      }));
     });
 
   nip46

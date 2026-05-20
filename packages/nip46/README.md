@@ -10,6 +10,8 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
   digest-bound local approval artifacts.
 - Parse `bunker://` and `nostrconnect://` connection URIs into descriptor-only
   metadata without echoing shared secrets.
+- Verify already decrypted `nostrconnect://` token responses against the
+  original local token secret without echoing or storing that secret.
 - Parse NIP-46 `kind:24133` relay event envelopes into sender/recipient/content
   metadata without decrypting NIP-44 content or opening relay connections.
 - Evaluate metadata-only relay request and response steps after a future
@@ -72,6 +74,13 @@ assert.equal(decision.type, "signer_request");
 Connection URI parsing is intentionally non-committal: it validates official
 NIP-46 token shape, relays, client metadata, and requested permissions, but it
 returns only `secret_present` instead of the secret value.
+
+Connection token response verification is also non-committal. It checks that a
+decrypted `nostrconnect://` response returned the expected local token secret,
+then returns only secretless metadata: client pubkey binding, discovered remote
+signer pubkey, relays, requested permissions, and false side-effect flags. It
+does not open relays, derive NIP-44 keys, acknowledge `connect`, create grants,
+dispatch signers, store secrets, or persist session state.
 
 Connect approval is also non-committal. The approval artifact proves that a
 specific connect review digest was manually confirmed, but it still records

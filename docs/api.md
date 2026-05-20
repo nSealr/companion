@@ -219,6 +219,7 @@ Exports:
 - `Nip46ConnectApprovalOptions`
 - `Nip46ConnectIntent`
 - `Nip46ConnectReview`
+- `Nip46ConnectionTokenResponse`
 - `Nip46ConnectionUriDescriptor`
 - `Nip46Permission`
 - `Nip46PermissionRequirement`
@@ -259,6 +260,7 @@ Exports:
 - `reviewNip46AuthChallengeStep`
 - `reviewNip46ConnectIntent`
 - `reviewNip46ConnectMessage`
+- `verifyNip46ConnectionTokenResponse`
 
 ## @nsealr/policy
 

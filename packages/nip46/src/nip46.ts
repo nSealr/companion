@@ -48,6 +48,33 @@ export type Nip46ConnectionUriDescriptor = {
   exposes_secret: false;
 };
 
+export type Nip46ConnectionTokenResponse = {
+  format: "nsealr-nip46-connection-token-response-v0";
+  kind: "nostrconnect";
+  client_pubkey: string;
+  remote_signer_pubkey: string;
+  relays: string[];
+  requested_permissions: Nip46Permission[];
+  client_metadata?: {
+    name?: string;
+    url?: string;
+    image?: string;
+  };
+  response_message_id: string;
+  client_pubkey_bound_to_recipient: true;
+  secret_matched: true;
+  starts_relay_session: false;
+  derives_nip44_key: false;
+  acknowledges_connect: false;
+  opens_relay: false;
+  creates_grants: false;
+  dispatches_signer: false;
+  stores_production_secrets: false;
+  persists_session_state: false;
+  exposes_secret: false;
+  contains_secret_material: false;
+};
+
 export type Nip46RelayEventDirection = "client_to_remote_signer" | "remote_signer_to_client";
 
 export type Nip46RelayEventEnvelope = {
@@ -603,7 +630,10 @@ export function parseNip46PolicyFile(policy: unknown, context = "NIP-46 policy f
   return policy.approved_permissions.map((permission) => parseNip46PolicyPermission(permission, context));
 }
 
-export function parseNip46ConnectionUri(value: string): Nip46ConnectionUriDescriptor {
+function parseNip46ConnectionUriWithSecret(value: string): {
+  descriptor: Nip46ConnectionUriDescriptor;
+  secret?: string;
+} {
   if (typeof value !== "string" || value.trim() !== value || value.length === 0) {
     throw new Error("NIP-46 connection URI must be a non-empty trimmed string");
   }
@@ -642,16 +672,19 @@ export function parseNip46ConnectionUri(value: string): Nip46ConnectionUriDescri
       throw new Error("NIP-46 bunker URI must not include client metadata or requested permissions");
     }
     return {
-      format: "nsealr-nip46-connection-uri-v0",
-      kind,
-      remote_signer_pubkey: requireXOnlyPubkey(url.hostname, "bunker remote-signer pubkey"),
-      relays,
-      secret_present: secret !== undefined && secret !== "",
-      requested_permissions: [],
-      starts_relay_session: false,
-      creates_grants: false,
-      stores_production_secrets: false,
-      exposes_secret: false
+      descriptor: {
+        format: "nsealr-nip46-connection-uri-v0",
+        kind,
+        remote_signer_pubkey: requireXOnlyPubkey(url.hostname, "bunker remote-signer pubkey"),
+        relays,
+        secret_present: secret !== undefined && secret !== "",
+        requested_permissions: [],
+        starts_relay_session: false,
+        creates_grants: false,
+        stores_production_secrets: false,
+        exposes_secret: false
+      },
+      ...(secret !== undefined && { secret })
     };
   }
 
@@ -660,24 +693,31 @@ export function parseNip46ConnectionUri(value: string): Nip46ConnectionUriDescri
   }
 
   return {
-    format: "nsealr-nip46-connection-uri-v0",
-    kind,
-    client_pubkey: requireXOnlyPubkey(url.hostname, "nostrconnect client pubkey"),
-    relays,
-    secret_present: true,
-    requested_permissions: perms !== undefined ? parseNip46Permissions(perms) : [],
-    ...((name !== undefined || clientUrl !== undefined || image !== undefined) && {
-      client_metadata: {
-        ...(name !== undefined && { name }),
-        ...(clientUrl !== undefined && { url: requireOptionalHttpUrl(clientUrl, "url") }),
-        ...(image !== undefined && { image: requireOptionalHttpUrl(image, "image") })
-      }
-    }),
-    starts_relay_session: false,
-    creates_grants: false,
-    stores_production_secrets: false,
-    exposes_secret: false
+    descriptor: {
+      format: "nsealr-nip46-connection-uri-v0",
+      kind,
+      client_pubkey: requireXOnlyPubkey(url.hostname, "nostrconnect client pubkey"),
+      relays,
+      secret_present: true,
+      requested_permissions: perms !== undefined ? parseNip46Permissions(perms) : [],
+      ...((name !== undefined || clientUrl !== undefined || image !== undefined) && {
+        client_metadata: {
+          ...(name !== undefined && { name }),
+          ...(clientUrl !== undefined && { url: requireOptionalHttpUrl(clientUrl, "url") }),
+          ...(image !== undefined && { image: requireOptionalHttpUrl(image, "image") })
+        }
+      }),
+      starts_relay_session: false,
+      creates_grants: false,
+      stores_production_secrets: false,
+      exposes_secret: false
+    },
+    secret
   };
+}
+
+export function parseNip46ConnectionUri(value: string): Nip46ConnectionUriDescriptor {
+  return parseNip46ConnectionUriWithSecret(value).descriptor;
 }
 
 export function parseNip46RelayEventEnvelope(
@@ -741,6 +781,21 @@ export function evaluateNip46RelayRequestStep(value: unknown): Nip46RelayRequest
   };
 }
 
+function parseNip46RelayResponseStepParts(value: unknown): {
+  envelope: Nip46RelayEventEnvelope;
+  responseMessage: Nip46ResponseMessage;
+} {
+  if (!isRecord(value)) throw new Error("NIP-46 relay response step must be an object");
+  const direction = requireNip46RelayDirection(value.direction);
+  if (direction !== "remote_signer_to_client") {
+    throw new Error("NIP-46 relay response step direction must be remote_signer_to_client");
+  }
+  return {
+    envelope: parseNip46RelayEventEnvelope(value.event, direction),
+    responseMessage: requireResponseMessage(value.decrypted_message)
+  };
+}
+
 function relayResponseResultType(message: Nip46ResponseMessage): {
   resultType: Nip46RelayResponseResultType;
   signedEventShapeChecked: boolean;
@@ -783,13 +838,7 @@ function relayResponseResultType(message: Nip46ResponseMessage): {
 }
 
 export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayResponseStep {
-  if (!isRecord(value)) throw new Error("NIP-46 relay response step must be an object");
-  const direction = requireNip46RelayDirection(value.direction);
-  if (direction !== "remote_signer_to_client") {
-    throw new Error("NIP-46 relay response step direction must be remote_signer_to_client");
-  }
-  const envelope = parseNip46RelayEventEnvelope(value.event, direction);
-  const responseMessage = requireResponseMessage(value.decrypted_message);
+  const { envelope, responseMessage } = parseNip46RelayResponseStepParts(value);
   const { resultType, signedEventShapeChecked, resultPubkey, authUrl } = relayResponseResultType(responseMessage);
   const resultPubkeyBoundToSender = resultPubkey !== undefined && resultPubkey === envelope.sender_pubkey;
   if (resultPubkey !== undefined && !resultPubkeyBoundToSender) {
@@ -816,6 +865,49 @@ export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayRespon
     verifies_signature: false,
     stores_production_secrets: false,
     persists_session_state: false
+  };
+}
+
+export function verifyNip46ConnectionTokenResponse(value: unknown): Nip46ConnectionTokenResponse {
+  if (!isRecord(value)) throw new Error("NIP-46 connection token response input must be an object");
+  if (typeof value.connectionUri !== "string") {
+    throw new Error("NIP-46 connection token response connectionUri must be a string");
+  }
+  const { descriptor, secret } = parseNip46ConnectionUriWithSecret(value.connectionUri);
+  if (descriptor.kind !== "nostrconnect" || descriptor.client_pubkey === undefined || secret === undefined || secret === "") {
+    throw new Error("NIP-46 connection token response requires a nostrconnect URI with secret");
+  }
+  const { envelope, responseMessage } = parseNip46RelayResponseStepParts(value.responseStep);
+  if (envelope.recipient_pubkey !== descriptor.client_pubkey) {
+    throw new Error("NIP-46 connection token response recipient does not match client pubkey");
+  }
+  if (responseMessage.error !== undefined) {
+    throw new Error("NIP-46 connection token response must not contain an error");
+  }
+  if (responseMessage.result !== secret) {
+    throw new Error("NIP-46 connection token response secret mismatch");
+  }
+  return {
+    format: "nsealr-nip46-connection-token-response-v0",
+    kind: "nostrconnect",
+    client_pubkey: descriptor.client_pubkey,
+    remote_signer_pubkey: envelope.sender_pubkey,
+    relays: descriptor.relays,
+    requested_permissions: descriptor.requested_permissions,
+    ...(descriptor.client_metadata !== undefined && { client_metadata: descriptor.client_metadata }),
+    response_message_id: responseMessage.id,
+    client_pubkey_bound_to_recipient: true,
+    secret_matched: true,
+    starts_relay_session: false,
+    derives_nip44_key: false,
+    acknowledges_connect: false,
+    opens_relay: false,
+    creates_grants: false,
+    dispatches_signer: false,
+    stores_production_secrets: false,
+    persists_session_state: false,
+    exposes_secret: false,
+    contains_secret_material: false
   };
 }
 

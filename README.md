@@ -334,6 +334,11 @@ match the shared `contract_id`.
   `nostrconnect://` token from a local file and writes descriptor-only metadata
   without echoing the shared secret value. It does not open relays, acknowledge
   `connect`, persist grants, or contact signer transports.
+- `nsealr nip46 verify-connection-token-response` verifies a decrypted
+  `nostrconnect://` token response against the original local token file. It
+  writes only secretless metadata, discovers the remote signer pubkey from the
+  response envelope, and does not open relays, acknowledge `connect`, create
+  grants, dispatch signers, or persist session state.
 - `packages/qr` implements the v0 `nsealr1:` QR envelope from
   `nSealr/specs`, including malformed/padded/invalid-UTF-8/oversized
   rejection. Encoding applies the same static decoded-JSON byte limit as

@@ -217,6 +217,14 @@ export type SpecsFixtureSet = {
     expected_descriptor: unknown;
     scope: string;
   }>;
+  nip46ConnectionTokenResponses: Array<{
+    name: string;
+    format: "nsealr-nip46-connection-token-response-vector-v0";
+    source_connection_uri_vector: string;
+    response_step: unknown;
+    expected_response: unknown;
+    scope: string;
+  }>;
   nip46RelayEvents: Array<{
     name: string;
     format: "nsealr-nip46-relay-event-envelope-v0";
@@ -1052,6 +1060,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const nip46Root = resolve(specsRoot, "vectors/nip46");
   const nip46PolicyFilesRoot = resolve(specsRoot, "vectors/nip46-policy-files");
   const nip46ConnectionUrisRoot = resolve(specsRoot, "vectors/nip46-connection-uris");
+  const nip46ConnectionTokenResponsesRoot = resolve(specsRoot, "vectors/nip46-connection-token-responses");
   const nip46RelayEventsRoot = resolve(specsRoot, "vectors/nip46-relay-events");
   const nip46RelayStepsRoot = resolve(specsRoot, "vectors/nip46-relay-steps");
   const nip46AuthChallengesRoot = resolve(specsRoot, "vectors/nip46-auth-challenges");
@@ -1094,6 +1103,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const nip46ConnectionUriFiles = readdirSync(nip46ConnectionUrisRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const nip46ConnectionTokenResponseFiles = readdirSync(nip46ConnectionTokenResponsesRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const nip46RelayEventFiles = readdirSync(nip46RelayEventsRoot)
@@ -1182,6 +1194,10 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     ),
     nip46ConnectionUris: nip46ConnectionUriFiles.map(
       (file) => loadJson(resolve(nip46ConnectionUrisRoot, file)) as SpecsFixtureSet["nip46ConnectionUris"][number]
+    ),
+    nip46ConnectionTokenResponses: nip46ConnectionTokenResponseFiles.map(
+      (file) =>
+        loadJson(resolve(nip46ConnectionTokenResponsesRoot, file)) as SpecsFixtureSet["nip46ConnectionTokenResponses"][number]
     ),
     nip46RelayEvents: nip46RelayEventFiles.map(
       (file) => loadJson(resolve(nip46RelayEventsRoot, file)) as SpecsFixtureSet["nip46RelayEvents"][number]

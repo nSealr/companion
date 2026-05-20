@@ -158,6 +158,17 @@ describe("fixture loading", () => {
     );
   });
 
+  it("loads NIP-46 connection token response vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    expect(fixtures.nip46ConnectionTokenResponses.map((vector) => vector.name)).toEqual([
+      "nostrconnect-client-secret-response"
+    ]);
+    expect(fixtures.nip46ConnectionTokenResponses[0].format).toBe(
+      "nsealr-nip46-connection-token-response-vector-v0"
+    );
+    expect(JSON.stringify(fixtures.nip46ConnectionTokenResponses[0].expected_response)).not.toContain("client-secret");
+  });
+
   it("loads NIP-46 relay event envelope vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
     expect(fixtures.nip46RelayEvents.map((vector) => vector.name)).toEqual([

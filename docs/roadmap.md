@@ -140,8 +140,13 @@ encryption, or signer I/O. The package now also validates `bunker://` and
 and session work; the parser records only whether a secret was present and does
 not acknowledge a connection, open relays, or create grants. `nsealr nip46
 parse-connection-uri` exposes that parser as a file-backed CLI harness without
-putting tokens directly in the shell command line. The first M5 relay boundary
-is now package-owned: NIP-46 `kind:24133` relay event envelopes are parsed into
+putting tokens directly in the shell command line. The package now also
+verifies already decrypted `nostrconnect://` token responses against the
+original local token secret without echoing or storing that secret. The
+secretless result discovers the remote signer pubkey from the response envelope
+and still avoids relay I/O, NIP-44 derivation, `connect` acknowledgement, grant
+creation, signer dispatch, and persistence. The first M5 relay boundary is now
+package-owned: NIP-46 `kind:24133` relay event envelopes are parsed into
 sender pubkey, recipient `p` tag, encrypted-content, and signed-field metadata
 without opening relays, decrypting NIP-44 content, creating grants, or
 dispatching to signers. The next M5 relay boundaries are also package-owned:
@@ -172,8 +177,8 @@ persistence. The invalid vector set now pins sender mismatch, recipient
 mismatch, pre-approval evaluation, expiry, wrong direction, and attempted
 `connect` processing before output is written.
 Relay sessions, NIP-44 encryption/decryption,
-connection token responses, permission storage, grant review, browser URL
-opening UX, and active auth-flow session handling remain future work.
+permission storage, grant review, browser URL opening UX, and active auth-flow
+session handling remain future work.
 
 ## M4.5: Pre-Signing Contract Hardening
 

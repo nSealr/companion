@@ -92,8 +92,11 @@ A route-driver store uses this shape:
 ```
 
 Route-driver files reject QR-vault route types, non-USB transports, empty route
-sets, duplicate account/route/transport entries, unsupported fields, and secret
-field names such as `nsec`, `mnemonic`, or `passphrase`.
+sets, duplicate account/route/transport entries, unsupported fields, broad or
+remote serial paths, and secret field names such as `nsec`, `mnemonic`, or
+`passphrase`. Accepted serial paths are local device identifiers only:
+`/dev/cu*`, `/dev/tty*`, `/dev/serial/by-id/*`, `/dev/serial/by-path/*`,
+`COMn`, or Windows `\\.\COMn` paths encoded in JSON as `\\\\.\\COMn`.
 
 ## Boundary
 

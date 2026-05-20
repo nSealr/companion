@@ -11,6 +11,7 @@ import { SerialLineTransport, type SerialLinePort, type SerialLinePortOpener } f
 export const SERVICE_ROUTE_DRIVER_STORE_FORMAT = "nsealr-service-route-driver-store-v0";
 export const MAX_SERVICE_ROUTE_DRIVER_STORE_JSON_BYTES = 64 * 1024;
 export const MAX_SERVICE_ROUTE_DRIVERS = 64;
+export const MAX_SERIAL_LINE_PATH_LENGTH = 512;
 
 type ServiceSerialLineRouteDriver = {
   account_id: string;
@@ -101,8 +102,20 @@ function requireStableId(value: unknown, label: string): string {
 }
 
 function requireSerialLinePath(value: unknown): string {
-  if (typeof value !== "string" || value.length === 0 || value.includes("\0")) {
+  if (typeof value !== "string" || value.length === 0) {
     throw new Error("serial_line.path must be a non-empty path");
+  }
+  if (value.length > MAX_SERIAL_LINE_PATH_LENGTH) {
+    throw new Error("serial_line.path exceeds max length");
+  }
+  if (value !== value.trim() || /[\0\r\n\t]/u.test(value)) {
+    throw new Error("serial_line.path contains unsupported whitespace or control characters");
+  }
+  const isPosixDevice = /^\/dev\/(?:cu|tty)[A-Za-z0-9._-]{1,240}$/u.test(value);
+  const isLinuxStableDevice = /^\/dev\/serial\/(?:by-id|by-path)\/[A-Za-z0-9._:+-]{1,240}$/u.test(value);
+  const isWindowsComDevice = /^(?:COM[1-9][0-9]{0,2}|\\\\\.\\COM[1-9][0-9]{0,2})$/iu.test(value);
+  if (!isPosixDevice && !isLinuxStableDevice && !isWindowsComDevice) {
+    throw new Error("serial_line.path must be a supported local serial device path");
   }
   return value;
 }

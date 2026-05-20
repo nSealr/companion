@@ -113,6 +113,42 @@ describe("service route drivers", () => {
     }))).toThrow(/secret field routes\[0\]\.serial_line\.mnemonic/u);
   });
 
+  it("accepts only supported local serial device paths", () => {
+    const validPaths = [
+      "/dev/cu.usbmodem-test",
+      "/dev/ttyUSB0",
+      "/dev/serial/by-id/usb-Espressif_USB_JTAG_serial_debug_unit-40:22:D8:00-if00",
+      "/dev/serial/by-path/pci-0000:00:14.0-usb-0:6:1.0-port0",
+      "COM3",
+      "\\\\.\\COM10"
+    ];
+    for (const path of validPaths) {
+      expect(parseServiceRouteDriverStore(routeDriverStore({
+        serial_line: {
+          path
+        }
+      })).routes[0].serial_line.path).toBe(path);
+    }
+
+    const invalidPaths = [
+      "cu.usbmodem-test",
+      "/tmp/cu.usbmodem-test",
+      "/dev/cu.usbmodem-test\n--flag",
+      "/dev/cu.usbmodem-test ",
+      "https://example.com/serial",
+      "/dev/serial/by-id/../ttyUSB0",
+      "COM0",
+      "\\\\.\\COM0"
+    ];
+    for (const path of invalidPaths) {
+      expect(() => parseServiceRouteDriverStore(routeDriverStore({
+        serial_line: {
+          path
+        }
+      }))).toThrow(/serial_line\.path/u);
+    }
+  });
+
   it("dispatches matching requests through an injected serial-line opener", async () => {
     const store = parseServiceRouteDriverStore(routeDriverStore());
     const written: string[] = [];

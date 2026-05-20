@@ -411,15 +411,15 @@ single-repository CI. Cross-repository drift remains guarded by
   grant/account JSON files for local harnesses only when a storage approval
   covers the paths, rejects secret-bearing or malformed account-store files,
   parses explicit storage-approved secretless route-driver stores, rejects
-  empty, duplicate, broad, secret-bearing, non-USB, and QR-vault driver
-  mappings, rejects stale route-driver entries that do not match the loaded
-  account-store account id, route type, and transport, dispatches matching
-  developer serial-line requests only through an injected opener or explicit
-  route-driver file, maps serial-line open,
-  timeout, protocol, I/O, and close failures to deterministic transport error
-  codes, returns deterministic `signer_route_unavailable` for authorized
-  dispatch without a configured driver, awaits async dispatchers through the
-  async native-message helpers, and returns deterministic errors for malformed
+  empty, duplicate, broad, secret-bearing, non-USB, QR-vault, and unsupported
+  serial-path driver mappings, rejects stale route-driver entries that do not
+  match the loaded account-store account id, route type, and transport,
+  dispatches matching developer serial-line requests only through an injected
+  opener or explicit route-driver file, maps serial-line open, timeout,
+  protocol, I/O, and close failures to deterministic transport error codes,
+  returns deterministic `signer_route_unavailable` for authorized dispatch
+  without a configured driver, awaits async dispatchers through the async
+  native-message helpers, and returns deterministic errors for malformed
   native-message frames.
 - Local service tests cover deterministic pairing intent creation, digest-bound
   pairing-review projection, manual approval into a grant, strict secretless
@@ -668,9 +668,9 @@ single-repository CI. Cross-repository drift remains guarded by
   behavior, and the private service CLI wrapper that renders
   manifests/plans/approvals and can write an approved manifest path without
   overwriting existing files. Current service
-  route-driver tests cover the developer serial-line
-  dispatch boundary through fake ports only; hardware serial smoke remains a
-  later gate before production driver acceptance.
+  route-driver tests cover the developer serial-line dispatch boundary through
+  fake ports and supported local serial path forms only; hardware serial smoke
+  remains a later gate before production driver acceptance.
 - Browser extension provider tests over fake companion/local-service backends
   cover authorized selected-account public-key lookup, `signEvent` routing
   through local-service dispatch, explicit dispatcher success, deterministic

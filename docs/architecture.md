@@ -342,9 +342,11 @@ serial-line dispatch through the async local-service boundary only when the
 same storage approval covers the driver-store path and a loaded account-store
 contains a matching account id, route type, and transport. That driver store
 does not contain keys, does not approve clients, does not choose default paths,
-and does not make QR vaults connected signers. Serial-line open, timeout,
-protocol, I/O, close, and fallback failures are normalized into deterministic
-local-service transport error codes before they cross the service boundary.
+does not make QR vaults connected signers, and rejects remote, relative, or
+whitespace-tainted serial path forms before opening only supported local serial
+device identifiers. Serial-line open, timeout, protocol, I/O, close, and
+fallback failures are normalized into deterministic local-service transport
+error codes before they cross the service boundary.
 Install approvals still keep `writes_files=false`; install execution is a
 separate digest-confirmed gate that reports `writes_files=true` only after the
 reviewed manifest writer runs. Default storage locations, grant/account file

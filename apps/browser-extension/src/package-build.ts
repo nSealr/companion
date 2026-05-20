@@ -23,7 +23,10 @@ import {
   parseBrowserExtensionRouteConfig,
   type BrowserExtensionDispatchableRouteType
 } from "./route-config.js";
-import { type BrowserExtensionManifestOptions } from "./manifest.js";
+import {
+  type BrowserExtensionManifestOptions,
+  type BrowserExtensionManifestPermission
+} from "./manifest.js";
 import {
   isBrowserExtensionOriginMethodAllowed,
   parseBrowserExtensionOriginPermissionStore,
@@ -66,6 +69,7 @@ export type BrowserExtensionPackageBuildResult = {
   route_account_id: string;
   route_type: BrowserExtensionDispatchableRouteType;
   popup_mode: BrowserExtensionPackagePlan["popup_mode"];
+  manifest_permissions: readonly BrowserExtensionManifestPermission[];
   origin_permission_mode: "none" | BrowserExtensionPackageOriginPermissionMode;
   extension_id?: string;
   local_pairing_digest?: string;
@@ -542,6 +546,7 @@ export async function buildBrowserExtensionPackage(
     route_account_id: routeConfig.account_id,
     route_type: routeConfig.route_type,
     popup_mode: plan.popup_mode,
+    manifest_permissions: Object.freeze([...plan.manifest.permissions]),
     origin_permission_mode: originPermissions?.mode ?? "none",
     ...(originPermissions?.extensionId !== undefined ? { extension_id: originPermissions.extensionId } : {}),
     ...(originPermissions?.localPairingDigest !== undefined

@@ -80,11 +80,11 @@ packages, but it must not export test-only signing as a production path.
   output directory only after successful in-memory bundling, embeds a
   digest-approved secretless static route config in the background bundle, and
   requires reviewed origin-permission store data before content scripts can be
-  packaged. It returns explicit route, popup mode, activeTab usage, origin,
-  extension, and pairing metadata plus a package digest and per-file byte
-  counts plus SHA-256 hashes, writes no extension storage, installs no
-  native-host manifest, and remains a developer artifact until a full
-  bootstrap/config UX is reviewed.
+  packaged. It returns explicit route, manifest permissions, popup mode,
+  activeTab usage, origin, extension, and pairing metadata plus a package
+  digest and per-file byte counts plus SHA-256 hashes, writes no extension
+  storage, installs no native-host manifest, and remains a developer artifact
+  until a full bootstrap/config UX is reviewed.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
   central nSealr v0 implementation limit profile used by companion parsers,
@@ -561,12 +561,12 @@ unreviewed files under `apps/`, `packages/`, docs, scripts, or tests. The
 returned `nsealr-browser-extension-package-build-v0` result includes the
 reviewed package-plan digest, route-config digest, selected account/route,
 content-script origins, extension id, local pairing digest,
-popup mode, origin-permission mode, activeTab usage, package digest, and
-per-file byte counts plus SHA-256 hashes for the manifest, packaged popup HTML,
-and bundled entrypoints. Lab integration verifies both the explicit binding
-metadata and the files that were actually written. It still installs no
-native-host manifest, writes no extension storage, creates no grants, dispatches
-no signers, and holds no key material.
+manifest permissions, popup mode, origin-permission mode, activeTab usage,
+package digest, and per-file byte counts plus SHA-256 hashes for the manifest,
+packaged popup HTML, and bundled entrypoints. Lab integration verifies both the
+explicit binding metadata and the files that were actually written. It still
+installs no native-host manifest, writes no extension storage, creates no
+grants, dispatches no signers, and holds no key material.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

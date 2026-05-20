@@ -381,6 +381,9 @@ production dependency sections before release artifacts can be prepared.
 Package README examples are executable TypeScript snippets checked against
 built package entrypoints in CI. `docs/api-review.md` records a
 package-by-package public API review bound to the current `docs/api.md` digest.
+A digest-bound package release plan now records the exact public package set,
+synchronized version, tarball names, required local gates, provenance
+requirements, and local-publish prohibition before release artifacts are built.
 The manual release rehearsal manifest records every tarball's filename, byte
 count, and SHA-256 digest before artifact upload.
 `@nsealr/sdk` now provides a platform-neutral facade over curated public
@@ -393,9 +396,9 @@ clean and no longer requires Node `Buffer`; `@nsealr/framing` is also
 browser-runtime clean as a direct package, but remains outside
 `@nsealr/sdk/browser` until the WebSerial/WebUSB access-surface boundary is
 reviewed. A manual package release rehearsal
-workflow now prepares and uploads
-checked tarball artifacts with byte counts and SHA-256 digests without
-publishing to npm.
+workflow now renders the package release plan, prepares and uploads checked
+tarball artifacts whose manifest includes the `release_plan_digest`, byte
+counts, and SHA-256 digests, and still does not publish to npm.
 
 ## Later
 
@@ -680,8 +683,10 @@ publishing to npm.
   is digest-bound to generated API docs. Public package import hygiene is now
   checked so production source cannot drift into private apps, unreviewed
   `@nsealr/*` subpaths, or the test-only signer package. Changelog and release
-  policy are present. A manual release rehearsal workflow prepares checked
-  tarball artifacts with byte counts and SHA-256 digests without npm
+  policy are present. The release-plan check emits a digest-bound review of the
+  exact public package set and keeps local npm publishing forbidden. A manual
+  release rehearsal workflow prepares checked tarball artifacts with byte
+  counts, SHA-256 digests, and the reviewed `release_plan_digest` without npm
   publication. Actual npm trusted publishing/provenance activation remains
   pending.
 - M5 full NIP-46/Nostr Connect relay session integration after reviewed

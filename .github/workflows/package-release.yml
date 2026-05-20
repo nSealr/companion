@@ -25,6 +25,7 @@ jobs:
           node-version: "24"
           cache: "pnpm"
       - run: make ci
+      - run: make release-plan
       - run: make release-artifacts
       - uses: actions/upload-artifact@v6
         with:

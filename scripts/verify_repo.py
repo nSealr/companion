@@ -126,13 +126,17 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("package.json must expose browser extension security checks")
     elif scripts.get("public-imports:check") != "node scripts/check_public_imports.mjs":
         errors.append("package.json must expose public import-hygiene checks")
+    elif scripts.get("release-plan") != "node scripts/release_plan.mjs":
+        errors.append("package.json must expose the package release plan")
+    elif scripts.get("release-plan:check") != "node scripts/check_release_plan.mjs":
+        errors.append("package.json must expose package release plan checks")
     elif scripts.get("pack-smoke") != "node scripts/pack_smoke.mjs":
         errors.append("package.json must expose the packed tarball smoke script")
     elif scripts.get("release-artifacts:safety") != "node scripts/check_release_artifacts_safety.mjs":
         errors.append("package.json must expose release-artifacts output safety checks")
     elif scripts.get("release-artifacts") != "node scripts/prepare_release_artifacts.mjs --out release-artifacts/packages":
         errors.append("package.json must expose release-artifacts preparation")
-    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm api-review:check && pnpm package-registry:check && pnpm browser-runtime-imports:check && pnpm browser-runtime-bundle:check && pnpm browser-extension-security:check && pnpm public-imports:check && pnpm release-artifacts:safety && pnpm pack-smoke":
+    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm api-review:check && pnpm package-registry:check && pnpm browser-runtime-imports:check && pnpm browser-runtime-bundle:check && pnpm browser-extension-security:check && pnpm public-imports:check && pnpm release-plan:check && pnpm release-artifacts:safety && pnpm pack-smoke":
         errors.append("package.json ci must build package artifacts, API review, and import-hygiene checks")
 
     makefile = makefile_path.read_text(encoding="utf-8")
@@ -164,6 +168,10 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile must run the browser extension security check")
     if "public-imports:" not in makefile or "$(PNPM) public-imports:check" not in makefile:
         errors.append("Makefile must run the public import-hygiene check")
+    if "release-plan:" not in makefile or "$(PNPM) release-plan" not in makefile:
+        errors.append("Makefile must render the package release plan")
+    if "release-plan-check:" not in makefile or "$(PNPM) release-plan:check" not in makefile:
+        errors.append("Makefile must run package release plan checks")
     if "release-artifacts-safety:" not in makefile or "$(PNPM) release-artifacts:safety" not in makefile:
         errors.append("Makefile must run release artifact output safety checks")
     if "pack-smoke:" not in makefile or "$(PNPM) pack-smoke" not in makefile:
@@ -180,17 +188,29 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile ci must include the browser extension security check")
     if "ci:" not in makefile or "release-artifacts-safety" not in makefile.split("ci:", 1)[1].splitlines()[0]:
         errors.append("Makefile ci must include the release artifact output safety check")
+    if "ci:" not in makefile or "release-plan-check" not in makefile.split("ci:", 1)[1].splitlines()[0]:
+        errors.append("Makefile ci must include the package release plan check")
 
     if not changelog_path.exists() or "## Unreleased" not in changelog_path.read_text(encoding="utf-8"):
         errors.append("CHANGELOG.md must track unreleased package changes")
     for rel in [
         "scripts/package_set.mjs",
         "scripts/check_package_registry.mjs",
+        "scripts/release_plan.mjs",
+        "scripts/check_release_plan.mjs",
         "scripts/prepare_release_artifacts.mjs",
         "scripts/check_release_artifacts_safety.mjs",
     ]:
         if not (ROOT / rel).exists():
             errors.append(f"missing companion package release helper: {rel}")
+    release_artifacts_text = (ROOT / "scripts" / "prepare_release_artifacts.mjs").read_text(encoding="utf-8")
+    for marker in [
+        "buildCompanionPackageReleasePlan",
+        "companionPackageReleasePlanDigest",
+        "release_plan_digest",
+    ]:
+        if marker not in release_artifacts_text:
+            errors.append(f"release artifact helper must bind artifacts to release plan marker: {marker}")
     if not (ROOT / "scripts" / "check_api_docs.mjs").exists():
         errors.append("missing companion API documentation drift helper: scripts/check_api_docs.mjs")
     if not (ROOT / "scripts" / "check_api_review.mjs").exists():
@@ -211,6 +231,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         release_text = release_path.read_text(encoding="utf-8")
         if "npm publish --provenance" not in release_text or "make integration" not in release_text:
             errors.append("docs/release.md must document provenance and integration release gates")
+        if "release_plan_digest" not in release_text:
+            errors.append("docs/release.md must document release artifact manifest plan binding")
     if not sdk_examples_path.exists():
         errors.append("docs/sdk-examples.md must document executable SDK examples")
     else:
@@ -249,6 +271,7 @@ def verify_companion_tooling(errors: list[str]) -> None:
             "Package Release Rehearsal",
             "workflow_dispatch:",
             "make ci",
+            "make release-plan",
             "make release-artifacts",
             "actions/upload-artifact@v6",
             "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24"

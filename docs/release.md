@@ -58,14 +58,19 @@ Before any npm publication:
 ## Rehearsal Workflow
 
 `.github/workflows/package-release.yml` is a manual package release rehearsal.
-It runs `make ci`, prepares checked package tarballs with
+It runs `make ci`, renders the digest-bound package release plan with
+`make release-plan`, prepares checked package tarballs with
 `make release-artifacts`, and uploads those tarballs plus a manifest as a
 GitHub Actions artifact.
 
 This workflow does not publish to npm. It is the reviewed artifact-preparation
-path that a later publication workflow must build on. The uploaded manifest
+path that a later publication workflow must build on. The release plan records
+the exact public package set, synchronized version, tarball names, provenance
+requirements, required local gates, and the rule that local npm publication is
+not allowed. The uploaded manifest includes the `release_plan_digest`, then
 records every package name, version, tarball filename, byte count, and SHA-256
-digest so reviewers can verify downloaded rehearsal artifacts exactly.
+digest so reviewers can verify that downloaded rehearsal artifacts match the
+reviewed package plan exactly.
 
 The release artifact helper may delete and recreate only a child directory
 under `release-artifacts/`. `make release-artifacts-safety` is part of CI and

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import assert from "node:assert/strict";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import {
@@ -12,6 +13,10 @@ import {
   run,
   sourceManifest
 } from "./package_set.mjs";
+import {
+  buildCompanionPackageReleasePlan,
+  companionPackageReleasePlanDigest
+} from "./release_plan.mjs";
 
 function outputDirectoryFromArgs(args) {
   const outIndex = args.indexOf("--out");
@@ -32,14 +37,21 @@ function assertSafeReleaseOutputDirectory(outDir) {
 const outDir = outputDirectoryFromArgs(process.argv.slice(2));
 assertSafeReleaseOutputDirectory(outDir);
 assertCompanionPackageRegistry();
+const releasePlan = buildCompanionPackageReleasePlan();
+const releasePlanDigest = companionPackageReleasePlanDigest(releasePlan);
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 
 const packageManager = packageManagerCommand();
 const artifacts = [];
 
-for (const packageName of publicPackages) {
+assert.deepEqual(releasePlan.packages.map((entry) => entry.name), publicPackages);
+
+for (const plannedPackage of releasePlan.packages) {
+  const packageName = plannedPackage.name;
   const expectedManifest = sourceManifest(packageName);
+  assert.equal(plannedPackage.version, expectedManifest.version);
+  assert.equal(plannedPackage.tarball, packageFilename(expectedManifest));
   run(packageManager.command, [
     ...packageManager.prefixArgs,
     "--filter",
@@ -60,6 +72,10 @@ for (const packageName of publicPackages) {
 
 writeFileSync(join(outDir, "manifest.json"), `${JSON.stringify({
   format: "nsealr-companion-release-artifacts-v0",
+  release_plan_format: releasePlan.format,
+  release_plan_digest: releasePlanDigest,
+  version: releasePlan.version,
+  package_count: artifacts.length,
   packages: artifacts
 }, null, 2)}\n`, "utf8");
 

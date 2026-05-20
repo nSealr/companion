@@ -385,6 +385,11 @@ single-repository CI. Cross-repository drift remains guarded by
   imports other `@nsealr/*` packages only through reviewed public
   entrypoints/subpaths, keeps relative imports inside the package `src`
   boundary, and never imports private apps or the test-only signer package.
+- `make release-plan-check` verifies the digest-bound public package release
+  plan and review envelope. The plan lists every public package, tarball name,
+  package directory, synchronized version, MIT license, publish provenance
+  config, and required local gates, while proving private packages and local
+  npm publishing stay excluded.
 - `make pack-smoke` packs public `@nsealr/*` tarballs, verifies they contain
   only `dist`, README, and package metadata, verifies `workspace:*` dependency
   protocols were rewritten, installs the tarballs into a temporary npm consumer
@@ -394,9 +399,10 @@ single-repository CI. Cross-repository drift remains guarded by
   top-level `release-artifacts/` directory before any cleanup occurs.
 - `make release-artifacts` builds package artifacts, packs every public
   package, validates the same tarball boundaries, and writes
-  `release-artifacts/packages/manifest.json` with each tarball filename, byte
-  count, and SHA-256 digest for the manual package release rehearsal workflow.
-  It does not publish to npm.
+  `release-artifacts/packages/manifest.json` with the reviewed
+  `release_plan_digest` plus each tarball filename, byte count, and SHA-256
+  digest for the manual package release rehearsal workflow. It does not publish
+  to npm.
 - Service app tests prove the private native-messaging host scaffold stays a
   thin wrapper around `@nsealr/client`, passes injected in-memory authorization
   context to the local service, loads explicit read-only secretless
@@ -645,10 +651,11 @@ single-repository CI. Cross-repository drift remains guarded by
   into injected exchanges, thrown native-host sender failures, and latest-grant
   revocation before browser callers trust route selection or signer dispatch.
 - Package consumer smoke currently runs against built JS/declaration artifacts,
-  packed tarballs, and executable examples importing every publishable public
-  package. README snippets for every publishable package are now executed from
-  CI, and the public API review is digest-bound to `docs/api.md`. The remaining
-  npm-facing gate is trusted-publishing/provenance activation.
+  packed tarballs, executable examples importing every publishable public
+  package, and the digest-bound package release plan. README snippets for every
+  publishable package are now executed from CI, and the public API review is
+  digest-bound to `docs/api.md`. The remaining npm-facing gate is
+  trusted-publishing/provenance activation.
 - Full NIP-46 relay-session tests with local relay fixtures after NIP-44
   session lifecycle and reviewed `connect` acknowledgement are specified.
 - Large QR payload strategy tests once chunking or compression is designed.

@@ -420,9 +420,12 @@ match the shared `contract_id`.
   release/provenance policy are documented. The public API review is bound to
   the generated API-surface digest. SDK browser-provider examples consume the
   shared access-surface vector instead of carrying an ad hoc browser/local
-  service contract. A manual package release rehearsal workflow prepares
-  checked tarball artifacts with byte counts and SHA-256 digests without
-  publishing to npm.
+  service contract. A digest-bound package release plan now lists exactly which
+  public packages may be rehearsed, confirms trusted-publishing/provenance
+  requirements, and keeps local npm publish disabled. A manual package release
+  rehearsal workflow prepares checked tarball artifacts whose manifest carries
+  the release-plan digest, byte counts, and SHA-256 digests without publishing
+  to npm.
 - Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,
   permissions, and auth challenges.
 - WebUSB, HID, CDC, WebSerial, and persistent transport experiments.

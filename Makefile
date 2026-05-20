@@ -6,7 +6,7 @@ else
 PNPM ?= npm exec --yes --package=pnpm@$(PNPM_VERSION) -- pnpm
 endif
 
-.PHONY: setup build test package-smoke examples-smoke readme-examples api-docs api-docs-update api-review package-registry browser-runtime-imports browser-runtime-bundle browser-extension-security public-imports release-artifacts-safety pack-smoke release-artifacts lint audit docs ci
+.PHONY: setup build test package-smoke examples-smoke readme-examples api-docs api-docs-update api-review package-registry browser-runtime-imports browser-runtime-bundle browser-extension-security public-imports release-plan release-plan-check release-artifacts-safety pack-smoke release-artifacts lint audit docs ci
 
 setup:
 	$(PNPM) install
@@ -62,6 +62,14 @@ public-imports:
 	python3 scripts/verify_repo.py
 	$(PNPM) public-imports:check
 
+release-plan:
+	python3 scripts/verify_repo.py
+	$(PNPM) release-plan
+
+release-plan-check:
+	python3 scripts/verify_repo.py
+	$(PNPM) release-plan:check
+
 release-artifacts-safety:
 	python3 scripts/verify_repo.py
 	$(PNPM) release-artifacts:safety
@@ -87,4 +95,4 @@ docs:
 	$(PNPM) api-docs:check
 	$(PNPM) api-review:check
 
-ci: setup build test package-smoke examples-smoke readme-examples api-docs api-review package-registry browser-runtime-imports browser-runtime-bundle browser-extension-security public-imports release-artifacts-safety pack-smoke lint audit docs
+ci: setup build test package-smoke examples-smoke readme-examples api-docs api-review package-registry browser-runtime-imports browser-runtime-bundle browser-extension-security public-imports release-plan-check release-artifacts-safety pack-smoke lint audit docs

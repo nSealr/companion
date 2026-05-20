@@ -99,7 +99,8 @@ packages, but it must not export test-only signing as a production path.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
   payload, NIP-46 policy-file, NIP-46 connection URI, NIP-46 relay-event,
-  NIP-46 relay-step, NIP-46 session lifecycle, account-descriptor, policy-profile,
+  NIP-46 relay-step, NIP-46 session lifecycle, NIP-46 session gate,
+  account-descriptor, policy-profile,
   grant-descriptor, policy-change review, policy-decision, route-selection,
   source public-key proof, access-surface, feature-matrix, limit-profile, and
   invalid hardening fixture loading.
@@ -162,6 +163,10 @@ packages, but it must not export test-only signing as a production path.
   and do not open that URL. It still does this without opening relays,
   acknowledging `connect`, creating grants, dispatching signers, verifying
   signatures, or persisting session state.
+  It also evaluates a pending-session request gate for
+  `approved_pending_ack` checkpoints: relay sender/recipient binding and
+  expiry are checked, but signer dispatch is rejected with
+  `connect_ack_pending` until a future acknowledged-session contract exists.
   Permission matching is present as a pure boundary and is pinned by shared
   permission policy fixture checks. Bridge decision output is also present: a
   permitted request can become a signer request, `ping` can produce a local
@@ -1078,6 +1083,14 @@ persistence disabled. The package can also create that checkpoint from a
 canonical connect review plus matching approval artifact, explicit client
 pubkey, relay list, expiry, and approved permissions. Source vector paths stay
 in specs fixture metadata, not in runtime session objects.
+
+The pending-session request gate consumes that checkpoint only as immutable
+review metadata. It binds the relay envelope sender to the session client
+pubkey, the recipient `p` tag to the remote-signer pubkey, and the decrypted
+request to the normal NIP-46 permission requirement logic, then returns a
+deterministic `connect_ack_pending` error. It does not use session permissions,
+acknowledge `connect`, open relays, derive NIP-44 keys, create grants, dispatch
+signers, store production secrets, or persist session state.
 
 `connect` parsing is also intentionally non-committal. The bridge can extract
 the remote-signer pubkey, optional secret, and requested permissions into a

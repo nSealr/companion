@@ -36,6 +36,7 @@ import {
   decideNip46BridgeAction,
   evaluateNip46RelayRequestStep,
   evaluateNip46RelayResponseStep,
+  evaluateNip46SessionRequestGate,
   isNip46RequestPermitted,
   nip46PermissionRequirementFromRequest,
   nip46ResponseFromNSealr,
@@ -509,6 +510,7 @@ function validateInvalidHardeningFixture(fixture: {
   relay_event?: unknown;
   relay_step?: unknown;
   session?: unknown;
+  session_gate?: unknown;
   policy_file?: unknown;
 }): void {
   if (fixture.category === "signing-request") {
@@ -581,6 +583,12 @@ function validateInvalidHardeningFixture(fixture: {
   if (fixture.category === "nip46-session") {
     expectFixtureRejection(fixture.name, fixture.expected_error, () => {
       parseNip46SessionLifecycle(fixture.session);
+    });
+    return;
+  }
+  if (fixture.category === "nip46-session-gate") {
+    expectFixtureRejection(fixture.name, fixture.expected_error, () => {
+      evaluateNip46SessionRequestGate(fixture.session_gate);
     });
     return;
   }
@@ -780,6 +788,25 @@ export function buildCli(options: BuildCliOptions = {}): Command {
           throw new Error(`invalid NIP-46 session fixture ${session.name}: session mismatch`);
         }
       }
+      for (const gate of fixtures.nip46SessionGates) {
+        const sourceSession = fixtures.nip46Sessions.find(
+          (session) => `vectors/nip46-sessions/${session.name}.json` === gate.source_session_vector
+        );
+        if (sourceSession === undefined) {
+          throw new Error(`invalid NIP-46 session gate fixture ${gate.name}: source session missing`);
+        }
+        const actual = evaluateNip46SessionRequestGate({
+          format: gate.format,
+          session: sourceSession.session,
+          evaluated_at: gate.evaluated_at,
+          direction: gate.direction,
+          event: gate.event,
+          decrypted_message: gate.decrypted_message
+        });
+        if (JSON.stringify(actual) !== JSON.stringify(gate.expected_gate)) {
+          throw new Error(`invalid NIP-46 session gate fixture ${gate.name}: gate mismatch`);
+        }
+      }
       for (const featureMatrix of fixtures.featureMatrices) {
         validateFeatureMatrixFixture(featureMatrix.name, featureMatrix);
       }
@@ -796,8 +823,10 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         fixtureCountLabel(fixtures.nip46RelaySteps.length, "NIP-46 relay step fixture");
       const sessionFixtureLabel =
         fixtureCountLabel(fixtures.nip46Sessions.length, "NIP-46 session fixture");
+      const sessionGateFixtureLabel =
+        fixtureCountLabel(fixtures.nip46SessionGates.length, "NIP-46 session gate fixture");
       console.log(
-        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${relayStepFixtureLabel}, ${sessionFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${relayStepFixtureLabel}, ${sessionFixtureLabel}, ${sessionGateFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );
     });
 

@@ -155,6 +155,29 @@ export type Nip46SessionLifecycle = {
   scope: string;
 };
 
+export type Nip46SessionRequestGate = {
+  format: "nsealr-nip46-session-request-gate-v0";
+  session_name: string;
+  session_phase: "approved_pending_ack";
+  evaluated_at: number;
+  envelope: Nip46RelayEventEnvelope;
+  message_id: string;
+  permission_requirement: Nip46PermissionRequirement;
+  blocked_reason: "connect_ack_pending";
+  response_message: Nip46ResponseMessage;
+  client_pubkey_bound_to_sender: true;
+  remote_signer_pubkey_bound_to_recipient: true;
+  session_not_expired: true;
+  uses_session_permissions: false;
+  decrypts_content: false;
+  opens_relay: false;
+  creates_grants: false;
+  acknowledges_connect: false;
+  dispatches_signer: false;
+  stores_production_secrets: false;
+  persists_session_state: false;
+};
+
 export type Nip46ConnectApprovalOptions = {
   reviewedConnectDigest: string;
   approvedAt: number;
@@ -1178,6 +1201,66 @@ export function parseNip46SessionLifecycle(value: unknown): Nip46SessionLifecycl
     stores_production_secrets: false,
     persists_session_state: false,
     scope
+  };
+}
+
+export function evaluateNip46SessionRequestGate(value: unknown): Nip46SessionRequestGate {
+  if (!isRecord(value)) throw new Error("NIP-46 session request gate must be an object");
+  assertOnlyKeys(
+    value,
+    ["format", "session", "evaluated_at", "direction", "event", "decrypted_message"],
+    "NIP-46 session request gate"
+  );
+  if (value.format !== "nsealr-nip46-session-request-gate-v0") {
+    throw new Error("NIP-46 session request gate format is invalid");
+  }
+  const session = parseNip46SessionLifecycle(value.session);
+  const evaluatedAt = requireSafeNonNegativeInteger(value.evaluated_at, "NIP-46 session request gate evaluated_at");
+  if (evaluatedAt < session.approved_at) {
+    throw new Error("NIP-46 session request gate evaluated_at must be greater than or equal to approved_at");
+  }
+  if (evaluatedAt >= session.expires_at) {
+    throw new Error("NIP-46 session request gate evaluated_at must be less than expires_at");
+  }
+  const direction = requireNip46RelayDirection(value.direction);
+  if (direction !== "client_to_remote_signer") {
+    throw new Error("NIP-46 session request gate direction must be client_to_remote_signer");
+  }
+  const envelope = parseNip46RelayEventEnvelope(value.event, direction);
+  if (envelope.sender_pubkey !== session.client_pubkey) {
+    throw new Error("NIP-46 session request sender does not match session client_pubkey");
+  }
+  if (envelope.recipient_pubkey !== session.remote_signer_pubkey) {
+    throw new Error("NIP-46 session request recipient does not match session remote_signer_pubkey");
+  }
+  const message = requireMessage(value.decrypted_message);
+  if (message.method === "connect") {
+    throw new Error("NIP-46 session request gate must not process connect");
+  }
+  return {
+    format: "nsealr-nip46-session-request-gate-v0",
+    session_name: session.name,
+    session_phase: session.phase,
+    evaluated_at: evaluatedAt,
+    envelope,
+    message_id: message.id,
+    permission_requirement: nip46PermissionRequirementFromRequest(message),
+    blocked_reason: "connect_ack_pending",
+    response_message: {
+      id: message.id,
+      error: "connect_pending: NIP-46 session is approved but connect is not acknowledged"
+    },
+    client_pubkey_bound_to_sender: true,
+    remote_signer_pubkey_bound_to_recipient: true,
+    session_not_expired: true,
+    uses_session_permissions: false,
+    decrypts_content: false,
+    opens_relay: false,
+    creates_grants: false,
+    acknowledges_connect: false,
+    dispatches_signer: false,
+    stores_production_secrets: false,
+    persists_session_state: false
   };
 }
 

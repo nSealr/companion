@@ -458,7 +458,7 @@ single-repository CI. Cross-repository drift remains guarded by
   fixtures, review-detail-page fixtures, QR review-transcript fixtures, NIP-46
   payload fixtures, NIP-46 policy-file fixtures, NIP-46 connection URI
   fixtures, NIP-46 relay-event fixtures, NIP-46 relay-step fixtures,
-  NIP-46 session lifecycle fixtures,
+  NIP-46 session lifecycle fixtures, NIP-46 session gate fixtures,
   account descriptors, policy profiles, grant descriptors, policy-change
   review vectors, policy-decision vectors, route-selection vectors, source
   public-key proof vectors, and access-surface vectors, plus the shared
@@ -590,6 +590,12 @@ single-repository CI. Cross-repository drift remains guarded by
   secret storage, and session persistence. Creation tests also prove a
   canonical connect review plus matching approval can produce the same
   checkpoint while rejecting approved permissions outside the reviewed request.
+- NIP-46 pending-session request gate tests covering shared
+  `connect_ack_pending` vectors. The evaluator binds the relay event sender to
+  the session client pubkey, binds the recipient `p` tag to the remote-signer
+  pubkey, derives the same permission requirement as the standard NIP-46 bridge,
+  and rejects signer dispatch until a future acknowledged-session contract
+  exists.
 - NIP-46 permission matching tests covering derived `sign_event:<kind>`
   requirements, broad requested-permission compatibility, explicit approved
   `sign_event:<kind>` inputs, method-only grants, denied requests, and
@@ -663,8 +669,8 @@ single-repository CI. Cross-repository drift remains guarded by
   malformed response request ids, contradictory or reason-less signing-status
   readiness, malformed QR/serial envelopes, malformed NIP-46 payloads, invalid
   NIP-46 connection URIs, invalid NIP-46 session lifecycle checkpoints,
-  invalid policy files, duplicate signing-status gate entries, and
-  signed-event response integer-safety, content, or tag
+  invalid NIP-46 session gates, invalid policy files, duplicate signing-status
+  gate entries, and signed-event response integer-safety, content, or tag
   violations.
 - Nostr conformance oracle tests must compare companion event id/signature
   behavior with `nostr-tools` in tests, while keeping production code free of

@@ -12,9 +12,10 @@ Status: implemented as the first companion foundation with JSON and QR envelope
 CLI paths. Fixture verification now includes shared review-display-frame,
 review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
 NIP-46 connection URI, NIP-46 relay-event, NIP-46 relay-step,
-NIP-46 session lifecycle, account-descriptor, policy-profile, grant-descriptor, policy-change review,
-policy-decision, source public-key proof, limit-profile, and invalid hardening
-vectors in addition to event and trusted-review vectors.
+NIP-46 session lifecycle, NIP-46 session gate, account-descriptor,
+policy-profile, grant-descriptor, policy-change review, policy-decision,
+source public-key proof, limit-profile, and invalid hardening vectors in
+addition to event and trusted-review vectors.
 Policy-decision fixtures include explicit grant-usage snapshots for scoped automation
 rate-limit decisions before any persistent grant store exists. Policy-change
 review fixtures pin manual persistent-device defaults plus digest-bound
@@ -154,6 +155,12 @@ opening the URL or treating arbitrary result/error pairs as valid. Both avoid
 relay I/O, NIP-44 decryption, `connect`
 acknowledgement, grant creation, signer dispatch, signature verification, or
 session persistence.
+The package now also evaluates a pending-session request gate for
+`approved_pending_ack` checkpoints: it validates the relay envelope and session
+binding, derives the request permission requirement, and returns a deterministic
+`connect_ack_pending` rejection without using session permissions, acknowledging
+`connect`, opening relays, creating grants, dispatching signers, or persisting
+session state.
 Relay sessions, NIP-44 encryption/decryption,
 connection token responses, permission storage, grant review, and auth
 challenge UI remain future work.

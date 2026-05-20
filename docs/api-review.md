@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:6cabab55d16a2da4442c03d68cec4c198d5649fd31883d6cd31537c886cd21c7`
+API surface digest: `sha256:483573b5b512e44382ec68cf96e2b53ce7757576aab9fc7131982d9f082dff2f`
 
 Source: `docs/api.md`
 
@@ -26,9 +26,10 @@ Source: `docs/api.md`
 - NIP-46 APIs currently handle the already-decrypted payload bridge,
   digest-bound `connect` review/approval artifacts, descriptor-only connection
   URI parsing, relay event envelopes, and metadata-only relay request/response
-  steps. Relay sessions, NIP-44 encryption, `connect` acknowledgements,
-  persistent grants, and browser extension packaging remain outside this
-  reviewed surface.
+  steps, plus pending-session request gates that block signer dispatch with
+  `connect_ack_pending` for approved-but-unacknowledged session checkpoints.
+  Relay sessions, NIP-44 encryption, `connect` acknowledgements, persistent
+  grants, and browser extension packaging remain outside this reviewed surface.
 
 ## @nsealr/browser-provider
 

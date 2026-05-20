@@ -28,6 +28,10 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
   review, matching connect approval artifact, explicit client pubkey, relay
   list, expiry, and approved permission subset without acknowledging `connect`
   or starting a relay session.
+- Evaluate pending-session request gates for `approved_pending_ack` checkpoints,
+  binding relay sender/recipient metadata and decrypted request permissions
+  while returning deterministic `connect_ack_pending` errors instead of signer
+  dispatch.
 - Parse read-only nSealr policy files used by the CLI and tests.
 - Keep requested-permission parsing separate from approved-permission parsing
   so broad `sign_event` can be reviewed as metadata but cannot authorize a
@@ -93,3 +97,10 @@ material, NIP-44 key derivation, relay opening, `connect` acknowledgement,
 grant creation, signer dispatch, production secret storage, or persisted
 session state. Checkpoint creation validates the review/approval digest pair
 and approved-permission subset before returning the same secretless object.
+
+Session request gate evaluation is still non-enabling. It checks that the relay
+event sender matches the reviewed client pubkey, that the recipient `p` tag
+matches the remote-signer pubkey, that the session has not expired, and that the
+decrypted request has a valid permission requirement. The result is a
+`connect_ack_pending` NIP-46 error with no session-permission use, relay I/O,
+grant creation, signer dispatch, or persistence.

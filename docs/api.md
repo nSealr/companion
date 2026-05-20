@@ -225,11 +225,13 @@ Exports:
 - `Nip46ResponseMessage`
 - `Nip46SessionLifecycle`
 - `Nip46SessionLifecycleCheckpointOptions`
+- `Nip46SessionRequestGate`
 - `approveNip46ConnectReview`
 - `createNip46SessionLifecycleCheckpoint`
 - `decideNip46BridgeAction`
 - `evaluateNip46RelayRequestStep`
 - `evaluateNip46RelayResponseStep`
+- `evaluateNip46SessionRequestGate`
 - `isNip46RequestPermitted`
 - `nip46PermissionLabel`
 - `nip46PermissionRequirementFromRequest`

@@ -10,6 +10,7 @@ import {
   decideNip46BridgeAction,
   evaluateNip46RelayRequestStep,
   evaluateNip46RelayResponseStep,
+  evaluateNip46SessionRequestGate,
   isNip46RequestPermitted,
   nip46ResponseFromNSealr,
   nip46PermissionRequirementFromRequest,
@@ -296,6 +297,35 @@ describe("NIP-46 bridge payloads", () => {
     }
   });
 
+  it("matches shared NIP-46 pending-session request gate vectors", () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+
+    expect(fixtures.nip46SessionGates.map((vector) => vector.name)).toEqual([
+      "approved-pending-ack-sign-event-blocked"
+    ]);
+    for (const vector of fixtures.nip46SessionGates) {
+      const sourceSession = fixtures.nip46Sessions.find(
+        (session) => `vectors/nip46-sessions/${session.name}.json` === vector.source_session_vector
+      );
+      if (sourceSession === undefined) throw new Error(`missing source session for ${vector.name}`);
+      const actual = evaluateNip46SessionRequestGate({
+        format: vector.format,
+        session: sourceSession.session,
+        evaluated_at: vector.evaluated_at,
+        direction: vector.direction,
+        event: vector.event,
+        decrypted_message: vector.decrypted_message
+      });
+
+      expect(actual).toEqual(vector.expected_gate);
+      expect(actual.blocked_reason).toBe("connect_ack_pending");
+      expect(actual.uses_session_permissions).toBe(false);
+      expect(actual.acknowledges_connect).toBe(false);
+      expect(actual.dispatches_signer).toBe(false);
+      expect(actual.persists_session_state).toBe(false);
+    }
+  });
+
   it("creates reviewed-but-not-active NIP-46 session lifecycle checkpoints", () => {
     const connect = loadSpecsFixtures(specsRoot).nip46Payloads.find((vector) => vector.name === "connect-policy-review");
     const sessionVector = loadSpecsFixtures(specsRoot).nip46Sessions[0];
@@ -367,6 +397,7 @@ describe("NIP-46 bridge payloads", () => {
         vector.category === "nip46-relay-event" ||
         vector.category === "nip46-relay-step" ||
         vector.category === "nip46-session" ||
+        vector.category === "nip46-session-gate" ||
         vector.category === "nip46-policy-file"
     );
 
@@ -402,6 +433,10 @@ describe("NIP-46 bridge payloads", () => {
         }
         if (vector.category === "nip46-session") {
           parseNip46SessionLifecycle(vector.session);
+          return;
+        }
+        if (vector.category === "nip46-session-gate") {
+          evaluateNip46SessionRequestGate(vector.session_gate);
           return;
         }
         decideNip46BridgeAction(vector.request_message, []);

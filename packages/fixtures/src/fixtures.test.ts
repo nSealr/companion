@@ -203,6 +203,25 @@ describe("fixture loading", () => {
     expect(fixtures.nip46Sessions[0].session.persists_session_state).toBe(false);
   });
 
+  it("loads NIP-46 pending-session request gate vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+
+    expect(fixtures.nip46SessionGates.map((vector) => vector.name)).toEqual([
+      "approved-pending-ack-sign-event-blocked"
+    ]);
+    expect(fixtures.nip46SessionGates[0].format).toBe("nsealr-nip46-session-request-gate-v0");
+    expect(fixtures.nip46SessionGates[0].source_session_vector).toBe(
+      "vectors/nip46-sessions/nostrconnect-approved-kind-1-checkpoint.json"
+    );
+    expect(fixtures.nip46SessionGates[0].expected_gate).toMatchObject({
+      blocked_reason: "connect_ack_pending",
+      uses_session_permissions: false,
+      acknowledges_connect: false,
+      dispatches_signer: false,
+      persists_session_state: false
+    });
+  });
+
   it("loads identity, policy, and grant descriptors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
 

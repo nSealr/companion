@@ -272,6 +272,17 @@ export type SpecsFixtureSet = {
       scope: string;
     };
   }>;
+  nip46SessionGates: Array<{
+    name: string;
+    format: "nsealr-nip46-session-request-gate-v0";
+    source_session_vector: string;
+    evaluated_at: number;
+    direction: "client_to_remote_signer";
+    event: unknown;
+    decrypted_message: unknown;
+    expected_gate: unknown;
+    scope: string;
+  }>;
   accounts: AccountDescriptor[];
   policyProfiles: PolicyProfile[];
   grants: GrantDescriptor[];
@@ -379,6 +390,7 @@ export type SpecsFixtureSet = {
       | "nip46-relay-event"
       | "nip46-relay-step"
       | "nip46-session"
+      | "nip46-session-gate"
       | "nip46-policy-file";
     expected_error: string;
     request?: unknown;
@@ -390,6 +402,7 @@ export type SpecsFixtureSet = {
     relay_event?: unknown;
     relay_step?: unknown;
     session?: unknown;
+    session_gate?: unknown;
     policy_file?: unknown;
   }>;
 };
@@ -738,6 +751,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const nip46RelayEventsRoot = resolve(specsRoot, "vectors/nip46-relay-events");
   const nip46RelayStepsRoot = resolve(specsRoot, "vectors/nip46-relay-steps");
   const nip46SessionsRoot = resolve(specsRoot, "vectors/nip46-sessions");
+  const nip46SessionGatesRoot = resolve(specsRoot, "vectors/nip46-session-gates");
   const accountsRoot = resolve(specsRoot, "vectors/accounts");
   const policyProfilesRoot = resolve(specsRoot, "vectors/policies");
   const grantsRoot = resolve(specsRoot, "vectors/grants");
@@ -782,6 +796,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const nip46SessionFiles = readdirSync(nip46SessionsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const nip46SessionGateFiles = readdirSync(nip46SessionGatesRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const accountFiles = readdirSync(accountsRoot)
@@ -856,6 +873,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     ),
     nip46Sessions: nip46SessionFiles.map(
       (file) => loadJson(resolve(nip46SessionsRoot, file)) as SpecsFixtureSet["nip46Sessions"][number]
+    ),
+    nip46SessionGates: nip46SessionGateFiles.map(
+      (file) => loadJson(resolve(nip46SessionGatesRoot, file)) as SpecsFixtureSet["nip46SessionGates"][number]
     ),
     accounts,
     policyProfiles,

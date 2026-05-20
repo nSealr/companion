@@ -169,6 +169,7 @@ describe("fixture loading", () => {
   it("loads NIP-46 relay step vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
     expect(fixtures.nip46RelaySteps.map((vector) => vector.name)).toEqual([
+      "auth-challenge-response-step",
       "get-public-key-response-step",
       "ping-request-step",
       "ping-response-step",
@@ -178,10 +179,14 @@ describe("fixture loading", () => {
     ]);
     const requestStep = fixtures.nip46RelaySteps.find((vector) => vector.name === "ping-request-step");
     const responseStep = fixtures.nip46RelaySteps.find((vector) => vector.name === "sign-event-response-step");
+    const authStep = fixtures.nip46RelaySteps.find((vector) => vector.name === "auth-challenge-response-step");
     expect(requestStep?.format).toBe("nsealr-nip46-relay-request-step-v0");
     expect(JSON.stringify(requestStep?.expected_step)).toContain("persists_session_state");
     expect(responseStep?.format).toBe("nsealr-nip46-relay-response-step-v0");
     expect(JSON.stringify(responseStep?.expected_step)).toContain("verifies_signature");
+    const authExpectedStep = authStep?.expected_step as { result_type?: unknown; auth_url?: unknown } | undefined;
+    expect(authExpectedStep?.result_type).toBe("auth_challenge");
+    expect(authExpectedStep?.auth_url).toBe("https://remote-signer.example.com/auth?challenge=nip46-auth-1");
   });
 
   it("loads NIP-46 session lifecycle checkpoint vectors from the specs repository", () => {

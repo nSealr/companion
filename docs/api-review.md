@@ -146,7 +146,8 @@ permission checks. It also evaluates relay request and response steps only
 after plaintext has been
 supplied by a future NIP-44 layer: request steps return deterministic bridge
 decisions, while response steps shape-check plaintext signed-event, public-key,
-ping, and error responses without opening relays or verifying signatures.
+ping, auth challenge, and error responses without opening relays, opening auth
+URLs, accepting URL credentials/fragments, or verifying signatures.
 Approved `sign_event` inputs must be kind-scoped before signer routing. The
 connection URI parser records only secret presence, not the secret value. Relay
 event envelope parsing exposes only sender/recipient/content metadata and

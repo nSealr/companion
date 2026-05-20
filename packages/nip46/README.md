@@ -16,8 +16,9 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
   NIP-44 layer has supplied plaintext, returning deterministic bridge decisions
   or response-shape metadata. Public-key and signed-event response results are
   bound to the relay event sender before later session code can accept them,
-  without relay I/O, signer dispatch, grant creation, signature verification,
-  or session persistence.
+  and auth challenge responses expose only safe http(s) URL metadata without
+  credentials or fragments for later UI, without relay I/O, signer dispatch,
+  grant creation, signature verification, URL opening, or session persistence.
 - Parse reviewed-but-not-active NIP-46 session lifecycle checkpoints that bind
   client/signer pubkeys, relays, connect digest, approval time, expiry, and an
   approved permission subset while keeping NIP-44 derivation, `connect`
@@ -79,9 +80,12 @@ Relay step evaluation starts from an envelope and an already decrypted message.
 Request steps reuse the same request validation, permission checks, and bridge
 decision logic as local decrypted payload handling. Response steps shape-check
 NIP-46 response messages and signed-event result payloads, and bind
-public-key/signed-event result pubkeys to the relay event sender. They still do
-not decrypt NIP-44 content, open relays, acknowledge `connect`, create grants,
-dispatch a signer, verify signatures, or persist session state.
+public-key/signed-event result pubkeys to the relay event sender. Auth
+challenge responses are accepted only as `result: "auth_url"` plus a safe
+http(s) URL without credentials or fragments in `error`; the package returns
+that URL as metadata and does not open it. Relay steps still do not decrypt
+NIP-44 content, open relays, acknowledge `connect`, create grants, dispatch a
+signer, verify signatures, or persist session state.
 
 Session lifecycle parsing is a checkpoint contract, not a session engine. It
 accepts only the `approved_pending_ack` phase and rejects embedded secret

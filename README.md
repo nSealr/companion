@@ -381,13 +381,15 @@ match the shared `contract_id`.
   content, opening relays, or dispatching to signers. It also evaluates
   metadata-only relay request steps and response steps after plaintext is
   supplied by a future decryption layer, returning bridge decisions or
-  response-shape metadata without relay I/O, grant creation, signer dispatch,
-  signature verification, or session persistence. Shared specs vectors now
+  response-shape metadata, including auth challenge URL metadata without
+  credentials or fragments, without relay I/O, grant creation, signer dispatch,
+  URL opening, signature verification, or session persistence. Shared specs
+  vectors now
   pin the derived permission requirements, positive/negative permission checks,
   bridge decisions, `connect` review pages, and invalid payload rejection for
   signer routing, local response routing, `connect` review, and
   permission-denied responses. Relay transport, NIP-44 encryption, `connect`
-  acknowledgement, persistent permission grants, and auth flows remain future
+  acknowledgement, persistent permission grants, and auth-flow UI remain future
   work.
 
 ## Planned Capabilities
@@ -442,7 +444,7 @@ match the shared `contract_id`.
   the release-plan digest, byte counts, and SHA-256 digests without publishing
   to npm.
 - Full NIP-46 / Nostr Connect relay session handling with NIP-44 encryption,
-  permissions, and auth challenges.
+  permissions, auth challenge UI, and relay I/O.
 - WebUSB, HID, CDC, WebSerial, and persistent transport experiments.
 - Real PC/SC reader smoke tests and NFC smartcard adapter work.
 - TROPIC01 USB DevKit research adapter for the custom persistent-secret

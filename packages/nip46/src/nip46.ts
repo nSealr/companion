@@ -81,6 +81,7 @@ export type Nip46RelayResponseResultType =
   | "signed_event_result"
   | "public_key_result"
   | "pong_result"
+  | "auth_challenge"
   | "error";
 
 export type Nip46RelayResponseStep = {
@@ -89,6 +90,7 @@ export type Nip46RelayResponseStep = {
   message_id: string;
   response_message: Nip46ResponseMessage;
   result_type: Nip46RelayResponseResultType;
+  auth_url?: string;
   signed_event_shape_checked: boolean;
   result_pubkey_bound_to_sender: boolean;
   decrypts_content: false;
@@ -354,6 +356,25 @@ function requireOptionalHttpUrl(value: string, name: string): string {
   return parsed.toString();
 }
 
+function requireNip46AuthUrl(value: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch (error) {
+    throw new Error("NIP-46 auth challenge URL must be a valid URL");
+  }
+  if (
+    (parsed.protocol !== "https:" && parsed.protocol !== "http:") ||
+    parsed.username !== "" ||
+    parsed.password !== "" ||
+    parsed.hash !== ""
+  ) {
+    throw new Error("NIP-46 auth challenge URL must be an http(s) URL without credentials or fragment");
+  }
+  if (parsed.hostname === "") throw new Error("NIP-46 auth challenge URL host is required");
+  return parsed.toString();
+}
+
 function requireMessage(value: unknown): Nip46RequestMessage {
   if (!isRecord(value)) throw new Error("NIP-46 message must be an object");
   if (compactJsonUtf8ByteLength(value) > NSEALR_V0_LIMITS.max_nip46_decrypted_message_json_bytes) {
@@ -382,8 +403,14 @@ function requireResponseMessage(value: unknown): Nip46ResponseMessage {
   const id = requireNip46Id(value.id);
   const hasResult = "result" in value;
   const hasError = "error" in value;
-  if (hasResult === hasError) {
-    throw new Error("NIP-46 response message must contain exactly one of result or error");
+  if (hasResult && hasError) {
+    if (value.result === "auth_url" && typeof value.error === "string") {
+      return { id, result: "auth_url", error: requireNip46AuthUrl(value.error) };
+    }
+    throw new Error("NIP-46 response message result and error together are only allowed for auth_url");
+  }
+  if (!hasResult && !hasError) {
+    throw new Error("NIP-46 response message must contain result or error");
   }
   if (hasResult) {
     if (typeof value.result !== "string") throw new Error("NIP-46 response message result must be a string");
@@ -639,7 +666,11 @@ function relayResponseResultType(message: Nip46ResponseMessage): {
   resultType: Nip46RelayResponseResultType;
   signedEventShapeChecked: boolean;
   resultPubkey?: string;
+  authUrl?: string;
 } {
+  if (message.result === "auth_url" && message.error !== undefined) {
+    return { resultType: "auth_challenge", signedEventShapeChecked: false, authUrl: message.error };
+  }
   if (message.error !== undefined) {
     return { resultType: "error", signedEventShapeChecked: false };
   }
@@ -680,7 +711,7 @@ export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayRespon
   }
   const envelope = parseNip46RelayEventEnvelope(value.event, direction);
   const responseMessage = requireResponseMessage(value.decrypted_message);
-  const { resultType, signedEventShapeChecked, resultPubkey } = relayResponseResultType(responseMessage);
+  const { resultType, signedEventShapeChecked, resultPubkey, authUrl } = relayResponseResultType(responseMessage);
   const resultPubkeyBoundToSender = resultPubkey !== undefined && resultPubkey === envelope.sender_pubkey;
   if (resultPubkey !== undefined && !resultPubkeyBoundToSender) {
     throw new Error(
@@ -695,6 +726,7 @@ export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayRespon
     message_id: responseMessage.id,
     response_message: responseMessage,
     result_type: resultType,
+    ...(authUrl !== undefined && { auth_url: authUrl }),
     signed_event_shape_checked: signedEventShapeChecked,
     result_pubkey_bound_to_sender: resultPubkeyBoundToSender,
     decrypts_content: false,

@@ -253,6 +253,7 @@ describe("NIP-46 bridge payloads", () => {
     const fixtures = loadSpecsFixtures(specsRoot);
 
     expect(fixtures.nip46RelaySteps.map((vector) => vector.name)).toEqual([
+      "auth-challenge-response-step",
       "get-public-key-response-step",
       "ping-request-step",
       "ping-response-step",
@@ -266,6 +267,14 @@ describe("NIP-46 bridge payloads", () => {
         : evaluateNip46RelayRequestStep(vector);
       expect(actual).toEqual(vector.expected_step);
     }
+    const authStep = fixtures.nip46RelaySteps.find((vector) => vector.name === "auth-challenge-response-step");
+    expect(authStep?.expected_step).toMatchObject({
+      result_type: "auth_challenge",
+      auth_url: "https://remote-signer.example.com/auth?challenge=nip46-auth-1",
+      opens_relay: false,
+      dispatches_signer: false,
+      persists_session_state: false
+    });
   });
 
   it("matches shared NIP-46 session lifecycle checkpoint vectors", () => {

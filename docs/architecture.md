@@ -155,9 +155,11 @@ packages, but it must not export test-only signing as a production path.
   request and response steps only after a future NIP-44 layer provides
   plaintext, reusing the same bridge-decision path for requests and
   shape-checking plaintext responses while binding public-key and signed-event
-  result pubkeys to the relay event sender. It still does this without opening
-  relays, acknowledging `connect`, creating grants, dispatching signers,
-  verifying signatures, or persisting session state.
+  result pubkeys to the relay event sender. Auth challenge responses expose
+  only safe http(s) URL metadata without credentials or fragments for later UI
+  and do not open that URL. It still does this without opening relays,
+  acknowledging `connect`, creating grants, dispatching signers, verifying
+  signatures, or persisting session state.
   Permission matching is present as a pure boundary and is pinned by shared
   permission policy fixture checks. Bridge decision output is also present: a
   permitted request can become a signer request, `ping` can produce a local
@@ -999,7 +1001,10 @@ The first NIP-46 module handles only already-decrypted JSON-RPC-like payloads
 from NIP-46 kind `24133` content plus descriptor-only parsing for official
 `bunker://` and `nostrconnect://` connection tokens. It does not implement
 relay subscriptions, NIP-44 encryption/decryption, connection
-acknowledgements, permission persistence, or auth challenge UX.
+acknowledgements, permission persistence, or auth challenge UX. Relay response
+step evaluation accepts the official auth challenge shape only as normalized
+http(s) URL metadata without credentials or fragments; it never opens the URL
+or treats it as approval.
 
 The bridge maps `get_public_key` and `sign_event` messages into standard
 nSealr v1 requests so any signer transport can handle them behind the same
@@ -1026,7 +1031,8 @@ request can reach a signer route. Shared specs fixtures now include the derived
 requirement and positive/negative permission checks for conformance. The bridge
 decision helper uses the same matching result to produce signer routing, local
 `ping`, `connect` review, or permission-denied responses. Actual grant storage,
-revocation, auth challenges, and user approval UX remain future policy layers.
+revocation, auth challenge UI/session handling, and user approval UX remain
+future policy layers.
 This broad NIP-46 permission matching is a read-only compatibility boundary;
 it is not the nSealr-managed persistent grant descriptor menu, which remains
 limited to `sign_event` kind `1` in v0.

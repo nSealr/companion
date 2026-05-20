@@ -1,8 +1,8 @@
 {
-  "name": "relay-step-response-result-and-error",
+  "name": "relay-step-response-non-auth-result-and-error",
   "format": "pre-signing-invalid-vector-v0",
   "category": "nip46-relay-step",
-  "expected_error": "must contain exactly one of result or error",
+  "expected_error": "result and error together are only allowed for auth_url",
   "relay_step": {
     "format": "nsealr-nip46-relay-response-step-v0",
     "direction": "remote_signer_to_client",

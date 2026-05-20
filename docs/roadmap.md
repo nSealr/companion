@@ -148,12 +148,15 @@ relay request-step evaluation combines that envelope with an already decrypted
 message and reviewed permissions, returning the same bridge decision as local
 decrypted payload handling, while relay response-step evaluation shape-checks
 already decrypted NIP-46 responses and binds public-key/signed-event result
-pubkeys to the relay event sender. Both avoid relay I/O, NIP-44 decryption,
-`connect` acknowledgement, grant creation, signer dispatch, signature
-verification, or session persistence.
+pubkeys to the relay event sender. It also accepts auth challenge responses as
+URL metadata only, requiring http(s) without credentials or fragments, without
+opening the URL or treating arbitrary result/error pairs as valid. Both avoid
+relay I/O, NIP-44 decryption, `connect`
+acknowledgement, grant creation, signer dispatch, signature verification, or
+session persistence.
 Relay sessions, NIP-44 encryption/decryption,
 connection token responses, permission storage, grant review, and auth
-challenge UX remain future work.
+challenge UI remain future work.
 
 ## M4.5: Pre-Signing Contract Hardening
 

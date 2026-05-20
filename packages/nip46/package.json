@@ -1,7 +1,7 @@
 {
   "name": "@nsealr/nip46",
   "version": "0.1.0",
-  "description": "Already-decrypted NIP-46 bridge, connection-token descriptor, and permission-review helpers for nSealr companion.",
+  "description": "Already-decrypted NIP-46 bridge, connection-token descriptor, relay-event envelope, and permission-review helpers for nSealr companion.",
   "keywords": [
     "nostr",
     "nsealr",

@@ -544,6 +544,11 @@ single-repository CI. Cross-repository drift remains guarded by
   presence, unsupported parameter rejection, and proof that descriptor output
   does not echo shared secret values. Shared invalid hardening vectors cover
   malformed connection URI schemes, relays, and missing `nostrconnect` secrets.
+- NIP-46 relay event envelope tests covering shared `kind:24133` request and
+  response vectors. The parser checks sender pubkey, exactly one recipient `p`
+  tag, opaque encrypted content, and optional signed-event field shapes without
+  decrypting NIP-44 content, opening relays, creating grants, or reaching
+  signer transport.
 - NIP-46 permission matching tests covering derived `sign_event:<kind>`
   requirements, broad requested-permission compatibility, explicit approved
   `sign_event:<kind>` inputs, method-only grants, denied requests, and

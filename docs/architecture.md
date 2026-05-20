@@ -144,7 +144,10 @@ packages, but it must not export test-only signing as a production path.
   `sign_event`, local `ping`, and conversion from nSealr responses back to
   NIP-46 result/error strings. It also validates requested permission strings
   and policy files, and parses `connect` messages into review intents and
-  deterministic review pages for later policy work.
+  deterministic review pages for later policy work. It now parses NIP-46
+  `kind:24133` relay event envelopes into sender/recipient/content metadata,
+  while explicitly leaving relay I/O, NIP-44 decryption, grant creation, and
+  signer dispatch outside this package boundary.
   Permission matching is present as a pure boundary and is pinned by shared
   permission policy fixture checks. Bridge decision output is also present: a
   permitted request can become a signer request, `ping` can produce a local

@@ -39,7 +39,8 @@ assert(
   "docs/api-review.md must record that smartcard simulation is private test-only code"
 );
 assert(
-  normalizedReview.includes("already-decrypted payload bridge plus descriptor-only connection URI parsing"),
+  normalizedReview.includes("parses relay event envelopes") &&
+    normalizedReview.includes("does not verify signatures or decrypt NIP-44 content"),
   "docs/api-review.md must preserve the current NIP-46 boundary"
 );
 

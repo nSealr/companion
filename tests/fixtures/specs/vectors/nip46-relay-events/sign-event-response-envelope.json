@@ -1,0 +1,32 @@
+{
+  "name": "sign-event-response-envelope",
+  "format": "nsealr-nip46-relay-event-envelope-v0",
+  "direction": "remote_signer_to_client",
+  "event": {
+    "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "kind": 24133,
+    "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+    "created_at": 1710000001,
+    "content": "nip44-v2-response-ciphertext-placeholder",
+    "tags": [
+      [
+        "p",
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ]
+    ],
+    "sig": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "expected_envelope": {
+    "format": "nsealr-nip46-relay-event-envelope-v0",
+    "direction": "remote_signer_to_client",
+    "sender_pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+    "recipient_pubkey": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "encrypted_content": "nip44-v2-response-ciphertext-placeholder",
+    "has_signed_event_fields": true,
+    "decrypts_content": false,
+    "opens_relay": false,
+    "creates_grants": false,
+    "stores_production_secrets": false
+  },
+  "scope": "NIP-46 relay response envelope parsing only. Signed event fields are shape-checked when present, but this vector does not verify signatures, decrypt NIP-44 content, open relays, or persist grants."
+}

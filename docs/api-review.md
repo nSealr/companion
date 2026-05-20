@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:fe508b8adbc78a07a7f2b3262c7b91abd5ac2ce34fcad43598ca515315580c2a`
+API surface digest: `sha256:294605fb2a2e42d8cefe3bceacae5993e0883d69715ded1cca78758f30333c13`
 
 Source: `docs/api.md`
 
@@ -136,12 +136,15 @@ Status: reviewed for pre-alpha.
 The NIP-46 package converts already-decrypted messages into nSealr decisions or
 deterministic local responses, parses connect review intents, parses
 descriptor-only `bunker://` and `nostrconnect://` connection URI metadata,
-parses requested-permission metadata, parses stricter approved-permission
-inputs, parses read-only policy files, and enforces permission checks. Approved
-`sign_event` inputs must be kind-scoped before signer routing. The connection
-URI parser records only secret presence, not the secret value. It deliberately
-excludes relay sessions, NIP-44 encryption/decryption, persistent grants,
-connect acknowledgement, browser storage, and signer I/O.
+parses relay event envelopes, parses requested-permission metadata, parses
+stricter approved-permission inputs, parses read-only policy files, and
+enforces permission checks. Approved `sign_event` inputs must be kind-scoped
+before signer routing. The connection URI parser records only secret presence,
+not the secret value. Relay event envelope parsing exposes only
+sender/recipient/content metadata and signed-field shape; it does not verify
+signatures or decrypt NIP-44 content. It deliberately excludes relay sessions,
+NIP-44 encryption/decryption, persistent grants, connect acknowledgement,
+browser storage, and signer I/O.
 
 ## @nsealr/policy
 

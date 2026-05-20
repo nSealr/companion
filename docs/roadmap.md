@@ -132,9 +132,13 @@ encryption, or signer I/O. The package now also validates `bunker://` and
 and session work; the parser records only whether a secret was present and does
 not acknowledge a connection, open relays, or create grants. `nsealr nip46
 parse-connection-uri` exposes that parser as a file-backed CLI harness without
-putting tokens directly in the shell command line.
-Relay sessions, NIP-44 encryption/decryption, connection token responses,
-permission storage, grant review, and auth challenge UX remain future work.
+putting tokens directly in the shell command line. The first M5 relay boundary
+is now package-owned: NIP-46 `kind:24133` relay event envelopes are parsed into
+sender pubkey, recipient `p` tag, encrypted-content, and signed-field metadata
+without opening relays, decrypting NIP-44 content, creating grants, or
+dispatching to signers. Relay sessions, NIP-44 encryption/decryption,
+connection token responses, permission storage, grant review, and auth
+challenge UX remain future work.
 
 ## M4.5: Pre-Signing Contract Hardening
 

@@ -368,12 +368,15 @@ match the shared `contract_id`.
   policy-file parser used by the CLI. It can also parse official `bunker://`
   and `nostrconnect://` connection tokens into descriptor-only metadata for
   later UX, validating relays, requested permissions, and client metadata while
-  retaining only secret presence. Shared specs vectors now pin the derived
-  permission requirements, positive/negative permission checks, bridge
-  decisions, `connect` review pages, and invalid payload rejection for signer
-  routing, local response routing, `connect` review, and permission-denied
-  responses. Relay transport, NIP-44 encryption, `connect` acknowledgement,
-  persistent permission grants, and auth flows remain future work.
+  retaining only secret presence. It now parses NIP-46 `kind:24133` relay event
+  envelopes into sender/recipient/content metadata without decrypting NIP-44
+  content, opening relays, or dispatching to signers. Shared specs vectors now
+  pin the derived permission requirements, positive/negative permission checks,
+  bridge decisions, `connect` review pages, and invalid payload rejection for
+  signer routing, local response routing, `connect` review, and
+  permission-denied responses. Relay transport, NIP-44 encryption, `connect`
+  acknowledgement, persistent permission grants, and auth flows remain future
+  work.
 
 ## Planned Capabilities
 

@@ -41,6 +41,7 @@ import {
   parseNip46ConnectIntent,
   parseNip46PolicyFile,
   parseNip46Permissions,
+  parseNip46RelayEventEnvelope,
   reviewNip46ConnectMessage,
   type Nip46Permission,
   respondToLocalNip46Request
@@ -476,6 +477,7 @@ function validateInvalidHardeningFixture(fixture: {
   frame?: string;
   request_message?: unknown;
   uri?: string;
+  relay_event?: unknown;
   policy_file?: unknown;
 }): void {
   if (fixture.category === "signing-request") {
@@ -525,6 +527,12 @@ function validateInvalidHardeningFixture(fixture: {
     const uri = fixture.uri;
     expectFixtureRejection(fixture.name, fixture.expected_error, () => {
       parseNip46ConnectionUri(uri);
+    });
+    return;
+  }
+  if (fixture.category === "nip46-relay-event") {
+    expectFixtureRejection(fixture.name, fixture.expected_error, () => {
+      parseNip46RelayEventEnvelope(fixture.relay_event, "client_to_remote_signer");
     });
     return;
   }
@@ -704,6 +712,12 @@ export function buildCli(options: BuildCliOptions = {}): Command {
           throw new Error(`invalid NIP-46 connection URI fixture ${connectionUri.name}: secret echo`);
         }
       }
+      for (const relayEvent of fixtures.nip46RelayEvents) {
+        const actual = parseNip46RelayEventEnvelope(relayEvent.event, relayEvent.direction);
+        if (JSON.stringify(actual) !== JSON.stringify(relayEvent.expected_envelope)) {
+          throw new Error(`invalid NIP-46 relay event fixture ${relayEvent.name}: envelope mismatch`);
+        }
+      }
       for (const featureMatrix of fixtures.featureMatrices) {
         validateFeatureMatrixFixture(featureMatrix.name, featureMatrix);
       }
@@ -714,8 +728,10 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         fixtureCountLabel(fixtures.nip46PolicyFiles.length, "NIP-46 policy-file fixture");
       const connectionUriFixtureLabel =
         fixtureCountLabel(fixtures.nip46ConnectionUris.length, "NIP-46 connection URI fixture");
+      const relayEventFixtureLabel =
+        fixtureCountLabel(fixtures.nip46RelayEvents.length, "NIP-46 relay event fixture");
       console.log(
-        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );
     });
 

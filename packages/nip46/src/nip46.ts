@@ -46,6 +46,21 @@ export type Nip46ConnectionUriDescriptor = {
   exposes_secret: false;
 };
 
+export type Nip46RelayEventDirection = "client_to_remote_signer" | "remote_signer_to_client";
+
+export type Nip46RelayEventEnvelope = {
+  format: "nsealr-nip46-relay-event-envelope-v0";
+  direction: Nip46RelayEventDirection;
+  sender_pubkey: string;
+  recipient_pubkey: string;
+  encrypted_content: string;
+  has_signed_event_fields: boolean;
+  decrypts_content: false;
+  opens_relay: false;
+  creates_grants: false;
+  stores_production_secrets: false;
+};
+
 export type Nip46ConnectReview = {
   format: "nsealr-nip46-connect-review-v0";
   id: string;
@@ -92,6 +107,9 @@ const NIP46_PERMISSION_METHODS = new Set([
 ]);
 
 const NIP46_CONNECTION_URI_PARAMS = new Set(["relay", "secret", "perms", "name", "url", "image"]);
+const NIP46_RELAY_DIRECTIONS = new Set(["client_to_remote_signer", "remote_signer_to_client"]);
+const X_ONLY_PUBKEY = /^[0-9a-f]{64}$/u;
+const HEX_64_BYTE = /^[0-9a-f]{128}$/u;
 
 type NSealrBridgeRequest =
   | {
@@ -120,10 +138,40 @@ function requireNip46Id(value: unknown): string {
 }
 
 function requireXOnlyPubkey(value: unknown, label: string): string {
-  if (typeof value !== "string" || !/^[0-9a-f]{64}$/u.test(value)) {
+  if (typeof value !== "string" || !X_ONLY_PUBKEY.test(value)) {
     throw new Error(`NIP-46 ${label} must be 32-byte lowercase hex`);
   }
   return value;
+}
+
+function requireNip46RelayDirection(value: unknown): Nip46RelayEventDirection {
+  if (typeof value !== "string" || !NIP46_RELAY_DIRECTIONS.has(value)) {
+    throw new Error("NIP-46 relay event direction is invalid");
+  }
+  return value as Nip46RelayEventDirection;
+}
+
+function requireSignedEventFields(value: Record<string, unknown>): boolean {
+  const signedFieldNames = ["id", "created_at", "sig"] as const;
+  const presentFields = signedFieldNames.filter((field) => field in value);
+  if (presentFields.length === 0) return false;
+  if (presentFields.length !== signedFieldNames.length) {
+    throw new Error("NIP-46 relay event signed fields must be complete when present");
+  }
+  if (typeof value.id !== "string" || !X_ONLY_PUBKEY.test(value.id)) {
+    throw new Error("NIP-46 relay event id must be 32-byte lowercase hex");
+  }
+  if (
+    typeof value.created_at !== "number" ||
+    !Number.isSafeInteger(value.created_at) ||
+    value.created_at < 0
+  ) {
+    throw new Error("NIP-46 relay event created_at must be a safe non-negative integer");
+  }
+  if (typeof value.sig !== "string" || !HEX_64_BYTE.test(value.sig)) {
+    throw new Error("NIP-46 relay event sig must be 64-byte lowercase hex");
+  }
+  return true;
 }
 
 function requireSingleQueryParam(params: URLSearchParams, name: string): string | undefined {
@@ -344,6 +392,38 @@ export function parseNip46ConnectionUri(value: string): Nip46ConnectionUriDescri
     creates_grants: false,
     stores_production_secrets: false,
     exposes_secret: false
+  };
+}
+
+export function parseNip46RelayEventEnvelope(
+  value: unknown,
+  direction: Nip46RelayEventDirection
+): Nip46RelayEventEnvelope {
+  const checkedDirection = requireNip46RelayDirection(direction);
+  if (!isRecord(value)) throw new Error("NIP-46 relay event must be an object");
+  if (value.kind !== 24133) throw new Error("NIP-46 relay event kind must be 24133");
+  const senderPubkey = requireXOnlyPubkey(value.pubkey, "relay event pubkey");
+  if (typeof value.content !== "string" || value.content.length === 0) {
+    throw new Error("NIP-46 relay event content must be a non-empty encrypted string");
+  }
+  if (!Array.isArray(value.tags)) throw new Error("NIP-46 relay event tags must be an array");
+  const pTags = value.tags.filter((tag): tag is unknown[] => Array.isArray(tag) && tag[0] === "p");
+  if (pTags.length !== 1) throw new Error("NIP-46 relay event must include exactly one p tag");
+  const pTag = pTags[0];
+  if (pTag.length !== 2) throw new Error("NIP-46 relay event p tag must contain only marker and pubkey");
+  const recipientPubkey = requireXOnlyPubkey(pTag[1], "relay event p tag pubkey");
+  const hasSignedEventFields = requireSignedEventFields(value);
+  return {
+    format: "nsealr-nip46-relay-event-envelope-v0",
+    direction: checkedDirection,
+    sender_pubkey: senderPubkey,
+    recipient_pubkey: recipientPubkey,
+    encrypted_content: value.content,
+    has_signed_event_fields: hasSignedEventFields,
+    decrypts_content: false,
+    opens_relay: false,
+    creates_grants: false,
+    stores_production_secrets: false
   };
 }
 

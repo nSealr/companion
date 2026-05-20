@@ -9,6 +9,8 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
 - Parse `connect` messages into review intents and deterministic review pages.
 - Parse `bunker://` and `nostrconnect://` connection URIs into descriptor-only
   metadata without echoing shared secrets.
+- Parse NIP-46 `kind:24133` relay event envelopes into sender/recipient/content
+  metadata without decrypting NIP-44 content or opening relay connections.
 - Parse read-only nSealr policy files used by the CLI and tests.
 - Keep requested-permission parsing separate from approved-permission parsing
   so broad `sign_event` can be reviewed as metadata but cannot authorize a
@@ -46,6 +48,8 @@ Connection URI parsing is intentionally non-committal: it validates official
 NIP-46 token shape, relays, client metadata, and requested permissions, but it
 returns only `secret_present` instead of the secret value.
 
-This package does not implement relay sessions, NIP-44 encryption/decryption,
-persistent grants, browser extension storage, `connect` acknowledgements, or
+Relay event envelope parsing is also non-committal. It validates the event kind,
+sender pubkey, exactly one recipient `p` tag, opaque encrypted content, and
+optional signed-event field shapes. It does not verify signatures, decrypt
+NIP-44 content, open relays, persist grants, acknowledge `connect`, or reach
 signer I/O. Those layers remain blocked on separate policy and session gates.

@@ -156,6 +156,16 @@ describe("fixture loading", () => {
     );
   });
 
+  it("loads NIP-46 relay event envelope vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    expect(fixtures.nip46RelayEvents.map((vector) => vector.name)).toEqual([
+      "sign-event-request-envelope",
+      "sign-event-response-envelope"
+    ]);
+    expect(fixtures.nip46RelayEvents[0].format).toBe("nsealr-nip46-relay-event-envelope-v0");
+    expect(JSON.stringify(fixtures.nip46RelayEvents[0].expected_envelope)).toContain("decrypts_content");
+  });
+
   it("loads identity, policy, and grant descriptors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
 

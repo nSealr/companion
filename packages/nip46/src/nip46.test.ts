@@ -12,6 +12,7 @@ import {
   parseNip46ConnectionUri,
   parseNip46ConnectIntent,
   parseNip46PolicyFile,
+  parseNip46RelayEventEnvelope,
   nsealrRequestFromNip46,
   parseNip46Permissions,
   reviewNip46ConnectMessage,
@@ -195,6 +196,18 @@ describe("NIP-46 bridge payloads", () => {
     }
   });
 
+  it("matches shared NIP-46 relay event envelope vectors", () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+
+    expect(fixtures.nip46RelayEvents.map((vector) => vector.name)).toEqual([
+      "sign-event-request-envelope",
+      "sign-event-response-envelope"
+    ]);
+    for (const vector of fixtures.nip46RelayEvents) {
+      expect(parseNip46RelayEventEnvelope(vector.event, vector.direction)).toEqual(vector.expected_envelope);
+    }
+  });
+
   it("rejects unsafe or ambiguous NIP-46 connection URIs", () => {
     const pubkey = "c".repeat(64);
 
@@ -241,6 +254,7 @@ describe("NIP-46 bridge payloads", () => {
       (vector) =>
         vector.category === "nip46" ||
         vector.category === "nip46-connection-uri" ||
+        vector.category === "nip46-relay-event" ||
         vector.category === "nip46-policy-file"
     );
 
@@ -250,6 +264,10 @@ describe("NIP-46 bridge payloads", () => {
         if (vector.category === "nip46-connection-uri") {
           if (typeof vector.uri !== "string") throw new Error(`${vector.name}: uri must be a string`);
           parseNip46ConnectionUri(vector.uri);
+          return;
+        }
+        if (vector.category === "nip46-relay-event") {
+          parseNip46RelayEventEnvelope(vector.relay_event, "client_to_remote_signer");
           return;
         }
         if (vector.category === "nip46-policy-file") {

@@ -11,8 +11,9 @@ descriptors.
   grant targets.
 - Parse policy-change proposals and render deterministic review pages plus an
   approval digest for device-approved `set_policy` changes.
-- Parse and select secretless account-route metadata for supported methods
-  without dispatching signer I/O.
+- Parse route-selection requests, select secretless account-route metadata for
+  supported methods, and parse `nsealr-route-selection-v0` responses without
+  dispatching signer I/O.
 - Evaluate pure policy-decision vectors for conformance tests.
 
 ## Example
@@ -90,5 +91,5 @@ does not store the usage history itself. Policy-change helpers create
 secretless review material only; they do not approve or persist device policy.
 The package does not store persistent grants or hold production mnemonics,
 passphrases, `nsec` values, or decrypted signing material. Route selection
-returns metadata from account descriptors; it does not open transports, create
-grants, or sign events.
+returns and validates metadata from account descriptors; it does not open
+transports, create grants, or sign events.

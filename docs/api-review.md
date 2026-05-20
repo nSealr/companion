@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:08f6bdf83e1b78919608daf49dc8f859e7d3d7824881d13cb0311b823ba13a50`
+API surface digest: `sha256:6c15f8feea2f0a745cd4e529fb09138bb2b47bffc0ca40730f1c1d4f81a62147`
 
 Source: `docs/api.md`
 
@@ -78,9 +78,10 @@ packaging checks do not drift.
 `SignerTransportError` is the public typed error host-owned dispatchers should
 throw when a transport failure needs to cross the local-service boundary with a
 deterministic code instead of a generic dispatch failure.
-Route selection returns metadata only; dispatch is unavailable by default and
-does not include real transport drivers. The route-aware dispatcher registry is
-only a secretless host-wiring helper: it selects the most specific configured
+Route selection returns metadata only and validates response metadata through
+`@nsealr/policy`; dispatch is unavailable by default and does not include real
+transport drivers. The route-aware dispatcher registry is only a secretless
+host-wiring helper: it selects the most specific configured
 account/route/transport handler, reports missing route handlers as unavailable,
 and rejects ambiguous handler configuration without opening a signer transport.
 Display-less `sign_event` routes require a
@@ -148,9 +149,10 @@ Policy descriptors are internal nSealr records rather than Nostr events. The
 package rejects embedded secret fields, QR-vault automation, wildcard grants,
 decrypt/export grants, and invalid route targets. It also exposes pure
 secretless account-route request parsing and selection from parsed descriptors
-and supported methods, runtime parsing for policy-decision requests, plus
-deterministic expiry, revocation, and rate-limit decisions from explicit
-grant-usage snapshots. It also exposes secretless policy-change proposal
+and supported methods, `nsealr-route-selection-v0` response parsing, runtime
+parsing for policy-decision requests, plus deterministic expiry, revocation,
+and rate-limit decisions from explicit grant-usage snapshots. It also exposes
+secretless policy-change proposal
 parsing and deterministic review-page/approval-digest generation for device
 approved `set_policy` changes. Persistent grant storage, usage history
 storage, authoritative device policy mutation, signer dispatch, and account

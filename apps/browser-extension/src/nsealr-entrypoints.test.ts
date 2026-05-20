@@ -116,10 +116,10 @@ function routeSelectionResponse(request: LocalServiceRequest): unknown {
         custody: "device_persistent",
         trusted_review: "device_display",
         policy_support: "scoped_automation",
-        policy_profile_id: "policy-esp32-usb-manual-v0",
+        policy_profile_id: "policy-manual-only-persistent-device",
         physical_review: true,
         physical_approval: true,
-        persistent_grants: false,
+        persistent_grants: true,
         contains_secret_material: false
       }
     }

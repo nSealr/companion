@@ -175,7 +175,7 @@ describe("local service client", () => {
           contains_secret_material: true
         }
       }
-    }, "expected-request")).toThrow(/secret-material flag/u);
+    }, "expected-request")).toThrow(/contains_secret_material/u);
     expect(() => validateLocalServiceResponse({
       version: 1,
       request_id: "expected-request",
@@ -187,6 +187,17 @@ describe("local service client", () => {
         }
       }
     }, "expected-request")).toThrow(/repository does not match/u);
+    expect(() => validateLocalServiceResponse({
+      version: 1,
+      request_id: "expected-request",
+      ok: true,
+      result: {
+        route_selection: {
+          ...routeVector.selection,
+          nsec: "nsec1notallowed"
+        }
+      }
+    }, "expected-request")).toThrow(/secret field nsec/u);
     expect(() => validateLocalServiceResponse({
       version: 1,
       request_id: "expected-request",

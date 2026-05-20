@@ -9,6 +9,7 @@ import {
   parsePolicyChangeReviewVector,
   parsePolicyDecisionRequest,
   parsePolicyProfile,
+  parseRouteSelection,
   reviewPolicyChangeProposal,
   parseRouteSelectionRequest,
   selectAccountRoute
@@ -374,11 +375,16 @@ describe("identity, recovery, and policy contracts", () => {
       };
 
       expect(selectAccountRoute(accounts, vector.request)).toEqual(vector.selection);
+      expect(parseRouteSelection(vector.selection)).toEqual(vector.selection);
     }
   });
 
   it("rejects ambiguous or unsupported route selections before signer IO", () => {
     const account = parseAccountDescriptor(loadJson(resolve(specsRoot, "vectors/accounts/raspberry-qr-nip06-account-0.json")));
+    const routeSelection = selectAccountRoute([account], {
+      account_id: account.account_id,
+      method: "sign_event"
+    });
 
     expect(parseRouteSelectionRequest({
       account_id: account.account_id,
@@ -414,5 +420,18 @@ describe("identity, recovery, and policy contracts", () => {
       method: "sign_event",
       route_type: "esp32_usb_nip46"
     })).toThrow(/route_type does not match/u);
+
+    expect(() => parseRouteSelection({
+      ...routeSelection,
+      repository: "esp32"
+    })).toThrow(/repository does not match/u);
+    expect(() => parseRouteSelection({
+      ...routeSelection,
+      contains_secret_material: true
+    })).toThrow(/contains_secret_material/u);
+    expect(() => parseRouteSelection({
+      ...routeSelection,
+      mnemonic: "leader monkey parrot ring guide accident before fence cannon height naive bean"
+    })).toThrow(/secret field mnemonic/u);
   });
 });

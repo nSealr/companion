@@ -1042,6 +1042,84 @@ function routeSelectionFromAccount(account: AccountDescriptor): RouteSelection {
   };
 }
 
+export function parseRouteSelection(value: unknown): RouteSelection {
+  rejectSecretFields(value);
+  assertRecord(value, "route selection");
+  assertOnlyKeys(value, [
+    "format",
+    "account_id",
+    "public_key",
+    "route_type",
+    "repository",
+    "transport",
+    "custody",
+    "trusted_review",
+    "policy_support",
+    "policy_profile_id",
+    "physical_review",
+    "physical_approval",
+    "persistent_grants",
+    "contains_secret_material"
+  ], "route selection");
+  if (value.format !== "nsealr-route-selection-v0") throw new Error("route selection format mismatch");
+  const routeType = requireRouteType(value.route_type, "route selection route_type");
+  const expectedRepository = ROUTE_REPOSITORIES.get(routeType);
+  if (expectedRepository !== undefined && value.repository !== expectedRepository) {
+    throw new Error("route selection repository does not match route_type");
+  }
+  if (expectedRepository === undefined && "repository" in value) {
+    throw new Error("external route selections must not claim a nSealr repository");
+  }
+  const transport = requireString(value.transport, "route selection transport");
+  if (!ROUTE_TRANSPORTS.has(transport)) throw new Error("route selection transport is unknown");
+  const custody = requireString(value.custody, "route selection custody");
+  if (!CUSTODY_MODES.has(custody)) throw new Error("route selection custody is unknown");
+  const trustedReview = requireString(value.trusted_review, "route selection trusted_review");
+  if (!REVIEW_MODES.has(trustedReview)) throw new Error("route selection trusted_review is unknown");
+  const policySupport = requireString(value.policy_support, "route selection policy_support");
+  if (!POLICY_SUPPORT_MODES.has(policySupport)) throw new Error("route selection policy_support is unknown");
+  const routeSelection: RouteSelection = {
+    format: "nsealr-route-selection-v0",
+    account_id: requireStringId(value.account_id, "route selection account_id"),
+    public_key: requireXOnlyPubkey(value.public_key, "route selection public_key"),
+    route_type: routeType,
+    ...(typeof value.repository === "string" ? { repository: value.repository as RouteSelection["repository"] } : {}),
+    transport: transport as RouteSelection["transport"],
+    custody: custody as RouteSelection["custody"],
+    trusted_review: trustedReview as RouteSelection["trusted_review"],
+    policy_support: policySupport as RouteSelection["policy_support"],
+    policy_profile_id: requirePolicyId(value.policy_profile_id, "route selection policy_profile_id"),
+    physical_review: requireBoolean(value.physical_review, "route selection physical_review"),
+    physical_approval: requireBoolean(value.physical_approval, "route selection physical_approval"),
+    persistent_grants: requireBoolean(value.persistent_grants, "route selection persistent_grants"),
+    contains_secret_material: false
+  };
+  if (value.contains_secret_material !== false) {
+    throw new Error("route selection contains_secret_material must be false");
+  }
+  const routeSelectionCapabilities: AccountDescriptor["capabilities"] = {
+    // Route-selection responses do not carry method lists; route request parsing
+    // checks method support before a response is produced.
+    methods: [],
+    physical_review: routeSelection.physical_review,
+    physical_approval: routeSelection.physical_approval,
+    persistent_grants: routeSelection.persistent_grants
+  };
+  validateRouteSemantics(routeSelectionToSignerRoute(routeSelection), routeSelectionCapabilities, value);
+  return routeSelection;
+}
+
+function routeSelectionToSignerRoute(routeSelection: RouteSelection): SignerRoute {
+  return {
+    type: routeSelection.route_type,
+    ...(routeSelection.repository !== undefined ? { repository: routeSelection.repository } : {}),
+    transport: routeSelection.transport,
+    custody: routeSelection.custody,
+    trusted_review: routeSelection.trusted_review,
+    policy_support: routeSelection.policy_support
+  };
+}
+
 export function parseRouteSelectionRequest(value: unknown): RouteSelectionRequest {
   assertRecord(value, "route selection request");
   assertOnlyKeys(value, ["account_id", "method", "route_type"], "route selection request");
@@ -1071,5 +1149,5 @@ export function selectAccountRoute(accounts: AccountDescriptor[], request: Route
   if (!account.capabilities.methods.includes(method)) {
     throw new Error("route selection method is unsupported by account");
   }
-  return routeSelectionFromAccount(account);
+  return parseRouteSelection(routeSelectionFromAccount(account));
 }

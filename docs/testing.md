@@ -575,8 +575,9 @@ single-repository CI. Cross-repository drift remains guarded by
   pages and approval digests, wildcard/decrypt/export rejection, rejection of
   stateless QR-vault grant targets, closed-schema rejection for descriptor,
   route, capability, policy-profile, grant, client, permission, and rate-limit
-  records, and deterministic policy-decision transcripts for allowed, expired,
-  revoked, decrypt, export-secret, and unknown-method requests.
+  records, shared route-selection response parsing, and deterministic
+  policy-decision transcripts for allowed, expired, revoked, decrypt,
+  export-secret, and unknown-method requests.
 - Pre-signing hardening tests must reject every shared invalid vector that
   reaches companion-owned parsing: unsafe event-template fields, unsafe integer
   values, resource-limit violations, malformed or ambiguous responses,
@@ -618,10 +619,10 @@ single-repository CI. Cross-repository drift remains guarded by
   cover authorized selected-account public-key lookup, `signEvent` routing
   through local-service dispatch, explicit dispatcher success, deterministic
   signer-unavailable responses before a real signer transport driver exists,
-  malformed companion outputs, already-cancelled requests, in-flight
-  cancellation, `AbortSignal` forwarding into injected exchanges, thrown
-  native-host sender failures, and latest-grant revocation before browser
-  callers trust route selection or signer dispatch.
+  malformed companion outputs rejected through shared route-selection parsing,
+  already-cancelled requests, in-flight cancellation, `AbortSignal` forwarding
+  into injected exchanges, thrown native-host sender failures, and latest-grant
+  revocation before browser callers trust route selection or signer dispatch.
 - Package consumer smoke currently runs against built JS/declaration artifacts,
   packed tarballs, and executable examples importing every publishable public
   package. README snippets for every publishable package are now executed from

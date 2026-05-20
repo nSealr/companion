@@ -1,4 +1,5 @@
 import { validateResponse } from "@nsealr/protocol";
+import { parseRouteSelection } from "@nsealr/policy";
 import {
   decodeNativeMessage,
   encodeNativeMessage,
@@ -57,10 +58,6 @@ function isHex64(value: unknown): value is string {
   return typeof value === "string" && /^[0-9a-f]{64}$/u.test(value);
 }
 
-function isStableId(value: unknown): value is string {
-  return typeof value === "string" && /^[A-Za-z0-9._:-]{1,128}$/u.test(value);
-}
-
 function isLocalServiceOperation(value: unknown): value is LocalServiceOperation {
   return typeof value === "string" && LOCAL_SERVICE_OPERATIONS.includes(value as LocalServiceOperation);
 }
@@ -77,33 +74,6 @@ function isLocalClientIdentity(value: unknown): value is LocalClientIdentity {
     return false;
   }
 }
-
-const ROUTE_TYPES = new Set([
-  "raspberry_qr_vault",
-  "esp32_qr_vault",
-  "esp32_usb_nip46",
-  "smartcard",
-  "custom_hardware_wallet",
-  "external_nip46"
-]);
-const ROUTE_REPOSITORIES = new Set(["raspberry", "esp32", "smartcard", "hardware"]);
-const ROUTE_REPOSITORY_BY_TYPE = new Map([
-  ["raspberry_qr_vault", "raspberry"],
-  ["esp32_qr_vault", "esp32"],
-  ["esp32_usb_nip46", "esp32"],
-  ["smartcard", "smartcard"],
-  ["custom_hardware_wallet", "hardware"]
-]);
-const ROUTE_TRANSPORTS = new Set(["qr", "usb", "smartcard", "nfc", "nip46_relay", "embedded"]);
-const ROUTE_CUSTODY_MODES = new Set([
-  "stateless_session",
-  "device_persistent",
-  "card_persistent",
-  "custom_hardware_persistent",
-  "external_signer"
-]);
-const ROUTE_REVIEW_MODES = new Set(["device_display", "external_review", "external_policy", "display_less"]);
-const POLICY_SUPPORT_MODES = new Set(["manual_only", "scoped_automation", "external"]);
 
 function defaultRequestIdFactory(): () => string {
   let sequence = 0;
@@ -175,61 +145,14 @@ function validateServiceError(value: unknown): string | undefined {
 }
 
 function validateRouteSelection(value: unknown): string | undefined {
-  if (!isRecord(value)) return "local service route selection result is invalid";
-  if (!hasOnlyKeys(value, [
-    "format",
-    "account_id",
-    "public_key",
-    "route_type",
-    "repository",
-    "transport",
-    "custody",
-    "trusted_review",
-    "policy_support",
-    "policy_profile_id",
-    "physical_review",
-    "physical_approval",
-    "persistent_grants",
-    "contains_secret_material"
-  ])) {
-    return "local service route selection has unsupported fields";
+  try {
+    parseRouteSelection(value);
+    return undefined;
+  } catch (error) {
+    return error instanceof Error
+      ? `local service route selection is invalid: ${error.message}`
+      : "local service route selection is invalid";
   }
-  if (value.format !== "nsealr-route-selection-v0") return "local service route selection format is invalid";
-  if (!isStableId(value.account_id)) return "local service route selection account_id is invalid";
-  if (!isHex64(value.public_key)) return "local service route selection public_key is invalid";
-  if (typeof value.route_type !== "string" || !ROUTE_TYPES.has(value.route_type)) {
-    return "local service route selection route_type is invalid";
-  }
-  if ("repository" in value && (typeof value.repository !== "string" || !ROUTE_REPOSITORIES.has(value.repository))) {
-    return "local service route selection repository is invalid";
-  }
-  const expectedRepository = ROUTE_REPOSITORY_BY_TYPE.get(value.route_type);
-  if (expectedRepository !== undefined && value.repository !== expectedRepository) {
-    return "local service route selection repository does not match route_type";
-  }
-  if (expectedRepository === undefined && "repository" in value) {
-    return "local service external route selection must not claim a repository";
-  }
-  if (typeof value.transport !== "string" || !ROUTE_TRANSPORTS.has(value.transport)) {
-    return "local service route selection transport is invalid";
-  }
-  if (typeof value.custody !== "string" || !ROUTE_CUSTODY_MODES.has(value.custody)) {
-    return "local service route selection custody is invalid";
-  }
-  if (typeof value.trusted_review !== "string" || !ROUTE_REVIEW_MODES.has(value.trusted_review)) {
-    return "local service route selection trusted_review is invalid";
-  }
-  if (typeof value.policy_support !== "string" || !POLICY_SUPPORT_MODES.has(value.policy_support)) {
-    return "local service route selection policy_support is invalid";
-  }
-  if (typeof value.policy_profile_id !== "string" || !/^policy-[A-Za-z0-9._:-]+$/u.test(value.policy_profile_id)) {
-    return "local service route selection policy_profile_id is invalid";
-  }
-  for (const field of ["physical_review", "physical_approval", "persistent_grants"] as const) {
-    if (typeof value[field] !== "boolean") return `local service route selection ${field} is invalid`;
-  }
-  if (value.contains_secret_material !== false) return "local service route selection secret-material flag is invalid";
-  return undefined;
 }
 
 function validateSignerResponseResult(value: unknown): string | undefined {

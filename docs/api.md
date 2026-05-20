@@ -260,6 +260,7 @@ Exports:
 - `parsePolicyChangeReviewVector`
 - `parsePolicyDecisionRequest`
 - `parsePolicyProfile`
+- `parseRouteSelection`
 - `parseRouteSelectionRequest`
 - `reviewPolicyChangeProposal`
 - `selectAccountRoute`

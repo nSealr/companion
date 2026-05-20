@@ -113,9 +113,10 @@ packages, but it must not export test-only signing as a production path.
   anti-decrypt-grant, and audit-event decision checks,
   including runtime policy-decision request parsing, deterministic expiry,
   revocation, and rate-limit decisions from explicit grant-usage snapshots,
-  plus digest-bound `set_policy` review pages for persistent device routes, so
-  CLI/browser/SDK code does not grow a parallel policy parser. The package does
-  not persist usage history, grants, or authoritative device policy.
+  shared `nsealr-route-selection-v0` response parsing, and digest-bound
+  `set_policy` review pages for persistent device routes, so CLI/browser/SDK
+  code does not grow a parallel policy parser. The package does not persist
+  usage history, grants, or authoritative device policy.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: private test-only signing implementation,
@@ -155,9 +156,10 @@ packages, but it must not export test-only signing as a production path.
   dispatcher, display-less `sign_event` external-review acknowledgement binding,
   signer-response verification, response validation, and a
   high-level client wrapper. The wrapper checks request-id correlation,
-  malformed responses, and operation-specific result types before callers can
-  trust native-messaging responses. The dispatch operation remains unavailable
-  by default and adds no real transport driver by itself. The package also
+  malformed responses, operation-specific result types, and route selections
+  through the shared `@nsealr/policy` parser before callers can trust
+  native-messaging responses. The dispatch operation remains unavailable by
+  default and adds no real transport driver by itself. The package also
   exposes a route-aware dispatcher registry helper so host apps can attach
   multiple explicit account/route/transport handlers without putting
   route-selection conditionals in browser, SDK, or CLI access surfaces. This is
@@ -815,9 +817,10 @@ Route-selection vectors are also consumed through `packages/policy`. The
 selector is pure and secretless: it accepts parsed account descriptors plus a
 requested account/method and returns selected route metadata only. It does not
 open transports, create grants, approve clients, dispatch signer I/O, or claim
-route readiness. Route-selection request parsing also lives in `packages/policy`
-so browser extension, local service, CLI, SDK, and future UI code do not fork
-the selected-account route-request shape.
+route readiness. Route-selection request and response parsing also live in
+`packages/policy` so browser extension, local service, CLI, SDK, and future UI
+code do not fork account-id, route-type, repository, custody, transport,
+review, policy-support, or secret-material validation.
 
 Access-surface vectors are loaded through `packages/fixtures` and consumed by
 browser-provider tests. The current shared vector pins the NIP-07 browser

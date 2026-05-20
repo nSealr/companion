@@ -555,9 +555,10 @@ single-repository CI. Cross-repository drift remains guarded by
   vectors. The request evaluator binds the validated relay event envelope,
   plaintext message, and reviewed permissions to the same bridge decision path
   used by local decrypted payloads. The response evaluator shape-checks
-  plaintext NIP-46 response messages. Neither opens relays, decrypts NIP-44
-  content, acknowledges `connect`, creates grants, dispatches signers, verifies
-  signatures, or persists session state.
+  plaintext signed-event, public-key, ping, and error response messages.
+  Neither opens relays, decrypts NIP-44 content, acknowledges `connect`,
+  creates grants, dispatches signers, verifies signatures, or persists session
+  state.
 - NIP-46 permission matching tests covering derived `sign_event:<kind>`
   requirements, broad requested-permission compatibility, explicit approved
   `sign_event:<kind>` inputs, method-only grants, denied requests, and

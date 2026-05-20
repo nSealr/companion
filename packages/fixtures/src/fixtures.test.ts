@@ -169,14 +169,19 @@ describe("fixture loading", () => {
   it("loads NIP-46 relay step vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
     expect(fixtures.nip46RelaySteps.map((vector) => vector.name)).toEqual([
+      "get-public-key-response-step",
       "ping-request-step",
+      "ping-response-step",
+      "sign-event-error-response-step",
       "sign-event-request-step",
       "sign-event-response-step"
     ]);
-    expect(fixtures.nip46RelaySteps[0].format).toBe("nsealr-nip46-relay-request-step-v0");
-    expect(JSON.stringify(fixtures.nip46RelaySteps[0].expected_step)).toContain("persists_session_state");
-    expect(fixtures.nip46RelaySteps[2].format).toBe("nsealr-nip46-relay-response-step-v0");
-    expect(JSON.stringify(fixtures.nip46RelaySteps[2].expected_step)).toContain("verifies_signature");
+    const requestStep = fixtures.nip46RelaySteps.find((vector) => vector.name === "ping-request-step");
+    const responseStep = fixtures.nip46RelaySteps.find((vector) => vector.name === "sign-event-response-step");
+    expect(requestStep?.format).toBe("nsealr-nip46-relay-request-step-v0");
+    expect(JSON.stringify(requestStep?.expected_step)).toContain("persists_session_state");
+    expect(responseStep?.format).toBe("nsealr-nip46-relay-response-step-v0");
+    expect(JSON.stringify(responseStep?.expected_step)).toContain("verifies_signature");
   });
 
   it("loads identity, policy, and grant descriptors from the specs repository", () => {

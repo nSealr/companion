@@ -250,7 +250,10 @@ describe("NIP-46 bridge payloads", () => {
     const fixtures = loadSpecsFixtures(specsRoot);
 
     expect(fixtures.nip46RelaySteps.map((vector) => vector.name)).toEqual([
+      "get-public-key-response-step",
       "ping-request-step",
+      "ping-response-step",
+      "sign-event-error-response-step",
       "sign-event-request-step",
       "sign-event-response-step"
     ]);

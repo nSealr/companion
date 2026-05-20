@@ -318,6 +318,12 @@ routes require a `nsealr-external-review-acknowledgement-v0` artifact whose
 `approval_digest` matches the signer request before the injected dispatcher is
 called; the same artifact is rejected on routes with trusted device review.
 
+Status note, 2026-05-20: the high-level `LocalServiceClient` dispatch wrapper
+now carries that explicit external-review acknowledgement for display-less
+routes, so browser, SDK, desktop, CLI, and native-messaging hosts reuse the
+same service gate instead of creating a parallel smartcard dispatch path. This
+does not add a production smartcard transport or trusted-host review claim.
+
 Status note, 2026-05-19: `@nsealr/browser-provider` now consumes the shared
 access-surface vector for NIP-07 over local companion service route selection.
 The vector pins `getPublicKey` to the selected ESP32 USB route and pins

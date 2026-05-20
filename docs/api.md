@@ -71,6 +71,7 @@ Exports:
 - `LocalServiceClient`
 - `LocalServiceClientOptions`
 - `LocalServiceContext`
+- `LocalServiceDispatchSignerRequestOptions`
 - `LocalServiceExchange`
 - `LocalServiceExchangeOptions`
 - `LocalServiceOperation`

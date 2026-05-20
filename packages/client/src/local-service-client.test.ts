@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
+import { approvalDigestForRequest } from "@nsealr/review";
 import {
   createNativeMessagingLocalServiceClient,
   LocalServiceClient,
@@ -9,9 +10,11 @@ import {
 } from "./local-service-client.js";
 import { decodeNativeMessage, encodeNativeMessage } from "./native-messaging.js";
 import {
+  EXTERNAL_REVIEW_ACKNOWLEDGEMENT_FORMAT,
   clientIdForIdentity,
   handleLocalServiceRequest,
   LOCAL_SERVICE_OPERATIONS,
+  type ExternalReviewAcknowledgement,
   type LocalClientGrant,
   type LocalClientIdentity
 } from "./service.js";
@@ -22,6 +25,8 @@ const request = JSON.parse(readFileSync(resolve(specsRoot, "examples/request-kin
 const response = JSON.parse(readFileSync(resolve(specsRoot, "examples/response-kind-1-basic.json"), "utf8"));
 const routeVector = fixtures.routeSelections.find((selection) => selection.name === "esp32-usb-sign-event-slot-0");
 if (!routeVector) throw new Error("route selection fixture is missing");
+const smartcardRouteVector = fixtures.routeSelections.find((selection) => selection.name === "smartcard-sign-event-slot-0");
+if (!smartcardRouteVector) throw new Error("smartcard route selection fixture is missing");
 const client: LocalClientIdentity = {
   surface: "browser_extension",
   origin: "https://example.com",
@@ -35,6 +40,17 @@ const grant: LocalClientGrant = {
   allowed_operations: ["select_account_route", "validate_signer_request", "dispatch_signer_request", "verify_signer_response"],
   expires_at: 2_000_000_000
 };
+
+function externalReviewAcknowledgement(): ExternalReviewAcknowledgement {
+  return {
+    format: EXTERNAL_REVIEW_ACKNOWLEDGEMENT_FORMAT,
+    acknowledged: true,
+    source: "external-review" as const,
+    approval_digest: approvalDigestForRequest(request),
+    stores_production_secrets: false,
+    contains_secret_material: false
+  };
+}
 
 describe("local service client", () => {
   it("wraps service-status and pairing calls with generated request ids", async () => {
@@ -115,7 +131,9 @@ describe("local service client", () => {
       }
     });
 
-    await expect(service.dispatchSignerRequest(client, routeVector.request, request, "client-dispatch")).resolves.toMatchObject({
+    await expect(service.dispatchSignerRequest(client, routeVector.request, request, {
+      requestId: "client-dispatch"
+    })).resolves.toMatchObject({
       request_id: "client-dispatch",
       ok: false,
       error: {
@@ -123,6 +141,40 @@ describe("local service client", () => {
         message: "signer dispatch is not configured"
       }
     });
+  });
+
+  it("passes external review acknowledgement through dispatch options for display-less routes", async () => {
+    const acknowledgement = externalReviewAcknowledgement();
+    const dispatched: unknown[] = [];
+    const service = new LocalServiceClient({
+      exchange: (message) => handleLocalServiceRequest(message, {
+        accounts: fixtures.accounts,
+        grants: [grant],
+        now: 1_900_000_000,
+        signerDispatcher: (dispatchRequest) => {
+          dispatched.push(dispatchRequest);
+          return response;
+        }
+      })
+    });
+
+    await expect(service.dispatchSignerRequest(client, smartcardRouteVector.request, request, {
+      requestId: "client-smartcard-dispatch",
+      externalReviewAcknowledgement: acknowledgement
+    })).resolves.toEqual({
+      version: 1,
+      request_id: "client-smartcard-dispatch",
+      ok: true,
+      result: {
+        signer_response: response
+      }
+    });
+    expect(dispatched).toEqual([{
+      client,
+      route_selection: smartcardRouteVector.selection,
+      request,
+      external_review_acknowledgement: acknowledgement
+    }]);
   });
 
   it("rejects malformed or mismatched service responses before callers trust them", async () => {
@@ -284,7 +336,9 @@ describe("local service client", () => {
       serviceResultForEveryOperation.selectAccountRoute(client, routeVector.request, "route-mismatch")
     ).rejects.toThrow(/select_account_route returned unexpected local service result/u);
     await expect(
-      serviceResultForEveryOperation.dispatchSignerRequest(client, routeVector.request, request, "dispatch-mismatch")
+      serviceResultForEveryOperation.dispatchSignerRequest(client, routeVector.request, request, {
+        requestId: "dispatch-mismatch"
+      })
     ).rejects.toThrow(/dispatch_signer_request returned unexpected local service result/u);
 
     const pairingResultForStatus = new LocalServiceClient({

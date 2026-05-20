@@ -43,6 +43,14 @@ export type NativeMessagingLocalServiceClientOptions = {
   abortSignal?: AbortSignal;
 };
 
+export type LocalServiceDispatchSignerRequestOptions = {
+  requestId?: string;
+  externalReviewAcknowledgement?: Extract<
+    LocalServiceRequest,
+    { operation: "dispatch_signer_request" }
+  >["params"]["external_review_acknowledgement"];
+};
+
 type RequestParams = Extract<LocalServiceRequest, { params: unknown }>["params"];
 type LocalServiceResultKey = "service" | "pairing_intent" | "route_selection" | "validation" | "signer_response";
 
@@ -345,12 +353,16 @@ export class LocalServiceClient {
     client: LocalClientIdentity,
     routeRequest: Extract<LocalServiceRequest, { operation: "dispatch_signer_request" }>["params"]["route_request"],
     request: unknown,
-    requestId = this.nextRequestId()
+    options: LocalServiceDispatchSignerRequestOptions = {}
   ): Promise<LocalServiceResponse> {
+    const requestId = options.requestId ?? this.nextRequestId();
     return this.sendWithParams("dispatch_signer_request", {
       client,
       route_request: routeRequest,
-      request
+      request,
+      ...(options.externalReviewAcknowledgement !== undefined
+        ? { external_review_acknowledgement: options.externalReviewAcknowledgement }
+        : {})
     }, requestId).then((response) => requireResultType(response, "signer_response", "dispatch_signer_request"));
   }
 

@@ -717,6 +717,10 @@ single-repository CI. Cross-repository drift remains guarded by
   already-cancelled requests, in-flight cancellation, `AbortSignal` forwarding
   into injected exchanges, thrown native-host sender failures, and latest-grant
   revocation before browser callers trust route selection or signer dispatch.
+- Local-service client tests cover the high-level dispatch wrapper carrying a
+  digest-bound external-review acknowledgement through to display-less signer
+  routes, so SDK, desktop, CLI, and native-messaging callers reuse the service
+  safety gate instead of inventing a parallel smartcard path.
 - Package consumer smoke currently runs against built JS/declaration artifacts,
   packed tarballs, every manifest-declared public export subpath from a
   temporary npm consumer, executable examples importing every publishable

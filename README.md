@@ -73,6 +73,8 @@ match the shared `contract_id`.
   signer payload handling. The service request parser rejects unsupported
   top-level request fields and unsupported per-operation `params` fields before
   those operations run. Dispatch validates the request, selects the route,
+  requires a matching external-review acknowledgement for display-less
+  `sign_event` routes, rejects that acknowledgement on trusted-review routes,
   calls only the injected route dispatcher, and verifies the signer response
   before returning it. The
   high-level client also binds each operation to its expected result type, so a

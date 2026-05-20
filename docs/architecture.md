@@ -185,8 +185,11 @@ packages, but it must not export test-only signing as a production path.
   high-level client wrapper. The wrapper checks request-id correlation,
   malformed responses, operation-specific result types, and route selections
   through the shared `@nsealr/policy` parser before callers can trust
-  native-messaging responses. The dispatch operation remains unavailable by
-  default and adds no real transport driver by itself. The package also
+  native-messaging responses. Its dispatch wrapper can pass the same
+  digest-bound external-review acknowledgement accepted by the service for
+  display-less routes, so SDK, desktop, CLI, and native-messaging callers do
+  not need to fork that smartcard safety gate. The dispatch operation remains
+  unavailable by default and adds no real transport driver by itself. The package also
   exposes a route-aware dispatcher registry helper so host apps can attach
   multiple explicit account/route/transport handlers without putting
   route-selection conditionals in browser, SDK, or CLI access surfaces. This is
@@ -380,9 +383,11 @@ adapter over an explicit `sendNativeMessage(hostName, message)` function. This
 keeps browser API integration thin while reusing `LocalServiceClient` response
 validation, optional deterministic response timeouts, request cancellation,
 request-id correlation, and the shared native host name and manifest contract
-exported by `@nsealr/client`. Timeout and cancellation behavior lives in the
-client package so SDK, browser extension, and future desktop callers cannot fork
-that boundary.
+exported by `@nsealr/client`. `dispatchSignerRequest` also carries the explicit
+external-review acknowledgement option for display-less routes through this same
+client boundary, so access surfaces cannot create a separate smartcard dispatch
+path. Timeout and cancellation behavior lives in the client package so SDK,
+browser extension, and future desktop callers cannot fork that boundary.
 It does not install native-host manifests, persist grants, or open signer
 transports.
 The background browser entrypoint adapter is the browser-like wrapper over the

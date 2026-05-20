@@ -149,10 +149,12 @@ same acknowledgement is rejected on routes with their own trusted review UI, so
 external review cannot weaken device-local review requirements.
 `LocalServiceClient` owns response validation, request-id correlation, optional
 deterministic response timeout, and optional cancellation for any injected
-exchange. Route-selection results are validated through the shared
-`@nsealr/policy` parser, not a client-local route taxonomy. Browser adapters
-forward an `AbortSignal` into their injected transport but do not reimplement
-this boundary.
+exchange. Its dispatch wrapper accepts that explicit external-review
+acknowledgement as an option for display-less routes, then lets the service
+enforce the same matching and route-scope checks. Route-selection results are
+validated through the shared `@nsealr/policy` parser, not a client-local route
+taxonomy. Browser adapters forward an `AbortSignal` into their injected
+transport but do not reimplement this boundary.
 `createRouteDispatcher` is only a registry helper for host-owned dispatch
 functions; it selects an explicitly configured route handler and otherwise
 returns the same unavailable or configuration-error boundary.

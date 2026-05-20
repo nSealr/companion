@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:483573b5b512e44382ec68cf96e2b53ce7757576aab9fc7131982d9f082dff2f`
+API surface digest: `sha256:637894acfc7d6ae386888d97c43d07f1200cc7a6b8ad01baf60b6287a2216209`
 
 Source: `docs/api.md`
 
@@ -70,9 +70,10 @@ signer-response verification. Browser runtime code uses the reviewed
 `./client-identity` subpath. Request-id correlation, native-message framing,
 and malformed-response rejection are public helpers.
 `LocalServiceClient` also owns optional deterministic response timeouts,
-request cancellation, and `AbortSignal` forwarding into injected exchanges so
-browser-provider, SDK, extension, and future desktop code do not fork stalled
-local-service behavior.
+request cancellation, `AbortSignal` forwarding into injected exchanges, and the
+explicit external-review acknowledgement dispatch option for display-less
+routes so browser-provider, SDK, extension, and future desktop code do not fork
+stalled local-service or smartcard-review behavior.
 The shared native host name, native-host manifest builder, digest-bound dry-run
 install-plan builder/parser, install-approval artifact helpers, and explicit
 approval-bound install execution builder/parser remain exported from the

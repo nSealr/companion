@@ -253,7 +253,7 @@ Exports:
 
 ## @nsealr/policy
 
-Secretless account, route, grant, and policy-decision helpers for nSealr companion.
+Secretless account, route, grant, policy-change, and policy-decision helpers for nSealr companion.
 
 Source entrypoint: `packages/policy/src/index.ts`
 
@@ -264,6 +264,7 @@ Exports:
 - `GrantUsageSnapshot`
 - `PolicyChangeProposal`
 - `PolicyChangeReview`
+- `PolicyChangeReviewContext`
 - `PolicyChangeReviewPage`
 - `PolicyChangeReviewVector`
 - `PolicyDecision`
@@ -278,6 +279,7 @@ Exports:
 - `parseAccountDescriptor`
 - `parseGrantDescriptor`
 - `parsePolicyChangeProposal`
+- `parsePolicyChangeReviewContext`
 - `parsePolicyChangeReviewVector`
 - `parsePolicyDecisionRequest`
 - `parsePolicyProfile`
@@ -285,6 +287,7 @@ Exports:
 - `parseRouteSelectionRequest`
 - `reviewPolicyChangeProposal`
 - `selectAccountRoute`
+- `validatePolicyChangeProposalContext`
 
 ## @nsealr/protocol
 

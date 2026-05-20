@@ -165,6 +165,12 @@ export type PolicyChangeReviewVector = {
   review: PolicyChangeReview;
 };
 
+export type PolicyChangeReviewContext = {
+  accounts: AccountDescriptor[];
+  policyProfiles: PolicyProfile[];
+  grants: GrantDescriptor[];
+};
+
 export type RouteSelectionRequest = {
   account_id: string;
   method: string;
@@ -355,7 +361,9 @@ function requireStringArray(value: unknown, field: string): string[] {
 
 function requireGrantIdArray(value: unknown, field: string): string[] {
   if (!Array.isArray(value)) throw new Error(`${field} must be an array of grant ids`);
-  return value.map((item, index) => requireGrantId(item, `${field}[${index}]`));
+  const grantIds = value.map((item, index) => requireGrantId(item, `${field}[${index}]`));
+  if (new Set(grantIds).size !== grantIds.length) throw new Error(`${field} must be unique`);
+  return grantIds;
 }
 
 function requirePolicyId(value: unknown, field: string): string {
@@ -903,6 +911,33 @@ function sha256Utf8Hex(value: string): string {
   return bytesToHex(sha256(utf8ToBytes(value)));
 }
 
+function parseContextArray<T>(
+  context: Record<string, unknown>,
+  field: "accounts" | "policyProfiles" | "grants",
+  parser: (value: unknown) => T
+): T[] {
+  const value = context[field];
+  if (!Array.isArray(value)) throw new Error(`policy change context ${field} must be an array`);
+  return value.map((item, index) => {
+    try {
+      return parser(item);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`policy change context ${field}[${index}]: ${message}`);
+    }
+  });
+}
+
+export function parsePolicyChangeReviewContext(value: unknown): PolicyChangeReviewContext {
+  assertRecord(value, "policy change context");
+  assertOnlyKeys(value, ["accounts", "policyProfiles", "grants"], "policy change context");
+  return {
+    accounts: parseContextArray(value, "accounts", parseAccountDescriptor),
+    policyProfiles: parseContextArray(value, "policyProfiles", parsePolicyProfile),
+    grants: parseContextArray(value, "grants", parseGrantDescriptor)
+  };
+}
+
 export function parsePolicyChangeProposal(value: unknown): PolicyChangeProposal {
   rejectSecretFields(value);
   assertRecord(value, "policy change proposal");
@@ -958,8 +993,83 @@ export function parsePolicyChangeProposal(value: unknown): PolicyChangeProposal 
   };
 }
 
-export function reviewPolicyChangeProposal(value: unknown): PolicyChangeReview {
+function findSingleAccount(context: PolicyChangeReviewContext, proposal: PolicyChangeProposal): AccountDescriptor {
+  const matches = context.accounts.filter((account) => account.account_id === proposal.account_id);
+  if (matches.length === 0) throw new Error("policy change account_id target is missing");
+  if (matches.length > 1) throw new Error("policy change account_id target is ambiguous");
+  return matches[0];
+}
+
+function findSinglePolicy(
+  context: PolicyChangeReviewContext,
+  policyId: string,
+  field: "current_policy_id" | "proposed_policy_id"
+): PolicyProfile {
+  const matches = context.policyProfiles.filter((policy) => policy.policy_id === policyId);
+  if (matches.length === 0) throw new Error(`policy change ${field} target is missing`);
+  if (matches.length > 1) throw new Error(`policy change ${field} target is ambiguous`);
+  return matches[0];
+}
+
+function findSingleGrant(context: PolicyChangeReviewContext, grantId: string): GrantDescriptor {
+  const matches = context.grants.filter((grant) => grant.grant_id === grantId);
+  if (matches.length === 0) throw new Error(`policy change proposed grant ${grantId} target is missing`);
+  if (matches.length > 1) throw new Error(`policy change proposed grant ${grantId} target is ambiguous`);
+  return matches[0];
+}
+
+function validatePolicyChangeProfileRoute(
+  proposal: PolicyChangeProposal,
+  policy: PolicyProfile,
+  field: "current_policy_id" | "proposed_policy_id"
+): void {
+  if (!policy.route_types.includes(proposal.route_type)) {
+    throw new Error(`policy change ${field} does not include route type ${proposal.route_type}`);
+  }
+}
+
+function validateParsedPolicyChangeProposalContext(
+  proposal: PolicyChangeProposal,
+  context: PolicyChangeReviewContext
+): void {
+  const account = findSingleAccount(context, proposal);
+  if (account.signer_route.type !== proposal.route_type) {
+    throw new Error("policy change account route_type mismatch");
+  }
+  if (account.policy_profile_id !== proposal.current_policy_id) {
+    throw new Error("policy change current_policy_id must match the account descriptor default policy");
+  }
+
+  const currentPolicy = findSinglePolicy(context, proposal.current_policy_id, "current_policy_id");
+  const proposedPolicy = findSinglePolicy(context, proposal.proposed_policy_id, "proposed_policy_id");
+  validatePolicyChangeProfileRoute(proposal, currentPolicy, "current_policy_id");
+  validatePolicyChangeProfileRoute(proposal, proposedPolicy, "proposed_policy_id");
+
+  if (proposal.proposed_grant_ids.length > 0 && !proposedPolicy.grants_allowed) {
+    throw new Error("policy change proposed_policy_id must allow grants when proposed_grant_ids is not empty");
+  }
+  for (const grantId of proposal.proposed_grant_ids) {
+    const grant = findSingleGrant(context, grantId);
+    if (grant.account_id !== proposal.account_id) {
+      throw new Error(`policy change proposed grant ${grantId} account mismatch`);
+    }
+    if (grant.route_type !== proposal.route_type) {
+      throw new Error(`policy change proposed grant ${grantId} route mismatch`);
+    }
+    if (grant.client.pubkey !== proposal.requested_by.client_pubkey) {
+      throw new Error(`policy change proposed grant ${grantId} client mismatch`);
+    }
+  }
+}
+
+export function validatePolicyChangeProposalContext(value: unknown, contextValue: unknown): PolicyChangeProposal {
   const proposal = parsePolicyChangeProposal(value);
+  const context = parsePolicyChangeReviewContext(contextValue);
+  validateParsedPolicyChangeProposalContext(proposal, context);
+  return proposal;
+}
+
+function buildPolicyChangeReview(proposal: PolicyChangeProposal): PolicyChangeReview {
   const policyLines = [
     `From: ${proposal.current_policy_id}`,
     `To: ${proposal.proposed_policy_id}`,
@@ -1009,6 +1119,10 @@ export function reviewPolicyChangeProposal(value: unknown): PolicyChangeReview {
   };
 }
 
+export function reviewPolicyChangeProposal(value: unknown, contextValue: unknown): PolicyChangeReview {
+  return buildPolicyChangeReview(validatePolicyChangeProposalContext(value, contextValue));
+}
+
 function parsePolicyChangeReview(value: unknown): PolicyChangeReview {
   assertRecord(value, "policy change review");
   assertOnlyKeys(value, ["format", "proposal_id", "approval_digest", "pages"], "policy change review");
@@ -1038,14 +1152,18 @@ function parsePolicyChangeReview(value: unknown): PolicyChangeReview {
   };
 }
 
-export function parsePolicyChangeReviewVector(value: unknown): PolicyChangeReviewVector {
+export function parsePolicyChangeReviewVector(value: unknown, contextValue?: unknown): PolicyChangeReviewVector {
   rejectSecretFields(value);
   assertRecord(value, "policy change review vector");
   assertOnlyKeys(value, ["name", "format", "proposal", "review"], "policy change review vector");
   if (value.format !== "nsealr-policy-change-review-v0") throw new Error("policy change review vector format mismatch");
   const proposal = parsePolicyChangeProposal(value.proposal);
+  if (contextValue !== undefined) {
+    const context = parsePolicyChangeReviewContext(contextValue);
+    validateParsedPolicyChangeProposalContext(proposal, context);
+  }
   const review = parsePolicyChangeReview(value.review);
-  const expectedReview = reviewPolicyChangeProposal(proposal);
+  const expectedReview = buildPolicyChangeReview(proposal);
   if (review.proposal_id !== proposal.proposal_id) throw new Error("policy change review proposal_id mismatch");
   if (review.approval_digest !== expectedReview.approval_digest) throw new Error("policy change approval_digest mismatch");
   if (JSON.stringify(review.pages) !== JSON.stringify(expectedReview.pages)) {

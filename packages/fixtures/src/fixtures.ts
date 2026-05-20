@@ -833,7 +833,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .sort();
   const accounts = accountFiles.map((file) => parseAccountDescriptor(loadJson(resolve(accountsRoot, file))));
   const policyProfiles = policyProfileFiles.map((file) => parsePolicyProfile(loadJson(resolve(policyProfilesRoot, file))));
+  const grants = grantFiles.map((file) => parseGrantDescriptor(loadJson(resolve(grantsRoot, file))));
   validateAccountPolicyReferences(accounts, policyProfiles);
+  const policyChangeContext = { accounts, policyProfiles, grants };
 
   return {
     key: loadJson(resolve(specsRoot, "vectors/keys/test-key-1.json")) as SpecsFixtureSet["key"],
@@ -879,11 +881,13 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     ),
     accounts,
     policyProfiles,
-    grants: grantFiles.map((file) => parseGrantDescriptor(loadJson(resolve(grantsRoot, file)))),
+    grants,
     policyDecisions: policyDecisionFiles.map(
       (file) => loadJson(resolve(policyDecisionsRoot, file)) as SpecsFixtureSet["policyDecisions"][number]
     ),
-    policyChanges: policyChangeFiles.map((file) => parsePolicyChangeReviewVector(loadJson(resolve(policyChangesRoot, file)))),
+    policyChanges: policyChangeFiles.map((file) =>
+      parsePolicyChangeReviewVector(loadJson(resolve(policyChangesRoot, file)), policyChangeContext)
+    ),
     routeSelections: routeSelectionFiles.map(
       (file) => loadJson(resolve(routeSelectionsRoot, file)) as SpecsFixtureSet["routeSelections"][number]
     ),

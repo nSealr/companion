@@ -355,8 +355,9 @@ match the shared `contract_id`.
   Raspberry QR vault, ESP32 firmware, and smartcard conformance tests.
 - `packages/policy` parses secretless account descriptors, policy profiles, and
   grant descriptors, selects secretless account-route metadata, renders
-  digest-bound policy-change review pages, then evaluates policy-decision
-  transcript vectors without a persistent grant store. It
+  digest-bound policy-change review pages against explicit account, policy, and
+  grant context, then evaluates policy-decision transcript vectors without a
+  persistent grant store. It
   rejects unsupported descriptor fields, embedded private-key material,
   QR-vault automation, external NIP-46 nSealr-managed automation,
   wildcard/decrypt/export grants, and grant targets outside ESP32 USB/NIP-46
@@ -374,6 +375,9 @@ match the shared `contract_id`.
   events. Persistent-device account descriptors default to manual-only policy;
   scoped-automation vectors are conformance fixtures that require a
   device-reviewed policy-change proposal before they can become active policy.
+  Policy-change review requires the proposal to match the selected account,
+  current policy, proposed policy, and proposed grants before the CLI writes
+  review output.
 - `packages/smartcard` implements the first APDU codec, provider-based PC/SC
   APDU transport boundary, and `SmartcardSigner` boundary against shared
   smartcard vectors, including APDU rejection status words. The codec rejects
@@ -500,7 +504,7 @@ pnpm nsealr request get-signing-status --request-id req-status-1 --out status-re
 pnpm nsealr request sign-event --event-template template.json --out request.qr --output-format qr
 pnpm nsealr review-request --request request.qr --request-format qr --out review.json
 pnpm nsealr review-request --request request.qr --request-format qr --detail-pages --max-compact-line-chars 48 --out review-detail-pages.json
-pnpm nsealr policy review-change --proposal policy-change-proposal.json --out policy-change-review.json
+pnpm nsealr policy review-change --proposal policy-change-proposal.json --account account.json --current-policy manual-policy.json --proposed-policy scoped-policy.json --grant proposed-grant.json --out policy-change-review.json
 pnpm nsealr local review-pairing --intent pairing-intent.json --out pairing-review.json
 pnpm nsealr local approve-pairing --intent pairing-intent.json --reviewed-pairing-digest <digest-hex> --approved-at 1900000000 --out pairing-approval.json
 pnpm nsealr local review-storage --grant-store "$PWD/local-grants.json" --grant-store-output "$PWD/local-grants-next.json" --out storage-review.json

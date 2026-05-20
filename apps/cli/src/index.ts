@@ -52,7 +52,11 @@ import {
   type Nip46Permission,
   respondToLocalNip46Request
 } from "@nsealr/nip46";
-import { decidePolicyRequest, reviewPolicyChangeProposal, selectAccountRoute } from "@nsealr/policy";
+import {
+  decidePolicyRequest,
+  reviewPolicyChangeProposal,
+  selectAccountRoute
+} from "@nsealr/policy";
 import { validateRequest, validateResponse } from "@nsealr/protocol";
 import {
   decodeAnimatedQrEnvelopeFrames,
@@ -187,6 +191,10 @@ function singleValueOption(optionName: string): (value: string, previous: string
     }
     return value;
   };
+}
+
+function appendPathOption(value: string, previous: string[]): string[] {
+  return [...previous, value];
 }
 
 function requireGrantStoreStorageApproval(options: {
@@ -745,7 +753,11 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         }
       }
       for (const policyChange of fixtures.policyChanges) {
-        const actual = reviewPolicyChangeProposal(policyChange.proposal);
+        const actual = reviewPolicyChangeProposal(policyChange.proposal, {
+          accounts: fixtures.accounts,
+          policyProfiles: fixtures.policyProfiles,
+          grants: fixtures.grants
+        });
         if (JSON.stringify(actual) !== JSON.stringify(policyChange.review)) {
           throw new Error(`invalid policy change fixture ${policyChange.name}: policy change review mismatch`);
         }
@@ -834,11 +846,27 @@ export function buildCli(options: BuildCliOptions = {}): Command {
     .command("policy")
     .argument("<action>")
     .requiredOption("--proposal <path>")
+    .requiredOption("--account <path>")
+    .requiredOption("--current-policy <path>")
+    .requiredOption("--proposed-policy <path>")
+    .option("--grant <path>", "Proposed grant descriptor JSON; repeat for multiple grants", appendPathOption, [])
     .requiredOption("--out <path>")
     .description("Review secretless policy-change proposals")
-    .action((action: string, options: { proposal: string; out: string }) => {
+    .action((action: string, options: {
+      proposal: string;
+      account: string;
+      currentPolicy: string;
+      proposedPolicy: string;
+      grant: string[];
+      out: string;
+    }) => {
       if (action !== "review-change") throw new Error(`unsupported policy action: ${action}`);
-      const review = reviewPolicyChangeProposal(readJson(options.proposal));
+      const context = {
+        accounts: [readJson(options.account)],
+        policyProfiles: [readJson(options.currentPolicy), readJson(options.proposedPolicy)],
+        grants: options.grant.map((path) => readJson(path))
+      };
+      const review = reviewPolicyChangeProposal(readJson(options.proposal), context);
       writeNewJson(options.out, review);
     });
 

@@ -152,7 +152,11 @@ async function fixturesPolicyReviewAndFramingExample(): Promise<void> {
   if (!policyChange) throw new Error("SDK example could not find a matching policy-change vector");
   assert.equal(policyChange.proposal.current_policy_id, account.policy_profile_id);
   assert.equal(policyChange.proposal.proposed_policy_id, policyVector.policy_profile_id);
-  assert.deepEqual(reviewPolicyChangeProposal(policyChange.proposal), policyChange.review);
+  assert.deepEqual(reviewPolicyChangeProposal(policyChange.proposal, {
+    accounts: fixtures.accounts,
+    policyProfiles: fixtures.policyProfiles,
+    grants: fixtures.grants
+  }), policyChange.review);
 
   const routeVector = fixtures.routeSelections.find((candidate) => candidate.request.account_id === account.account_id);
   if (!routeVector) throw new Error("SDK example could not find a matching route-selection vector");

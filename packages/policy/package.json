@@ -1,7 +1,7 @@
 {
   "name": "@nsealr/policy",
   "version": "0.1.0",
-  "description": "Secretless account, route, grant, and policy-decision helpers for nSealr companion.",
+  "description": "Secretless account, route, grant, policy-change, and policy-decision helpers for nSealr companion.",
   "keywords": [
     "nostr",
     "nsealr",

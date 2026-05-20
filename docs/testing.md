@@ -472,8 +472,9 @@ single-repository CI. Cross-repository drift remains guarded by
   and device-confirmation semantics. Policy-profile parser tests also reject
   unsupported policy vocabulary so new manual-review, forbidden-permission, or
   risk-tier strings cannot appear without a specs update.
-- CLI policy-change review tests covering
-  `nsealr policy review-change --proposal ... --out ...` against shared
+- CLI policy-change review tests covering contextual
+  `nsealr policy review-change --proposal ... --account ... --current-policy
+  ... --proposed-policy ... [--grant ...] --out ...` execution against shared
   policy-change vectors, including deterministic output and no output after a
   rejected companion-authoritative proposal.
 - CLI fixture verification rejects review detail-page style drift, including
@@ -662,7 +663,8 @@ single-repository CI. Cross-repository drift remains guarded by
   source fingerprints, manual-only QR vault policy, manual-only display-less
   smartcard policy, manual-only persistent-device defaults, scoped grants for
   ESP32 USB/NIP-46 and custom hardware-wallet routes, policy-change review
-  pages and approval digests, wildcard/decrypt/export rejection, rejection of
+  pages and approval digests, policy-change account/policy/grant context
+  mismatches, wildcard/decrypt/export rejection, rejection of
   grant targets outside ESP32 USB/NIP-46 and custom hardware-wallet persistent
   policy routes, closed-schema rejection for descriptor, route, capability,
   policy-profile, grant, client, permission, and rate-limit records, external

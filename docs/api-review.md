@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:637894acfc7d6ae386888d97c43d07f1200cc7a6b8ad01baf60b6287a2216209`
+API surface digest: `sha256:0b8a3c33edddc9a92b231690bf8c4cc09286ea3c865fc3e2a229063350b37dba`
 
 Source: `docs/api.md`
 
@@ -177,10 +177,11 @@ and supported methods, `nsealr-route-selection-v0` response parsing, runtime
 parsing for policy-decision requests, plus deterministic expiry, revocation,
 and rate-limit decisions from explicit grant-usage snapshots. It also exposes
 secretless policy-change proposal
-parsing and deterministic review-page/approval-digest generation for device
-approved `set_policy` changes. Persistent grant storage, usage history
-storage, authoritative device policy mutation, signer dispatch, and account
-custody remain outside this package.
+parsing, explicit account/policy/grant context validation, and deterministic
+review-page/approval-digest generation for device approved `set_policy`
+changes. Persistent grant storage, usage history storage, authoritative device
+policy mutation, signer dispatch, and account custody remain outside this
+package.
 
 ## @nsealr/protocol
 

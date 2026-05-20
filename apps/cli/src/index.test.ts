@@ -259,7 +259,22 @@ describe("nsealr CLI", () => {
 
     writeFileSync(proposalPath, `${JSON.stringify(vector.proposal, null, 2)}\n`, "utf8");
 
-    await runCli(["policy", "review-change", "--proposal", proposalPath, "--out", reviewPath]);
+    await runCli([
+      "policy",
+      "review-change",
+      "--proposal",
+      proposalPath,
+      "--account",
+      resolve(specsRoot, "vectors/accounts/custom-hardware-wallet-slot-0.json"),
+      "--current-policy",
+      resolve(specsRoot, "vectors/policies/manual-only-persistent-device.json"),
+      "--proposed-policy",
+      resolve(specsRoot, "vectors/policies/scoped-automation-daily-use.json"),
+      "--grant",
+      resolve(specsRoot, "vectors/grants/custom-hardware-wallet-kind-1-session.json"),
+      "--out",
+      reviewPath
+    ]);
 
     expect(loadJson(reviewPath)).toEqual(vector.review);
   });
@@ -278,9 +293,22 @@ describe("nsealr CLI", () => {
       "utf8"
     );
 
-    await expect(runCli(["policy", "review-change", "--proposal", proposalPath, "--out", reviewPath])).rejects.toThrow(
-      /companion_authoritative must be false/u
-    );
+    await expect(runCli([
+      "policy",
+      "review-change",
+      "--proposal",
+      proposalPath,
+      "--account",
+      resolve(specsRoot, "vectors/accounts/esp32-usb-device-slot-0.json"),
+      "--current-policy",
+      resolve(specsRoot, "vectors/policies/manual-only-persistent-device.json"),
+      "--proposed-policy",
+      resolve(specsRoot, "vectors/policies/scoped-automation-daily-use.json"),
+      "--grant",
+      resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json"),
+      "--out",
+      reviewPath
+    ])).rejects.toThrow(/companion_authoritative must be false/u);
     expect(existsSync(reviewPath)).toBe(false);
   });
 

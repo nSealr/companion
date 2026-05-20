@@ -247,9 +247,12 @@ approval digest. This does not approve or persist device policy, create grants,
 enable relay sessions, or make the companion authoritative.
 
 Status note, 2026-05-19: the CLI now exposes that package-owned review path as
-`nsealr policy review-change --proposal <json> --out <json>`. The command is a
-file adapter only: it validates and renders review material, writes no output
-after rejection, and does not persist policy or grants.
+`nsealr policy review-change --proposal <json> --account <json>
+--current-policy <json> --proposed-policy <json> [--grant <json> ...]
+--out <json>`. The command is a file adapter only: it validates that the
+proposal matches the selected account, current policy, proposed policy, and
+proposed grants before rendering review material, writes no output after
+rejection, and does not persist policy or grants.
 
 Status note, 2026-05-13: companion policy code now consumes shared
 route-selection vectors. The pure selector maps parsed account descriptors and

@@ -32,6 +32,24 @@ function loadJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
+function loadPolicyChangeContext(): {
+  accounts: unknown[];
+  policyProfiles: unknown[];
+  grants: unknown[];
+} {
+  return {
+    accounts: readdirSync(resolve(specsRoot, "vectors/accounts"))
+      .filter((name) => name.endsWith(".json"))
+      .map((name) => loadJson(resolve(specsRoot, "vectors/accounts", name))),
+    policyProfiles: readdirSync(resolve(specsRoot, "vectors/policies"))
+      .filter((name) => name.endsWith(".json"))
+      .map((name) => loadJson(resolve(specsRoot, "vectors/policies", name))),
+    grants: readdirSync(resolve(specsRoot, "vectors/grants"))
+      .filter((name) => name.endsWith(".json"))
+      .map((name) => loadJson(resolve(specsRoot, "vectors/grants", name)))
+  };
+}
+
 describe("identity, recovery, and policy contracts", () => {
   it("parses shared account, policy, and grant descriptors", () => {
     const account = parseAccountDescriptor(
@@ -396,6 +414,7 @@ describe("identity, recovery, and policy contracts", () => {
   });
 
   it("matches shared policy change review vectors", () => {
+    const context = loadPolicyChangeContext();
     const vectorNames = readdirSync(resolve(specsRoot, "vectors/policy-changes"))
       .filter((name) => name.endsWith(".json"))
       .map((name) => name.replace(/\.json$/u, ""))
@@ -403,10 +422,50 @@ describe("identity, recovery, and policy contracts", () => {
 
     expect(vectorNames.length).toBeGreaterThan(0);
     for (const name of vectorNames) {
-      const vector = parsePolicyChangeReviewVector(loadJson(resolve(specsRoot, `vectors/policy-changes/${name}.json`)));
+      const vector = parsePolicyChangeReviewVector(loadJson(resolve(specsRoot, `vectors/policy-changes/${name}.json`)), context);
 
-      expect(reviewPolicyChangeProposal(vector.proposal)).toEqual(vector.review);
+      expect(reviewPolicyChangeProposal(vector.proposal, context)).toEqual(vector.review);
     }
+  });
+
+  it("rejects policy change proposals that do not match account, policy, and grant context", () => {
+    const context = loadPolicyChangeContext();
+    const vector = loadJson(resolve(specsRoot, "vectors/policy-changes/esp32-usb-enable-kind-1-automation.json")) as {
+      proposal: Record<string, unknown>;
+    };
+
+    expect(() => reviewPolicyChangeProposal({
+      ...vector.proposal,
+      account_id: "acct-missing"
+    }, context)).toThrow(/account_id target is missing/u);
+
+    expect(() => reviewPolicyChangeProposal({
+      ...vector.proposal,
+      route_type: "custom_hardware_wallet"
+    }, context)).toThrow(/account route_type mismatch/u);
+
+    expect(() => reviewPolicyChangeProposal({
+      ...vector.proposal,
+      current_policy_id: "policy-scoped-automation-daily-use"
+    }, context)).toThrow(/current_policy_id must match/u);
+
+    expect(() => reviewPolicyChangeProposal({
+      ...vector.proposal,
+      proposed_policy_id: "policy-manual-only-qr-vault"
+    }, context)).toThrow(/proposed_policy_id does not include route type/u);
+
+    expect(() => reviewPolicyChangeProposal({
+      ...vector.proposal,
+      proposed_grant_ids: ["grant-custom-hardware-wallet-kind-1-session"]
+    }, context)).toThrow(/account mismatch/u);
+
+    expect(() => reviewPolicyChangeProposal({
+      ...vector.proposal,
+      requested_by: {
+        ...(vector.proposal.requested_by as Record<string, unknown>),
+        client_pubkey: "5".repeat(64)
+      }
+    }, context)).toThrow(/client mismatch/u);
   });
 
   it("rejects policy change proposals that make the companion authoritative", () => {
@@ -441,6 +500,14 @@ describe("identity, recovery, and policy contracts", () => {
         label: 123
       }
     })).toThrow(/requested_by.label must be a non-empty string/u);
+
+    expect(() => parsePolicyChangeProposal({
+      ...vector.proposal,
+      proposed_grant_ids: [
+        "grant-esp32-usb-kind-1-session",
+        "grant-esp32-usb-kind-1-session"
+      ]
+    })).toThrow(/proposed_grant_ids must be unique/u);
   });
 
   it("matches shared route-selection vectors without signer dispatch", () => {

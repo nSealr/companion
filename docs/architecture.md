@@ -863,8 +863,11 @@ pages and an approval digest. The companion can carry the proposal, but it does
 not make the policy authoritative, write a grant store, or bypass local device
 approval.
 The CLI exposes only a thin `nsealr policy review-change` file adapter over the
-same package function. Rejection happens before output is written, and the
-command still does not install policy or create grants.
+same package function. That adapter now requires the account descriptor,
+current policy profile, proposed policy profile, and proposed grant descriptors
+that define the proposal context. Rejection happens before output is written
+when the proposal does not match that context, and the command still does not
+install policy or create grants.
 
 Route-selection vectors are also consumed through `packages/policy`. The
 selector is pure and secretless: it accepts parsed account descriptors plus a

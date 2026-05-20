@@ -579,9 +579,9 @@ single-repository CI. Cross-repository drift remains guarded by
   presence, unsupported parameter rejection, and proof that descriptor output
   does not echo shared secret values. Shared invalid hardening vectors cover
   malformed connection URI schemes, invalid or duplicate relays, relay
-  credentials or fragments, duplicate secrets or permission strings, empty
-  secrets, unsafe client metadata URLs, forbidden bunker client metadata, and
-  missing `nostrconnect` secrets.
+  credentials or fragments, unsafe `sign_event` permission kinds, duplicate
+  secrets or permission strings, empty secrets, unsafe client metadata URLs,
+  forbidden bunker client metadata, and missing `nostrconnect` secrets.
 - NIP-46 relay event envelope tests covering shared `kind:24133` request and
   response vectors. The parser checks sender pubkey, exactly one recipient `p`
   tag, opaque encrypted content, and optional signed-event field shapes without

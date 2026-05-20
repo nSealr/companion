@@ -544,6 +544,19 @@ function assertValidNSealrRequest(request: NSealrBridgeRequest): void {
   if (!result.ok) throw new Error(result.error ?? "invalid nSealr request");
 }
 
+function parseSignEventPermissionKind(parameter: string): number {
+  if (!/^[0-9]+$/u.test(parameter)) throw new Error("NIP-46 sign_event permission kind must be numeric");
+  const eventKind = Number(parameter);
+  if (
+    !Number.isSafeInteger(eventKind) ||
+    eventKind < 0 ||
+    eventKind > NSEALR_V0_LIMITS.max_safe_integer
+  ) {
+    throw new Error("NIP-46 sign_event permission kind must be a safe non-negative integer");
+  }
+  return eventKind;
+}
+
 export function parseNip46Permissions(value: string): Nip46Permission[] {
   if (value.trim() === "") return [];
   return value.split(",").map((item) => {
@@ -554,11 +567,11 @@ export function parseNip46Permissions(value: string): Nip46Permission[] {
     if (method === "connect") throw new Error("NIP-46 permissions must not request connect");
     if (!NIP46_PERMISSION_METHODS.has(method)) throw new Error(`unsupported permission method: ${method}`);
     if (method === "sign_event" && parameter !== undefined) {
-      if (!/^[0-9]+$/u.test(parameter)) throw new Error("NIP-46 sign_event permission kind must be numeric");
+      const event_kind = parseSignEventPermissionKind(parameter);
       return {
         method,
         parameter,
-        event_kind: Number(parameter)
+        event_kind
       };
     }
     if (parameter !== undefined) {
@@ -593,22 +606,28 @@ function parseNip46PermissionObject(permission: unknown, context: string, approv
       }
       throw new Error(`${context}: approved sign_event permission must include parameter and event_kind`);
     }
+    const parameter = permission.parameter;
+    const eventKind = permission.event_kind;
+    const parsedParameterKind = typeof parameter === "string" ? Number(parameter) : Number.NaN;
     if (
-      typeof permission.parameter !== "string" ||
-      !/^[0-9]+$/u.test(permission.parameter) ||
-      typeof permission.event_kind !== "number" ||
-      !Number.isInteger(permission.event_kind) ||
-      permission.event_kind !== Number(permission.parameter)
+      typeof parameter !== "string" ||
+      !/^[0-9]+$/u.test(parameter) ||
+      typeof eventKind !== "number" ||
+      !Number.isSafeInteger(eventKind) ||
+      eventKind < 0 ||
+      eventKind > NSEALR_V0_LIMITS.max_safe_integer ||
+      eventKind !== parsedParameterKind ||
+      !Number.isSafeInteger(parsedParameterKind)
     ) {
-      throw new Error(`${context}: sign_event permission parameter must match event_kind`);
+      throw new Error(`${context}: sign_event permission parameter must match event_kind and be safe`);
     }
     if (Object.keys(permission).some((key) => !["method", "parameter", "event_kind"].includes(key))) {
       throw new Error(`${context}: sign_event permission contains unknown fields`);
     }
     return {
       method: "sign_event",
-      parameter: permission.parameter,
-      event_kind: permission.event_kind
+      parameter,
+      event_kind: eventKind
     };
   }
   if ("parameter" in permission || "event_kind" in permission || Object.keys(permission).length !== 1) {

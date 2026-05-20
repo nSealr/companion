@@ -335,9 +335,11 @@ match the shared `contract_id`.
   digest-bound policy-change review pages, then evaluates policy-decision
   transcript vectors without a persistent grant store. It
   rejects unsupported descriptor fields, embedded private-key material,
-  QR-vault automation, wildcard/decrypt/export grants, and stateless QR-vault
-  grant targets before CLI or fixture-verification code can treat those records
-  as valid. NIP-06 account descriptors must carry a reviewed source fingerprint
+  QR-vault automation, external NIP-46 nSealr-managed automation,
+  wildcard/decrypt/export grants, and grant targets outside ESP32 USB/NIP-46
+  and custom hardware-wallet persistent policy routes before CLI or
+  fixture-verification code can treat those records as valid. NIP-06 account
+  descriptors must carry a reviewed source fingerprint
   matching the QR vault import-review contract.
   These records describe resulting signing public keys and routes. Mnemonics,
   BIP-39 passphrase namespaces, standalone `nsec` keys, device slots, card

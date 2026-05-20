@@ -656,10 +656,13 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         if (policy.route_types.some((route) => route.endsWith("_qr_vault")) && policy.grants_allowed) {
           throw new Error(`invalid policy profile ${policy.policy_id}: QR vault policies must not allow grants`);
         }
+        if (policy.route_types.includes("external_nip46") && policy.grants_allowed) {
+          throw new Error(`invalid policy profile ${policy.policy_id}: external NIP-46 policies must not allow nSealr grants`);
+        }
       }
       for (const grant of fixtures.grants) {
-        if (grant.route_type.endsWith("_qr_vault")) {
-          throw new Error(`invalid grant descriptor ${grant.grant_id}: QR vaults must not receive grants`);
+        if (!["esp32_usb_nip46", "custom_hardware_wallet"].includes(grant.route_type)) {
+          throw new Error(`invalid grant descriptor ${grant.grant_id}: grants require nSealr persistent policy routes`);
         }
       }
       for (const policyDecision of fixtures.policyDecisions) {

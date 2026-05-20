@@ -118,7 +118,8 @@ packages, but it must not export test-only signing as a production path.
   code does not grow a parallel policy parser. The package does not persist
   usage history, grants, or authoritative device policy. External NIP-46
   account descriptors remain external-policy metadata and cannot claim nSealr
-  physical review, physical approval, or persistent grants.
+  physical review, physical approval, persistent grants, or nSealr-managed
+  scoped automation.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: private test-only signing implementation,
@@ -797,8 +798,9 @@ levels, so unsigned metadata cannot silently alter route or policy meaning.
 Stateless QR vault routes remain manual-only and cannot receive persistent
 grants. Display-less smartcard routes also remain manual-only; they require
 explicit external review acknowledgement and cannot claim trusted device review
-or persistent grant automation. The local service accepts that acknowledgement
-only as
+or persistent grant automation. External NIP-46 routes remain external-policy
+metadata and cannot receive nSealr-managed scoped automation grants. The local
+service accepts that acknowledgement only as
 `nsealr-external-review-acknowledgement-v0`, only for display-less
 `sign_event`, and only when its `approval_digest` equals the digest recomputed
 from the request; acknowledged metadata is rejected on routes with trusted

@@ -8,7 +8,9 @@ descriptors.
 - Parse account, route, policy-profile, and grant descriptors.
 - Reject embedded production private-key material.
 - Reject QR-vault automation, wildcard/decrypt/export grants, and invalid
-  grant targets.
+  grant targets. nSealr-managed grants are accepted only for ESP32 USB/NIP-46
+  and custom hardware-wallet persistent policy routes; external NIP-46 routes
+  remain external-policy metadata.
 - Parse policy-change proposals and render deterministic review pages plus an
   approval digest for device-approved `set_policy` changes.
 - Parse route-selection requests, select secretless account-route metadata for

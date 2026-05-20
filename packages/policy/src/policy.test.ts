@@ -228,6 +228,24 @@ describe("identity, recovery, and policy contracts", () => {
     expect(() => parseAccountDescriptor(account)).toThrow(/smartcard routes must remain display_less/u);
   });
 
+  it("rejects external NIP-46 policy automation", () => {
+    const policy = loadJson(resolve(specsRoot, "vectors/policies/external-signer-manual-route.json")) as Record<
+      string,
+      unknown
+    >;
+    policy.mode = "scoped_automation";
+    policy.grants_allowed = true;
+    policy.grant_constraints = {
+      expiry_required: true,
+      rate_limit_required: true,
+      revocation_required: true,
+      audit_log_required: true,
+      device_confirmation_required: true
+    };
+
+    expect(() => parsePolicyProfile(policy)).toThrow(/external NIP-46 routes must remain external-policy manual/u);
+  });
+
   it("rejects external NIP-46 descriptors that claim nSealr persistent grants", () => {
     const account = loadJson(resolve(specsRoot, "vectors/accounts/external-nip46-bunker.json")) as {
       capabilities: Record<string, unknown>;
@@ -237,7 +255,7 @@ describe("identity, recovery, and policy contracts", () => {
     expect(() => parseAccountDescriptor(account)).toThrow(/external NIP-46 routes must not claim nSealr persistent grants/u);
   });
 
-  it("rejects wildcard grants and stateless QR vault grant targets", () => {
+  it("rejects wildcard grants and non-persistent policy-route grant targets", () => {
     const grant = loadJson(resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json")) as {
       route_type: string;
       permission: Record<string, unknown>;
@@ -245,8 +263,18 @@ describe("identity, recovery, and policy contracts", () => {
     grant.route_type = "esp32_qr_vault";
     grant.permission.method = "*";
 
-    expect(() => parseGrantDescriptor(grant)).toThrow(/stateless QR vault/u);
+    expect(() => parseGrantDescriptor(grant)).toThrow(/nSealr persistent policy route/u);
     expect(() => parseGrantDescriptor({ ...grant, route_type: "esp32_usb_nip46" })).toThrow(/wildcard/u);
+    expect(() => parseGrantDescriptor({
+      ...grant,
+      route_type: "smartcard",
+      permission: { method: "sign_event", parameter: "1", event_kind: 1 }
+    })).toThrow(/nSealr persistent policy route/u);
+    expect(() => parseGrantDescriptor({
+      ...grant,
+      route_type: "external_nip46",
+      permission: { method: "sign_event", parameter: "1", event_kind: 1 }
+    })).toThrow(/nSealr persistent policy route/u);
   });
 
   it("rejects decrypt grants because decrypt operations require manual review", () => {

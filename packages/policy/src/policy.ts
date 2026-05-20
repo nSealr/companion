@@ -224,6 +224,7 @@ const POLICY_DECISION_ROUTE_TYPES = new Set<RouteType>([
   "external_nip46"
 ]);
 const POLICY_CHANGE_ROUTE_TYPES = new Set<RouteType>(["esp32_usb_nip46", "custom_hardware_wallet"]);
+const GRANT_ROUTE_TYPES = new Set<RouteType>(["esp32_usb_nip46", "custom_hardware_wallet"]);
 const POLICY_CHANGE_SURFACES = new Set(["browser_extension", "desktop_app", "cli", "sdk", "native_host_test"]);
 const SECRET_FIELD_NAMES = new Set([
   "secret_key",
@@ -577,6 +578,9 @@ export function parsePolicyProfile(value: unknown): PolicyProfile {
   if (routeTypes.includes("smartcard") && (mode !== "manual_only" || grantsAllowed !== false)) {
     throw new Error("display-less smartcard routes must remain manual_only with grants_allowed false");
   }
+  if (routeTypes.includes("external_nip46") && (mode !== "manual_only" || grantsAllowed !== false)) {
+    throw new Error("external NIP-46 routes must remain external-policy manual without nSealr grants");
+  }
   if (mode === "manual_only" && grantsAllowed) throw new Error("manual_only profiles must not allow grants");
   if (grantsAllowed) {
     assertRecord(value.grant_constraints, "grant_constraints");
@@ -687,7 +691,7 @@ export function parseGrantDescriptor(value: unknown): GrantDescriptor {
   ], "grant descriptor");
   if (value.format !== "nsealr-grant-descriptor-v0") throw new Error("grant descriptor format mismatch");
   const routeType = requireRouteType(value.route_type);
-  if (QR_ROUTE_TYPES.has(routeType)) throw new Error("grant route_type must not be a stateless QR vault");
+  if (!GRANT_ROUTE_TYPES.has(routeType)) throw new Error("grant route_type must be a nSealr persistent policy route");
   assertRecord(value.client, "client");
   assertOnlyKeys(value.client, ["pubkey", "label"], "client");
   assertRecord(value.rate_limit, "rate_limit");

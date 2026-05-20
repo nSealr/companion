@@ -573,10 +573,11 @@ single-repository CI. Cross-repository drift remains guarded by
   smartcard policy, manual-only persistent-device defaults, scoped grants for
   ESP32 USB/NIP-46 and custom hardware-wallet routes, policy-change review
   pages and approval digests, wildcard/decrypt/export rejection, rejection of
-  stateless QR-vault grant targets, closed-schema rejection for descriptor,
-  route, capability, policy-profile, grant, client, permission, and rate-limit
-  records, external NIP-46 metadata that cannot claim nSealr persistent
-  grants, shared route-selection response parsing, and deterministic
+  grant targets outside ESP32 USB/NIP-46 and custom hardware-wallet persistent
+  policy routes, closed-schema rejection for descriptor, route, capability,
+  policy-profile, grant, client, permission, and rate-limit records, external
+  NIP-46 metadata that cannot claim nSealr persistent grants or scoped
+  automation, shared route-selection response parsing, and deterministic
   policy-decision transcripts for allowed, expired, revoked, decrypt,
   export-secret, and unknown-method requests.
 - Pre-signing hardening tests must reject every shared invalid vector that

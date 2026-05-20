@@ -80,6 +80,10 @@ type BuildCliOptions = {
   openSerialLinePort?: SerialLinePortOpener;
 };
 
+type ErrorOutput = {
+  write(message: string): unknown;
+};
+
 const DEFAULT_REVIEW_DETAIL_PAGE_LIMITS: ReviewDetailPageLimits = {
   max_title_chars: 18,
   max_body_lines: 5,
@@ -1333,6 +1337,20 @@ export function buildCli(options: BuildCliOptions = {}): Command {
   return program;
 }
 
+export async function runCliMain(
+  argv: string[] = process.argv,
+  options: BuildCliOptions & { errorOutput?: ErrorOutput } = {}
+): Promise<number> {
+  try {
+    await buildCli(options).parseAsync(argv, { from: "node" });
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    (options.errorOutput ?? process.stderr).write(`${message}\n`);
+    return 1;
+  }
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
-  await buildCli().parseAsync(process.argv);
+  process.exitCode = await runCliMain(process.argv);
 }

@@ -22,7 +22,7 @@ import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
 import { validateRequest, validateResponse } from "@nsealr/protocol";
 import { decodeAnimatedQrEnvelopeFrames, decodeQrEnvelope, encodeQrEnvelope } from "@nsealr/qr";
 import { renderReviewDetailPages, reviewEventTemplate } from "@nsealr/review";
-import { buildCli } from "./index.js";
+import { buildCli, runCliMain } from "./index.js";
 
 const specsRoot = resolveSpecsRoot();
 
@@ -1143,6 +1143,40 @@ describe("nsealr CLI", () => {
       ).rejects.toThrow(new RegExp(`${optionName} is duplicated`, "u"));
       expect(existsSync(duplicateReviewPath)).toBe(false);
     }
+  });
+
+  it("prints executable validation errors without stack traces or review output", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-main-storage-review-invalid-"));
+    const reviewPath = join(tempRoot, "storage-review.json");
+    const errors: string[] = [];
+
+    const exitCode = await runCliMain(
+      [
+        "node",
+        "nsealr",
+        "local",
+        "review-storage",
+        "--grant-store",
+        join(tempRoot, "one.json"),
+        "--grant-store",
+        join(tempRoot, "two.json"),
+        "--out",
+        reviewPath
+      ],
+      {
+        errorOutput: {
+          write: (message) => {
+            errors.push(message);
+          }
+        }
+      }
+    );
+
+    expect(exitCode).toBe(1);
+    expect(errors.join("")).toContain("--grant-store is duplicated");
+    expect(errors.join("")).not.toContain("at Option.parseArg");
+    expect(errors.join("")).not.toContain("apps/cli/src/index.ts");
+    expect(existsSync(reviewPath)).toBe(false);
   });
 
   it("creates local-service storage approval artifacts only after explicit digest confirmation", async () => {

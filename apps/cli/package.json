@@ -8,7 +8,7 @@
     "nsealr": "./src/index.ts"
   },
   "scripts": {
-    "nsealr": "tsx src/index.ts"
+    "nsealr": "node --disable-warning=DEP0205 --import tsx src/index.ts"
   },
   "dependencies": {
     "@nsealr/client": "workspace:*",

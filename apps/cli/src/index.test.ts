@@ -396,30 +396,22 @@ describe("nsealr CLI", () => {
     const gateMessagePath = join(tempRoot, "session-gate-message.json");
     const gatePath = join(tempRoot, "session-gate.json");
     const invalidSessionPath = join(tempRoot, "invalid-session-checkpoint.json");
-    const invalidGateVector = loadJson(resolve(specsRoot, "vectors/invalid/nip46-session-gate-sender-mismatch.json")) as {
+    const invalidGateVectors = fixtures.invalidVectors.filter((vector) => vector.category === "nip46-session-gate") as Array<{
+      name: string;
+      expected_error: string;
       session_gate: {
         session: unknown;
         event: unknown;
         decrypted_message: unknown;
         evaluated_at: number;
+        direction?: string;
       };
-    };
-    const invalidGateSessionPath = join(tempRoot, "invalid-session-gate-checkpoint.json");
-    const invalidGateEventPath = join(tempRoot, "invalid-session-gate-event.json");
-    const invalidGateMessagePath = join(tempRoot, "invalid-session-gate-message.json");
-    const invalidGatePath = join(tempRoot, "invalid-session-gate.json");
+    }>;
 
     writeFileSync(signEventMessagePath, `${JSON.stringify(signEventVector.request_message, null, 2)}\n`, "utf8");
     writeFileSync(connectMessagePath, `${JSON.stringify(connectVector.request_message, null, 2)}\n`, "utf8");
     writeFileSync(gateEventPath, `${JSON.stringify(gateVector.event, null, 2)}\n`, "utf8");
     writeFileSync(gateMessagePath, `${JSON.stringify(gateVector.decrypted_message, null, 2)}\n`, "utf8");
-    writeFileSync(invalidGateSessionPath, `${JSON.stringify(invalidGateVector.session_gate.session, null, 2)}\n`, "utf8");
-    writeFileSync(invalidGateEventPath, `${JSON.stringify(invalidGateVector.session_gate.event, null, 2)}\n`, "utf8");
-    writeFileSync(
-      invalidGateMessagePath,
-      `${JSON.stringify(invalidGateVector.session_gate.decrypted_message, null, 2)}\n`,
-      "utf8"
-    );
 
     await runCli([
       "nip46",
@@ -500,8 +492,28 @@ describe("nsealr CLI", () => {
     ]);
     expect(loadJson(gatePath)).toEqual(gateVector.expected_gate);
     expect(JSON.stringify(loadJson(gatePath))).not.toContain("secret-1");
-    await expect(
-      runCli([
+    expect(invalidGateVectors.length).toBeGreaterThan(1);
+    for (const invalidGateVector of invalidGateVectors) {
+      const invalidGateSessionPath = join(tempRoot, `${invalidGateVector.name}-session.json`);
+      const invalidGateEventPath = join(tempRoot, `${invalidGateVector.name}-event.json`);
+      const invalidGateMessagePath = join(tempRoot, `${invalidGateVector.name}-message.json`);
+      const invalidGatePath = join(tempRoot, `${invalidGateVector.name}-gate.json`);
+      writeFileSync(
+        invalidGateSessionPath,
+        `${JSON.stringify(invalidGateVector.session_gate.session, null, 2)}\n`,
+        "utf8"
+      );
+      writeFileSync(
+        invalidGateEventPath,
+        `${JSON.stringify(invalidGateVector.session_gate.event, null, 2)}\n`,
+        "utf8"
+      );
+      writeFileSync(
+        invalidGateMessagePath,
+        `${JSON.stringify(invalidGateVector.session_gate.decrypted_message, null, 2)}\n`,
+        "utf8"
+      );
+      const args = [
         "nip46",
         "gate-session-request",
         "--session",
@@ -511,12 +523,18 @@ describe("nsealr CLI", () => {
         "--message",
         invalidGateMessagePath,
         "--evaluated-at",
-        String(invalidGateVector.session_gate.evaluated_at),
+        String(invalidGateVector.session_gate.evaluated_at)
+      ];
+      if (invalidGateVector.session_gate.direction !== undefined) {
+        args.push("--direction", invalidGateVector.session_gate.direction);
+      }
+      args.push(
         "--out",
         invalidGatePath
-      ])
-    ).rejects.toThrow(/sender does not match session client_pubkey/u);
-    expect(existsSync(invalidGatePath)).toBe(false);
+      );
+      await expect(runCli(args)).rejects.toThrow(invalidGateVector.expected_error);
+      expect(existsSync(invalidGatePath)).toBe(false);
+    }
     await expect(
       runCli([
         "nip46",

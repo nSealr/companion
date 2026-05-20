@@ -116,7 +116,9 @@ packages, but it must not export test-only signing as a production path.
   shared `nsealr-route-selection-v0` response parsing, and digest-bound
   `set_policy` review pages for persistent device routes, so CLI/browser/SDK
   code does not grow a parallel policy parser. The package does not persist
-  usage history, grants, or authoritative device policy.
+  usage history, grants, or authoritative device policy. External NIP-46
+  account descriptors remain external-policy metadata and cannot claim nSealr
+  physical review, physical approval, or persistent grants.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: private test-only signing implementation,

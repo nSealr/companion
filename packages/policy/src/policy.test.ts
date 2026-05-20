@@ -228,6 +228,15 @@ describe("identity, recovery, and policy contracts", () => {
     expect(() => parseAccountDescriptor(account)).toThrow(/smartcard routes must remain display_less/u);
   });
 
+  it("rejects external NIP-46 descriptors that claim nSealr persistent grants", () => {
+    const account = loadJson(resolve(specsRoot, "vectors/accounts/external-nip46-bunker.json")) as {
+      capabilities: Record<string, unknown>;
+    };
+    account.capabilities.persistent_grants = true;
+
+    expect(() => parseAccountDescriptor(account)).toThrow(/external NIP-46 routes must not claim nSealr persistent grants/u);
+  });
+
   it("rejects wildcard grants and stateless QR vault grant targets", () => {
     const grant = loadJson(resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json")) as {
       route_type: string;

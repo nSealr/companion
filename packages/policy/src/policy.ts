@@ -499,6 +499,9 @@ function validateRouteSemantics(
     if (capabilities.physical_review || capabilities.physical_approval) {
       throw new Error("external NIP-46 routes must not claim nSealr physical review or approval");
     }
+    if (capabilities.persistent_grants) {
+      throw new Error("external NIP-46 routes must not claim nSealr persistent grants");
+    }
   }
 }
 

@@ -575,7 +575,8 @@ single-repository CI. Cross-repository drift remains guarded by
   pages and approval digests, wildcard/decrypt/export rejection, rejection of
   stateless QR-vault grant targets, closed-schema rejection for descriptor,
   route, capability, policy-profile, grant, client, permission, and rate-limit
-  records, shared route-selection response parsing, and deterministic
+  records, external NIP-46 metadata that cannot claim nSealr persistent
+  grants, shared route-selection response parsing, and deterministic
   policy-decision transcripts for allowed, expired, revoked, decrypt,
   export-secret, and unknown-method requests.
 - Pre-signing hardening tests must reject every shared invalid vector that

@@ -128,6 +128,32 @@ export type Nip46ConnectApproval = {
   exposes_secret: false;
 };
 
+export type Nip46SessionLifecycle = {
+  name: string;
+  format: "nsealr-nip46-session-lifecycle-v0";
+  phase: "approved_pending_ack";
+  client_pubkey: string;
+  remote_signer_pubkey: string;
+  relays: string[];
+  connect_review_vector: string;
+  connect_digest: string;
+  approved_at: number;
+  expires_at: number;
+  requested_permissions: Nip46Permission[];
+  approved_permissions: Nip46Permission[];
+  secret_present: boolean;
+  secret_value_stored: false;
+  contains_secret_material: false;
+  derives_nip44_key: false;
+  acknowledges_connect: false;
+  opens_relay: false;
+  creates_grants: false;
+  dispatches_signer: false;
+  stores_production_secrets: false;
+  persists_session_state: false;
+  scope: string;
+};
+
 export type Nip46ConnectApprovalOptions = {
   reviewedConnectDigest: string;
   approvedAt: number;
@@ -167,6 +193,30 @@ const NIP46_PERMISSION_METHODS = new Set([
 
 const NIP46_CONNECTION_URI_PARAMS = new Set(["relay", "secret", "perms", "name", "url", "image"]);
 const NIP46_RELAY_DIRECTIONS = new Set(["client_to_remote_signer", "remote_signer_to_client"]);
+const NIP46_SESSION_PHASES = new Set(["approved_pending_ack"]);
+const NIP46_SESSION_FALSE_FIELDS = [
+  "secret_value_stored",
+  "contains_secret_material",
+  "derives_nip44_key",
+  "acknowledges_connect",
+  "opens_relay",
+  "creates_grants",
+  "dispatches_signer",
+  "stores_production_secrets",
+  "persists_session_state"
+] as const;
+const NIP46_SESSION_SECRET_FIELDS = new Set([
+  "secret",
+  "shared_secret",
+  "session_secret",
+  "nip44_key",
+  "secret_key",
+  "private_key",
+  "nsec",
+  "mnemonic",
+  "seed",
+  "passphrase"
+]);
 const X_ONLY_PUBKEY = /^[0-9a-f]{64}$/u;
 const HEX_64_BYTE = /^[0-9a-f]{128}$/u;
 const CONNECT_REVIEW_DIGEST_FORMAT = "nsealr-nip46-connect-digest-v0";
@@ -825,6 +875,181 @@ export function approveNip46ConnectReview(
     persists_session_state: false,
     stores_production_secrets: false,
     exposes_secret: false
+  };
+}
+
+function sessionSecretPaths(value: unknown, prefix = ""): string[] {
+  const paths: string[] = [];
+  if (Array.isArray(value)) {
+    for (const [index, item] of value.entries()) {
+      paths.push(...sessionSecretPaths(item, prefix === "" ? `[${index}]` : `${prefix}[${index}]`));
+    }
+    return paths;
+  }
+  if (!isRecord(value)) return paths;
+  for (const [key, item] of Object.entries(value)) {
+    const path = prefix === "" ? key : `${prefix}.${key}`;
+    if (NIP46_SESSION_SECRET_FIELDS.has(key.toLowerCase())) paths.push(path);
+    paths.push(...sessionSecretPaths(item, path));
+  }
+  return paths;
+}
+
+function assertNoSessionSecretMaterial(value: unknown): void {
+  const secretPaths = sessionSecretPaths(value);
+  if (secretPaths.length > 0) {
+    throw new Error(`NIP-46 session must not contain secret material at ${secretPaths[0]}`);
+  }
+}
+
+function requireNip46SessionName(value: unknown): string {
+  if (typeof value !== "string" || !/^[a-z0-9][a-z0-9._:-]{0,127}$/u.test(value)) {
+    throw new Error("NIP-46 session name is invalid");
+  }
+  return value;
+}
+
+function requireNip46SessionReviewVector(value: unknown): string {
+  if (
+    typeof value !== "string" ||
+    !/^vectors\/nip46\/[A-Za-z0-9._:-]+\.json$/u.test(value)
+  ) {
+    throw new Error("NIP-46 session connect_review_vector must point under vectors/nip46/");
+  }
+  return value;
+}
+
+function requireNip46SessionPhase(value: unknown): "approved_pending_ack" {
+  if (typeof value !== "string" || !NIP46_SESSION_PHASES.has(value)) {
+    throw new Error("NIP-46 session phase must be approved_pending_ack");
+  }
+  return value as "approved_pending_ack";
+}
+
+function requireRelayList(value: unknown): string[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error("NIP-46 session relays must be a non-empty list");
+  }
+  const relays = value.map((relay) => {
+    if (typeof relay !== "string") throw new Error("NIP-46 session relays must be strings");
+    return requireRelayUrl(relay);
+  });
+  if (new Set(relays).size !== relays.length) throw new Error("NIP-46 session relays must be unique");
+  return relays;
+}
+
+function parseSessionPermissions(
+  value: unknown,
+  label: "requested_permissions" | "approved_permissions"
+): Nip46Permission[] {
+  if (!Array.isArray(value)) throw new Error(`NIP-46 session ${label} must be a list`);
+  return value.map((permission, index) =>
+    label === "approved_permissions"
+      ? parseNip46PolicyPermission(permission, `NIP-46 session ${label}[${index}]`)
+      : parseNip46RequestedPermission(permission, `NIP-46 session ${label}[${index}]`)
+  );
+}
+
+function requireFalseSessionFlag(value: Record<string, unknown>, field: typeof NIP46_SESSION_FALSE_FIELDS[number]): void {
+  if (value[field] !== false) throw new Error(`${field} must be false`);
+}
+
+function assertApprovedPermissionsSubset(
+  approvedPermissions: readonly Nip46Permission[],
+  requestedPermissions: readonly Nip46Permission[]
+): void {
+  for (const approvedPermission of approvedPermissions) {
+    if (!requestedPermissions.some((requestedPermission) => permissionMatchesRequirement(requestedPermission, approvedPermission))) {
+      throw new Error("approved_permissions must be a subset of requested_permissions");
+    }
+  }
+}
+
+function requireSessionScope(value: unknown): string {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error("NIP-46 session scope must be a non-empty string");
+  }
+  for (const required of ["NIP-44", "relay", "acknowledge", "grant", "signer", "persist", "secret material"]) {
+    if (!value.includes(required)) throw new Error(`NIP-46 session scope must mention ${required}`);
+  }
+  return value;
+}
+
+export function parseNip46SessionLifecycle(value: unknown): Nip46SessionLifecycle {
+  if (!isRecord(value)) throw new Error("NIP-46 session must be an object");
+  assertNoSessionSecretMaterial(value);
+  assertOnlyKeys(
+    value,
+    [
+      "name",
+      "format",
+      "phase",
+      "client_pubkey",
+      "remote_signer_pubkey",
+      "relays",
+      "connect_review_vector",
+      "connect_digest",
+      "approved_at",
+      "expires_at",
+      "requested_permissions",
+      "approved_permissions",
+      "secret_present",
+      "secret_value_stored",
+      "contains_secret_material",
+      "derives_nip44_key",
+      "acknowledges_connect",
+      "opens_relay",
+      "creates_grants",
+      "dispatches_signer",
+      "stores_production_secrets",
+      "persists_session_state",
+      "scope"
+    ],
+    "NIP-46 session"
+  );
+  if (value.format !== "nsealr-nip46-session-lifecycle-v0") {
+    throw new Error("NIP-46 session format is invalid");
+  }
+  const name = requireNip46SessionName(value.name);
+  const phase = requireNip46SessionPhase(value.phase);
+  const clientPubkey = requireXOnlyPubkey(value.client_pubkey, "session client pubkey");
+  const remoteSignerPubkey = requireXOnlyPubkey(value.remote_signer_pubkey, "session remote-signer pubkey");
+  const relays = requireRelayList(value.relays);
+  const connectReviewVector = requireNip46SessionReviewVector(value.connect_review_vector);
+  const connectDigest = requireLowerHex64(value.connect_digest, "NIP-46 session connect_digest");
+  const approvedAt = requireSafeNonNegativeInteger(value.approved_at, "NIP-46 session approved_at");
+  const expiresAt = requireSafeNonNegativeInteger(value.expires_at, "NIP-46 session expires_at");
+  if (expiresAt <= approvedAt) throw new Error("expires_at must be greater than approved_at");
+  const requestedPermissions = parseSessionPermissions(value.requested_permissions, "requested_permissions");
+  const approvedPermissions = parseSessionPermissions(value.approved_permissions, "approved_permissions");
+  assertApprovedPermissionsSubset(approvedPermissions, requestedPermissions);
+  if (typeof value.secret_present !== "boolean") throw new Error("NIP-46 session secret_present must be boolean");
+  for (const field of NIP46_SESSION_FALSE_FIELDS) requireFalseSessionFlag(value, field);
+  const scope = requireSessionScope(value.scope);
+  return {
+    name,
+    format: "nsealr-nip46-session-lifecycle-v0",
+    phase,
+    client_pubkey: clientPubkey,
+    remote_signer_pubkey: remoteSignerPubkey,
+    relays,
+    connect_review_vector: connectReviewVector,
+    connect_digest: connectDigest,
+    approved_at: approvedAt,
+    expires_at: expiresAt,
+    requested_permissions: requestedPermissions,
+    approved_permissions: approvedPermissions,
+    secret_present: value.secret_present,
+    secret_value_stored: false,
+    contains_secret_material: false,
+    derives_nip44_key: false,
+    acknowledges_connect: false,
+    opens_relay: false,
+    creates_grants: false,
+    dispatches_signer: false,
+    stores_production_secrets: false,
+    persists_session_state: false,
+    scope
   };
 }
 

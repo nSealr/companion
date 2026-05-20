@@ -18,6 +18,11 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
   bound to the relay event sender before later session code can accept them,
   without relay I/O, signer dispatch, grant creation, signature verification,
   or session persistence.
+- Parse reviewed-but-not-active NIP-46 session lifecycle checkpoints that bind
+  client/signer pubkeys, relays, connect digest, approval time, expiry, and an
+  approved permission subset while keeping NIP-44 derivation, `connect`
+  acknowledgement, relay I/O, grant creation, signer dispatch, secret storage,
+  and session persistence disabled.
 - Parse read-only nSealr policy files used by the CLI and tests.
 - Keep requested-permission parsing separate from approved-permission parsing
   so broad `sign_event` can be reviewed as metadata but cannot authorize a
@@ -73,3 +78,9 @@ NIP-46 response messages and signed-event result payloads, and bind
 public-key/signed-event result pubkeys to the relay event sender. They still do
 not decrypt NIP-44 content, open relays, acknowledge `connect`, create grants,
 dispatch a signer, verify signatures, or persist session state.
+
+Session lifecycle parsing is a checkpoint contract, not a session engine. It
+accepts only the `approved_pending_ack` phase and rejects embedded secret
+material, NIP-44 key derivation, relay opening, `connect` acknowledgement,
+grant creation, signer dispatch, production secret storage, or persisted
+session state.

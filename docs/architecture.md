@@ -96,10 +96,11 @@ packages, but it must not export test-only signing as a production path.
   callers can treat them as accepted output.
 - `packages/fixtures`: shared event, key, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
-  payload, NIP-46 policy-file, NIP-46 connection URI, account-descriptor,
-  policy-profile, grant-descriptor, policy-change review, policy-decision,
-  route-selection, source public-key proof, access-surface, feature-matrix,
-  limit-profile, and invalid hardening fixture loading.
+  payload, NIP-46 policy-file, NIP-46 connection URI, NIP-46 relay-event,
+  NIP-46 relay-step, NIP-46 session lifecycle, account-descriptor, policy-profile,
+  grant-descriptor, policy-change review, policy-decision, route-selection,
+  source public-key proof, access-surface, feature-matrix, limit-profile, and
+  invalid hardening fixture loading.
   Package code also owns QR review-transcript fixture validation, including
   `scroll` buttons and rendered-frame `body_line_styles`, so the CLI does not
   duplicate that contract.
@@ -1050,6 +1051,15 @@ to the CLI. The artifact binds the approval to the exact review pages while
 recording `acknowledges_connect: false`, `creates_grants: false`,
 `opens_relay: false`, `persists_session_state: false`, and
 `stores_production_secrets: false`.
+
+The NIP-46 package now also parses a shared session lifecycle checkpoint, but
+this remains a checkpoint rather than a session engine. The
+`approved_pending_ack` descriptor binds a reviewed connect digest, client and
+remote-signer pubkeys, relay URLs, approval time, expiry, requested
+permissions, and approved permission subsets while rejecting embedded secret
+material and keeping NIP-44 key derivation, `connect` acknowledgement, relay
+I/O, grant creation, signer dispatch, production secret storage, and session
+persistence disabled.
 
 `connect` parsing is also intentionally non-committal. The bridge can extract
 the remote-signer pubkey, optional secret, and requested permissions into a

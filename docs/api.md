@@ -223,6 +223,7 @@ Exports:
 - `Nip46RelayResponseStep`
 - `Nip46RequestMessage`
 - `Nip46ResponseMessage`
+- `Nip46SessionLifecycle`
 - `approveNip46ConnectReview`
 - `decideNip46BridgeAction`
 - `evaluateNip46RelayRequestStep`
@@ -239,6 +240,7 @@ Exports:
 - `parseNip46Permissions`
 - `parseNip46PolicyFile`
 - `parseNip46RelayEventEnvelope`
+- `parseNip46SessionLifecycle`
 - `respondToLocalNip46Request`
 - `reviewNip46ConnectIntent`
 - `reviewNip46ConnectMessage`

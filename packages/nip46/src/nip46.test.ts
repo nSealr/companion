@@ -18,6 +18,7 @@ import {
   parseNip46ConnectReview,
   parseNip46PolicyFile,
   parseNip46RelayEventEnvelope,
+  parseNip46SessionLifecycle,
   nsealrRequestFromNip46,
   parseNip46Permissions,
   reviewNip46ConnectMessage,
@@ -265,6 +266,25 @@ describe("NIP-46 bridge payloads", () => {
     }
   });
 
+  it("matches shared NIP-46 session lifecycle checkpoint vectors", () => {
+    const fixtures = loadSpecsFixtures(specsRoot);
+
+    expect(fixtures.nip46Sessions.map((vector) => vector.name)).toEqual([
+      "nostrconnect-approved-kind-1-checkpoint"
+    ]);
+    for (const vector of fixtures.nip46Sessions) {
+      const actual = parseNip46SessionLifecycle(vector);
+      expect(actual).toEqual(vector);
+      expect(actual.acknowledges_connect).toBe(false);
+      expect(actual.derives_nip44_key).toBe(false);
+      expect(actual.opens_relay).toBe(false);
+      expect(actual.creates_grants).toBe(false);
+      expect(actual.dispatches_signer).toBe(false);
+      expect(actual.persists_session_state).toBe(false);
+      expect(JSON.stringify(actual)).not.toContain("secret-1");
+    }
+  });
+
   it("rejects unsafe or ambiguous NIP-46 connection URIs", () => {
     const pubkey = "c".repeat(64);
 
@@ -313,6 +333,7 @@ describe("NIP-46 bridge payloads", () => {
         vector.category === "nip46-connection-uri" ||
         vector.category === "nip46-relay-event" ||
         vector.category === "nip46-relay-step" ||
+        vector.category === "nip46-session" ||
         vector.category === "nip46-policy-file"
     );
 
@@ -344,6 +365,10 @@ describe("NIP-46 bridge payloads", () => {
         }
         if (vector.category === "nip46-policy-file") {
           parseNip46PolicyFile(vector.policy_file);
+          return;
+        }
+        if (vector.category === "nip46-session") {
+          parseNip46SessionLifecycle(vector.session);
           return;
         }
         decideNip46BridgeAction(vector.request_message, []);

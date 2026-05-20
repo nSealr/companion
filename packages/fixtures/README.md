@@ -5,7 +5,8 @@ Shared fixture loading and conformance helpers for nSealr repositories.
 ## Purpose
 
 - Load shared vectors from `nSealr/specs`, including NIP-46 connection URI,
-  route-selection, source public-key proof, and access-surface conformance data.
+  relay-event, relay-step, session lifecycle, route-selection, source public-key proof, and
+  access-surface conformance data.
 - Validate feature matrices and QR review transcript fixtures.
 - Keep companion tests aligned with Raspberry, ESP32, smartcard, and hardware
   contracts.

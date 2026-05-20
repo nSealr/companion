@@ -184,6 +184,18 @@ describe("fixture loading", () => {
     expect(JSON.stringify(responseStep?.expected_step)).toContain("verifies_signature");
   });
 
+  it("loads NIP-46 session lifecycle checkpoint vectors from the specs repository", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    expect(fixtures.nip46Sessions.map((vector) => vector.name)).toEqual([
+      "nostrconnect-approved-kind-1-checkpoint"
+    ]);
+    expect(fixtures.nip46Sessions[0].format).toBe("nsealr-nip46-session-lifecycle-v0");
+    expect(fixtures.nip46Sessions[0].phase).toBe("approved_pending_ack");
+    expect(fixtures.nip46Sessions[0].acknowledges_connect).toBe(false);
+    expect(fixtures.nip46Sessions[0].derives_nip44_key).toBe(false);
+    expect(fixtures.nip46Sessions[0].persists_session_state).toBe(false);
+  });
+
   it("loads identity, policy, and grant descriptors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
 

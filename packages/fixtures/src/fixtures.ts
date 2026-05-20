@@ -235,6 +235,39 @@ export type SpecsFixtureSet = {
     expected_step: unknown;
     scope: string;
   }>;
+  nip46Sessions: Array<{
+    name: string;
+    format: "nsealr-nip46-session-lifecycle-v0";
+    phase: "approved_pending_ack";
+    client_pubkey: string;
+    remote_signer_pubkey: string;
+    relays: string[];
+    connect_review_vector: string;
+    connect_digest: string;
+    approved_at: number;
+    expires_at: number;
+    requested_permissions: Array<{
+      method: string;
+      parameter?: string;
+      event_kind?: number;
+    }>;
+    approved_permissions: Array<{
+      method: string;
+      parameter?: string;
+      event_kind?: number;
+    }>;
+    secret_present: boolean;
+    secret_value_stored: false;
+    contains_secret_material: false;
+    derives_nip44_key: false;
+    acknowledges_connect: false;
+    opens_relay: false;
+    creates_grants: false;
+    dispatches_signer: false;
+    stores_production_secrets: false;
+    persists_session_state: false;
+    scope: string;
+  }>;
   accounts: AccountDescriptor[];
   policyProfiles: PolicyProfile[];
   grants: GrantDescriptor[];
@@ -341,6 +374,7 @@ export type SpecsFixtureSet = {
       | "nip46-connection-uri"
       | "nip46-relay-event"
       | "nip46-relay-step"
+      | "nip46-session"
       | "nip46-policy-file";
     expected_error: string;
     request?: unknown;
@@ -351,6 +385,7 @@ export type SpecsFixtureSet = {
     uri?: string;
     relay_event?: unknown;
     relay_step?: unknown;
+    session?: unknown;
     policy_file?: unknown;
   }>;
 };
@@ -698,6 +733,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const nip46ConnectionUrisRoot = resolve(specsRoot, "vectors/nip46-connection-uris");
   const nip46RelayEventsRoot = resolve(specsRoot, "vectors/nip46-relay-events");
   const nip46RelayStepsRoot = resolve(specsRoot, "vectors/nip46-relay-steps");
+  const nip46SessionsRoot = resolve(specsRoot, "vectors/nip46-sessions");
   const accountsRoot = resolve(specsRoot, "vectors/accounts");
   const policyProfilesRoot = resolve(specsRoot, "vectors/policies");
   const grantsRoot = resolve(specsRoot, "vectors/grants");
@@ -739,6 +775,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const nip46RelayStepFiles = readdirSync(nip46RelayStepsRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const nip46SessionFiles = readdirSync(nip46SessionsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const accountFiles = readdirSync(accountsRoot)
@@ -810,6 +849,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     ),
     nip46RelaySteps: nip46RelayStepFiles.map(
       (file) => loadJson(resolve(nip46RelayStepsRoot, file)) as SpecsFixtureSet["nip46RelaySteps"][number]
+    ),
+    nip46Sessions: nip46SessionFiles.map(
+      (file) => loadJson(resolve(nip46SessionsRoot, file)) as SpecsFixtureSet["nip46Sessions"][number]
     ),
     accounts,
     policyProfiles,

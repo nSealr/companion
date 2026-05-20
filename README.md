@@ -32,9 +32,10 @@ match the shared `contract_id`.
 
 - `nsealr fixture verify` validates shared signing, trusted-review,
   review-display-frame, review-detail-page, QR review-transcript, NIP-46
-  payload, NIP-46 policy-file, NIP-46 connection URI, account descriptor,
-  policy profile, grant descriptor, policy-change review, policy-decision,
-  source public-key proof, and feature-matrix fixtures from
+  payload, NIP-46 policy-file, NIP-46 connection URI, NIP-46 relay-event,
+  NIP-46 relay-step, NIP-46 session lifecycle, account descriptor, policy profile, grant
+  descriptor, policy-change review, policy-decision, source public-key proof,
+  and feature-matrix fixtures from
   `nSealr/specs`, including NIP-46 permission policy checks, bridge
   decisions, implementation limits, feature conformance contracts, and invalid
   hardening vectors.
@@ -330,7 +331,8 @@ match the shared `contract_id`.
   signing-disabled scaffold responses.
 - `packages/fixtures` loads shared event, trusted-review, review-display-frame,
   review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
-  NIP-46 connection URI, account-descriptor, policy-profile,
+  NIP-46 connection URI, NIP-46 relay-event, NIP-46 relay-step, NIP-46 session lifecycle,
+  account-descriptor, policy-profile,
   grant-descriptor, policy-change review, policy-decision, route-selection,
   source-public-key-proof, access-surface,
   feature-matrix, and smartcard vectors from `nSealr/specs` for companion,

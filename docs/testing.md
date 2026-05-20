@@ -450,10 +450,12 @@ single-repository CI. Cross-repository drift remains guarded by
   signed-event fixtures, trusted-review fixtures, review-display-frame
   fixtures, review-detail-page fixtures, QR review-transcript fixtures, NIP-46
   payload fixtures, NIP-46 policy-file fixtures, NIP-46 connection URI
-  fixtures, account descriptors, policy profiles, grant descriptors,
-  policy-change review vectors, policy-decision vectors, route-selection
-  vectors, source public-key proof vectors, and access-surface vectors, plus
-  the shared implementation-limit profile and invalid hardening vectors. Grant
+  fixtures, NIP-46 relay-event fixtures, NIP-46 relay-step fixtures,
+  NIP-46 session lifecycle fixtures,
+  account descriptors, policy profiles, grant descriptors, policy-change
+  review vectors, policy-decision vectors, route-selection vectors, source
+  public-key proof vectors, and access-surface vectors, plus the shared
+  implementation-limit profile and invalid hardening vectors. Grant
   descriptor tests reject the removed `decision` field so the companion cannot
   revive an ambiguous grant mode outside expiry, rate-limit, revocation, audit,
   and device-confirmation semantics. Policy-profile parser tests also reject
@@ -571,6 +573,13 @@ single-repository CI. Cross-repository drift remains guarded by
   Neither opens relays, decrypts NIP-44 content, acknowledges `connect`,
   creates grants, dispatches signers, verifies signatures, or persists session
   state.
+- NIP-46 session lifecycle checkpoint tests covering shared
+  `approved_pending_ack` vectors. The parser validates client/signer pubkeys,
+  relay URLs, connect digest shape, approval/expiry safety, requested
+  permissions, approved permission subsets, and false side-effect flags, and it
+  rejects embedded secret material, NIP-44 key derivation, relay opening,
+  `connect` acknowledgement, grant creation, signer dispatch, production
+  secret storage, and session persistence.
 - NIP-46 permission matching tests covering derived `sign_event:<kind>`
   requirements, broad requested-permission compatibility, explicit approved
   `sign_event:<kind>` inputs, method-only grants, denied requests, and
@@ -639,8 +648,9 @@ single-repository CI. Cross-repository drift remains guarded by
   values, resource-limit violations, malformed or ambiguous responses,
   malformed response request ids, contradictory or reason-less signing-status
   readiness, malformed QR/serial envelopes, malformed NIP-46 payloads, invalid
-  NIP-46 connection URIs, invalid policy files, duplicate signing-status gate
-  entries, and signed-event response integer-safety, content, or tag
+  NIP-46 connection URIs, invalid NIP-46 session lifecycle checkpoints,
+  invalid policy files, duplicate signing-status gate entries, and
+  signed-event response integer-safety, content, or tag
   violations.
 - Nostr conformance oracle tests must compare companion event id/signature
   behavior with `nostr-tools` in tests, while keeping production code free of

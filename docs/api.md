@@ -224,7 +224,9 @@ Exports:
 - `Nip46RequestMessage`
 - `Nip46ResponseMessage`
 - `Nip46SessionLifecycle`
+- `Nip46SessionLifecycleCheckpointOptions`
 - `approveNip46ConnectReview`
+- `createNip46SessionLifecycleCheckpoint`
 - `decideNip46BridgeAction`
 - `evaluateNip46RelayRequestStep`
 - `evaluateNip46RelayResponseStep`
@@ -234,6 +236,7 @@ Exports:
 - `nip46ResponseFromNSealr`
 - `nsealrRequestFromNip46`
 - `parseNip46ApprovedPermissions`
+- `parseNip46ConnectApproval`
 - `parseNip46ConnectIntent`
 - `parseNip46ConnectReview`
 - `parseNip46ConnectionUri`

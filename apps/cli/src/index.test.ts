@@ -388,6 +388,9 @@ describe("nsealr CLI", () => {
     const connectReviewPath = join(tempRoot, "connect-review.json");
     const connectApprovalPath = join(tempRoot, "connect-approval.json");
     const connectApprovalMismatchPath = join(tempRoot, "connect-approval-mismatch.json");
+    const sessionVector = loadSpecsFixtures(specsRoot).nip46Sessions[0];
+    const sessionPath = join(tempRoot, "session-checkpoint.json");
+    const invalidSessionPath = join(tempRoot, "invalid-session-checkpoint.json");
 
     writeFileSync(signEventMessagePath, `${JSON.stringify(signEventVector.request_message, null, 2)}\n`, "utf8");
     writeFileSync(connectMessagePath, `${JSON.stringify(connectVector.request_message, null, 2)}\n`, "utf8");
@@ -433,6 +436,51 @@ describe("nsealr CLI", () => {
     expect(loadJson(connectReviewPath)).toEqual(connectVector.connect_review);
     expect(loadJson(connectApprovalPath)).toEqual(connectVector.connect_approval);
     expect(JSON.stringify(loadJson(connectReviewPath))).not.toContain("secret-1");
+    await runCli([
+      "nip46",
+      "create-session-checkpoint",
+      "--review",
+      connectReviewPath,
+      "--approval",
+      connectApprovalPath,
+      "--name",
+      sessionVector.session.name,
+      "--client-pubkey",
+      sessionVector.session.client_pubkey,
+      "--relays",
+      sessionVector.session.relays.join(","),
+      "--policy-file",
+      resolve(specsRoot, "vectors/nip46-policy-files/sign-event-kind-1-approved.json"),
+      "--expires-at",
+      String(sessionVector.session.expires_at),
+      "--out",
+      sessionPath
+    ]);
+    expect(loadJson(sessionPath)).toEqual(sessionVector.session);
+    expect(JSON.stringify(loadJson(sessionPath))).not.toContain("secret-1");
+    await expect(
+      runCli([
+        "nip46",
+        "create-session-checkpoint",
+        "--review",
+        connectReviewPath,
+        "--approval",
+        connectApprovalPath,
+        "--name",
+        "invalid-session",
+        "--client-pubkey",
+        sessionVector.session.client_pubkey,
+        "--relays",
+        sessionVector.session.relays.join(","),
+        "--permissions",
+        "sign_event:4",
+        "--expires-at",
+        String(sessionVector.session.expires_at),
+        "--out",
+        invalidSessionPath
+      ])
+    ).rejects.toThrow(/approved_permissions must be a subset/u);
+    expect(existsSync(invalidSessionPath)).toBe(false);
     await expect(
       runCli([
         "nip46",

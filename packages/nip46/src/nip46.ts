@@ -135,7 +135,6 @@ export type Nip46SessionLifecycle = {
   client_pubkey: string;
   remote_signer_pubkey: string;
   relays: string[];
-  connect_review_vector: string;
   connect_digest: string;
   approved_at: number;
   expires_at: number;
@@ -157,6 +156,14 @@ export type Nip46SessionLifecycle = {
 export type Nip46ConnectApprovalOptions = {
   reviewedConnectDigest: string;
   approvedAt: number;
+};
+
+export type Nip46SessionLifecycleCheckpointOptions = {
+  name: string;
+  clientPubkey: string;
+  relays: string[];
+  approvedPermissions: unknown[];
+  expiresAt: number;
 };
 
 export type Nip46BridgeDecision =
@@ -878,6 +885,61 @@ export function approveNip46ConnectReview(
   };
 }
 
+function requireFalseConnectApprovalFlag(value: Record<string, unknown>, field: keyof Pick<
+  Nip46ConnectApproval,
+  "acknowledges_connect" | "creates_grants" | "opens_relay" | "persists_session_state" | "stores_production_secrets" | "exposes_secret"
+>): void {
+  if (value[field] !== false) throw new Error(`NIP-46 connect approval ${field} must be false`);
+}
+
+export function parseNip46ConnectApproval(value: unknown): Nip46ConnectApproval {
+  if (!isRecord(value)) throw new Error("NIP-46 connect approval must be an object");
+  assertOnlyKeys(
+    value,
+    [
+      "format",
+      "id",
+      "connect_digest",
+      "approved_at",
+      "acknowledges_connect",
+      "creates_grants",
+      "opens_relay",
+      "persists_session_state",
+      "stores_production_secrets",
+      "exposes_secret"
+    ],
+    "NIP-46 connect approval"
+  );
+  if (value.format !== "nsealr-nip46-connect-approval-v0") {
+    throw new Error("NIP-46 connect approval format is invalid");
+  }
+  const id = requireNip46Id(value.id);
+  const connectDigest = requireLowerHex64(value.connect_digest, "NIP-46 connect approval connect_digest");
+  const approvedAt = requireSafeNonNegativeInteger(value.approved_at, "NIP-46 connect approval approved_at");
+  for (const field of [
+    "acknowledges_connect",
+    "creates_grants",
+    "opens_relay",
+    "persists_session_state",
+    "stores_production_secrets",
+    "exposes_secret"
+  ] as const) {
+    requireFalseConnectApprovalFlag(value, field);
+  }
+  return {
+    format: "nsealr-nip46-connect-approval-v0",
+    id,
+    connect_digest: connectDigest,
+    approved_at: approvedAt,
+    acknowledges_connect: false,
+    creates_grants: false,
+    opens_relay: false,
+    persists_session_state: false,
+    stores_production_secrets: false,
+    exposes_secret: false
+  };
+}
+
 function sessionSecretPaths(value: unknown, prefix = ""): string[] {
   const paths: string[] = [];
   if (Array.isArray(value)) {
@@ -905,16 +967,6 @@ function assertNoSessionSecretMaterial(value: unknown): void {
 function requireNip46SessionName(value: unknown): string {
   if (typeof value !== "string" || !/^[a-z0-9][a-z0-9._:-]{0,127}$/u.test(value)) {
     throw new Error("NIP-46 session name is invalid");
-  }
-  return value;
-}
-
-function requireNip46SessionReviewVector(value: unknown): string {
-  if (
-    typeof value !== "string" ||
-    !/^vectors\/nip46\/[A-Za-z0-9._:-]+\.json$/u.test(value)
-  ) {
-    throw new Error("NIP-46 session connect_review_vector must point under vectors/nip46/");
   }
   return value;
 }
@@ -975,6 +1027,53 @@ function requireSessionScope(value: unknown): string {
   return value;
 }
 
+const NIP46_SESSION_SCOPE =
+  "NIP-46 session lifecycle checkpoint only. It records a reviewed connect digest and approved permission subset, but does not acknowledge connect, derive NIP-44 keys, open relays, create grants, dispatch a signer, store production secrets, persist session state, or include secret material.";
+
+export function createNip46SessionLifecycleCheckpoint(
+  reviewValue: unknown,
+  approvalValue: unknown,
+  options: Nip46SessionLifecycleCheckpointOptions
+): Nip46SessionLifecycle {
+  const review = parseNip46ConnectReview(reviewValue);
+  const approval = parseNip46ConnectApproval(approvalValue);
+  if (approval.id !== review.id) throw new Error("NIP-46 session approval id must match connect review");
+  if (approval.connect_digest !== review.connect_digest) {
+    throw new Error("NIP-46 session approval digest must match connect review");
+  }
+  const name = requireNip46SessionName(options.name);
+  const clientPubkey = requireXOnlyPubkey(options.clientPubkey, "session client pubkey");
+  const relays = requireRelayList(options.relays);
+  const expiresAt = requireSafeNonNegativeInteger(options.expiresAt, "NIP-46 session expires_at");
+  if (expiresAt <= approval.approved_at) throw new Error("expires_at must be greater than approved_at");
+  const approvedPermissions = parseSessionPermissions(options.approvedPermissions, "approved_permissions");
+  assertApprovedPermissionsSubset(approvedPermissions, review.requested_permissions);
+  return {
+    name,
+    format: "nsealr-nip46-session-lifecycle-v0",
+    phase: "approved_pending_ack",
+    client_pubkey: clientPubkey,
+    remote_signer_pubkey: review.remote_signer_pubkey,
+    relays,
+    connect_digest: review.connect_digest,
+    approved_at: approval.approved_at,
+    expires_at: expiresAt,
+    requested_permissions: review.requested_permissions,
+    approved_permissions: approvedPermissions,
+    secret_present: review.secret_present,
+    secret_value_stored: false,
+    contains_secret_material: false,
+    derives_nip44_key: false,
+    acknowledges_connect: false,
+    opens_relay: false,
+    creates_grants: false,
+    dispatches_signer: false,
+    stores_production_secrets: false,
+    persists_session_state: false,
+    scope: NIP46_SESSION_SCOPE
+  };
+}
+
 export function parseNip46SessionLifecycle(value: unknown): Nip46SessionLifecycle {
   if (!isRecord(value)) throw new Error("NIP-46 session must be an object");
   assertNoSessionSecretMaterial(value);
@@ -987,7 +1086,6 @@ export function parseNip46SessionLifecycle(value: unknown): Nip46SessionLifecycl
       "client_pubkey",
       "remote_signer_pubkey",
       "relays",
-      "connect_review_vector",
       "connect_digest",
       "approved_at",
       "expires_at",
@@ -1015,7 +1113,6 @@ export function parseNip46SessionLifecycle(value: unknown): Nip46SessionLifecycl
   const clientPubkey = requireXOnlyPubkey(value.client_pubkey, "session client pubkey");
   const remoteSignerPubkey = requireXOnlyPubkey(value.remote_signer_pubkey, "session remote-signer pubkey");
   const relays = requireRelayList(value.relays);
-  const connectReviewVector = requireNip46SessionReviewVector(value.connect_review_vector);
   const connectDigest = requireLowerHex64(value.connect_digest, "NIP-46 session connect_digest");
   const approvedAt = requireSafeNonNegativeInteger(value.approved_at, "NIP-46 session approved_at");
   const expiresAt = requireSafeNonNegativeInteger(value.expires_at, "NIP-46 session expires_at");
@@ -1033,7 +1130,6 @@ export function parseNip46SessionLifecycle(value: unknown): Nip46SessionLifecycl
     client_pubkey: clientPubkey,
     remote_signer_pubkey: remoteSignerPubkey,
     relays,
-    connect_review_vector: connectReviewVector,
     connect_digest: connectDigest,
     approved_at: approvedAt,
     expires_at: expiresAt,

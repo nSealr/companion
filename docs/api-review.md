@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:d900192e998666fce7d5ac81d7211c74c7f4ca2197621d2b4767f44071abf303`
+API surface digest: `sha256:6cabab55d16a2da4442c03d68cec4c198d5649fd31883d6cd31537c886cd21c7`
 
 Source: `docs/api.md`
 
@@ -139,10 +139,11 @@ The NIP-46 package converts already-decrypted messages into nSealr decisions or
 deterministic local responses, parses connect review intents, produces
 digest-bound connect review and approval artifacts, parses descriptor-only
 `bunker://` and `nostrconnect://` connection URI metadata, parses relay event
-envelopes, parses reviewed-but-not-active session lifecycle checkpoints, parses
-requested-permission metadata, parses stricter approved-permission inputs,
-parses read-only policy files, and enforces permission checks. It also
-evaluates relay request and response steps only after plaintext has been
+envelopes, parses and creates reviewed-but-not-active session lifecycle
+checkpoints, parses requested-permission metadata, parses stricter
+approved-permission inputs, parses read-only policy files, and enforces
+permission checks. It also evaluates relay request and response steps only
+after plaintext has been
 supplied by a future NIP-44 layer: request steps return deterministic bridge
 decisions, while response steps shape-check plaintext signed-event, public-key,
 ping, and error responses without opening relays or verifying signatures.
@@ -153,7 +154,10 @@ signed-field shape; it does not verify signatures or decrypt NIP-44 content.
 Session lifecycle parsing records `approved_pending_ack` checkpoint metadata
 only and rejects secret material, NIP-44 key derivation, relay opening, connect
 acknowledgement, grant creation, signer dispatch, production secret storage,
-and session persistence. It deliberately excludes relay sessions, NIP-44
+and session persistence. Session checkpoint creation validates the
+review/approval digest pair, client pubkey, relay list, expiry, and approved
+permission subset before returning the same secretless object. It deliberately
+excludes relay sessions, NIP-44
 encryption/decryption, persistent grants, connect acknowledgement, browser
 storage, and signer I/O; connect approval artifacts explicitly preserve those
 false side-effect flags.

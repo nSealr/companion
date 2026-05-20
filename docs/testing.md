@@ -579,7 +579,9 @@ single-repository CI. Cross-repository drift remains guarded by
   permissions, approved permission subsets, and false side-effect flags, and it
   rejects embedded secret material, NIP-44 key derivation, relay opening,
   `connect` acknowledgement, grant creation, signer dispatch, production
-  secret storage, and session persistence.
+  secret storage, and session persistence. Creation tests also prove a
+  canonical connect review plus matching approval can produce the same
+  checkpoint while rejecting approved permissions outside the reviewed request.
 - NIP-46 permission matching tests covering derived `sign_event:<kind>`
   requirements, broad requested-permission compatibility, explicit approved
   `sign_event:<kind>` inputs, method-only grants, denied requests, and
@@ -602,6 +604,9 @@ single-repository CI. Cross-repository drift remains guarded by
   against shared `bunker://` and `nostrconnect://` vectors, including
   no-secret-echo output and invalid-token refusal before output files are
   written.
+- CLI NIP-46 session checkpoint tests covering `nsealr nip46
+  create-session-checkpoint` from a review/approval pair, explicit relays,
+  client pubkey, expiry, and policy-file approved permissions.
 - CLI NIP-46 policy-file tests covering read-only
   `nsealr-nip46-policy-v0` permission input and rejection of ambiguous
   `--permissions` plus `--policy-file` usage. The positive case consumes the

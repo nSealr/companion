@@ -6,6 +6,7 @@ import { loadSpecsFixtures, resolveSpecsRoot } from "@nsealr/fixtures";
 import { validateRequest } from "@nsealr/protocol";
 import {
   approveNip46ConnectReview,
+  createNip46SessionLifecycleCheckpoint,
   decideNip46BridgeAction,
   evaluateNip46RelayRequestStep,
   evaluateNip46RelayResponseStep,
@@ -15,6 +16,7 @@ import {
   parseNip46ApprovedPermissions,
   parseNip46ConnectionUri,
   parseNip46ConnectIntent,
+  parseNip46ConnectApproval,
   parseNip46ConnectReview,
   parseNip46PolicyFile,
   parseNip46RelayEventEnvelope,
@@ -273,8 +275,8 @@ describe("NIP-46 bridge payloads", () => {
       "nostrconnect-approved-kind-1-checkpoint"
     ]);
     for (const vector of fixtures.nip46Sessions) {
-      const actual = parseNip46SessionLifecycle(vector);
-      expect(actual).toEqual(vector);
+      const actual = parseNip46SessionLifecycle(vector.session);
+      expect(actual).toEqual(vector.session);
       expect(actual.acknowledges_connect).toBe(false);
       expect(actual.derives_nip44_key).toBe(false);
       expect(actual.opens_relay).toBe(false);
@@ -283,6 +285,28 @@ describe("NIP-46 bridge payloads", () => {
       expect(actual.persists_session_state).toBe(false);
       expect(JSON.stringify(actual)).not.toContain("secret-1");
     }
+  });
+
+  it("creates reviewed-but-not-active NIP-46 session lifecycle checkpoints", () => {
+    const connect = loadSpecsFixtures(specsRoot).nip46Payloads.find((vector) => vector.name === "connect-policy-review");
+    const sessionVector = loadSpecsFixtures(specsRoot).nip46Sessions[0];
+    if (connect === undefined) throw new Error("missing connect-policy-review vector");
+
+    expect(parseNip46ConnectApproval(connect.connect_approval)).toEqual(connect.connect_approval);
+    expect(createNip46SessionLifecycleCheckpoint(connect.connect_review, connect.connect_approval, {
+      name: sessionVector.session.name,
+      clientPubkey: sessionVector.session.client_pubkey,
+      relays: sessionVector.session.relays,
+      approvedPermissions: sessionVector.session.approved_permissions,
+      expiresAt: sessionVector.session.expires_at
+    })).toEqual(sessionVector.session);
+    expect(() => createNip46SessionLifecycleCheckpoint(connect.connect_review, connect.connect_approval, {
+      name: "bad-unapproved",
+      clientPubkey: sessionVector.session.client_pubkey,
+      relays: sessionVector.session.relays,
+      approvedPermissions: [{ method: "sign_event", parameter: "4", event_kind: 4 }],
+      expiresAt: sessionVector.session.expires_at
+    })).toThrow("approved_permissions must be a subset of requested_permissions");
   });
 
   it("rejects unsafe or ambiguous NIP-46 connection URIs", () => {

@@ -32,6 +32,7 @@ import {
 import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
 import {
   approveNip46ConnectReview,
+  createNip46SessionLifecycleCheckpoint,
   decideNip46BridgeAction,
   evaluateNip46RelayRequestStep,
   evaluateNip46RelayResponseStep,
@@ -761,8 +762,8 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         }
       }
       for (const session of fixtures.nip46Sessions) {
-        const actual = parseNip46SessionLifecycle(session);
-        if (JSON.stringify(actual) !== JSON.stringify(session)) {
+        const actual = parseNip46SessionLifecycle(session.session);
+        if (JSON.stringify(actual) !== JSON.stringify(session.session)) {
           throw new Error(`invalid NIP-46 session fixture ${session.name}: session mismatch`);
         }
       }
@@ -1215,6 +1216,49 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         approvedAt: nonNegativeIntegerOption(options.approvedAt, "--approved-at")
       });
       writeNewJson(options.out, approval);
+    });
+
+  nip46
+    .command("create-session-checkpoint")
+    .description("Write a reviewed-but-not-active NIP-46 session lifecycle checkpoint")
+    .requiredOption("--review <path>", "Read a NIP-46 connect review JSON file")
+    .requiredOption("--approval <path>", "Read a NIP-46 connect approval JSON file")
+    .requiredOption("--name <value>", "Stable checkpoint name")
+    .requiredOption("--client-pubkey <hex>", "Client public key bound to the future session")
+    .requiredOption("--relays <csv>", "Comma-separated normalized wss relay URLs")
+    .requiredOption("--expires-at <unix>", "Unix timestamp when the checkpoint expires")
+    .option("--permissions <value>", "Comma-separated approved NIP-46 permissions", "")
+    .option("--policy-file <path>", "Read approved NIP-46 permissions from a policy file")
+    .requiredOption("--out <path>", "Write the session lifecycle checkpoint JSON")
+    .action((options: {
+      review: string;
+      approval: string;
+      name: string;
+      clientPubkey: string;
+      relays: string;
+      expiresAt: string;
+      permissions: string;
+      policyFile?: string;
+      out: string;
+    }) => {
+      if (options.policyFile && options.permissions.trim() !== "") {
+        throw new Error("--policy-file cannot be combined with --permissions");
+      }
+      const approvedPermissions = options.policyFile
+        ? readNip46PolicyPermissions(options.policyFile)
+        : parseNip46ApprovedPermissions(options.permissions);
+      const checkpoint = createNip46SessionLifecycleCheckpoint(
+        readJson(options.review),
+        readJson(options.approval),
+        {
+          name: options.name,
+          clientPubkey: options.clientPubkey,
+          relays: options.relays.split(",").map((relay) => relay.trim()),
+          approvedPermissions,
+          expiresAt: nonNegativeIntegerOption(options.expiresAt, "--expires-at")
+        }
+      );
+      writeNewJson(options.out, checkpoint);
     });
 
   nip46

@@ -23,6 +23,10 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
   approved permission subset while keeping NIP-44 derivation, `connect`
   acknowledgement, relay I/O, grant creation, signer dispatch, secret storage,
   and session persistence disabled.
+- Create the same reviewed-but-not-active checkpoint from a canonical connect
+  review, matching connect approval artifact, explicit client pubkey, relay
+  list, expiry, and approved permission subset without acknowledging `connect`
+  or starting a relay session.
 - Parse read-only nSealr policy files used by the CLI and tests.
 - Keep requested-permission parsing separate from approved-permission parsing
   so broad `sign_event` can be reviewed as metadata but cannot authorize a
@@ -83,4 +87,5 @@ Session lifecycle parsing is a checkpoint contract, not a session engine. It
 accepts only the `approved_pending_ack` phase and rejects embedded secret
 material, NIP-44 key derivation, relay opening, `connect` acknowledgement,
 grant creation, signer dispatch, production secret storage, or persisted
-session state.
+session state. Checkpoint creation validates the review/approval digest pair
+and approved-permission subset before returning the same secretless object.

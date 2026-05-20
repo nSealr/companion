@@ -237,36 +237,40 @@ export type SpecsFixtureSet = {
   }>;
   nip46Sessions: Array<{
     name: string;
-    format: "nsealr-nip46-session-lifecycle-v0";
-    phase: "approved_pending_ack";
-    client_pubkey: string;
-    remote_signer_pubkey: string;
-    relays: string[];
-    connect_review_vector: string;
-    connect_digest: string;
-    approved_at: number;
-    expires_at: number;
-    requested_permissions: Array<{
-      method: string;
-      parameter?: string;
-      event_kind?: number;
-    }>;
-    approved_permissions: Array<{
-      method: string;
-      parameter?: string;
-      event_kind?: number;
-    }>;
-    secret_present: boolean;
-    secret_value_stored: false;
-    contains_secret_material: false;
-    derives_nip44_key: false;
-    acknowledges_connect: false;
-    opens_relay: false;
-    creates_grants: false;
-    dispatches_signer: false;
-    stores_production_secrets: false;
-    persists_session_state: false;
-    scope: string;
+    format: "nsealr-nip46-session-lifecycle-vector-v0";
+    source_connect_review_vector: string;
+    session: {
+      name: string;
+      format: "nsealr-nip46-session-lifecycle-v0";
+      phase: "approved_pending_ack";
+      client_pubkey: string;
+      remote_signer_pubkey: string;
+      relays: string[];
+      connect_digest: string;
+      approved_at: number;
+      expires_at: number;
+      requested_permissions: Array<{
+        method: string;
+        parameter?: string;
+        event_kind?: number;
+      }>;
+      approved_permissions: Array<{
+        method: string;
+        parameter?: string;
+        event_kind?: number;
+      }>;
+      secret_present: boolean;
+      secret_value_stored: false;
+      contains_secret_material: false;
+      derives_nip44_key: false;
+      acknowledges_connect: false;
+      opens_relay: false;
+      creates_grants: false;
+      dispatches_signer: false;
+      stores_production_secrets: false;
+      persists_session_state: false;
+      scope: string;
+    };
   }>;
   accounts: AccountDescriptor[];
   policyProfiles: PolicyProfile[];

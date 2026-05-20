@@ -189,11 +189,13 @@ describe("fixture loading", () => {
     expect(fixtures.nip46Sessions.map((vector) => vector.name)).toEqual([
       "nostrconnect-approved-kind-1-checkpoint"
     ]);
-    expect(fixtures.nip46Sessions[0].format).toBe("nsealr-nip46-session-lifecycle-v0");
-    expect(fixtures.nip46Sessions[0].phase).toBe("approved_pending_ack");
-    expect(fixtures.nip46Sessions[0].acknowledges_connect).toBe(false);
-    expect(fixtures.nip46Sessions[0].derives_nip44_key).toBe(false);
-    expect(fixtures.nip46Sessions[0].persists_session_state).toBe(false);
+    expect(fixtures.nip46Sessions[0].format).toBe("nsealr-nip46-session-lifecycle-vector-v0");
+    expect(fixtures.nip46Sessions[0].source_connect_review_vector).toBe("vectors/nip46/connect-policy-review.json");
+    expect(fixtures.nip46Sessions[0].session.format).toBe("nsealr-nip46-session-lifecycle-v0");
+    expect(fixtures.nip46Sessions[0].session.phase).toBe("approved_pending_ack");
+    expect(fixtures.nip46Sessions[0].session.acknowledges_connect).toBe(false);
+    expect(fixtures.nip46Sessions[0].session.derives_nip44_key).toBe(false);
+    expect(fixtures.nip46Sessions[0].session.persists_session_state).toBe(false);
   });
 
   it("loads identity, policy, and grant descriptors from the specs repository", () => {

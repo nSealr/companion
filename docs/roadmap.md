@@ -731,7 +731,9 @@ counts, and SHA-256 digests, and still does not publish to npm.
   challenges are specified. Current groundwork stops at a reviewed
   `approved_pending_ack` session lifecycle checkpoint that records no secret
   material and performs no relay, NIP-44, ack, grant, signer dispatch,
-  production storage, or persistence side effects.
+  production storage, or persistence side effects. The companion can now create
+  that checkpoint from a reviewed connect artifact and matching approval, but
+  it still does not acknowledge `connect` or run a relay session.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and
   `SmartcardSigner` boundary.

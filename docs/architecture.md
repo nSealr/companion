@@ -1059,7 +1059,10 @@ remote-signer pubkeys, relay URLs, approval time, expiry, requested
 permissions, and approved permission subsets while rejecting embedded secret
 material and keeping NIP-44 key derivation, `connect` acknowledgement, relay
 I/O, grant creation, signer dispatch, production secret storage, and session
-persistence disabled.
+persistence disabled. The package can also create that checkpoint from a
+canonical connect review plus matching approval artifact, explicit client
+pubkey, relay list, expiry, and approved permissions. Source vector paths stay
+in specs fixture metadata, not in runtime session objects.
 
 `connect` parsing is also intentionally non-committal. The bridge can extract
 the remote-signer pubkey, optional secret, and requested permissions into a

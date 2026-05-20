@@ -27,6 +27,7 @@ import {
   loadSpecsFixtures,
   validateAccessSurfaceFixture,
   validateFeatureMatrixFixture,
+  validatePersistentSecretCustodyFixture,
   validateReviewTranscriptFixture
 } from "@nsealr/fixtures";
 import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
@@ -822,6 +823,9 @@ export function buildCli(options: BuildCliOptions = {}): Command {
       for (const featureMatrix of fixtures.featureMatrices) {
         validateFeatureMatrixFixture(featureMatrix.name, featureMatrix);
       }
+      for (const custodyContract of fixtures.custodyContracts) {
+        validatePersistentSecretCustodyFixture(custodyContract.name, custodyContract);
+      }
       for (const invalidVector of fixtures.invalidVectors) {
         validateInvalidHardeningFixture(invalidVector);
       }
@@ -837,8 +841,10 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         fixtureCountLabel(fixtures.nip46Sessions.length, "NIP-46 session fixture");
       const sessionGateFixtureLabel =
         fixtureCountLabel(fixtures.nip46SessionGates.length, "NIP-46 session gate fixture");
+      const custodyContractFixtureLabel =
+        fixtureCountLabel(fixtures.custodyContracts.length, "persistent-secret custody contract");
       console.log(
-        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${relayStepFixtureLabel}, ${sessionFixtureLabel}, ${sessionGateFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
+        `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${relayStepFixtureLabel}, ${sessionFixtureLabel}, ${sessionGateFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, ${custodyContractFixtureLabel}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );
     });
 

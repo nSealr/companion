@@ -62,7 +62,7 @@ function accountStore(accounts = [account]): Record<string, unknown> {
   };
 }
 
-function routeDriverStore(): Record<string, unknown> {
+function routeDriverStore(route: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     format: SERVICE_ROUTE_DRIVER_STORE_FORMAT,
     updated_at: 1_900_000_000,
@@ -75,7 +75,8 @@ function routeDriverStore(): Record<string, unknown> {
       serial_line: {
         path: "/dev/cu.usbmodem-test",
         response_timeout_ms: 1000
-      }
+      },
+      ...route
     }]
   };
 }
@@ -309,6 +310,55 @@ describe("service context loading", () => {
       });
     });
     expect(written[0]).toMatch(/^nsealr1f:request:/u);
+  });
+
+  it("rejects stale route-driver files before service dispatch", () => {
+    withTempFiles({
+      "drivers.json": `${JSON.stringify(routeDriverStore(), null, 2)}\n`,
+      "accounts.json": `${JSON.stringify(accountStore(), null, 2)}\n`,
+      "route-mismatch-accounts.json": `${JSON.stringify(accountStore([esp32Account]), null, 2)}\n`,
+      "route-mismatch-drivers.json": `${JSON.stringify(routeDriverStore({ route_type: "custom_hardware_wallet" }), null, 2)}\n`
+    }, (paths) => {
+      const missingAccountApprovalPath = join(paths["drivers.json"], "..", "missing-account-approval.json");
+      writeStorageApproval(missingAccountApprovalPath, [
+        { purpose: "route_driver_store", path: paths["drivers.json"] }
+      ]);
+      expect(() => loadServiceContextFromFiles({
+        routeDriverStorePath: paths["drivers.json"],
+        storageApprovalPath: missingAccountApprovalPath,
+        openSerialLinePort: () => {
+          throw new Error("must not open serial port");
+        }
+      })).toThrow(/requires --account-store/u);
+
+      const missingTargetApprovalPath = join(paths["drivers.json"], "..", "missing-target-approval.json");
+      writeStorageApproval(missingTargetApprovalPath, [
+        { purpose: "account_store", path: paths["accounts.json"] },
+        { purpose: "route_driver_store", path: paths["drivers.json"] }
+      ]);
+      expect(() => loadServiceContextFromFiles({
+        accountStorePath: paths["accounts.json"],
+        routeDriverStorePath: paths["drivers.json"],
+        storageApprovalPath: missingTargetApprovalPath,
+        openSerialLinePort: () => {
+          throw new Error("must not open serial port");
+        }
+      })).toThrow(/account target is missing/u);
+
+      const mismatchApprovalPath = join(paths["drivers.json"], "..", "route-mismatch-approval.json");
+      writeStorageApproval(mismatchApprovalPath, [
+        { purpose: "account_store", path: paths["route-mismatch-accounts.json"] },
+        { purpose: "route_driver_store", path: paths["route-mismatch-drivers.json"] }
+      ]);
+      expect(() => loadServiceContextFromFiles({
+        accountStorePath: paths["route-mismatch-accounts.json"],
+        routeDriverStorePath: paths["route-mismatch-drivers.json"],
+        storageApprovalPath: mismatchApprovalPath,
+        openSerialLinePort: () => {
+          throw new Error("must not open serial port");
+        }
+      })).toThrow(/route_type does not match account/u);
+    });
   });
 
   it("rejects account stores that contain secret material", () => {

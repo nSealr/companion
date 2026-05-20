@@ -8,7 +8,11 @@ import {
 } from "@nsealr/client";
 import { parseAccountDescriptor, type AccountDescriptor } from "@nsealr/policy";
 import { type SerialLinePortOpener } from "@nsealr/transport";
-import { createServiceRouteDispatcher, parseServiceRouteDriverStore } from "./drivers.js";
+import {
+  createServiceRouteDispatcher,
+  parseServiceRouteDriverStore,
+  type ServiceRouteDriverStore
+} from "./drivers.js";
 
 export const SERVICE_ACCOUNT_STORE_FORMAT = "nsealr-service-account-store-v0";
 export const MAX_SERVICE_ACCOUNT_STORE_JSON_BYTES = 64 * 1024;
@@ -140,6 +144,29 @@ export function parseServiceAccountStore(value: unknown): ServiceAccountStore {
   };
 }
 
+function validateRouteDriverTargets(
+  routeDriverStore: ServiceRouteDriverStore | undefined,
+  accountStore: ServiceAccountStore | undefined
+): void {
+  if (routeDriverStore === undefined) return;
+  if (accountStore === undefined) {
+    throw new Error("service route driver store requires --account-store");
+  }
+  const accountsById = new Map(accountStore.accounts.map((account) => [account.account_id, account]));
+  for (const route of routeDriverStore.routes) {
+    const account = accountsById.get(route.account_id);
+    if (account === undefined) {
+      throw new Error(`service route driver account target is missing: ${route.account_id}`);
+    }
+    if (account.signer_route.type !== route.route_type) {
+      throw new Error(`service route driver route_type does not match account: ${route.account_id}`);
+    }
+    if (account.signer_route.transport !== route.transport) {
+      throw new Error(`service route driver transport does not match account: ${route.account_id}`);
+    }
+  }
+}
+
 export function loadServiceContextFromFiles(options: ServiceContextFileOptions): LocalServiceContext {
   requireContextStorageApproval(options);
   const grantStore: LocalGrantStore | undefined = options.grantStorePath === undefined
@@ -151,6 +178,7 @@ export function loadServiceContextFromFiles(options: ServiceContextFileOptions):
   const routeDriverStore = options.routeDriverStorePath === undefined
     ? undefined
     : parseServiceRouteDriverStore(readJsonFile(options.routeDriverStorePath, "service route driver store"));
+  validateRouteDriverTargets(routeDriverStore, accountStore);
   if (routeDriverStore !== undefined && options.openSerialLinePort === undefined) {
     throw new Error("service route driver store requires an explicit serial-line opener");
   }

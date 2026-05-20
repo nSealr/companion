@@ -63,8 +63,11 @@ reviewed paths must be absolute and already expanded before use.
 They may authorize route selection, request validation, response verification,
 or dispatch. Route-driver stores must also be explicit, secretless, and exact:
 each serial-line driver names `account_id`, `route_type`, `transport: "usb"`,
-and a local serial path. The service never writes those files, chooses a
-default storage location, or approves a client by loading a file.
+and a local serial path. A route-driver store is accepted only together with an
+account-store that contains the same account id, route type, and transport, so
+stale driver files fail during context loading instead of later at dispatch
+time. The service never writes those files, chooses a default storage location,
+or approves a client by loading a file.
 
 A route-driver store uses this shape:
 

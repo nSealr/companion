@@ -390,8 +390,10 @@ single-repository CI. Cross-repository drift remains guarded by
   covers the paths, rejects secret-bearing or malformed account-store files,
   parses explicit storage-approved secretless route-driver stores, rejects
   empty, duplicate, broad, secret-bearing, non-USB, and QR-vault driver
-  mappings, dispatches matching developer serial-line requests only through an
-  injected opener or explicit route-driver file, maps serial-line open,
+  mappings, rejects stale route-driver entries that do not match the loaded
+  account-store account id, route type, and transport, dispatches matching
+  developer serial-line requests only through an injected opener or explicit
+  route-driver file, maps serial-line open,
   timeout, protocol, I/O, and close failures to deterministic transport error
   codes, returns deterministic `signer_route_unavailable` for authorized
   dispatch without a configured driver, awaits async dispatchers through the

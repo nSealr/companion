@@ -290,8 +290,10 @@ explicit secretless route-driver store for exact account/route/USB serial-line
 dispatch. As of the storage-approval gate below, the route-driver path also
 requires digest-bound storage approval before loading. The store rejects secret
 fields, broad or duplicate route mappings, QR-vault routes, non-USB transports,
-empty route sets, and unsupported fields; it opens only the configured local
-serial path through the package-owned serial-line exchange boundary. This is
+empty route sets, unsupported fields, and route-driver entries that do not
+match a loaded account-store account id, route type, and transport; it opens
+only the configured local serial path through the package-owned serial-line
+exchange boundary. This is
 developer/integration driver wiring only: it does not choose default paths,
 persist routes, approve clients, hold keys, make QR vaults connected signers,
 or claim production signer readiness.

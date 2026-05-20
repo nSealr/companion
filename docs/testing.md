@@ -37,7 +37,10 @@ single-repository CI. Cross-repository drift remains guarded by
   instead of being maintained in a hand-written name list.
   Account-descriptor, policy-profile, grant-descriptor, policy-change review,
   policy-decision, route-selection, and source public-key proof loading is also
-  directory-driven through package-owned fixture/policy code.
+  directory-driven through package-owned fixture/policy code. Policy parser
+  tests pin the v0 nSealr-managed grant menu to `sign_event` kind `1` only, so
+  broader automated methods or event kinds fail before CLI, browser, SDK, or
+  local-service code can treat a grant descriptor as valid.
   QR review-transcript fixture validation also lives in this package and covers
   `scroll` buttons plus rendered-frame `body_line_styles` mismatch rejection,
   keeping `apps/cli` as a thin fixture-verification wrapper.

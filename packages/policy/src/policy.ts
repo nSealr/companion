@@ -225,6 +225,7 @@ const POLICY_DECISION_ROUTE_TYPES = new Set<RouteType>([
 ]);
 const POLICY_CHANGE_ROUTE_TYPES = new Set<RouteType>(["esp32_usb_nip46", "custom_hardware_wallet"]);
 const GRANT_ROUTE_TYPES = new Set<RouteType>(["esp32_usb_nip46", "custom_hardware_wallet"]);
+const GRANT_AUTOMATION_EVENT_KINDS = new Set([1]);
 const POLICY_CHANGE_SURFACES = new Set(["browser_extension", "desktop_app", "cli", "sdk", "native_host_test"]);
 const SECRET_FIELD_NAMES = new Set([
   "secret_key",
@@ -631,6 +632,7 @@ function parseGrantPermission(value: unknown): GrantPermission {
   const method = requireString(value.method, "permission.method");
   if (method === "export_secret") throw new Error("grant permission must not request secret export");
   if (DECRYPT_METHODS.has(method)) throw new Error("decrypt grant permissions require manual review");
+  if (method !== "sign_event") throw new Error("v0 grants support only sign_event kind 1 automation");
   if (method === "sign_event") {
     if (typeof value.parameter !== "string" || !/^[0-9]+$/u.test(value.parameter)) {
       throw new Error("sign_event permission.parameter must be a decimal event kind");
@@ -641,12 +643,12 @@ function parseGrantPermission(value: unknown): GrantPermission {
     if (Number(value.parameter) !== value.event_kind) {
       throw new Error("sign_event permission parameter/event_kind mismatch");
     }
+    if (value.parameter !== "1" || !GRANT_AUTOMATION_EVENT_KINDS.has(value.event_kind)) {
+      throw new Error("v0 grants support only sign_event kind 1 automation");
+    }
     return { method, parameter: value.parameter, event_kind: value.event_kind };
   }
-  if ("parameter" in value || "event_kind" in value) {
-    throw new Error("non-sign_event grant permissions must not include parameters");
-  }
-  return { method };
+  throw new Error("v0 grants support only sign_event kind 1 automation");
 }
 
 function parsePolicyDecisionPermission(value: unknown): GrantPermission {

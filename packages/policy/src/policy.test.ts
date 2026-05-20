@@ -286,6 +286,22 @@ describe("identity, recovery, and policy contracts", () => {
     expect(() => parseGrantDescriptor(grant)).toThrow(/decrypt grant permissions require manual review/u);
   });
 
+  it("rejects grant automation outside the v0 kind 1 sign_event menu", () => {
+    const grant = loadJson(resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json")) as {
+      permission: Record<string, unknown>;
+    };
+
+    expect(() => parseGrantDescriptor({
+      ...grant,
+      permission: { method: "sign_event", parameter: "0", event_kind: 0 }
+    })).toThrow(/v0 grants support only sign_event kind 1 automation/u);
+
+    expect(() => parseGrantDescriptor({
+      ...grant,
+      permission: { method: "get_public_key" }
+    })).toThrow(/v0 grants support only sign_event kind 1 automation/u);
+  });
+
   it("matches shared policy decision vectors without a persistent grant store", () => {
     const grant = parseGrantDescriptor(loadJson(resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json")));
     const vectorNames = readdirSync(resolve(specsRoot, "vectors/policy-decisions"))

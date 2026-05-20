@@ -338,7 +338,10 @@ match the shared `contract_id`.
   QR-vault automation, external NIP-46 nSealr-managed automation,
   wildcard/decrypt/export grants, and grant targets outside ESP32 USB/NIP-46
   and custom hardware-wallet persistent policy routes before CLI or
-  fixture-verification code can treat those records as valid. NIP-06 account
+  fixture-verification code can treat those records as valid. The v0
+  nSealr-managed grant menu is deliberately limited to `sign_event` kind `1`;
+  additional automated methods or event kinds must arrive through specs
+  vectors and parser updates before access surfaces can expose them. NIP-06 account
   descriptors must carry a reviewed source fingerprint
   matching the QR vault import-review contract.
   These records describe resulting signing public keys and routes. Mnemonics,

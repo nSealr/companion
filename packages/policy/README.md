@@ -10,7 +10,9 @@ descriptors.
 - Reject QR-vault automation, wildcard/decrypt/export grants, and invalid
   grant targets. nSealr-managed grants are accepted only for ESP32 USB/NIP-46
   and custom hardware-wallet persistent policy routes; external NIP-46 routes
-  remain external-policy metadata.
+  remain external-policy metadata. The v0 grant automation menu is limited to
+  `sign_event` kind `1`; broader automated methods or event kinds require a
+  specs revision before this package should accept them.
 - Parse policy-change proposals and render deterministic review pages plus an
   approval digest for device-approved `set_policy` changes.
 - Parse route-selection requests, select secretless account-route metadata for

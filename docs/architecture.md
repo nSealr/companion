@@ -119,7 +119,9 @@ packages, but it must not export test-only signing as a production path.
   usage history, grants, or authoritative device policy. External NIP-46
   account descriptors remain external-policy metadata and cannot claim nSealr
   physical review, physical approval, persistent grants, or nSealr-managed
-  scoped automation.
+  scoped automation. The v0 nSealr-managed grant menu is intentionally limited
+  to `sign_event` kind `1`; broader automated event kinds or methods remain
+  future-spec work and must not be added ad hoc in an access surface.
 - `packages/review`: deterministic event-template review summary generation
   for untrusted companion previews and conformance checks.
 - `packages/dev-signer`: private test-only signing implementation,

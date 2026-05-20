@@ -174,6 +174,12 @@ USB/NIP-46 plus custom hardware-wallet persistent policy routes. This is policy
 metadata validation only; it does not add local-service grant persistence or a
 browser/relay session.
 
+Status note, 2026-05-19: companion policy parsing now enforces the v0
+nSealr-managed grant menu from specs: grant descriptors may authorize only
+`sign_event` kind `1`. Other event kinds and methods remain manual-review or
+future-spec behavior, even if an access surface can parse the underlying
+NIP-46 method.
+
 Status note, 2026-05-19: companion policy parsing now accepts and validates the
 shared NIP-06 `recovery.source_fingerprint` field so secretless account
 descriptors stay aligned with QR vault source-review metadata. This does not

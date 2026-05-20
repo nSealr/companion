@@ -215,11 +215,13 @@ match the shared `contract_id`.
   writes approvals only through the same digest-confirmed background control
   path. It can build an explicit developer package artifact
   only after route-config review/approval. Embedded-store content-script builds
-  still require a reviewed origin-permission store as secretless background
-  gate data; storage-backed builds start from browser extension storage instead
-  of embedding approvals. The build result exposes the selected route,
-  manifest permissions, content-script origin, extension id, local pairing
-  digest, popup mode, activeTab usage, and origin-permission mode it packaged,
+  still require a reviewed extension id plus origin-permission store as
+  secretless background gate data; storage-backed builds start from browser
+  extension storage instead of embedding approvals and treat any build-time
+  extension id as optional metadata only. The build result exposes the selected
+  route, manifest permissions, content-script origin, optional embedded
+  extension id, local pairing digest, popup mode, activeTab usage, and
+  origin-permission mode it packaged,
   while still not installing a browser extension, writing extension storage at
   build time, creating grants, dispatching signers, or holding key material.
 - `@nsealr/client` exposes the shared local-client identity parser, including

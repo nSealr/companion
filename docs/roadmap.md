@@ -687,9 +687,10 @@ counts, and SHA-256 digests, and still does not publish to npm.
   `release-artifacts/browser-extension/`, preventing source-tree artifact drift
   during package rehearsals. Package build returns explicit
   reviewed package-plan, route, manifest-permissions, popup-mode, activeTab,
-  origin, extension, and pairing metadata plus a package digest and per-file
-  byte counts and SHA-256 hashes, and still avoids native-host installation,
-  extension storage writes, key custody, and signer dispatch.
+  origin, optional embedded extension, and pairing metadata plus a package
+  digest and per-file byte counts and SHA-256 hashes, and still avoids
+  native-host installation, extension storage writes, key custody, and signer
+  dispatch.
   The browser-extension manifest builder can still build a minimal
   MV3 manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage
@@ -704,7 +705,8 @@ counts, and SHA-256 digests, and still does not publish to npm.
   `activeTab` and `storage`, resolves active-tab and extension-storage globals
   only through reviewed adapters, loads the approved-origin store before
   provider selection, binds approvals to the browser runtime's actual
-  extension id for unpacked Chromium development builds, and wires the
+  extension id for unpacked Chromium development builds without requiring a
+  static extension id at storage-backed package-build time, and wires the
   packaged popup to the digest-confirmed origin-permission approval path.
   Remaining work: reviewed
   bootstrap/config UX beyond the static developer route config,

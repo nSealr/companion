@@ -197,8 +197,6 @@ describe("browser extension package-build CLI", () => {
         "esp32_usb_nip46",
         "--route-config-approval",
         approvalPath,
-        "--extension-id",
-        chromiumExtensionId,
         "--origin-permission-mode",
         "extension-storage",
         "--local-pairing-digest",
@@ -216,13 +214,13 @@ describe("browser extension package-build CLI", () => {
         manifest_permissions: ["nativeMessaging", "activeTab", "storage"],
         origin_permission_mode: "extension_storage",
         package_plan_digest: chromiumExtensionStoragePackagePlanDigest,
-        extension_id: chromiumExtensionId,
         local_pairing_digest: localPairingDigest,
         content_script_origins: ["https://example.com"],
         uses_active_tab_permission: true,
         embeds_origin_permission_store: false,
         uses_extension_origin_permission_storage: true
       });
+      expect("extension_id" in result).toBe(false);
       expect(existsSync(join(temp.outDir, "manifest.json"))).toBe(true);
     } finally {
       temp.cleanup();
@@ -364,6 +362,26 @@ describe("browser extension package-build CLI", () => {
         "--content-script-match",
         "<all_urls>"
       ])).rejects.toThrow(/content script match/u);
+      await expect(browserExtensionPackageBuildJsonFromArgs([
+        "--target",
+        "chromium",
+        "--out-dir",
+        temp.outDir,
+        "--package-plan-digest",
+        chromiumPackagePlanDigest,
+        "--route-account-id",
+        "esp32-usb-slot-0",
+        "--route-type",
+        "esp32_usb_nip46",
+        "--route-config-approval",
+        approvalPath,
+        "--origin-permission-store",
+        originStorePath,
+        "--local-pairing-digest",
+        localPairingDigest,
+        "--content-script-match",
+        "https://example.com/*"
+      ])).rejects.toThrow(/extensionId is required for embedded origin-permission/u);
       await expect(browserExtensionPackageBuildJsonFromArgs([
         "--target",
         "chromium",

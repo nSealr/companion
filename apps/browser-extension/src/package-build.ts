@@ -209,10 +209,14 @@ function packageExtensionId(options: BrowserExtensionPackageBuildOptions): strin
 }
 
 type BrowserExtensionPackageOriginPermissions = {
-  mode: BrowserExtensionPackageOriginPermissionMode;
-  store?: BrowserExtensionOriginPermissionStore;
+  mode: "embedded";
+  store: BrowserExtensionOriginPermissionStore;
   localPairingDigest: string;
   extensionId: string;
+} | {
+  mode: "extension_storage";
+  localPairingDigest: string;
+  extensionId?: string;
 };
 
 function requireOriginPermissionMode(
@@ -267,10 +271,6 @@ function originPermissionsForPackage(
       throw new Error("browser extension package localPairingDigest is required for extension-storage origin permissions");
     }
   }
-  const extensionId = packageExtensionId(options);
-  if (extensionId === undefined) {
-    throw new Error("browser extension package extensionId is required for origin-permission gated content scripts");
-  }
   const localPairingDigest = requireLowerHex64(
     options.localPairingDigest,
     "browser extension package localPairingDigest"
@@ -282,7 +282,16 @@ function originPermissionsForPackage(
     if (options.originPermissionStore !== undefined) {
       throw new Error("browser extension package extension-storage origin permissions must start from browser storage");
     }
-    return { mode: "extension_storage", localPairingDigest, extensionId };
+    const extensionId = packageExtensionId(options);
+    return {
+      mode: "extension_storage",
+      localPairingDigest,
+      ...(extensionId !== undefined ? { extensionId } : {})
+    };
+  }
+  const extensionId = packageExtensionId(options);
+  if (extensionId === undefined) {
+    throw new Error("browser extension package extensionId is required for embedded origin-permission builds");
   }
   const store = parseBrowserExtensionOriginPermissionStore(options.originPermissionStore);
   for (const origin of origins) {

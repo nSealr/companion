@@ -301,7 +301,9 @@ single-repository CI. Cross-repository drift remains guarded by
   has no output-path/install behavior.
   Package-build tests require a reviewed package-plan digest plus explicit
   extension id, reviewed origin-permission store, and local pairing digest
-  before content-script artifacts can embed an origin gate. The default
+  before content-script artifacts can embed an origin gate. Storage-backed
+  package-build tests prove the build can omit static extension-id metadata and
+  bind approvals to the runtime extension id instead. The default
   embedded-origin result remains extension-storage-free; every package-build
   profile remains grant-free, signer-dispatch-free, and secret-free.
   Content-script browser entrypoint tests prove explicit browser-like

@@ -287,7 +287,6 @@ describe("browser extension package build", () => {
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
-        extensionId: chromiumExtensionId,
         originPermissionMode: "extension_storage",
         localPairingDigest
       });
@@ -303,7 +302,6 @@ describe("browser extension package build", () => {
         popup_mode: "origin_permission_approval",
         manifest_permissions: ["nativeMessaging", "activeTab", "storage"],
         origin_permission_mode: "extension_storage",
-        extension_id: chromiumExtensionId,
         local_pairing_digest: localPairingDigest,
         content_script_origins: ["https://example.com"],
         installs_native_host_manifest: false,
@@ -314,6 +312,7 @@ describe("browser extension package build", () => {
         embeds_origin_permission_store: false,
         uses_extension_origin_permission_storage: true
       });
+      expect("extension_id" in result).toBe(false);
       const manifest = JSON.parse(readFileSync(join(temp.outDir, "manifest.json"), "utf8"));
       expect(manifest.permissions).toEqual(["nativeMessaging", "activeTab", "storage"]);
       expect("host_permissions" in manifest).toBe(false);
@@ -385,12 +384,22 @@ describe("browser extension package build", () => {
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: invalidRoute.outDir,
+        packagePlanDigest: chromiumPackagePlanDigest,
+        routeConfig,
+        routeConfigApproval,
+        contentScriptMatches: ["https://example.com/*"],
+        originPermissionStore: originPermissionStore(),
+        localPairingDigest
+      })).rejects.toThrow(/extensionId is required for embedded origin-permission/u);
+      expect(existsSync(invalidRoute.outDir)).toBe(false);
+      await expect(buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: invalidRoute.outDir,
         packagePlanDigest: chromiumExtensionStoragePackagePlanDigest,
         routeConfig,
         routeConfigApproval,
         popupMode: "origin_permission_approval",
         contentScriptMatches: ["https://example.com/*"],
-        extensionId: chromiumExtensionId,
         originPermissionStore: originPermissionStore(),
         localPairingDigest
       })).rejects.toThrow(/extension-storage origin permission mode/u);
@@ -402,7 +411,6 @@ describe("browser extension package build", () => {
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
-        extensionId: chromiumExtensionId,
         originPermissionMode: "extension_storage",
         popupMode: "pending_requests",
         localPairingDigest
@@ -415,7 +423,6 @@ describe("browser extension package build", () => {
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
-        extensionId: chromiumExtensionId,
         originPermissionMode: "extension_storage",
         originPermissionStore: originPermissionStore(),
         localPairingDigest

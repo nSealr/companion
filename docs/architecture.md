@@ -81,8 +81,9 @@ packages, but it must not export test-only signing as a production path.
   digest-approved secretless static route config in the background bundle, and
   requires reviewed origin-permission store data before content scripts can be
   packaged. It returns explicit route, manifest permissions, popup mode,
-  activeTab usage, origin, extension, and pairing metadata plus a package
-  digest and per-file byte counts plus SHA-256 hashes, writes no extension
+  activeTab usage, origin, optional embedded extension, and pairing metadata
+  plus a package digest and per-file byte counts plus SHA-256 hashes, writes no
+  extension
   storage, installs no native-host manifest, and remains a developer artifact
   until a full bootstrap/config UX is reviewed.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
@@ -561,7 +562,7 @@ output directory must either be outside the companion source tree or a child of
 unreviewed files under `apps/`, `packages/`, docs, scripts, or tests. The
 returned `nsealr-browser-extension-package-build-v0` result includes the
 reviewed package-plan digest, route-config digest, selected account/route,
-content-script origins, extension id, local pairing digest,
+content-script origins, optional embedded extension id, local pairing digest,
 manifest permissions, popup mode, origin-permission mode, activeTab usage,
 package digest, and per-file byte counts plus SHA-256 hashes for the manifest,
 packaged popup HTML, and bundled entrypoints. Lab integration verifies both the
@@ -711,7 +712,10 @@ adapter at runtime, loads the store before provider selection, and lets the
 action popup write new approvals only through the digest-confirmed background
 approval path. Storage-backed packages bind approvals to the browser runtime's
 actual extension id at runtime, so unpacked Chromium development builds do not
-fail because their runtime id differs from reviewed package metadata.
+fail because their runtime id differs from reviewed package metadata. A
+build-time extension id is optional metadata for `extension_storage` packages
+and remains mandatory only for embedded-store content-script packages, where
+the reviewed store must be keyed before packaging.
 Build-time side effects remain unchanged: package builds write only package
 files, never extension storage, grants, signer output, or native host
 manifests.

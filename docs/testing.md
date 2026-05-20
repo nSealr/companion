@@ -551,12 +551,13 @@ single-repository CI. Cross-repository drift remains guarded by
   tag, opaque encrypted content, and optional signed-event field shapes without
   decrypting NIP-44 content, opening relays, creating grants, or reaching
   signer transport.
-- NIP-46 relay request-step tests covering shared post-decryption vectors. The
-  evaluator binds the validated relay event envelope, plaintext message, and
-  reviewed permissions to the same bridge decision path used by local
-  decrypted payloads without opening relays, decrypting NIP-44 content,
-  acknowledging `connect`, creating grants, dispatching signers, or persisting
-  session state.
+- NIP-46 relay step tests covering shared post-decryption request and response
+  vectors. The request evaluator binds the validated relay event envelope,
+  plaintext message, and reviewed permissions to the same bridge decision path
+  used by local decrypted payloads. The response evaluator shape-checks
+  plaintext NIP-46 response messages. Neither opens relays, decrypts NIP-44
+  content, acknowledges `connect`, creates grants, dispatches signers, verifies
+  signatures, or persists session state.
 - NIP-46 permission matching tests covering derived `sign_event:<kind>`
   requirements, broad requested-permission compatibility, explicit approved
   `sign_event:<kind>` inputs, method-only grants, denied requests, and

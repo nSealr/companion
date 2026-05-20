@@ -219,11 +219,14 @@ Exports:
 - `Nip46RelayEventDirection`
 - `Nip46RelayEventEnvelope`
 - `Nip46RelayRequestStep`
+- `Nip46RelayResponseResultType`
+- `Nip46RelayResponseStep`
 - `Nip46RequestMessage`
 - `Nip46ResponseMessage`
 - `approveNip46ConnectReview`
 - `decideNip46BridgeAction`
 - `evaluateNip46RelayRequestStep`
+- `evaluateNip46RelayResponseStep`
 - `isNip46RequestPermitted`
 - `nip46PermissionLabel`
 - `nip46PermissionRequirementFromRequest`

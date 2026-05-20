@@ -12,9 +12,10 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
   metadata without echoing shared secrets.
 - Parse NIP-46 `kind:24133` relay event envelopes into sender/recipient/content
   metadata without decrypting NIP-44 content or opening relay connections.
-- Evaluate metadata-only relay request steps after a future NIP-44 layer has
-  supplied plaintext, returning deterministic bridge decisions without relay
-  I/O, signer dispatch, grant creation, or session persistence.
+- Evaluate metadata-only relay request and response steps after a future
+  NIP-44 layer has supplied plaintext, returning deterministic bridge decisions
+  or response-shape metadata without relay I/O, signer dispatch, grant
+  creation, signature verification, or session persistence.
 - Parse read-only nSealr policy files used by the CLI and tests.
 - Keep requested-permission parsing separate from approved-permission parsing
   so broad `sign_event` can be reviewed as metadata but cannot authorize a
@@ -63,8 +64,9 @@ optional signed-event field shapes. It does not verify signatures, decrypt
 NIP-44 content, open relays, persist grants, acknowledge `connect`, or reach
 signer I/O. Those layers remain blocked on separate policy and session gates.
 
-Relay request-step evaluation starts from an envelope and an already decrypted
-message. It reuses the same request validation, permission checks, and bridge
-decision logic as local decrypted payload handling, but still does not decrypt
-NIP-44 content, open relays, acknowledge `connect`, create grants, dispatch a
-signer, or persist session state.
+Relay step evaluation starts from an envelope and an already decrypted message.
+Request steps reuse the same request validation, permission checks, and bridge
+decision logic as local decrypted payload handling. Response steps shape-check
+NIP-46 response messages and signed-event result payloads. They still do not
+decrypt NIP-44 content, open relays, acknowledge `connect`, create grants,
+dispatch a signer, verify signatures, or persist session state.

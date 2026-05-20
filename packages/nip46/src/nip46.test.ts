@@ -8,6 +8,7 @@ import {
   approveNip46ConnectReview,
   decideNip46BridgeAction,
   evaluateNip46RelayRequestStep,
+  evaluateNip46RelayResponseStep,
   isNip46RequestPermitted,
   nip46ResponseFromNSealr,
   nip46PermissionRequirementFromRequest,
@@ -245,15 +246,19 @@ describe("NIP-46 bridge payloads", () => {
     }
   });
 
-  it("matches shared NIP-46 relay request-step vectors", () => {
+  it("matches shared NIP-46 relay step vectors", () => {
     const fixtures = loadSpecsFixtures(specsRoot);
 
     expect(fixtures.nip46RelaySteps.map((vector) => vector.name)).toEqual([
       "ping-request-step",
-      "sign-event-request-step"
+      "sign-event-request-step",
+      "sign-event-response-step"
     ]);
     for (const vector of fixtures.nip46RelaySteps) {
-      expect(evaluateNip46RelayRequestStep(vector)).toEqual(vector.expected_step);
+      const actual = vector.format === "nsealr-nip46-relay-response-step-v0"
+        ? evaluateNip46RelayResponseStep(vector)
+        : evaluateNip46RelayRequestStep(vector);
+      expect(actual).toEqual(vector.expected_step);
     }
   });
 

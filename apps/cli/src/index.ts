@@ -34,6 +34,7 @@ import {
   approveNip46ConnectReview,
   decideNip46BridgeAction,
   evaluateNip46RelayRequestStep,
+  evaluateNip46RelayResponseStep,
   isNip46RequestPermitted,
   nip46PermissionRequirementFromRequest,
   nip46ResponseFromNSealr,
@@ -739,9 +740,11 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         }
       }
       for (const relayStep of fixtures.nip46RelaySteps) {
-        const actual = evaluateNip46RelayRequestStep(relayStep);
+        const actual = relayStep.format === "nsealr-nip46-relay-response-step-v0"
+          ? evaluateNip46RelayResponseStep(relayStep)
+          : evaluateNip46RelayRequestStep(relayStep);
         if (JSON.stringify(actual) !== JSON.stringify(relayStep.expected_step)) {
-          throw new Error(`invalid NIP-46 relay request-step fixture ${relayStep.name}: step mismatch`);
+          throw new Error(`invalid NIP-46 relay step fixture ${relayStep.name}: step mismatch`);
         }
       }
       for (const featureMatrix of fixtures.featureMatrices) {
@@ -757,7 +760,7 @@ export function buildCli(options: BuildCliOptions = {}): Command {
       const relayEventFixtureLabel =
         fixtureCountLabel(fixtures.nip46RelayEvents.length, "NIP-46 relay event fixture");
       const relayStepFixtureLabel =
-        fixtureCountLabel(fixtures.nip46RelaySteps.length, "NIP-46 relay request-step fixture");
+        fixtureCountLabel(fixtures.nip46RelaySteps.length, "NIP-46 relay step fixture");
       console.log(
         `verified ${fixtureCountLabel(fixtures.events.length, "event fixture")}, ${fixtureCountLabel(fixtures.reviews.length, "review fixture")}, ${fixtureCountLabel(fixtures.reviewScreens.length, "review-screen fixture")}, ${fixtureCountLabel(fixtures.reviewDisplayFrames.length, "review display-frame fixture")}, ${fixtureCountLabel(fixtures.reviewDetailPages.length, "review detail-page fixture")}, ${fixtureCountLabel(fixtures.reviewTranscripts.length, "review transcript fixture")}, ${fixtureCountLabel(fixtures.nip46Payloads.length, "NIP-46 payload fixture")}, ${policyFileFixtureLabel}, ${connectionUriFixtureLabel}, ${relayEventFixtureLabel}, ${relayStepFixtureLabel}, ${fixtureCountLabel(fixtures.accounts.length, "account descriptor")}, ${fixtureCountLabel(fixtures.policyProfiles.length, "policy profile")}, ${fixtureCountLabel(fixtures.grants.length, "grant descriptor")}, ${fixtureCountLabel(fixtures.policyChanges.length, "policy change vector")}, ${fixtureCountLabel(fixtures.policyDecisions.length, "policy decision vector")}, ${fixtureCountLabel(fixtures.routeSelections.length, "route selection vector")}, ${fixtureCountLabel(fixtures.accessSurfaces.length, "access-surface vector")}, ${fixtureCountLabel(fixtures.featureMatrices.length, "feature matrix")}, and ${fixtureCountLabel(fixtures.invalidVectors.length, "invalid hardening fixture")}`
       );

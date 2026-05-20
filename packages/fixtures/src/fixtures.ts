@@ -227,11 +227,11 @@ export type SpecsFixtureSet = {
   }>;
   nip46RelaySteps: Array<{
     name: string;
-    format: "nsealr-nip46-relay-request-step-v0";
+    format: "nsealr-nip46-relay-request-step-v0" | "nsealr-nip46-relay-response-step-v0";
     direction: "client_to_remote_signer" | "remote_signer_to_client";
     event: unknown;
     decrypted_message: unknown;
-    granted_permissions: unknown[];
+    granted_permissions?: unknown[];
     expected_step: unknown;
     scope: string;
   }>;

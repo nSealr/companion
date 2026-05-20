@@ -77,6 +77,29 @@ export type Nip46RelayRequestStep = {
   persists_session_state: false;
 };
 
+export type Nip46RelayResponseResultType =
+  | "signed_event_result"
+  | "public_key_result"
+  | "pong_result"
+  | "error";
+
+export type Nip46RelayResponseStep = {
+  format: "nsealr-nip46-relay-response-step-v0";
+  envelope: Nip46RelayEventEnvelope;
+  message_id: string;
+  response_message: Nip46ResponseMessage;
+  result_type: Nip46RelayResponseResultType;
+  signed_event_shape_checked: boolean;
+  decrypts_content: false;
+  opens_relay: false;
+  creates_grants: false;
+  acknowledges_connect: false;
+  dispatches_signer: false;
+  verifies_signature: false;
+  stores_production_secrets: false;
+  persists_session_state: false;
+};
+
 export type Nip46ConnectReview = {
   format: "nsealr-nip46-connect-review-v0";
   id: string;
@@ -290,6 +313,26 @@ function requireMessage(value: unknown): Nip46RequestMessage {
     method: value.method,
     params: value.params
   };
+}
+
+function requireResponseMessage(value: unknown): Nip46ResponseMessage {
+  if (!isRecord(value)) throw new Error("NIP-46 response message must be an object");
+  if (compactJsonUtf8ByteLength(value) > NSEALR_V0_LIMITS.max_nip46_decrypted_message_json_bytes) {
+    throw new Error("NIP-46 decrypted response JSON exceeds max_nip46_decrypted_message_json_bytes");
+  }
+  assertOnlyKeys(value, ["id", "result", "error"], "NIP-46 response message");
+  const id = requireNip46Id(value.id);
+  const hasResult = "result" in value;
+  const hasError = "error" in value;
+  if (hasResult === hasError) {
+    throw new Error("NIP-46 response message must contain exactly one of result or error");
+  }
+  if (hasResult) {
+    if (typeof value.result !== "string") throw new Error("NIP-46 response message result must be a string");
+    return { id, result: value.result };
+  }
+  if (typeof value.error !== "string") throw new Error("NIP-46 response message error must be a string");
+  return { id, error: value.error };
 }
 
 function parseJsonParam(param: string, label: string): unknown {
@@ -529,6 +572,66 @@ export function evaluateNip46RelayRequestStep(value: unknown): Nip46RelayRequest
     creates_grants: false,
     acknowledges_connect: false,
     dispatches_signer: false,
+    stores_production_secrets: false,
+    persists_session_state: false
+  };
+}
+
+function relayResponseResultType(message: Nip46ResponseMessage): {
+  resultType: Nip46RelayResponseResultType;
+  signedEventShapeChecked: boolean;
+} {
+  if (message.error !== undefined) {
+    return { resultType: "error", signedEventShapeChecked: false };
+  }
+  const result = message.result;
+  if (result === undefined) throw new Error("NIP-46 response message result is missing");
+  if (X_ONLY_PUBKEY.test(result)) {
+    return { resultType: "public_key_result", signedEventShapeChecked: false };
+  }
+  if (result === "pong") {
+    return { resultType: "pong_result", signedEventShapeChecked: false };
+  }
+  let event: unknown;
+  try {
+    event = JSON.parse(result);
+  } catch (error) {
+    throw new Error("NIP-46 response message result is not a supported v0 response shape");
+  }
+  const shape = validateResponse({
+    version: 1,
+    request_id: message.id,
+    ok: true,
+    result: { event }
+  });
+  if (!shape.ok) {
+    throw new Error(shape.error ?? "NIP-46 signed-event response shape is invalid");
+  }
+  return { resultType: "signed_event_result", signedEventShapeChecked: true };
+}
+
+export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayResponseStep {
+  if (!isRecord(value)) throw new Error("NIP-46 relay response step must be an object");
+  const direction = requireNip46RelayDirection(value.direction);
+  if (direction !== "remote_signer_to_client") {
+    throw new Error("NIP-46 relay response step direction must be remote_signer_to_client");
+  }
+  const envelope = parseNip46RelayEventEnvelope(value.event, direction);
+  const responseMessage = requireResponseMessage(value.decrypted_message);
+  const { resultType, signedEventShapeChecked } = relayResponseResultType(responseMessage);
+  return {
+    format: "nsealr-nip46-relay-response-step-v0",
+    envelope,
+    message_id: responseMessage.id,
+    response_message: responseMessage,
+    result_type: resultType,
+    signed_event_shape_checked: signedEventShapeChecked,
+    decrypts_content: false,
+    opens_relay: false,
+    creates_grants: false,
+    acknowledges_connect: false,
+    dispatches_signer: false,
+    verifies_signature: false,
     stores_production_secrets: false,
     persists_session_state: false
   };

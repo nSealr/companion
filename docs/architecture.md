@@ -340,16 +340,17 @@ paths, approve clients, dispatch signers, or turn reviewed paths into
 production storage. Grant-store artifact builders consume those approvals before
 writing requested output paths, and still refuse to replace existing output
 files.
+`nsealr local native-host` is the public CLI boundary for browser native-host
+onboarding. It renders Chromium/Firefox manifests and digest-bound install
+plans without installing anything, creates approval artifacts only after the
+reviewed install digest is supplied, and executes only the approved manifest
+write with exclusive-create semantics plus an execution report.
 The private `@nsealr/service` app now runs a tested multi-message native-host
 stdio loop, so a future browser extension can keep one native-messaging port
 open and receive one deterministic response per length-prefixed service
-request. It can also generate validated Chromium/Firefox native-host manifest
-JSON, digest-bound dry-run install-plan JSON, and digest-confirmed
-install-approval JSON with explicit host path, manifest path, extension id,
-and reviewed install digest inputs through the shared `@nsealr/client`
-manifest builder. The service app also exposes a separate digest-confirmed
-install-execution wrapper that writes only the reviewed manifest path with
-exclusive create semantics; planning and approval paths remain JSON-only.
+request. It keeps equivalent native-host artifact helpers for service-level
+harnesses, but operator-facing onboarding goes through the companion CLI and
+the shared `@nsealr/client` manifest builder.
 `@nsealr/client` also defines
 the persistent grant-store JSON contract used to serialize approved and revoked
 local client grants without secret material. The private service app can now

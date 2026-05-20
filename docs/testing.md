@@ -658,6 +658,12 @@ single-repository CI. Cross-repository drift remains guarded by
   rejection, stack-free executable validation errors, digest-confirmed approval
   artifacts, and refusal to write review or approval metadata for ambiguous
   paths or mismatched digests.
+- CLI native-host onboarding tests covering
+  `nsealr local native-host manifest`, `plan-install`, `approve-install`, and
+  `execute-install`, including dry-run manifest/plan rendering, digest-bound
+  approval, execution-report generation, exclusive-create manifest writes, and
+  refusal to write approval, execution-report, or manifest files when reviewed
+  digests or output paths do not match.
 - CLI local grant-store artifact tests covering
   `nsealr local grant-store append-approval`, including new-store creation,
   explicit input-store extension without input-file mutation, required
@@ -708,14 +714,14 @@ single-repository CI. Cross-repository drift remains guarded by
   deterministic pairing-review projection, digest-bound storage-location
   review and approval artifacts, strict grant-store serialization/revocation,
   explicit storage-approved read-only context loading, selected account route,
-  malformed
-  native-message rejection, shared Chromium/Firefox native-host manifest
-  building, digest-bound dry-run install-plan building, install-approval
-  artifact generation in `@nsealr/client`, explicit approval-bound
-  install-execution through a write-new adapter, multi-message native-host stdio
-  behavior, and the private service CLI wrapper that renders
-  manifests/plans/approvals, rejects duplicated singleton install options, and
-  can write an approved manifest path without overwriting existing files.
+  malformed native-message rejection, shared Chromium/Firefox native-host
+  manifest building, digest-bound dry-run install-plan building,
+  install-approval artifact generation in `@nsealr/client`, explicit
+  approval-bound install-execution through a write-new adapter, multi-message
+  native-host stdio behavior, public CLI native-host onboarding artifacts, and
+  the private service CLI wrapper that renders manifests/plans/approvals,
+  rejects duplicated singleton install options, and can write an approved
+  manifest path without overwriting existing files.
   Current service
   route-driver tests cover the developer serial-line dispatch boundary through
   fake ports and supported local serial path forms only; hardware serial smoke

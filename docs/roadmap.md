@@ -383,12 +383,13 @@ signer-driver acceptance.
 
 Status note, 2026-05-19: native-host install plans are now digest-bound and
 explicit about both the parent directory to ensure and the manifest file to
-write. The private `@nsealr/service` app can render native-host install
-approval JSON only after the caller supplies the reviewed install digest. The
-approval remains artifact-only with `writes_files=false`; the separate
-`--native-host-install-execute` path verifies the approval digest again, creates
-only the reviewed parent directory, and writes only the reviewed manifest path
-with exclusive create semantics.
+write. The public `nsealr local native-host` CLI now renders manifests,
+install plans, digest-confirmed install approvals, and approval-bound execution
+reports. The approval remains artifact-only with `writes_files=false`;
+execution verifies the install digest again, creates only the reviewed parent
+directory, and writes only the reviewed manifest path with exclusive-create
+semantics. The private service retains equivalent helpers for harness coverage,
+not as the primary operator interface.
 
 Status note, 2026-05-11: the companion identity/policy boundary now follows
 the official account model. Account metadata is per resulting public key and

@@ -102,6 +102,12 @@ match the shared `contract_id`.
 - `nsealr local approve-storage` creates a storage-location approval artifact
   only when the caller supplies the reviewed storage digest. It still does not
   create, move, or activate storage files.
+- `nsealr local native-host manifest`, `plan-install`, `approve-install`, and
+  `execute-install` expose the browser native-host onboarding flow through the
+  public companion CLI. Manifest rendering and install planning are dry-run
+  artifact steps. Approval requires the reviewed install digest, execution
+  rechecks that digest, writes only the reviewed manifest path with `write_new`
+  semantics, and produces a separate execution report.
 - `nsealr local grant-store append-approval` writes a new explicit secretless
   grant-store artifact from a pairing approval only when a storage approval
   covers the requested read-only input path, if any, and new output path. It may
@@ -242,13 +248,11 @@ match the shared `contract_id`.
   on one stdio session, returns deterministic native-frame errors, and accepts
   explicit in-memory authorization context in tests. It can also load explicit
   storage-approved read-only secretless grant/account and route-driver JSON
-  files for developer and integration harnesses, and print validated
-  Chromium/Firefox native-host manifest JSON for installer work. It can also
-  print a digest-bound dry-run native-host install plan, digest-confirmed
-  install approval JSON, and an explicit approval-bound install execution
-  result that writes only the reviewed native-host manifest with `write_new`
-  semantics. Native-host manifest/install CLI singleton options reject
-  duplicates before artifacts are rendered. Route-driver serial-line timing
+  files for developer and integration harnesses. Browser native-host onboarding
+  artifacts are now exposed by the public `nsealr local native-host` CLI; the
+  private service keeps equivalent JSON helpers only for service-level harness
+  tests. Native-host manifest/install CLI singleton options reject duplicates
+  before artifacts are rendered. Route-driver serial-line timing
   controls are bounded before
   dispatch, so driver files cannot configure unbounded response waits or
   ignored-log loops. It does not open relays, store keys, write grant/account
@@ -513,6 +517,9 @@ pnpm nsealr local review-pairing --intent pairing-intent.json --out pairing-revi
 pnpm nsealr local approve-pairing --intent pairing-intent.json --reviewed-pairing-digest <digest-hex> --approved-at 1900000000 --out pairing-approval.json
 pnpm nsealr local review-storage --grant-store "$PWD/local-grants.json" --grant-store-output "$PWD/local-grants-next.json" --out storage-review.json
 pnpm nsealr local approve-storage --review storage-review.json --reviewed-storage-digest <digest-hex> --approved-at 1900000000 --out storage-approval.json
+pnpm nsealr local native-host plan-install --browser chromium --host-path /Applications/nSealr/nsealr-service --manifest-path "$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts/dev.nsealr.companion.json" --extension-id <chromium-extension-id> --out native-host-plan.json
+pnpm nsealr local native-host approve-install --plan native-host-plan.json --reviewed-install-digest <install-digest-hex> --approved-at 1900000000 --out native-host-approval.json
+pnpm nsealr local native-host execute-install --approval native-host-approval.json --reviewed-install-digest <install-digest-hex> --out native-host-execution.json
 pnpm nsealr local grant-store append-approval --approval pairing-approval.json --grant-store "$PWD/local-grants.json" --storage-approval storage-approval.json --updated-at 1900000001 --out "$PWD/local-grants-next.json"
 pnpm nsealr local review-storage --grant-store "$PWD/local-grants-next.json" --grant-store-output "$PWD/local-grants-revoked.json" --out storage-revoke-review.json
 pnpm nsealr local approve-storage --review storage-revoke-review.json --reviewed-storage-digest <digest-hex> --approved-at 1900000010 --out storage-revoke-approval.json

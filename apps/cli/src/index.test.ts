@@ -4,12 +4,19 @@ import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   approveLocalStorageReview,
+  approveNativeHostInstallPlan,
   approvePairingIntent,
+  buildNativeHostInstallPlan,
+  buildNativeHostManifest,
   createLocalGrantStore,
   createLocalStorageReview,
   handleLocalServiceRequest,
   LOCAL_GRANT_STORE_FORMAT,
+  NATIVE_HOST_NAME,
   parseLocalGrantStore,
+  parseNativeHostInstallApproval,
+  parseNativeHostInstallExecution,
+  parseNativeHostInstallPlan,
   parseLocalStorageApproval,
   parseLocalStorageReview,
   reviewPairingIntent,
@@ -1345,6 +1352,188 @@ describe("nsealr CLI", () => {
       ])
     ).rejects.toThrow(/reviewed storage digest does not match review/u);
     expect(existsSync(approvalPath)).toBe(false);
+  });
+
+  it("creates browser native-host onboarding artifacts through the public local CLI", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-native-host-"));
+    const hostPath = "/Applications/nSealr/nsealr-service";
+    const extensionId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const manifestPath = join(tempRoot, "NativeMessagingHosts", `${NATIVE_HOST_NAME}.json`);
+    const manifestOutPath = join(tempRoot, "native-host-manifest.json");
+    const planPath = join(tempRoot, "native-host-plan.json");
+    const approvalPath = join(tempRoot, "native-host-approval.json");
+    const executionPath = join(tempRoot, "native-host-execution.json");
+
+    await runCli([
+      "local",
+      "native-host",
+      "manifest",
+      "--browser",
+      "chromium",
+      "--host-path",
+      hostPath,
+      "--extension-id",
+      extensionId,
+      "--out",
+      manifestOutPath
+    ]);
+    expect(loadJson(manifestOutPath)).toEqual(buildNativeHostManifest({
+      browser: "chromium",
+      hostPath,
+      extensionIds: [extensionId]
+    }));
+    expect(existsSync(manifestPath)).toBe(false);
+
+    await runCli([
+      "local",
+      "native-host",
+      "plan-install",
+      "--browser",
+      "chromium",
+      "--host-path",
+      hostPath,
+      "--manifest-path",
+      manifestPath,
+      "--extension-id",
+      extensionId,
+      "--out",
+      planPath
+    ]);
+    const plan = parseNativeHostInstallPlan(loadJson(planPath));
+    expect(plan).toEqual(buildNativeHostInstallPlan({
+      browser: "chromium",
+      hostPath,
+      manifestPath,
+      extensionIds: [extensionId]
+    }));
+    expect(existsSync(manifestPath)).toBe(false);
+
+    await runCli([
+      "local",
+      "native-host",
+      "approve-install",
+      "--plan",
+      planPath,
+      "--reviewed-install-digest",
+      plan.install_digest,
+      "--approved-at",
+      "1900000000",
+      "--out",
+      approvalPath
+    ]);
+    const approval = parseNativeHostInstallApproval(loadJson(approvalPath));
+    expect(approval).toEqual(approveNativeHostInstallPlan(plan, {
+      reviewedInstallDigest: plan.install_digest,
+      approvedAt: 1_900_000_000
+    }));
+    expect(existsSync(manifestPath)).toBe(false);
+
+    await runCli([
+      "local",
+      "native-host",
+      "execute-install",
+      "--approval",
+      approvalPath,
+      "--reviewed-install-digest",
+      plan.install_digest,
+      "--out",
+      executionPath
+    ]);
+    const execution = parseNativeHostInstallExecution(loadJson(executionPath));
+    expect(execution).toMatchObject({
+      install_digest: plan.install_digest,
+      manifest_path: manifestPath,
+      requires_user_approval: true,
+      writes_files: true,
+      stores_production_secrets: false
+    });
+    expect(loadJson(manifestPath)).toEqual(plan.manifest);
+  });
+
+  it("rejects browser native-host approval or execution before writing artifacts", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-native-host-reject-"));
+    const hostPath = "/Applications/nSealr/nsealr-service";
+    const extensionId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const manifestPath = join(tempRoot, "NativeMessagingHosts", `${NATIVE_HOST_NAME}.json`);
+    const planPath = join(tempRoot, "native-host-plan.json");
+    const approvalPath = join(tempRoot, "native-host-approval.json");
+    const badApprovalPath = join(tempRoot, "bad-native-host-approval.json");
+    const executionPath = join(tempRoot, "native-host-execution.json");
+    const preexistingExecutionPath = join(tempRoot, "preexisting-execution.json");
+
+    await runCli([
+      "local",
+      "native-host",
+      "plan-install",
+      "--browser",
+      "chromium",
+      "--host-path",
+      hostPath,
+      "--manifest-path",
+      manifestPath,
+      "--extension-id",
+      extensionId,
+      "--out",
+      planPath
+    ]);
+    const plan = parseNativeHostInstallPlan(loadJson(planPath));
+
+    await expect(runCli([
+      "local",
+      "native-host",
+      "approve-install",
+      "--plan",
+      planPath,
+      "--reviewed-install-digest",
+      "0".repeat(64),
+      "--approved-at",
+      "1900000000",
+      "--out",
+      badApprovalPath
+    ])).rejects.toThrow(/digest does not match/u);
+    expect(existsSync(badApprovalPath)).toBe(false);
+    expect(existsSync(manifestPath)).toBe(false);
+
+    await runCli([
+      "local",
+      "native-host",
+      "approve-install",
+      "--plan",
+      planPath,
+      "--reviewed-install-digest",
+      plan.install_digest,
+      "--approved-at",
+      "1900000000",
+      "--out",
+      approvalPath
+    ]);
+    await expect(runCli([
+      "local",
+      "native-host",
+      "execute-install",
+      "--approval",
+      approvalPath,
+      "--reviewed-install-digest",
+      "0".repeat(64),
+      "--out",
+      executionPath
+    ])).rejects.toThrow(/digest does not match/u);
+    expect(existsSync(executionPath)).toBe(false);
+    expect(existsSync(manifestPath)).toBe(false);
+
+    writeFileSync(preexistingExecutionPath, "{}\n", "utf8");
+    await expect(runCli([
+      "local",
+      "native-host",
+      "execute-install",
+      "--approval",
+      approvalPath,
+      "--reviewed-install-digest",
+      plan.install_digest,
+      "--out",
+      preexistingExecutionPath
+    ])).rejects.toThrow(/output path already exists/u);
+    expect(existsSync(manifestPath)).toBe(false);
   });
 
   it("creates explicit local grant-store artifacts from pairing approvals", async () => {

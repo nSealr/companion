@@ -1,15 +1,21 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { Command } from "commander";
 import { SerialPort } from "serialport";
 import {
   appendLocalGrant,
   appendLocalGrantRevocation,
   approveLocalStorageReview,
+  approveNativeHostInstallPlan,
   approvePairingIntent,
+  buildNativeHostInstallPlan,
+  buildNativeHostManifest,
   createLocalGrantStore,
   createLocalStorageReview,
+  executeNativeHostInstallApproval,
   LOCAL_CLIENT_SURFACES,
+  parseNativeHostInstallApproval,
+  parseNativeHostInstallPlan,
   parseLocalGrantStore,
   parseLocalPairingApproval,
   parseLocalStorageApproval,
@@ -19,7 +25,8 @@ import {
   serializeLocalGrantStore,
   type LocalStorageAccessMode,
   type LocalStoragePurpose,
-  type LocalClientSurface
+  type LocalClientSurface,
+  type NativeHostBrowser
 } from "@nsealr/client";
 import { verifySignedEventResponse, type SignEventRequest } from "@nsealr/core";
 import { devSignRequest, SmartcardSimulator } from "@nsealr/dev-signer";
@@ -169,6 +176,13 @@ function localClientSurfaceOption(value: string, optionName: string): LocalClien
     throw new Error(`${optionName} is unsupported`);
   }
   return value as LocalClientSurface;
+}
+
+function nativeHostBrowserOption(value: string, optionName: string): NativeHostBrowser {
+  if (value !== "chromium" && value !== "firefox") {
+    throw new Error(`${optionName} must be chromium or firefox`);
+  }
+  return value;
 }
 
 function addLocalStorageEntry(
@@ -1103,6 +1117,110 @@ export function buildCli(options: BuildCliOptions = {}): Command {
       writeJson(options.out, approveLocalStorageReview(review, {
         approvedAt: nonNegativeIntegerOption(options.approvedAt, "--approved-at")
       }));
+    });
+
+  const localNativeHost = local
+    .command("native-host")
+    .description("Build explicit browser native-host onboarding artifacts");
+
+  localNativeHost
+    .command("manifest")
+    .requiredOption("--browser <browser>", "Browser target: chromium or firefox", singleValueOption("--browser"))
+    .requiredOption("--host-path <path>", "Absolute path to the nSealr native host executable", singleValueOption("--host-path"))
+    .option("--extension-id <id>", "Allowed browser extension id; repeat for multiple ids", appendPathOption, [])
+    .requiredOption("--out <path>", "Write the native-host manifest JSON")
+    .description("Render a browser native-host manifest without installing it")
+    .action((options: {
+      browser: string;
+      hostPath: string;
+      extensionId: string[];
+      out: string;
+    }) => {
+      writeNewJson(options.out, buildNativeHostManifest({
+        browser: nativeHostBrowserOption(options.browser, "--browser"),
+        hostPath: options.hostPath,
+        extensionIds: options.extensionId
+      }));
+    });
+
+  localNativeHost
+    .command("plan-install")
+    .requiredOption("--browser <browser>", "Browser target: chromium or firefox", singleValueOption("--browser"))
+    .requiredOption("--host-path <path>", "Absolute path to the nSealr native host executable", singleValueOption("--host-path"))
+    .requiredOption("--manifest-path <path>", "Absolute browser native-host manifest path", singleValueOption("--manifest-path"))
+    .option("--extension-id <id>", "Allowed browser extension id; repeat for multiple ids", appendPathOption, [])
+    .requiredOption("--out <path>", "Write the digest-bound install plan JSON")
+    .description("Create a dry-run native-host install plan without writing browser files")
+    .action((options: {
+      browser: string;
+      hostPath: string;
+      manifestPath: string;
+      extensionId: string[];
+      out: string;
+    }) => {
+      writeNewJson(options.out, buildNativeHostInstallPlan({
+        browser: nativeHostBrowserOption(options.browser, "--browser"),
+        hostPath: options.hostPath,
+        manifestPath: options.manifestPath,
+        extensionIds: options.extensionId
+      }));
+    });
+
+  localNativeHost
+    .command("approve-install")
+    .requiredOption("--plan <path>", "Read a native-host install plan JSON file")
+    .requiredOption("--reviewed-install-digest <hex>", "Install digest the user reviewed and approved")
+    .requiredOption("--approved-at <timestamp>", "Approval timestamp as a non-negative integer")
+    .requiredOption("--out <path>", "Write the install approval artifact JSON")
+    .description("Create a native-host install approval artifact after digest confirmation")
+    .action((options: {
+      plan: string;
+      reviewedInstallDigest: string;
+      approvedAt: string;
+      out: string;
+    }) => {
+      writeNewJson(options.out, approveNativeHostInstallPlan(
+        parseNativeHostInstallPlan(readJson(options.plan)),
+        {
+          reviewedInstallDigest: lowerHex64Option(
+            options.reviewedInstallDigest,
+            "--reviewed-install-digest"
+          ),
+          approvedAt: nonNegativeIntegerOption(options.approvedAt, "--approved-at")
+        }
+      ));
+    });
+
+  localNativeHost
+    .command("execute-install")
+    .requiredOption("--approval <path>", "Read a native-host install approval JSON file")
+    .requiredOption("--reviewed-install-digest <hex>", "Install digest the user reviewed before execution")
+    .requiredOption("--out <path>", "Write the install execution report JSON")
+    .description("Write only the approved native-host manifest path with write-new semantics")
+    .action(async (options: {
+      approval: string;
+      reviewedInstallDigest: string;
+      out: string;
+    }) => {
+      if (existsSync(options.out)) throw new Error("output path already exists");
+      const execution = await executeNativeHostInstallApproval(
+        parseNativeHostInstallApproval(readJson(options.approval)),
+        {
+          reviewedInstallDigest: lowerHex64Option(
+            options.reviewedInstallDigest,
+            "--reviewed-install-digest"
+          ),
+          writer: {
+            ensureDirectory(path) {
+              mkdirSync(path, { recursive: true });
+            },
+            writeFileNew(path, contents) {
+              writeFileSync(path, contents, { encoding: "utf8", flag: "wx" });
+            }
+          }
+        }
+      );
+      writeNewJson(options.out, execution);
     });
 
   const localGrantStore = local

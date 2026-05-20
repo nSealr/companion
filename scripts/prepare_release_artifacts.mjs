@@ -19,11 +19,20 @@ import {
 } from "./release_plan.mjs";
 
 function outputDirectoryFromArgs(args) {
-  const outIndex = args.indexOf("--out");
-  if (outIndex === -1) return resolve(root, "release-artifacts/packages");
-  const value = args[outIndex + 1];
-  if (!value) throw new Error("--out requires a directory");
-  return resolve(root, value);
+  let outDir;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === "--out") {
+      if (outDir !== undefined) throw new Error("--out must be specified only once");
+      const value = args[index + 1];
+      if (!value || value.startsWith("--")) throw new Error("--out requires a directory");
+      outDir = resolve(root, value);
+      index += 1;
+    } else {
+      throw new Error(`unsupported release artifact option: ${arg}`);
+    }
+  }
+  return outDir ?? resolve(root, "release-artifacts/packages");
 }
 
 function assertSafeReleaseOutputDirectory(outDir) {

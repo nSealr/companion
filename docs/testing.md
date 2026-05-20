@@ -399,7 +399,9 @@ single-repository CI. Cross-repository drift remains guarded by
   project, and imports them by package name.
 - `make release-artifacts-safety` proves the release-artifact helper refuses
   destructive output paths such as the repository root, `packages/`, or the
-  top-level `release-artifacts/` directory before any cleanup occurs.
+  top-level `release-artifacts/` directory before any cleanup occurs. It also
+  rejects missing, duplicated, or unknown release-artifact CLI options so an
+  ambiguous invocation cannot select the wrong cleanup target.
 - `make release-artifacts` builds package artifacts, packs every public
   package, validates the same tarball boundaries, and writes
   `release-artifacts/packages/manifest.json` with the reviewed

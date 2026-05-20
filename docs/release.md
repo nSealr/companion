@@ -74,7 +74,8 @@ reviewed package plan exactly.
 
 The release artifact helper may delete and recreate only a child directory
 under `release-artifacts/`. `make release-artifacts-safety` is part of CI and
-proves dangerous output paths are rejected before cleanup.
+proves dangerous output paths, missing `--out` values, duplicated `--out`
+options, and unknown release-artifact options are rejected before cleanup.
 
 ## Provenance
 

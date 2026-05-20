@@ -406,6 +406,9 @@ function validateServiceRequest(value: unknown): { ok: true; request: LocalServi
   if (value.version !== 1) return { ok: false, error: "service request version must be 1" };
   if (!isRequestId(value.request_id)) return { ok: false, error: "service request_id is invalid" };
   if (!isAllowedOperation(value.operation)) return { ok: false, error: "service operation is unsupported" };
+  if (!hasOnlyKeys(value, ["version", "request_id", "operation", "params"])) {
+    return { ok: false, error: "service request has unsupported fields" };
+  }
   if (value.operation === "service_status") {
     if ("params" in value) return { ok: false, error: "service_status must not include params" };
     return { ok: true, request: value as LocalServiceRequest };
@@ -414,6 +417,9 @@ function validateServiceRequest(value: unknown): { ok: true; request: LocalServi
   const client = validateClientIdentity(value.params.client);
   if (!client.ok) return client;
   if (value.operation === "request_pairing") {
+    if (!hasOnlyKeys(value.params, ["client", "requested_operations"])) {
+      return { ok: false, error: "request_pairing params have unsupported fields" };
+    }
     const requestedOperations = validateRequestedOperations(value.params.requested_operations);
     if (!requestedOperations.ok) return requestedOperations;
     return {
@@ -430,6 +436,9 @@ function validateServiceRequest(value: unknown): { ok: true; request: LocalServi
     };
   }
   if (value.operation === "validate_signer_request" && "request" in value.params) {
+    if (!hasOnlyKeys(value.params, ["client", "request"])) {
+      return { ok: false, error: "validate_signer_request params have unsupported fields" };
+    }
     return {
       ok: true,
       request: {
@@ -444,6 +453,9 @@ function validateServiceRequest(value: unknown): { ok: true; request: LocalServi
     };
   }
   if (value.operation === "select_account_route" && "route_request" in value.params) {
+    if (!hasOnlyKeys(value.params, ["client", "route_request"])) {
+      return { ok: false, error: "select_account_route params have unsupported fields" };
+    }
     return {
       ok: true,
       request: {
@@ -458,6 +470,14 @@ function validateServiceRequest(value: unknown): { ok: true; request: LocalServi
     };
   }
   if (value.operation === "dispatch_signer_request" && "route_request" in value.params && "request" in value.params) {
+    if (!hasOnlyKeys(value.params, [
+      "client",
+      "route_request",
+      "request",
+      "external_review_acknowledgement"
+    ])) {
+      return { ok: false, error: "dispatch_signer_request params have unsupported fields" };
+    }
     const acknowledgement = parseOptionalExternalReviewAcknowledgement(value.params.external_review_acknowledgement);
     if (!acknowledgement.ok) return acknowledgement;
     return {
@@ -478,6 +498,9 @@ function validateServiceRequest(value: unknown): { ok: true; request: LocalServi
     };
   }
   if (value.operation === "verify_signer_response" && "request" in value.params && "response" in value.params) {
+    if (!hasOnlyKeys(value.params, ["client", "request", "response"])) {
+      return { ok: false, error: "verify_signer_response params have unsupported fields" };
+    }
     return {
       ok: true,
       request: {

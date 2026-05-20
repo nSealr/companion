@@ -256,7 +256,10 @@ code must reuse those contracts before deriving client ids, requesting pairing,
 selecting account routes, or trusting pairing responses.
 It rejects unsupported surfaces, non-origin URLs such as
 `https://example.com/path`, deceptive localhost names, overlong app names,
-invalid instance ids, and extra fields.
+invalid instance ids, and extra client fields. The service request parser also
+rejects unsupported top-level request fields and unsupported per-operation
+`params` fields before pairing, route selection, signer validation, or signer
+dispatch can inspect payloads.
 Pairing requests return a deterministic intent for later user review; they do
 not approve the client. Validation and verification require explicit grants
 supplied by the caller/test harness. When grant history is supplied, the latest

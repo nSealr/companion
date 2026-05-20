@@ -58,6 +58,8 @@ single-repository CI. Cross-repository drift remains guarded by
   deterministic pairing intents, browser-safe shared local-client identity
   parsing, unpaired/revoked/expired/scope-denied client rejection, latest-grant
   selection from in-memory grant history,
+  unsupported local-service request and per-operation parameter field
+  rejection,
   deterministic pairing-review projection, strict grant-store
   serialization/revocation, strict pairing-approval artifact parsing before
   grant-store persistence, latest-client revocation appending, secretless route

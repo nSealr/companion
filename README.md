@@ -69,7 +69,9 @@ match the shared `contract_id`.
   unavailable unless a host explicitly injects a dispatcher. Route selection,
   validation, dispatch, and verification require an explicit client grant;
   unpaired, revoked, expired, or operation-scoped clients are rejected before
-  signer payload handling. Dispatch validates the request, selects the route,
+  signer payload handling. The service request parser rejects unsupported
+  top-level request fields and unsupported per-operation `params` fields before
+  those operations run. Dispatch validates the request, selects the route,
   calls only the injected route dispatcher, and verifies the signer response
   before returning it. The
   high-level client also binds each operation to its expected result type, so a

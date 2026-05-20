@@ -1131,5 +1131,61 @@ describe("local service boundary", () => {
         retryable: false
       }
     });
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-extra-top-level",
+      operation: "request_pairing",
+      params: {
+        client,
+        requested_operations: ["validate_signer_request"]
+      },
+      unsigned_metadata: "not allowed"
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_service_request",
+        message: "service request has unsupported fields"
+      }
+    });
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-extra-request-pairing-param",
+      operation: "request_pairing",
+      params: {
+        client,
+        requested_operations: ["validate_signer_request"],
+        route_request: routeVector.request
+      }
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_service_request",
+        message: "request_pairing params have unsupported fields"
+      }
+    });
+
+    expect(handleLocalServiceRequest({
+      version: 1,
+      request_id: "svc-extra-dispatch-param",
+      operation: "dispatch_signer_request",
+      params: {
+        client,
+        route_request: routeVector.request,
+        request,
+        signer_hint: "not allowed"
+      }
+    }, {
+      accounts: fixtures.accounts,
+      grants: [grant],
+      now: 1_900_000_000
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_service_request",
+        message: "dispatch_signer_request params have unsupported fields"
+      }
+    });
   });
 });

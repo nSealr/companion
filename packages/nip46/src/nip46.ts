@@ -456,8 +456,13 @@ function requireOptionalHttpUrl(value: string, name: string): string {
   } catch (error) {
     throw new Error(`NIP-46 connection URI ${name} must be a valid URL`);
   }
-  if ((parsed.protocol !== "https:" && parsed.protocol !== "http:") || parsed.username !== "" || parsed.password !== "") {
-    throw new Error(`NIP-46 connection URI ${name} must be an http(s) URL without credentials`);
+  if (
+    (parsed.protocol !== "https:" && parsed.protocol !== "http:") ||
+    parsed.username !== "" ||
+    parsed.password !== "" ||
+    parsed.hash !== ""
+  ) {
+    throw new Error(`NIP-46 connection URI ${name} must be an http(s) URL without credentials or fragment`);
   }
   return parsed.toString();
 }
@@ -666,6 +671,7 @@ function parseNip46ConnectionUriWithSecret(value: string): {
   const name = requireSingleQueryParam(url.searchParams, "name");
   const clientUrl = requireSingleQueryParam(url.searchParams, "url");
   const image = requireSingleQueryParam(url.searchParams, "image");
+  if (secret === "") throw new Error("NIP-46 connection URI secret must be non-empty when present");
 
   if (kind === "bunker") {
     if (perms !== undefined || name !== undefined || clientUrl !== undefined || image !== undefined) {

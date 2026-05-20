@@ -456,6 +456,7 @@ describe("NIP-46 bridge payloads", () => {
       (vector) =>
         vector.category === "nip46" ||
         vector.category === "nip46-connection-uri" ||
+        vector.category === "nip46-connection-token-response" ||
         vector.category === "nip46-relay-event" ||
         vector.category === "nip46-relay-step" ||
         vector.category === "nip46-session" ||
@@ -469,6 +470,23 @@ describe("NIP-46 bridge payloads", () => {
         if (vector.category === "nip46-connection-uri") {
           if (typeof vector.uri !== "string") throw new Error(`${vector.name}: uri must be a string`);
           parseNip46ConnectionUri(vector.uri);
+          return;
+        }
+        if (vector.category === "nip46-connection-token-response") {
+          const tokenResponse = vector.connection_token_response as
+            | { connection_uri?: unknown; response_step?: unknown }
+            | undefined;
+          if (
+            typeof tokenResponse !== "object" ||
+            tokenResponse === null ||
+            typeof tokenResponse.connection_uri !== "string"
+          ) {
+            throw new Error(`${vector.name}: connection_token_response must include connection_uri`);
+          }
+          verifyNip46ConnectionTokenResponse({
+            connectionUri: tokenResponse.connection_uri,
+            responseStep: tokenResponse.response_step
+          });
           return;
         }
         if (vector.category === "nip46-relay-event") {

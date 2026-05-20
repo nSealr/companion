@@ -607,7 +607,9 @@ single-repository CI. Cross-repository drift remains guarded by
   recipient to the client pubkey, discovers the remote signer pubkey from the
   response envelope, and keeps relay I/O, NIP-44 derivation, `connect`
   acknowledgement, grant creation, signer dispatch, secret storage, and session
-  persistence disabled.
+  persistence disabled. Shared invalid hardening vectors also reject recipient
+  mismatch, explicit token-response errors, and returned-secret mismatch
+  deterministically through package code and fixture verification.
 - NIP-46 session lifecycle checkpoint tests covering shared
   `approved_pending_ack` vectors. The parser validates client/signer pubkeys,
   relay URLs, connect digest shape, approval/expiry safety, requested

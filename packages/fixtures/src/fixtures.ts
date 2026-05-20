@@ -465,6 +465,7 @@ export type SpecsFixtureSet = {
       | "serial-frame"
       | "nip46"
       | "nip46-connection-uri"
+      | "nip46-connection-token-response"
       | "nip46-relay-event"
       | "nip46-relay-step"
       | "nip46-session"
@@ -477,6 +478,7 @@ export type SpecsFixtureSet = {
     frame?: string;
     request_message?: unknown;
     uri?: string;
+    connection_token_response?: unknown;
     relay_event?: unknown;
     relay_step?: unknown;
     session?: unknown;

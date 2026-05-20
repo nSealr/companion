@@ -536,6 +536,7 @@ function validateInvalidHardeningFixture(fixture: {
   uri?: string;
   relay_event?: unknown;
   relay_step?: unknown;
+  connection_token_response?: unknown;
   session?: unknown;
   session_gate?: unknown;
   policy_file?: unknown;
@@ -587,6 +588,19 @@ function validateInvalidHardeningFixture(fixture: {
     const uri = fixture.uri;
     expectFixtureRejection(fixture.name, fixture.expected_error, () => {
       parseNip46ConnectionUri(uri);
+    });
+    return;
+  }
+  if (fixture.category === "nip46-connection-token-response") {
+    const tokenResponse = fixture.connection_token_response;
+    if (!isRecord(tokenResponse) || typeof tokenResponse.connection_uri !== "string") {
+      throw new Error(`invalid hardening fixture ${fixture.name}: connection_token_response must include connection_uri`);
+    }
+    expectFixtureRejection(fixture.name, fixture.expected_error, () => {
+      verifyNip46ConnectionTokenResponse({
+        connectionUri: tokenResponse.connection_uri,
+        responseStep: tokenResponse.response_step
+      });
     });
     return;
   }

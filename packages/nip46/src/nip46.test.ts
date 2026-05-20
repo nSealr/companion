@@ -326,7 +326,17 @@ describe("NIP-46 bridge payloads", () => {
           return;
         }
         if (vector.category === "nip46-relay-step") {
-          evaluateNip46RelayRequestStep(vector.relay_step);
+          const relayStep = vector.relay_step;
+          if (
+            typeof relayStep === "object" &&
+            relayStep !== null &&
+            "format" in relayStep &&
+            relayStep.format === "nsealr-nip46-relay-response-step-v0"
+          ) {
+            evaluateNip46RelayResponseStep(relayStep);
+            return;
+          }
+          evaluateNip46RelayRequestStep(relayStep);
           return;
         }
         if (vector.category === "nip46-policy-file") {

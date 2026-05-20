@@ -553,7 +553,12 @@ function validateInvalidHardeningFixture(fixture: {
   }
   if (fixture.category === "nip46-relay-step") {
     expectFixtureRejection(fixture.name, fixture.expected_error, () => {
-      evaluateNip46RelayRequestStep(fixture.relay_step);
+      const relayStep = fixture.relay_step;
+      if (isRecord(relayStep) && relayStep.format === "nsealr-nip46-relay-response-step-v0") {
+        evaluateNip46RelayResponseStep(relayStep);
+        return;
+      }
+      evaluateNip46RelayRequestStep(relayStep);
     });
     return;
   }

@@ -1,0 +1,29 @@
+{
+  "name": "relay-step-response-result-and-error",
+  "format": "pre-signing-invalid-vector-v0",
+  "category": "nip46-relay-step",
+  "expected_error": "must contain exactly one of result or error",
+  "relay_step": {
+    "format": "nsealr-nip46-relay-response-step-v0",
+    "direction": "remote_signer_to_client",
+    "event": {
+      "kind": 24133,
+      "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+      "content": "nip44-v2-response-ciphertext-placeholder",
+      "tags": [
+        [
+          "p",
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        ]
+      ],
+      "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "created_at": 1710000001,
+      "sig": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "decrypted_message": {
+      "id": "nip46-req-1",
+      "result": "pong",
+      "error": "denied"
+    }
+  }
+}

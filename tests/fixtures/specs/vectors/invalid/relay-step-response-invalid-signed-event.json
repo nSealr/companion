@@ -1,0 +1,28 @@
+{
+  "name": "relay-step-response-invalid-signed-event",
+  "format": "pre-signing-invalid-vector-v0",
+  "category": "nip46-relay-step",
+  "expected_error": "event id must be 32-byte lowercase hex",
+  "relay_step": {
+    "format": "nsealr-nip46-relay-response-step-v0",
+    "direction": "remote_signer_to_client",
+    "event": {
+      "kind": 24133,
+      "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+      "content": "nip44-v2-response-ciphertext-placeholder",
+      "tags": [
+        [
+          "p",
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        ]
+      ],
+      "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "created_at": 1710000001,
+      "sig": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "decrypted_message": {
+      "id": "nip46-req-1",
+      "result": "{\"id\":\"nothex\",\"pubkey\":\"4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa\",\"created_at\":1710000000,\"kind\":1,\"tags\":[],\"content\":\"nSealr fixture: invalid signed-event response.\",\"sig\":\"2eec0351eb1d651140922d4b1f1bd8135f4474aabf42ec5bda7011087c1a072d71be863646dc162e4d96eacf14afeed2618a4acb0e1134a273a2b8e73039e654\"}"
+    }
+  }
+}

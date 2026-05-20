@@ -27,15 +27,15 @@
       ],
       "properties": {
         "format": { "const": "nsealr-policy-change-proposal-v0" },
-        "proposal_id": { "type": "string", "pattern": "^proposal-[A-Za-z0-9._:-]+$" },
+        "proposal_id": { "type": "string", "pattern": "^proposal-[A-Za-z0-9._:-]{1,119}$" },
         "account_id": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,128}$" },
         "route_type": { "enum": ["esp32_usb_nip46", "custom_hardware_wallet"] },
         "action": { "const": "set_policy" },
-        "current_policy_id": { "type": "string", "pattern": "^policy-[A-Za-z0-9._:-]+$" },
-        "proposed_policy_id": { "type": "string", "pattern": "^policy-[A-Za-z0-9._:-]+$" },
+        "current_policy_id": { "type": "string", "pattern": "^policy-[A-Za-z0-9._:-]{1,121}$" },
+        "proposed_policy_id": { "type": "string", "pattern": "^policy-[A-Za-z0-9._:-]{1,121}$" },
         "proposed_grant_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^grant-[A-Za-z0-9._:-]+$" },
+          "items": { "type": "string", "pattern": "^grant-[A-Za-z0-9._:-]{1,122}$" },
           "uniqueItems": true
         },
         "requested_by": {
@@ -61,7 +61,7 @@
       "required": ["format", "proposal_id", "approval_digest", "pages"],
       "properties": {
         "format": { "const": "nsealr-policy-change-review-pages-v0" },
-        "proposal_id": { "type": "string", "pattern": "^proposal-[A-Za-z0-9._:-]+$" },
+        "proposal_id": { "type": "string", "pattern": "^proposal-[A-Za-z0-9._:-]{1,119}$" },
         "approval_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "pages": {
           "type": "array",

@@ -343,6 +343,19 @@ describe("identity, recovery, and policy contracts", () => {
       ...vector.proposal,
       route_type: "esp32_qr_vault"
     })).toThrow(/device-display persistent route/u);
+
+    expect(() => parsePolicyChangeProposal({
+      ...vector.proposal,
+      proposal_id: `proposal-${"x".repeat(120)}`
+    })).toThrow(/proposal_id must be a proposal-\* stable string id/u);
+
+    expect(() => parsePolicyChangeProposal({
+      ...vector.proposal,
+      requested_by: {
+        ...(vector.proposal.requested_by as Record<string, unknown>),
+        label: 123
+      }
+    })).toThrow(/requested_by.label must be a non-empty string/u);
   });
 
   it("matches shared route-selection vectors without signer dispatch", () => {

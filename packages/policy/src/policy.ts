@@ -912,7 +912,7 @@ export function parsePolicyChangeProposal(value: unknown): PolicyChangeProposal 
     requested_by: {
       surface: surface as PolicyChangeProposal["requested_by"]["surface"],
       client_pubkey: requireXOnlyPubkey(value.requested_by.client_pubkey, "requested_by.client_pubkey"),
-      ...(typeof value.requested_by.label === "string" ? { label: requireString(value.requested_by.label, "requested_by.label") } : {})
+      ...("label" in value.requested_by ? { label: requireString(value.requested_by.label, "requested_by.label") } : {})
     },
     created_at: requirePositiveInteger(value.created_at, "created_at"),
     device_review_required: true,

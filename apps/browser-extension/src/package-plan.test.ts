@@ -10,10 +10,13 @@ import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_SOURCE,
   BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_SOURCE,
   BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT,
+  BROWSER_EXTENSION_PACKAGE_PLAN_REVIEW_FORMAT,
   BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_SOURCE,
   BROWSER_EXTENSION_POPUP_ENTRYPOINT_SOURCE,
   assertBrowserExtensionPackagePlan,
+  browserExtensionPackagePlanDigest,
   browserExtensionPackagePlanJson,
+  createBrowserExtensionPackagePlanReview,
   buildBrowserExtensionPackagePlan,
   type BrowserExtensionPackagePlan
 } from "./package-plan.js";
@@ -106,6 +109,46 @@ describe("browser extension package plan", () => {
     expect(JSON.parse(browserExtensionPackagePlanJson({ target: "chromium" }))).toEqual(
       buildBrowserExtensionPackagePlan({ target: "chromium" })
     );
+  });
+
+  it("binds reviewed package plans to a deterministic digest", () => {
+    const plan = buildBrowserExtensionPackagePlan({
+      target: "chromium",
+      contentScriptMatches: ["https://example.com/*"]
+    });
+
+    expect(browserExtensionPackagePlanDigest(plan)).toMatch(/^[0-9a-f]{64}$/u);
+    expect(browserExtensionPackagePlanDigest(plan)).toBe(browserExtensionPackagePlanDigest(
+      JSON.parse(browserExtensionPackagePlanJson({
+        target: "chromium",
+        contentScriptMatches: ["https://example.com/*"]
+      })) as BrowserExtensionPackagePlan
+    ));
+    expect(browserExtensionPackagePlanDigest(plan)).not.toBe(browserExtensionPackagePlanDigest(
+      buildBrowserExtensionPackagePlan({
+        target: "chromium",
+        popupMode: "origin_permission_approval",
+        originPermissionStorageMode: "extension",
+        contentScriptMatches: ["https://example.com/*"]
+      })
+    ));
+  });
+
+  it("renders a review envelope for package-build gating", () => {
+    const review = createBrowserExtensionPackagePlanReview({
+      target: "chromium",
+      contentScriptMatches: ["https://example.com/*"]
+    });
+
+    expect(review).toMatchObject({
+      format: BROWSER_EXTENSION_PACKAGE_PLAN_REVIEW_FORMAT,
+      package_plan_digest: browserExtensionPackagePlanDigest(review.package_plan),
+      requires_user_review: true,
+      installs_native_host_manifest: false,
+      writes_extension_storage: false,
+      stores_production_secrets: false,
+      dispatches_signers: false
+    });
   });
 
   it("rejects package-plan drift before a bundle can be treated as reviewed", () => {

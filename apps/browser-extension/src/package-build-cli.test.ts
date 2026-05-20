@@ -17,6 +17,10 @@ import {
 import {
   createBrowserExtensionOriginPermissionStore
 } from "./origin-permission-store.js";
+import {
+  browserExtensionPackagePlanDigest,
+  buildBrowserExtensionPackagePlan
+} from "./package-plan.js";
 
 function tempBuildRoot(): { root: string; outDir: string; cleanup(): void } {
   const root = mkdtempSync(join(tmpdir(), "nsealr-browser-extension-cli-"));
@@ -44,6 +48,20 @@ function writeRouteConfigApproval(path: string): void {
 
 const localPairingDigest = "d".repeat(64);
 const chromiumExtensionId = "abcdefghijklmnopabcdefghijklmnop";
+const chromiumPackagePlanDigest = browserExtensionPackagePlanDigest(buildBrowserExtensionPackagePlan({
+  target: "chromium",
+  contentScriptMatches: ["https://example.com/*"]
+}));
+const chromiumExtensionStoragePackagePlanDigest = browserExtensionPackagePlanDigest(buildBrowserExtensionPackagePlan({
+  target: "chromium",
+  popupMode: "origin_permission_approval",
+  originPermissionStorageMode: "extension",
+  contentScriptMatches: ["https://example.com/*"]
+}));
+const firefoxPackagePlanDigest = browserExtensionPackagePlanDigest(buildBrowserExtensionPackagePlan({
+  target: "firefox",
+  firefoxExtensionId: "extension@nsealr.dev"
+}));
 
 function writeOriginPermissionStore(path: string): void {
   const store = createBrowserExtensionOriginPermissionStore([
@@ -92,6 +110,8 @@ describe("browser extension package-build CLI", () => {
         "chromium",
         "--out-dir",
         temp.outDir,
+        "--package-plan-digest",
+        chromiumPackagePlanDigest,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-type",
@@ -119,6 +139,7 @@ describe("browser extension package-build CLI", () => {
         local_pairing_digest: localPairingDigest,
         content_script_origins: ["https://example.com"],
         package_digest: expect.stringMatching(/^[0-9a-f]{64}$/u),
+        package_plan_digest: chromiumPackagePlanDigest,
         installs_native_host_manifest: false,
         writes_extension_storage: false,
         stores_production_secrets: false,
@@ -165,6 +186,8 @@ describe("browser extension package-build CLI", () => {
         "chromium",
         "--out-dir",
         temp.outDir,
+        "--package-plan-digest",
+        chromiumExtensionStoragePackagePlanDigest,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-type",
@@ -187,6 +210,7 @@ describe("browser extension package-build CLI", () => {
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
         origin_permission_mode: "extension_storage",
+        package_plan_digest: chromiumExtensionStoragePackagePlanDigest,
         extension_id: chromiumExtensionId,
         local_pairing_digest: localPairingDigest,
         content_script_origins: ["https://example.com"],
@@ -211,6 +235,8 @@ describe("browser extension package-build CLI", () => {
         "extension@nsealr.dev",
         "--out-dir",
         temp.outDir,
+        "--package-plan-digest",
+        firefoxPackagePlanDigest,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-type",
@@ -225,6 +251,7 @@ describe("browser extension package-build CLI", () => {
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
         origin_permission_mode: "none",
+        package_plan_digest: firefoxPackagePlanDigest,
         content_script_origins: [],
         embeds_origin_permission_store: false,
         uses_extension_origin_permission_storage: false
@@ -250,12 +277,28 @@ describe("browser extension package-build CLI", () => {
       "chromium",
       "--out-dir",
       "/tmp/nsealr-unused",
+      "--package-plan-digest",
+      "0".repeat(64),
       "--route-account-id",
       "esp32-usb-slot-0"
     ])).rejects.toThrow(/route-config-approval/u);
     try {
       const approvalPath = join(temp.root, "route-config-approval.json");
+      const originStorePath = join(temp.root, "origin-permission-store.json");
       writeRouteConfigApproval(approvalPath);
+      writeOriginPermissionStore(originStorePath);
+      await expect(browserExtensionPackageBuildJsonFromArgs([
+        "--target",
+        "chromium",
+        "--out-dir",
+        temp.outDir,
+        "--route-account-id",
+        "esp32-usb-slot-0",
+        "--route-type",
+        "esp32_usb_nip46",
+        "--route-config-approval",
+        approvalPath
+      ])).rejects.toThrow(/package-plan-digest/u);
       await expect(browserExtensionPackageBuildJsonFromArgs([
         "--target",
         "chromium",
@@ -263,6 +306,8 @@ describe("browser extension package-build CLI", () => {
         "firefox",
         "--out-dir",
         temp.outDir,
+        "--package-plan-digest",
+        chromiumPackagePlanDigest,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-config-approval",
@@ -273,6 +318,8 @@ describe("browser extension package-build CLI", () => {
         "chromium",
         "--out-dir",
         temp.outDir,
+        "--package-plan-digest",
+        chromiumPackagePlanDigest,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-config-approval",
@@ -283,6 +330,8 @@ describe("browser extension package-build CLI", () => {
         "chromium",
         "--out-dir",
         temp.outDir,
+        "--package-plan-digest",
+        chromiumPackagePlanDigest,
         "--route-account-id",
         "esp32-qr-account-0",
         "--route-type",
@@ -295,6 +344,8 @@ describe("browser extension package-build CLI", () => {
         "chromium",
         "--out-dir",
         temp.outDir,
+        "--package-plan-digest",
+        chromiumPackagePlanDigest,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-type",
@@ -304,6 +355,28 @@ describe("browser extension package-build CLI", () => {
         "--content-script-match",
         "<all_urls>"
       ])).rejects.toThrow(/content script match/u);
+      await expect(browserExtensionPackageBuildJsonFromArgs([
+        "--target",
+        "chromium",
+        "--out-dir",
+        temp.outDir,
+        "--package-plan-digest",
+        "0".repeat(64),
+        "--route-account-id",
+        "esp32-usb-slot-0",
+        "--route-type",
+        "esp32_usb_nip46",
+        "--route-config-approval",
+        approvalPath,
+        "--extension-id",
+        chromiumExtensionId,
+        "--origin-permission-store",
+        originStorePath,
+        "--local-pairing-digest",
+        localPairingDigest,
+        "--content-script-match",
+        "https://example.com/*"
+      ])).rejects.toThrow(/package plan digest mismatch/u);
     } finally {
       temp.cleanup();
     }

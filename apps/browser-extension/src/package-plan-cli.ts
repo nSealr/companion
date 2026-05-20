@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { writeSync } from "node:fs";
 import {
-  browserExtensionPackagePlanJson
+  browserExtensionPackagePlanJson,
+  browserExtensionPackagePlanReviewJson
 } from "./package-plan.js";
 import {
   type BrowserExtensionManifestOptions,
@@ -13,6 +14,12 @@ type PackagePlanCliOptions = {
   firefoxExtensionId?: string;
   contentScriptMatches: string[];
   originPermissionMode?: "embedded" | "extension_storage";
+  outputMode?: "plan" | "review";
+};
+
+type ParsedPackagePlanCliOptions = {
+  manifestOptions: BrowserExtensionManifestOptions;
+  outputMode: "plan" | "review";
 };
 
 function takeOptionValue(args: string[], index: number, option: string): string {
@@ -23,7 +30,7 @@ function takeOptionValue(args: string[], index: number, option: string): string 
   return value;
 }
 
-function packagePlanOptionsFromArgs(args: string[]): BrowserExtensionManifestOptions {
+function packagePlanOptionsFromArgs(args: string[]): ParsedPackagePlanCliOptions {
   const normalizedArgs = args[0] === "--" ? args.slice(1) : args;
   const options: PackagePlanCliOptions = {
     contentScriptMatches: []
@@ -50,6 +57,11 @@ function packagePlanOptionsFromArgs(args: string[]): BrowserExtensionManifestOpt
     } else if (arg === "--content-script-match") {
       options.contentScriptMatches.push(takeOptionValue(normalizedArgs, index, arg));
       index += 1;
+    } else if (arg === "--review") {
+      if (options.outputMode !== undefined) {
+        throw new Error("--review must be specified only once");
+      }
+      options.outputMode = "review";
     } else if (arg === "--origin-permission-mode") {
       if (options.originPermissionMode !== undefined) {
         throw new Error("--origin-permission-mode must be specified only once");
@@ -76,20 +88,26 @@ function packagePlanOptionsFromArgs(args: string[]): BrowserExtensionManifestOpt
   }
 
   return {
-    target: options.target,
-    ...(options.firefoxExtensionId !== undefined ? { firefoxExtensionId: options.firefoxExtensionId } : {}),
-    ...(options.contentScriptMatches.length > 0 ? { contentScriptMatches: options.contentScriptMatches } : {}),
-    ...(options.originPermissionMode === "extension_storage"
-      ? {
-          popupMode: "origin_permission_approval" as const,
-          originPermissionStorageMode: "extension" as const
-        }
-      : {})
+    manifestOptions: {
+      target: options.target,
+      ...(options.firefoxExtensionId !== undefined ? { firefoxExtensionId: options.firefoxExtensionId } : {}),
+      ...(options.contentScriptMatches.length > 0 ? { contentScriptMatches: options.contentScriptMatches } : {}),
+      ...(options.originPermissionMode === "extension_storage"
+        ? {
+            popupMode: "origin_permission_approval" as const,
+            originPermissionStorageMode: "extension" as const
+          }
+        : {})
+    },
+    outputMode: options.outputMode ?? "plan"
   };
 }
 
 export function browserExtensionPackagePlanJsonFromArgs(args: string[]): string {
-  return browserExtensionPackagePlanJson(packagePlanOptionsFromArgs(args));
+  const parsed = packagePlanOptionsFromArgs(args);
+  return parsed.outputMode === "review"
+    ? browserExtensionPackagePlanReviewJson(parsed.manifestOptions)
+    : browserExtensionPackagePlanJson(parsed.manifestOptions);
 }
 
 export function runBrowserExtensionPackagePlanCli(args: string[]): void {

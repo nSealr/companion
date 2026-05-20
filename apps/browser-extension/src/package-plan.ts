@@ -1,3 +1,4 @@
+import { sha256Utf8Hex } from "@nsealr/core";
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
   BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
@@ -13,6 +14,10 @@ import {
 } from "./manifest.js";
 
 export const BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT = "nsealr-browser-extension-package-plan-v0";
+export const BROWSER_EXTENSION_PACKAGE_PLAN_DIGEST_INPUT_FORMAT =
+  "nsealr-browser-extension-package-plan-digest-v0";
+export const BROWSER_EXTENSION_PACKAGE_PLAN_REVIEW_FORMAT =
+  "nsealr-browser-extension-package-plan-review-v0";
 export const BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_SOURCE =
   "apps/browser-extension/src/nsealr-background-entrypoint.ts";
 export const BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_SOURCE =
@@ -49,6 +54,17 @@ export type BrowserExtensionPackagePlan = {
   writes_extension_storage: false;
   uses_extension_storage: boolean;
   uses_active_tab_permission: boolean;
+  stores_production_secrets: false;
+  dispatches_signers: false;
+};
+
+export type BrowserExtensionPackagePlanReview = {
+  format: typeof BROWSER_EXTENSION_PACKAGE_PLAN_REVIEW_FORMAT;
+  package_plan_digest: string;
+  package_plan: BrowserExtensionPackagePlan;
+  requires_user_review: true;
+  installs_native_host_manifest: false;
+  writes_extension_storage: false;
   stores_production_secrets: false;
   dispatches_signers: false;
 };
@@ -221,6 +237,34 @@ export function buildBrowserExtensionPackagePlan(
   }));
 }
 
+export function browserExtensionPackagePlanDigest(plan: BrowserExtensionPackagePlan): string {
+  const reviewedPlan = assertBrowserExtensionPackagePlan(plan);
+  return sha256Utf8Hex(JSON.stringify({
+    format: BROWSER_EXTENSION_PACKAGE_PLAN_DIGEST_INPUT_FORMAT,
+    plan: reviewedPlan
+  }));
+}
+
+export function createBrowserExtensionPackagePlanReview(
+  options: BrowserExtensionManifestOptions
+): BrowserExtensionPackagePlanReview {
+  const packagePlan = buildBrowserExtensionPackagePlan(options);
+  return Object.freeze({
+    format: BROWSER_EXTENSION_PACKAGE_PLAN_REVIEW_FORMAT,
+    package_plan_digest: browserExtensionPackagePlanDigest(packagePlan),
+    package_plan: packagePlan,
+    requires_user_review: true,
+    installs_native_host_manifest: false,
+    writes_extension_storage: false,
+    stores_production_secrets: false,
+    dispatches_signers: false
+  });
+}
+
 export function browserExtensionPackagePlanJson(options: BrowserExtensionManifestOptions): string {
   return `${JSON.stringify(buildBrowserExtensionPackagePlan(options), null, 2)}\n`;
+}
+
+export function browserExtensionPackagePlanReviewJson(options: BrowserExtensionManifestOptions): string {
+  return `${JSON.stringify(createBrowserExtensionPackagePlanReview(options), null, 2)}\n`;
 }

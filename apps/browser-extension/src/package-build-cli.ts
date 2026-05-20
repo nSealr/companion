@@ -16,6 +16,7 @@ import {
 type PackageBuildCliOptions = {
   target?: BrowserExtensionTarget;
   outDir?: string;
+  packagePlanDigest?: string;
   firefoxExtensionId?: string;
   contentScriptMatches: string[];
   routeAccountId?: string;
@@ -52,6 +53,12 @@ function parsePackageBuildArgs(args: string[]): PackageBuildCliOptions {
     } else if (arg === "--out-dir") {
       if (options.outDir !== undefined) throw new Error("--out-dir must be specified only once");
       options.outDir = takeOptionValue(normalizedArgs, index, arg);
+      index += 1;
+    } else if (arg === "--package-plan-digest") {
+      if (options.packagePlanDigest !== undefined) {
+        throw new Error("--package-plan-digest must be specified only once");
+      }
+      options.packagePlanDigest = takeOptionValue(normalizedArgs, index, arg);
       index += 1;
     } else if (arg === "--firefox-extension-id") {
       if (options.firefoxExtensionId !== undefined) throw new Error("--firefox-extension-id must be specified only once");
@@ -143,9 +150,11 @@ export async function browserExtensionPackageBuildJsonFromArgs(args: string[]): 
   const options = parsePackageBuildArgs(args);
   if (options.outDir === undefined) throw new Error("--out-dir is required");
   if (options.routeConfigApprovalPath === undefined) throw new Error("--route-config-approval is required");
+  if (options.packagePlanDigest === undefined) throw new Error("--package-plan-digest is required");
   const result = await buildBrowserExtensionPackage({
     ...manifestOptionsFromCli(options),
     outDir: options.outDir,
+    packagePlanDigest: options.packagePlanDigest,
     routeConfig: routeConfigFromCli(options),
     routeConfigApproval: readJsonFile(options.routeConfigApprovalPath, "browser extension route config approval"),
     ...(options.extensionId !== undefined ? { extensionId: options.extensionId } : {}),

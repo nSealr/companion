@@ -625,21 +625,25 @@ publishing to npm.
   or installer behavior. It can also render the explicit
   `extension-storage` origin-approval manifest profile for reviewed
   content-script origins, pinning the same `activeTab` plus `storage`
-  permission boundary before package build without writing browser storage.
+  permission boundary before package build without writing browser storage,
+  and `--review` emits the digest-bound package-plan review artifact required
+  by `package-build`.
   Private `route-config-review` and
   `route-config-approve` scripts now create digest-bound approval artifacts for
   the secretless selected route before package build. A private `package-build`
   script now creates an explicit developer artifact in a new output directory
-  only after successful in-memory bundling, embeds that approved secretless
-  static route config, and requires a reviewed origin-permission store before
-  content scripts can be packaged. That store is embedded as secretless
+  only after successful in-memory bundling and a matching reviewed
+  package-plan digest, embeds that approved secretless static route config,
+  and requires a reviewed origin-permission store before content scripts can
+  be packaged. That store is embedded as secretless
   background gate data, not browser storage. The output directory is now
   constrained to paths outside the companion source tree or children of
   `release-artifacts/browser-extension/`, preventing source-tree artifact drift
   during package rehearsals. Package build returns explicit
-  route, origin, extension, and pairing metadata plus a package digest and
-  per-file byte counts and SHA-256 hashes, and still avoids native-host
-  installation, extension storage writes, key custody, and signer dispatch.
+  reviewed package-plan, route, origin, extension, and pairing metadata plus a
+  package digest and per-file byte counts and SHA-256 hashes, and still avoids
+  native-host installation, extension storage writes, key custody, and signer
+  dispatch.
   The browser-extension manifest builder can still build a minimal
   MV3 manifest with
   `nativeMessaging` as the only permission and no host/content-script/storage

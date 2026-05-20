@@ -119,8 +119,9 @@ single-repository CI. Cross-repository drift remains guarded by
   or display-less smartcard routing; package-build requires that approval
   before embedding the route config, requires a new output directory outside
   the companion source tree unless it is under
-  `release-artifacts/browser-extension/`, writes manifest, popup HTML, and
-  bundled entrypoints only after successful in-memory bundling,
+  `release-artifacts/browser-extension/`, requires the reviewed package-plan
+  digest to match the manifest profile being built, writes manifest, popup
+  HTML, and bundled entrypoints only after successful in-memory bundling,
   returns explicit route, origin, extension, and pairing metadata plus a
   package digest and per-file byte counts plus SHA-256 hashes, and still
   performs no native-host installation, build-time browser storage writes, key
@@ -291,11 +292,13 @@ single-repository CI. Cross-repository drift remains guarded by
   content-script arguments, rejects incomplete or broad-match inputs, keeps the
   default embedded-origin profile storage-free, exposes the explicit
   `extension-storage` origin-approval profile only for reviewed content-script
-  origins, and has no output-path/install behavior.
-  Package-build tests require content-script artifacts to include an explicit
+  origins, renders a digest-bound review envelope for package-build gating, and
+  has no output-path/install behavior.
+  Package-build tests require a reviewed package-plan digest plus explicit
   extension id, reviewed origin-permission store, and local pairing digest
-  before the packaged background embeds an origin gate. The result remains
-  extension-storage-free, grant-free, signer-dispatch-free, and secret-free.
+  before content-script artifacts can embed an origin gate. The default
+  embedded-origin result remains extension-storage-free; every package-build
+  profile remains grant-free, signer-dispatch-free, and secret-free.
   Content-script browser entrypoint tests prove explicit browser-like
   document/window/location/runtime dependencies compose into page-script
   injection, runtime messaging, response posting, and teardown without reading

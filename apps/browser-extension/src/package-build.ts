@@ -12,6 +12,7 @@ import {
 } from "./entrypoints.js";
 import {
   assertBrowserExtensionPackagePlan,
+  browserExtensionPackagePlanDigest,
   buildBrowserExtensionPackagePlan,
   type BrowserExtensionPackagePlan
 } from "./package-plan.js";
@@ -35,6 +36,7 @@ export type BrowserExtensionPackageOriginPermissionMode = "embedded" | "extensio
 
 export type BrowserExtensionPackageBuildOptions = BrowserExtensionManifestOptions & {
   outDir: string;
+  packagePlanDigest: string;
   routeConfig: unknown;
   routeConfigApproval: unknown;
   extensionId?: string;
@@ -59,6 +61,7 @@ export type BrowserExtensionPackageBuildResult = {
   format: typeof BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT;
   target: BrowserExtensionManifestOptions["target"];
   out_dir: string;
+  package_plan_digest: string;
   route_config_digest: string;
   route_account_id: string;
   route_type: BrowserExtensionDispatchableRouteType;
@@ -475,6 +478,14 @@ export async function buildBrowserExtensionPackage(
         }
       : {})
   }));
+  const packagePlanDigest = browserExtensionPackagePlanDigest(plan);
+  const reviewedPackagePlanDigest = requireLowerHex64(
+    options.packagePlanDigest,
+    "browser extension package plan digest"
+  );
+  if (reviewedPackagePlanDigest !== packagePlanDigest) {
+    throw new Error("browser extension package plan digest mismatch");
+  }
   const originPermissions = originPermissionsForPackage(options, plan);
   const contentScriptOrigins = packagedContentScriptOrigins(plan);
   const buildResult = await esbuild({
@@ -524,6 +535,7 @@ export async function buildBrowserExtensionPackage(
     format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
     target: plan.target,
     out_dir: outDir,
+    package_plan_digest: packagePlanDigest,
     route_config_digest: browserExtensionRouteConfigDigest(routeConfig),
     route_account_id: routeConfig.account_id,
     route_type: routeConfig.route_type,

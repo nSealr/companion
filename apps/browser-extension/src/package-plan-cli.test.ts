@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT
+  BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT,
+  BROWSER_EXTENSION_PACKAGE_PLAN_REVIEW_FORMAT
 } from "./package-plan.js";
 import {
   browserExtensionPackagePlanJsonFromArgs
@@ -90,6 +91,30 @@ describe("browser extension package-plan CLI", () => {
     expect(plan.manifest.permissions).toEqual(["nativeMessaging"]);
   });
 
+  it("renders a review envelope with the package-plan digest", () => {
+    const review = JSON.parse(browserExtensionPackagePlanJsonFromArgs([
+      "--target",
+      "chromium",
+      "--content-script-match",
+      "https://example.com/*",
+      "--review"
+    ]));
+
+    expect(review).toMatchObject({
+      format: BROWSER_EXTENSION_PACKAGE_PLAN_REVIEW_FORMAT,
+      package_plan_digest: expect.stringMatching(/^[0-9a-f]{64}$/u),
+      requires_user_review: true,
+      installs_native_host_manifest: false,
+      writes_extension_storage: false,
+      stores_production_secrets: false,
+      dispatches_signers: false
+    });
+    expect(review.package_plan).toMatchObject({
+      format: BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT,
+      target: "chromium"
+    });
+  });
+
   it("rejects unsupported or incomplete package-plan args before JSON output", () => {
     expect(() => browserExtensionPackagePlanJsonFromArgs([])).toThrow(/target is required/u);
     expect(() => browserExtensionPackagePlanJsonFromArgs([
@@ -126,6 +151,12 @@ describe("browser extension package-plan CLI", () => {
       "extension@nsealr.dev",
       "--firefox-extension-id",
       "other@nsealr.dev"
+    ])).toThrow(/specified only once/u);
+    expect(() => browserExtensionPackagePlanJsonFromArgs([
+      "--target",
+      "chromium",
+      "--review",
+      "--review"
     ])).toThrow(/specified only once/u);
     expect(() => browserExtensionPackagePlanJsonFromArgs([
       "--target",

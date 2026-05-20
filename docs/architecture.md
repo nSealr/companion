@@ -102,8 +102,8 @@ packages, but it must not export test-only signing as a production path.
   NIP-46 relay-step, NIP-46 session lifecycle, NIP-46 session gate,
   account-descriptor, policy-profile,
   grant-descriptor, policy-change review, policy-decision, route-selection,
-  source public-key proof, access-surface, feature-matrix, limit-profile, and
-  invalid hardening fixture loading.
+  source public-key proof, access-surface, feature-matrix, persistent-secret
+  custody contract, limit-profile, and invalid hardening fixture loading.
   Package code also owns QR review-transcript fixture validation, including
   `scroll` buttons and rendered-frame `body_line_styles`, so the CLI does not
   duplicate that contract.

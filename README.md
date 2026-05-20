@@ -35,10 +35,11 @@ match the shared `contract_id`.
   payload, NIP-46 policy-file, NIP-46 connection URI, NIP-46 relay-event,
   NIP-46 relay-step, NIP-46 session lifecycle, NIP-46 session gate, account
   descriptor, policy profile, grant descriptor, policy-change review,
-  policy-decision, source public-key proof, and feature-matrix fixtures from
-  `nSealr/specs`, including NIP-46 permission policy checks, bridge
-  decisions, implementation limits, feature conformance contracts, and invalid
-  hardening vectors.
+  policy-decision, source public-key proof, feature-matrix, and
+  persistent-secret custody contract fixtures from `nSealr/specs`, including
+  NIP-46 permission policy checks, bridge decisions, implementation limits,
+  feature conformance contracts, custom hardware-wallet custody gates, and
+  invalid hardening vectors.
 - `nsealr policy review-change` renders deterministic review pages and an
   approval digest for a secretless `set_policy` proposal. It does not approve
   the change, persist policy, create grants, or dispatch signer I/O.
@@ -351,8 +352,9 @@ match the shared `contract_id`.
   account-descriptor, policy-profile,
   grant-descriptor, policy-change review, policy-decision, route-selection,
   source-public-key-proof, access-surface,
-  feature-matrix, and smartcard vectors from `nSealr/specs` for companion,
-  Raspberry QR vault, ESP32 firmware, and smartcard conformance tests.
+  feature-matrix, persistent-secret custody contract, and smartcard vectors
+  from `nSealr/specs` for companion, Raspberry QR vault, ESP32 firmware,
+  custom hardware-wallet, and smartcard conformance tests.
 - `packages/policy` parses secretless account descriptors, policy profiles, and
   grant descriptors, selects secretless account-route metadata, renders
   digest-bound policy-change review pages against explicit account, policy, and

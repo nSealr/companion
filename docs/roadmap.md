@@ -14,8 +14,8 @@ review-detail-page, QR review-transcript, NIP-46 payload, NIP-46 policy-file,
 NIP-46 connection URI, NIP-46 relay-event, NIP-46 relay-step,
 NIP-46 session lifecycle, NIP-46 session gate, account-descriptor,
 policy-profile, grant-descriptor, policy-change review, policy-decision,
-source public-key proof, limit-profile, and invalid hardening vectors in
-addition to event and trusted-review vectors.
+source public-key proof, persistent-secret custody contract, limit-profile, and
+invalid hardening vectors in addition to event and trusted-review vectors.
 Policy-decision fixtures include explicit grant-usage snapshots for scoped automation
 rate-limit decisions before any persistent grant store exists. Policy-change
 review fixtures pin manual persistent-device defaults plus digest-bound

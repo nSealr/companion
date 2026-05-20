@@ -183,6 +183,7 @@ Exports:
 - `resolveSpecsRoot`
 - `validateAccessSurfaceFixture`
 - `validateFeatureMatrixFixture`
+- `validatePersistentSecretCustodyFixture`
 - `validateReviewTranscriptFixture`
 - `validateSourcePublicKeyProofFixture`
 

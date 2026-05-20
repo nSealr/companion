@@ -371,6 +371,44 @@ export type SpecsFixtureSet = {
       }
     >;
   }>;
+  custodyContracts: Array<{
+    name: "persistent-secret-custody-v0";
+    format: "nsealr-persistent-secret-custody-contract-v0";
+    contract_id: "persistent-secret-custody-v0";
+    solution: "custom_hardware_wallet";
+    repository: "hardware";
+    current_status: "research";
+    scope: string;
+    requirements: {
+      secret_at_rest: {
+        plaintext_allowed: false;
+        allowed_storage: string[];
+        production_storage_enabled: false;
+      };
+      unlock: {
+        plaintext_locations: string[];
+        required_unlock_assist: string[];
+        requires_local_unlock: true;
+        requires_device_review_state: true;
+      };
+      plaintext_persistence: {
+        scope: "unlocked_session_ram_only";
+        forbidden_outputs: string[];
+      };
+      wipe_events: string[];
+      pin_attempt_policy: {
+        requires_tropic01_mac_and_destroy_or_vendor_equivalent: true;
+        production_required: true;
+      };
+      backup_export_policy: {
+        enabled_by_default: false;
+        requires_local_device_review: true;
+        requires_physical_approval: true;
+        requires_danger_zone_copy: true;
+      };
+    };
+    non_claims: string[];
+  }>;
   limits: {
     format: string;
     name: string;
@@ -450,9 +488,129 @@ const STATELESS_QR_PARITY_FEATURES = [
   "device_display_review",
   "response_verification"
 ];
+const PERSISTENT_CUSTODY_ALLOWED_STORAGE = [
+  "esp32_flash_encrypted_blob",
+  "tropic01_wrapped_secret_blob"
+];
+const PERSISTENT_CUSTODY_FORBIDDEN_OUTPUTS = [
+  "companion_descriptors",
+  "crash_dumps",
+  "debug_output",
+  "flash",
+  "logs",
+  "usb_reports"
+];
+const PERSISTENT_CUSTODY_WIPE_EVENTS = [
+  "debug_policy_violation",
+  "firmware_error",
+  "manual_lock",
+  "pin_attempt_exhausted",
+  "power_loss",
+  "session_timeout"
+];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function expectStringArraySet(name: string, label: string, value: unknown, expected: string[]): void {
+  if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
+    throw new Error(`invalid persistent-secret custody contract ${name}: ${label} must be a string array`);
+  }
+  if (JSON.stringify([...value].sort()) !== JSON.stringify([...expected].sort())) {
+    throw new Error(`invalid persistent-secret custody contract ${name}: ${label} drift`);
+  }
+}
+
+export function validatePersistentSecretCustodyFixture(name: string, fixture: unknown): void {
+  if (!isRecord(fixture)) {
+    throw new Error(`invalid persistent-secret custody contract ${name}: fixture must be an object`);
+  }
+  if (fixture.format !== "nsealr-persistent-secret-custody-contract-v0") {
+    throw new Error(`invalid persistent-secret custody contract ${name}: unsupported format`);
+  }
+  if (fixture.name !== name) throw new Error(`invalid persistent-secret custody contract ${name}: name mismatch`);
+  if (fixture.contract_id !== "persistent-secret-custody-v0") {
+    throw new Error(`invalid persistent-secret custody contract ${name}: contract_id drift`);
+  }
+  if (fixture.solution !== "custom_hardware_wallet" || fixture.repository !== "hardware") {
+    throw new Error(`invalid persistent-secret custody contract ${name}: solution boundary drift`);
+  }
+  if (fixture.current_status !== "research") {
+    throw new Error(`invalid persistent-secret custody contract ${name}: current status must remain research`);
+  }
+  if (typeof fixture.scope !== "string" || !fixture.scope.includes("before production")) {
+    throw new Error(`invalid persistent-secret custody contract ${name}: scope must preserve pre-production boundary`);
+  }
+  if (!isRecord(fixture.requirements)) {
+    throw new Error(`invalid persistent-secret custody contract ${name}: requirements must be an object`);
+  }
+
+  const secretAtRest = fixture.requirements.secret_at_rest;
+  if (!isRecord(secretAtRest)) {
+    throw new Error(`invalid persistent-secret custody contract ${name}: secret_at_rest must be an object`);
+  }
+  if (secretAtRest.plaintext_allowed !== false || secretAtRest.production_storage_enabled !== false) {
+    throw new Error(`invalid persistent-secret custody contract ${name}: plaintext-at-rest boundary drift`);
+  }
+  expectStringArraySet(
+    name,
+    "secret_at_rest.allowed_storage",
+    secretAtRest.allowed_storage,
+    PERSISTENT_CUSTODY_ALLOWED_STORAGE
+  );
+
+  const unlock = fixture.requirements.unlock;
+  if (!isRecord(unlock)) {
+    throw new Error(`invalid persistent-secret custody contract ${name}: unlock must be an object`);
+  }
+  expectStringArraySet(name, "unlock.plaintext_locations", unlock.plaintext_locations, ["esp32_s3_ram"]);
+  expectStringArraySet(name, "unlock.required_unlock_assist", unlock.required_unlock_assist, ["tropic01"]);
+  if (unlock.requires_local_unlock !== true || unlock.requires_device_review_state !== true) {
+    throw new Error(`invalid persistent-secret custody contract ${name}: unlock review boundary drift`);
+  }
+
+  const plaintextPersistence = fixture.requirements.plaintext_persistence;
+  if (!isRecord(plaintextPersistence) || plaintextPersistence.scope !== "unlocked_session_ram_only") {
+    throw new Error(`invalid persistent-secret custody contract ${name}: plaintext persistence boundary drift`);
+  }
+  expectStringArraySet(
+    name,
+    "plaintext_persistence.forbidden_outputs",
+    plaintextPersistence.forbidden_outputs,
+    PERSISTENT_CUSTODY_FORBIDDEN_OUTPUTS
+  );
+  expectStringArraySet(name, "wipe_events", fixture.requirements.wipe_events, PERSISTENT_CUSTODY_WIPE_EVENTS);
+
+  const pinAttemptPolicy = fixture.requirements.pin_attempt_policy;
+  if (
+    !isRecord(pinAttemptPolicy) ||
+    pinAttemptPolicy.requires_tropic01_mac_and_destroy_or_vendor_equivalent !== true ||
+    pinAttemptPolicy.production_required !== true
+  ) {
+    throw new Error(`invalid persistent-secret custody contract ${name}: PIN attempt policy drift`);
+  }
+
+  const backupExportPolicy = fixture.requirements.backup_export_policy;
+  if (
+    !isRecord(backupExportPolicy) ||
+    backupExportPolicy.enabled_by_default !== false ||
+    backupExportPolicy.requires_local_device_review !== true ||
+    backupExportPolicy.requires_physical_approval !== true ||
+    backupExportPolicy.requires_danger_zone_copy !== true
+  ) {
+    throw new Error(`invalid persistent-secret custody contract ${name}: backup/export policy drift`);
+  }
+
+  if (
+    !Array.isArray(fixture.non_claims) ||
+    !fixture.non_claims.every((claim) => typeof claim === "string") ||
+    !fixture.non_claims.some((claim) => claim.includes("does not claim direct TROPIC01")) ||
+    !fixture.non_claims.some((claim) => claim.includes("does not enable production signing")) ||
+    !fixture.non_claims.some((claim) => claim.includes("does not apply to stateless QR vault"))
+  ) {
+    throw new Error(`invalid persistent-secret custody contract ${name}: non-claims drift`);
+  }
 }
 
 export function validateReviewTranscriptFixture(name: string, fixture: unknown): void {
@@ -761,6 +919,7 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
   const sourcePublicKeyProofsRoot = resolve(specsRoot, "vectors/source-public-key-proofs");
   const accessSurfacesRoot = resolve(specsRoot, "vectors/access-surfaces");
   const featureMatricesRoot = resolve(specsRoot, "vectors/features");
+  const custodyContractsRoot = resolve(specsRoot, "vectors/custody");
   const invalidVectorsRoot = resolve(specsRoot, "vectors/invalid");
   const eventFiles = readdirSync(eventsRoot)
     .filter((file) => file.endsWith(".json"))
@@ -826,6 +985,9 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     .filter((file) => file.endsWith(".json"))
     .sort();
   const featureMatrixFiles = readdirSync(featureMatricesRoot)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
+  const custodyContractFiles = readdirSync(custodyContractsRoot)
     .filter((file) => file.endsWith(".json"))
     .sort();
   const invalidVectorFiles = readdirSync(invalidVectorsRoot)
@@ -903,6 +1065,12 @@ export function loadSpecsFixtures(specsRoot: string): SpecsFixtureSet {
     featureMatrices: featureMatrixFiles.map(
       (file) => loadJson(resolve(featureMatricesRoot, file)) as SpecsFixtureSet["featureMatrices"][number]
     ),
+    custodyContracts: custodyContractFiles.map((file) => {
+      const fixture = loadJson(resolve(custodyContractsRoot, file));
+      const name = fileStem(file);
+      validatePersistentSecretCustodyFixture(name, fixture);
+      return fixture as SpecsFixtureSet["custodyContracts"][number];
+    }),
     invalidVectors: invalidVectorFiles.map(
       (file) => loadJson(resolve(invalidVectorsRoot, file)) as SpecsFixtureSet["invalidVectors"][number]
     )

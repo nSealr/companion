@@ -5,6 +5,7 @@ import {
   loadSpecsFixtures,
   validateAccessSurfaceFixture,
   validateFeatureMatrixFixture,
+  validatePersistentSecretCustodyFixture,
   validateReviewTranscriptFixture,
   validateSourcePublicKeyProofFixture
 } from "./fixtures.js";
@@ -354,6 +355,40 @@ describe("fixture loading", () => {
     matrix.solutions.esp32_qr_vault.features.nostr_event_review_universal.contract_id = "esp32-special-review";
 
     expect(() => validateFeatureMatrixFixture(matrix.name, matrix)).toThrow(/shared feature contract drift/u);
+  });
+
+  it("loads and validates persistent-secret custody contracts from the specs repository", () => {
+    const specsRoot = resolveSpecsRoot();
+    const fixtures = loadSpecsFixtures(specsRoot);
+    const expectedNames = readdirSync(resolve(specsRoot, "vectors/custody"))
+      .filter((file) => file.endsWith(".json"))
+      .map((file) => file.replace(/\.json$/u, ""))
+      .sort();
+
+    expect(fixtures.custodyContracts.map((contract) => contract.name)).toEqual(expectedNames);
+    expect(fixtures.custodyContracts[0].contract_id).toBe("persistent-secret-custody-v0");
+    expect(fixtures.custodyContracts[0].repository).toBe("hardware");
+    expect(fixtures.custodyContracts[0].requirements.secret_at_rest.plaintext_allowed).toBe(false);
+    expect(fixtures.custodyContracts[0].non_claims.join("\n")).toContain("stateless QR vault");
+    expect(() =>
+      validatePersistentSecretCustodyFixture(fixtures.custodyContracts[0].name, fixtures.custodyContracts[0])
+    ).not.toThrow();
+  });
+
+  it("rejects persistent-secret custody contract drift in package code", () => {
+    const fixtures = loadSpecsFixtures(resolveSpecsRoot());
+    const contract = structuredClone(fixtures.custodyContracts[0]) as Record<string, unknown>;
+    const requirements = contract.requirements as {
+      secret_at_rest: {
+        plaintext_allowed: boolean;
+      };
+    };
+
+    requirements.secret_at_rest.plaintext_allowed = true;
+
+    expect(() => validatePersistentSecretCustodyFixture(String(contract.name), contract)).toThrow(
+      /plaintext-at-rest boundary drift/u
+    );
   });
 
   it("loads implementation limits and invalid hardening vectors from the specs repository", () => {

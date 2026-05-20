@@ -39,8 +39,9 @@ single-repository CI. Cross-repository drift remains guarded by
   vectors are discovered from the sibling specs checkout or local snapshot
   instead of being maintained in a hand-written name list.
   Account-descriptor, policy-profile, grant-descriptor, policy-change review,
-  policy-decision, route-selection, and source public-key proof loading is also
-  directory-driven through package-owned fixture/policy code. Policy parser
+  policy-decision, route-selection, source public-key proof, and
+  persistent-secret custody contract loading is also directory-driven through
+  package-owned fixture/policy code. Policy parser
   tests pin the v0 nSealr-managed grant menu to `sign_event` kind `1` only, so
   broader automated methods or event kinds fail before CLI, browser, SDK, or
   local-service code can treat a grant descriptor as valid.
@@ -465,8 +466,9 @@ single-repository CI. Cross-repository drift remains guarded by
   NIP-46 session lifecycle fixtures, NIP-46 session gate fixtures,
   account descriptors, policy profiles, grant descriptors, policy-change
   review vectors, policy-decision vectors, route-selection vectors, source
-  public-key proof vectors, and access-surface vectors, plus the shared
-  implementation-limit profile and invalid hardening vectors. Grant
+  public-key proof vectors, access-surface vectors, and persistent-secret
+  custody contract vectors, plus the shared implementation-limit profile and
+  invalid hardening vectors. Grant
   descriptor tests reject the removed `decision` field so the companion cannot
   revive an ambiguous grant mode outside expiry, rate-limit, revocation, audit,
   and device-confirmation semantics. Policy-profile parser tests also reject

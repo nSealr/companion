@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:0b8a3c33edddc9a92b231690bf8c4cc09286ea3c865fc3e2a229063350b37dba`
+API surface digest: `sha256:5ca9e6c70a5388eb87f151d4c38ee6dc2e0cc8728592300bd7828fa100d57c8d`
 
 Source: `docs/api.md`
 
@@ -122,6 +122,9 @@ package only because it contains no production secret custody path.
 Source public-key proof fixture validation must remain secretless: it may load
 proof metadata, expected public keys, source fingerprints, and source-vector
 paths, but not mnemonic words, raw secret keys, or NIP-19 `nsec` payloads.
+Persistent-secret custody contract validation is also conformance tooling. It
+may check custom hardware-wallet custody gates and non-claims, but it must not
+become a production key store, TROPIC01 capability oracle, or signer route.
 
 ## @nsealr/framing
 

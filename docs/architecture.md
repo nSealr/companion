@@ -986,23 +986,27 @@ Permission parsing is intentionally separate from permission grants. The parser
 accepts the NIP-46 `method[:params]` string form, validates numeric
 `sign_event:<kind>` selectors, and rejects `connect` as a requested permission.
 The matching helper derives a required permission from a later request and
-checks it against an already-approved permission set. A broad `sign_event`
-permission matches every event kind; `sign_event:<kind>` matches only that
-kind. Shared specs fixtures now include the derived requirement and
-positive/negative permission checks for conformance. The bridge decision helper
-uses the same matching result to produce signer routing, local `ping`, `connect`
-review, or permission-denied responses. Actual grant storage, revocation, auth
-challenges, and user approval UX remain future policy layers. This broad
-NIP-46 permission matching is a read-only decision harness boundary; it is not
-the nSealr-managed persistent grant descriptor menu, which remains limited to
-`sign_event` kind `1` in v0.
+checks it against an already-approved permission set. For compatibility and
+request-review rendering, raw requested-permission parsing can represent broad
+`sign_event`; `sign_event:<kind>` matches only that kind. Approved-permission
+inputs are stricter: CLI `--permissions` and `nsealr-nip46-policy-v0` policy
+files reject broad `sign_event` and require an explicit kind selector before a
+request can reach a signer route. Shared specs fixtures now include the derived
+requirement and positive/negative permission checks for conformance. The bridge
+decision helper uses the same matching result to produce signer routing, local
+`ping`, `connect` review, or permission-denied responses. Actual grant storage,
+revocation, auth challenges, and user approval UX remain future policy layers.
+This broad NIP-46 permission matching is a read-only compatibility boundary;
+it is not the nSealr-managed persistent grant descriptor menu, which remains
+limited to `sign_event` kind `1` in v0.
 
 `nsealr nip46 decide` exposes that boundary as a file-backed test harness for
 already-decrypted payloads. It writes the same deterministic decision JSON used
 by shared vectors. The command accepts either an explicit permission string or
 a read-only `nsealr-nip46-policy-v0` policy file pinned by shared specs
-vectors. It does not create or update policy files, open relay sessions,
-decrypt NIP-44 payloads, persist grants, or contact signer transports.
+vectors, and both approved-permission paths reject broad `sign_event`. It does
+not create or update policy files, open relay sessions, decrypt NIP-44
+payloads, persist grants, or contact signer transports.
 
 `nsealr nip46 review-connect` exposes only the review projection for an
 already-decrypted `connect` request. It writes deterministic pages with the

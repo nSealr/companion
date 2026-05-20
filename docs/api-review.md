@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:6c15f8feea2f0a745cd4e529fb09138bb2b47bffc0ca40730f1c1d4f81a62147`
+API surface digest: `sha256:fe508b8adbc78a07a7f2b3262c7b91abd5ac2ce34fcad43598ca515315580c2a`
 
 Source: `docs/api.md`
 
@@ -136,7 +136,9 @@ Status: reviewed for pre-alpha.
 The NIP-46 package converts already-decrypted messages into nSealr decisions or
 deterministic local responses, parses connect review intents, parses
 descriptor-only `bunker://` and `nostrconnect://` connection URI metadata,
-parses read-only policy files, and enforces permission checks. The connection
+parses requested-permission metadata, parses stricter approved-permission
+inputs, parses read-only policy files, and enforces permission checks. Approved
+`sign_event` inputs must be kind-scoped before signer routing. The connection
 URI parser records only secret presence, not the secret value. It deliberately
 excludes relay sessions, NIP-44 encryption/decryption, persistent grants,
 connect acknowledgement, browser storage, and signer I/O.

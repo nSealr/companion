@@ -509,8 +509,24 @@ describe("nsealr CLI", () => {
     writeFileSync(messagePath, `${JSON.stringify(vector.request_message, null, 2)}\n`, "utf8");
 
     await expect(
-      runCli(["nip46", "decide", "--message", messagePath, "--permissions", "sign_event", "--out", decisionPath])
+      runCli(["nip46", "decide", "--message", messagePath, "--permissions", "sign_event:1", "--out", decisionPath])
     ).rejects.toThrow("event_template contains forbidden fields");
+    expect(existsSync(decisionPath)).toBe(false);
+  });
+
+  it("rejects broad approved NIP-46 sign_event permissions before writing output", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-broad-nip46-permission-"));
+    const signEventVector = loadJson(resolve(specsRoot, "vectors/nip46/sign-event-kind-1-basic.json")) as {
+      request_message: unknown;
+    };
+    const messagePath = join(tempRoot, "message.json");
+    const decisionPath = join(tempRoot, "decision.json");
+
+    writeFileSync(messagePath, `${JSON.stringify(signEventVector.request_message, null, 2)}\n`, "utf8");
+
+    await expect(
+      runCli(["nip46", "decide", "--message", messagePath, "--permissions", "sign_event", "--out", decisionPath])
+    ).rejects.toThrow("approved sign_event permission must include parameter and event_kind");
     expect(existsSync(decisionPath)).toBe(false);
   });
 

@@ -215,6 +215,16 @@ export function parseNip46Permissions(value: string): Nip46Permission[] {
   });
 }
 
+export function parseNip46ApprovedPermissions(value: string): Nip46Permission[] {
+  const permissions = parseNip46Permissions(value);
+  for (const permission of permissions) {
+    if (permission.method === "sign_event" && permission.parameter === undefined) {
+      throw new Error("approved sign_event permission must include parameter and event_kind");
+    }
+  }
+  return permissions;
+}
+
 function parseNip46PolicyPermission(permission: unknown, context: string): Nip46Permission {
   if (!isRecord(permission) || typeof permission.method !== "string") {
     throw new Error(`${context}: permission entries must include method`);
@@ -224,10 +234,7 @@ function parseNip46PolicyPermission(permission: unknown, context: string): Nip46
   }
   if (permission.method === "sign_event") {
     if (permission.parameter === undefined) {
-      if (Object.keys(permission).length !== 1) {
-        throw new Error(`${context}: broad sign_event permission must only include method`);
-      }
-      return { method: "sign_event" };
+      throw new Error(`${context}: approved sign_event permission must include parameter and event_kind`);
     }
     if (
       typeof permission.parameter !== "string" ||

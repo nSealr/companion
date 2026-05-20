@@ -289,6 +289,8 @@ match the shared `contract_id`.
   session.
 - `nsealr nip46 decide` writes the bridge decision for an already-decrypted
   NIP-46 payload using explicit permission inputs or a read-only policy file.
+  Approved `sign_event` inputs must be kind-scoped, for example
+  `sign_event:1`; broad `sign_event` is requested-permission metadata only.
   It does not open relays, decrypt NIP-44 payloads, persist grants, or contact
   signer transports.
 - `nsealr nip46 review-connect` writes deterministic review pages for an

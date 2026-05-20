@@ -8,6 +8,7 @@ import {
   isNip46RequestPermitted,
   nip46ResponseFromNSealr,
   nip46PermissionRequirementFromRequest,
+  parseNip46ApprovedPermissions,
   parseNip46ConnectionUri,
   parseNip46ConnectIntent,
   parseNip46PolicyFile,
@@ -154,6 +155,14 @@ describe("NIP-46 bridge payloads", () => {
       { method: "sign_event", parameter: "4", event_kind: 4 },
       { method: "sign_event", parameter: "30023", event_kind: 30023 }
     ]);
+    expect(parseNip46Permissions("sign_event")).toEqual([{ method: "sign_event" }]);
+    expect(parseNip46ApprovedPermissions("get_public_key,sign_event:1")).toEqual([
+      { method: "get_public_key" },
+      { method: "sign_event", parameter: "1", event_kind: 1 }
+    ]);
+    expect(() => parseNip46ApprovedPermissions("sign_event")).toThrow(
+      /approved sign_event permission must include parameter and event_kind/u
+    );
     expect(parseNip46Permissions("")).toEqual([]);
     expect(() => parseNip46Permissions("sign_event:not-a-kind")).toThrow(/sign_event permission kind/u);
     expect(() => parseNip46Permissions("connect")).toThrow(/must not request connect/u);
@@ -164,6 +173,12 @@ describe("NIP-46 bridge payloads", () => {
     const policy = load("vectors/nip46-policy-files/sign-event-kind-1-approved.json");
 
     expect(parseNip46PolicyFile(policy)).toEqual([{ method: "sign_event", parameter: "1", event_kind: 1 }]);
+    expect(() =>
+      parseNip46PolicyFile({
+        format: "nsealr-nip46-policy-v0",
+        approved_permissions: [{ method: "sign_event" }]
+      })
+    ).toThrow(/approved sign_event permission must include parameter and event_kind/u);
   });
 
   it("matches shared NIP-46 connection URI descriptor vectors", () => {

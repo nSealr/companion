@@ -222,6 +222,7 @@ Exports:
 - `nip46PermissionRequirementFromRequest`
 - `nip46ResponseFromNSealr`
 - `nsealrRequestFromNip46`
+- `parseNip46ApprovedPermissions`
 - `parseNip46ConnectIntent`
 - `parseNip46ConnectionUri`
 - `parseNip46Permissions`

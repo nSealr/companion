@@ -122,7 +122,9 @@ decisions as a file-backed CLI harness for integration tests. `nsealr nip46
 review-connect` exposes only the deterministic review pages for a `connect`
 message. The decision command can read explicit permissions from the command
 line or from a `nsealr-nip46-policy-v0` policy file pinned by shared specs
-vectors, but neither command creates, updates, approves, or persists grants by
+vectors, but approved `sign_event` inputs must use explicit kind selectors;
+broad `sign_event` is accepted only as requested-permission metadata for
+review. Neither command creates, updates, approves, or persists grants by
 itself. Policy-file parsing is now package-owned in `packages/nip46`, leaving
 the CLI as a file/argument adapter. These paths also do not add relay,
 encryption, or signer I/O. The package now also validates `bunker://` and

@@ -533,16 +533,21 @@ single-repository CI. Cross-repository drift remains guarded by
   does not echo shared secret values. Shared invalid hardening vectors cover
   malformed connection URI schemes, relays, and missing `nostrconnect` secrets.
 - NIP-46 permission matching tests covering derived `sign_event:<kind>`
-  requirements, broad `sign_event` grants, method-only grants, denied requests,
-  and `connect` exclusion from post-connect request permissions. The CLI fixture
-  verifier also rejects drift in shared permission policy checks.
+  requirements, broad requested-permission compatibility, explicit approved
+  `sign_event:<kind>` inputs, method-only grants, denied requests, and
+  `connect` exclusion from post-connect request permissions. Package and CLI
+  tests reject broad approved `sign_event` inputs before decision output is
+  written. The CLI fixture verifier also rejects drift in shared permission
+  policy checks.
 - NIP-46 bridge decision tests covering permitted signer routing, denied signer
   routing, local `ping`, denied `ping`, and `connect` review intent output. The
   CLI fixture verifier also rejects drift in shared bridge decision vectors.
 - CLI NIP-46 decision and review tests covering `nsealr nip46 decide` against
   shared permitted, denied, and `connect` bridge-decision vectors plus
   `nsealr nip46 review-connect` against the shared `connect` review-page vector
-  without opening relay or signer transports.
+  without opening relay or signer transports. Approved decision inputs must use
+  explicit `sign_event:<kind>` selectors; broad `sign_event` is accepted only
+  as requested-permission metadata for review.
 - CLI NIP-46 connection URI tests covering `nsealr nip46 parse-connection-uri`
   against shared `bunker://` and `nostrconnect://` vectors, including
   no-secret-echo output and invalid-token refusal before output files are

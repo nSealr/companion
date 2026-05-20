@@ -10,6 +10,9 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
 - Parse `bunker://` and `nostrconnect://` connection URIs into descriptor-only
   metadata without echoing shared secrets.
 - Parse read-only nSealr policy files used by the CLI and tests.
+- Keep requested-permission parsing separate from approved-permission parsing
+  so broad `sign_event` can be reviewed as metadata but cannot authorize a
+  signer route.
 - Enforce permission checks before signer routing.
 
 ## Example

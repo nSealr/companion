@@ -36,6 +36,7 @@ import {
   nip46PermissionRequirementFromRequest,
   nip46ResponseFromNSealr,
   nsealrRequestFromNip46,
+  parseNip46ApprovedPermissions,
   parseNip46ConnectionUri,
   parseNip46ConnectIntent,
   parseNip46PolicyFile,
@@ -1157,7 +1158,7 @@ export function buildCli(options: BuildCliOptions = {}): Command {
       }
       const permissions = options.policyFile
         ? readNip46PolicyPermissions(options.policyFile)
-        : parseNip46Permissions(options.permissions);
+        : parseNip46ApprovedPermissions(options.permissions);
       writeJson(options.out, decideNip46BridgeAction(message, permissions));
     });
 

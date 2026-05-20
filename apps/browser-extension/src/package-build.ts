@@ -19,7 +19,8 @@ import {
   BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
   browserExtensionRouteConfigDigest,
   parseBrowserExtensionRouteConfigApproval,
-  parseBrowserExtensionRouteConfig
+  parseBrowserExtensionRouteConfig,
+  type BrowserExtensionDispatchableRouteType
 } from "./route-config.js";
 import { type BrowserExtensionManifestOptions } from "./manifest.js";
 import {
@@ -60,7 +61,7 @@ export type BrowserExtensionPackageBuildResult = {
   out_dir: string;
   route_config_digest: string;
   route_account_id: string;
-  route_type?: string;
+  route_type: BrowserExtensionDispatchableRouteType;
   origin_permission_mode: "none" | BrowserExtensionPackageOriginPermissionMode;
   extension_id?: string;
   local_pairing_digest?: string;
@@ -129,13 +130,13 @@ function requireChromiumExtensionId(value: unknown, label: string): string {
 function normalizedRouteConfig(value: unknown): {
   format: typeof BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT;
   account_id: string;
-  route_type?: string;
+  route_type: BrowserExtensionDispatchableRouteType;
 } {
   const parsed = parseBrowserExtensionRouteConfig(value);
   return {
     format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
     account_id: parsed.route_request.account_id,
-    ...(parsed.route_request.route_type !== undefined ? { route_type: parsed.route_request.route_type } : {})
+    route_type: parsed.route_request.route_type
   };
 }
 
@@ -509,7 +510,7 @@ export async function buildBrowserExtensionPackage(
     out_dir: outDir,
     route_config_digest: browserExtensionRouteConfigDigest(routeConfig),
     route_account_id: routeConfig.account_id,
-    ...(routeConfig.route_type !== undefined ? { route_type: routeConfig.route_type } : {}),
+    route_type: routeConfig.route_type,
     origin_permission_mode: originPermissions?.mode ?? "none",
     ...(originPermissions?.extensionId !== undefined ? { extension_id: originPermissions.extensionId } : {}),
     ...(originPermissions?.localPairingDigest !== undefined

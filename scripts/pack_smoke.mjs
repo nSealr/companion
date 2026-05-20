@@ -39,7 +39,7 @@ for (const packageName of publicPackages) {
     "pack",
     "--pack-destination",
     packDir
-  ]);
+  ], { env: packageManager.env });
   const tarball = join(packDir, packageFilename(expectedManifest));
   tarballs.set(packageName, tarball);
   assertPublicPackageTarball(packageName, tarball, expectedManifest);

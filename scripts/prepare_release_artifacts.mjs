@@ -68,7 +68,7 @@ for (const plannedPackage of releasePlan.packages) {
     "pack",
     "--pack-destination",
     outDir
-  ]);
+  ], { env: packageManager.env });
   const tarball = join(outDir, packageFilename(expectedManifest));
   assertPublicPackageTarball(packageName, tarball, expectedManifest);
   artifacts.push({

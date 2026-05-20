@@ -63,11 +63,15 @@ export const publicPackageExportSpecifiers = publicPackages
   .sort();
 
 export function packageManagerCommand() {
-  const npmExecPath = process.env.npm_execpath;
-  if (npmExecPath?.endsWith(".js") || npmExecPath?.endsWith(".cjs")) {
-    return { command: process.execPath, prefixArgs: [npmExecPath] };
+  const packageManager = readJson(join(root, "package.json")).packageManager;
+  assert.match(packageManager, /^pnpm@\d+\.\d+\.\d+$/u, "root packageManager must pin pnpm");
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (key.startsWith("npm_config_")) {
+      delete env[key];
+    }
   }
-  return { command: npmExecPath ?? "pnpm", prefixArgs: [] };
+  return { command: "npm", prefixArgs: ["exec", "--yes", `--package=${packageManager}`, "--", "pnpm"], env };
 }
 
 export function run(command, args, options = {}) {
@@ -120,8 +124,36 @@ export function assertNoWorkspaceProtocols(value, path = "package.json") {
   }
 }
 
-function workspaceDependencyEntries(manifest) {
-  return ["dependencies", "peerDependencies", "optionalDependencies"].flatMap((section) => {
+function packageReferenceEntries(value, path = "package.json") {
+  if (typeof value === "string") {
+    return value.startsWith("@nsealr/") ? [{ path, packageName: value.split("/").slice(0, 2).join("/") }] : [];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => packageReferenceEntries(item, `${path}[${index}]`));
+  }
+  if (value && typeof value === "object") {
+    return Object.entries(value).flatMap(([key, item]) => {
+      if (key.startsWith("@nsealr/")) {
+        return [{ path: `${path}.${key}`, packageName: key.split("/").slice(0, 2).join("/") }];
+      }
+      return packageReferenceEntries(item, `${path}.${key}`);
+    });
+  }
+  return [];
+}
+
+export function assertNoPrivatePackageReferences(value, path = "package.json") {
+  const privatePackageSet = new Set(privatePackages);
+  for (const reference of packageReferenceEntries(value, path)) {
+    assert(
+      !privatePackageSet.has(reference.packageName),
+      `${reference.path} must not reference private/test-only package ${reference.packageName}`
+    );
+  }
+}
+
+function workspaceDependencyEntries(manifest, sections) {
+  return sections.flatMap((section) => {
     const dependencies = manifest[section];
     if (!dependencies || typeof dependencies !== "object") return [];
     return Object.entries(dependencies).map(([name, version]) => ({ section, name, version }));
@@ -152,7 +184,8 @@ export function assertCompanionPackageRegistry() {
     }
 
     if (publicPackageSet.has(manifest.name)) {
-      for (const dependency of workspaceDependencyEntries(manifest)) {
+      assertNoPrivatePackageReferences(manifest, `${manifest.name} package manifest`);
+      for (const dependency of workspaceDependencyEntries(manifest, ["dependencies", "peerDependencies", "optionalDependencies"])) {
         if (!dependency.name.startsWith("@nsealr/")) continue;
         assert(
           packageNames.has(dependency.name),
@@ -185,4 +218,5 @@ export function assertPublicPackageTarball(packageName, tarball, expectedManifes
   assert.equal(manifest.version, expectedManifest.version);
   assert.equal(manifest.private, undefined, `${packageName} public tarball must not be private`);
   assertNoWorkspaceProtocols(manifest);
+  assertNoPrivatePackageReferences(manifest, `${packageName} packed manifest`);
 }

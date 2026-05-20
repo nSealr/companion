@@ -38,7 +38,6 @@
     "@nsealr/protocol": "workspace:*"
   },
   "devDependencies": {
-    "@nsealr/dev-signer": "workspace:*",
     "@nsealr/fixtures": "workspace:*"
   },
   "publishConfig": {

@@ -39,8 +39,8 @@ Before any npm publication:
   repository directories, issue tracker, homepage, MIT license, and public
   provenance `publishConfig`.
 - `make package-registry` must confirm the publishable package set is derived
-  from package manifests and excludes private/test-only packages from
-  production dependency graphs.
+  from package manifests and excludes private/test-only packages from every
+  public package manifest field.
 - Packed tarballs must install into a temporary consumer project and import by
   package name.
 - Executable SDK examples must pass against built package entrypoints.
@@ -50,8 +50,8 @@ Before any npm publication:
 - `docs/api-review.md` must record the current `docs/api.md` digest through
   `make api-review`.
 - The changelog must describe the release.
-- No package may contain production private-key custody or depend on private
-  `@nsealr/dev-signer` from production code.
+- No package may contain production private-key custody. Public package
+  manifests and production code must not reference private `@nsealr/dev-signer`.
 - Public claims must remain pre-production unless real signer acceptance gates
   are complete.
 

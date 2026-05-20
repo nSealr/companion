@@ -378,9 +378,24 @@ def verify_companion_package_boundaries(errors: list[str]) -> None:
                     errors.append("packages/fixtures/package.json must export built specs-root entrypoint")
         if package.get("types") != "./dist/index.d.ts":
             errors.append(f"packages/{package_dir}/package.json must expose ./dist/index.d.ts types")
-        dependencies = package.get("dependencies")
-        if package_dir != "dev-signer" and isinstance(dependencies, dict) and "@nsealr/dev-signer" in dependencies:
-            errors.append(f"packages/{package_dir} must not depend on test-only @nsealr/dev-signer")
+        if package_dir != "dev-signer":
+            for dependency_section in [
+                "dependencies",
+                "devDependencies",
+                "peerDependencies",
+                "optionalDependencies",
+                "bundleDependencies",
+                "bundledDependencies",
+            ]:
+                dependency_value = package.get(dependency_section)
+                if isinstance(dependency_value, dict) and "@nsealr/dev-signer" in dependency_value:
+                    errors.append(
+                        f"packages/{package_dir} must not reference test-only @nsealr/dev-signer in {dependency_section}"
+                    )
+                if isinstance(dependency_value, list) and "@nsealr/dev-signer" in dependency_value:
+                    errors.append(
+                        f"packages/{package_dir} must not reference test-only @nsealr/dev-signer in {dependency_section}"
+                    )
 
     for app_dir, package_name in COMPANION_APPS.items():
         package_json_path = ROOT / "apps" / app_dir / "package.json"

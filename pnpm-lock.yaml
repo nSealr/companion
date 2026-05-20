@@ -412,9 +412,6 @@ importers:
         specifier: workspace:*
         version: link:../protocol
     devDependencies:
-      '@nsealr/dev-signer':
-        specifier: workspace:*
-        version: link:../dev-signer
       '@nsealr/fixtures':
         specifier: workspace:*
         version: link:../fixtures

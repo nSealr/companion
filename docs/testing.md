@@ -9,8 +9,11 @@ make ci
 The baseline check verifies repository structure, license policy, docs, CI,
 TypeScript type safety, unit tests, integration tests, dependency audit, and
 companion package-boundary rules.
-The Makefile pins `pnpm@10.33.4`; it uses a global `pnpm` when present and
-falls back to `npm exec` on development machines that only have Node/npm.
+The Makefile pins `pnpm@10.33.4`; it uses a global `pnpm` only when that exact
+version is present and otherwise falls back to `npm exec` on development
+machines that only have Node/npm. Package build, pack, and release-artifact
+helpers also invoke the repository-pinned `pnpm` internally, so direct script
+runs cannot silently inherit an older global `pnpm`.
 The workspace Vitest command is bounded to four workers to avoid local or CI
 fork-worker oversubscription while keeping the full test suite enabled.
 
@@ -386,8 +389,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - `make package-registry` verifies that the public package set is derived from
   actual package manifests, that private packages such as
   `@nsealr/dev-signer` cannot enter the publishable set, and that public
-  packages do not depend on private/test-only workspace packages through
-  production dependency sections.
+  packages do not reference private/test-only workspace packages anywhere in
+  their publishable manifests.
 - `make public-imports` verifies that production source for public packages
   imports other `@nsealr/*` packages only through reviewed public
   entrypoints/subpaths, keeps relative imports inside the package `src`
@@ -400,7 +403,8 @@ single-repository CI. Cross-repository drift remains guarded by
 - `make pack-smoke` packs public `@nsealr/*` tarballs, verifies they contain
   only `dist`, README, and package metadata, verifies `workspace:*` dependency
   protocols were rewritten, installs the tarballs into a temporary npm consumer
-  project, and imports them by package name.
+  project, and imports them by package name. Packed public manifests must not
+  mention private/test-only packages.
 - `make release-artifacts-safety` proves the release-artifact helper refuses
   destructive output paths such as the repository root, `packages/`, or the
   top-level `release-artifacts/` directory before any cleanup occurs. It also

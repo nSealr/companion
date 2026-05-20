@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
 import { readdirSync, rmSync, statSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const root = dirname(fileURLToPath(new URL("../package.json", import.meta.url)));
+import { join, relative } from "node:path";
+import { packageManagerCommand, root } from "./package_set.mjs";
 
 const packageOrder = [
   "core",
@@ -22,14 +20,6 @@ const packageOrder = [
   "browser-provider",
   "sdk"
 ];
-
-function packageManagerCommand() {
-  const npmExecPath = process.env.npm_execpath;
-  if (npmExecPath?.endsWith(".js") || npmExecPath?.endsWith(".cjs")) {
-    return { command: process.execPath, prefixArgs: [npmExecPath] };
-  }
-  return { command: npmExecPath ?? "pnpm", prefixArgs: [] };
-}
 
 function collectSources(directory) {
   const entries = readdirSync(directory, { withFileTypes: true });
@@ -79,7 +69,7 @@ function runTsc(packageDir) {
     relative(root, outDir),
     ...sourceFiles
   ];
-  const result = spawnSync(packageManager.command, args, { cwd: root, stdio: "inherit" });
+  const result = spawnSync(packageManager.command, args, { cwd: root, env: packageManager.env, stdio: "inherit" });
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
   }

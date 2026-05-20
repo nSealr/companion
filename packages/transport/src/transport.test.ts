@@ -4,8 +4,6 @@ import { join, resolve } from "node:path";
 import { PassThrough } from "node:stream";
 import { once } from "node:events";
 import { describe, expect, it } from "vitest";
-import { verifySignedEventResponse } from "@nsealr/core";
-import { DevSignerTransport } from "@nsealr/dev-signer";
 import { resolveSpecsRoot } from "@nsealr/fixtures";
 import { decodeSerialFrame, encodeSerialFrame } from "@nsealr/framing";
 import { validateResponse } from "@nsealr/protocol";
@@ -38,21 +36,6 @@ const publicKeyVector = JSON.parse(
 const basicEventVector = JSON.parse(readFileSync(resolve(specsRoot, "vectors/events/kind-1-basic.json"), "utf8"));
 
 describe("transport adapters", () => {
-  it("signs through the in-memory development signer transport", async () => {
-    const transport = new DevSignerTransport(key.secret_key);
-    const response = await transport.exchange(signEventRequest);
-
-    expect(verifySignedEventResponse(signEventRequest, response).ok).toBe(true);
-  });
-
-  it("rejects invalid development signer transport requests before signing", async () => {
-    const transport = new DevSignerTransport(key.secret_key);
-
-    await expect(transport.exchange({ ...signEventRequest, request_id: "bad request id" })).rejects.toThrow(
-      "transport request invalid: request_id is invalid"
-    );
-  });
-
   it("moves request and response JSON through files", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-file-"));
     const requestPath = join(tempRoot, "request.json");

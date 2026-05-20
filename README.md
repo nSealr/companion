@@ -484,8 +484,10 @@ Run the repository verification loop with:
 make ci
 ```
 
-The Makefile pins `pnpm@10.33.4`; it uses a global `pnpm` when available and
-falls back to `npm exec` when only Node/npm is installed.
+The Makefile pins `pnpm@10.33.4`; it uses a global `pnpm` only when that exact
+version is available and otherwise falls back to `npm exec`. Release helper
+scripts also invoke pinned `pnpm` internally so direct script runs do not depend
+on a stale global install.
 
 Run the CLI from the workspace with:
 

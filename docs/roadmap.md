@@ -425,8 +425,8 @@ entrypoints and checked in CI so exported symbols cannot drift invisibly.
 Package manifests now carry npm-facing descriptions, keywords, repository
 directories, issue tracker, homepage, MIT license, and public provenance
 `publishConfig`. The package registry check derives the public package set
-from those manifests and rejects private/test-only workspace dependencies in
-production dependency sections before release artifacts can be prepared.
+from those manifests and rejects private/test-only workspace package references
+anywhere in public package manifests before release artifacts can be prepared.
 Package README examples are executable TypeScript snippets checked against
 built package entrypoints in CI. `docs/api-review.md` records a
 package-by-package public API review bound to the current `docs/api.md` digest.

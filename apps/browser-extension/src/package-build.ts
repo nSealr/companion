@@ -65,6 +65,7 @@ export type BrowserExtensionPackageBuildResult = {
   route_config_digest: string;
   route_account_id: string;
   route_type: BrowserExtensionDispatchableRouteType;
+  popup_mode: BrowserExtensionPackagePlan["popup_mode"];
   origin_permission_mode: "none" | BrowserExtensionPackageOriginPermissionMode;
   extension_id?: string;
   local_pairing_digest?: string;
@@ -75,6 +76,7 @@ export type BrowserExtensionPackageBuildResult = {
   writes_extension_storage: false;
   stores_production_secrets: false;
   dispatches_signers: false;
+  uses_active_tab_permission: boolean;
   embeds_origin_permission_store: boolean;
   uses_extension_origin_permission_storage: boolean;
 };
@@ -539,6 +541,7 @@ export async function buildBrowserExtensionPackage(
     route_config_digest: browserExtensionRouteConfigDigest(routeConfig),
     route_account_id: routeConfig.account_id,
     route_type: routeConfig.route_type,
+    popup_mode: plan.popup_mode,
     origin_permission_mode: originPermissions?.mode ?? "none",
     ...(originPermissions?.extensionId !== undefined ? { extension_id: originPermissions.extensionId } : {}),
     ...(originPermissions?.localPairingDigest !== undefined
@@ -551,6 +554,7 @@ export async function buildBrowserExtensionPackage(
     writes_extension_storage: false,
     stores_production_secrets: false,
     dispatches_signers: false,
+    uses_active_tab_permission: plan.uses_active_tab_permission,
     embeds_origin_permission_store: originPermissions?.mode === "embedded",
     uses_extension_origin_permission_storage: originPermissions?.mode === "extension_storage"
   });

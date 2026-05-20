@@ -560,10 +560,10 @@ unreviewed files under `apps/`, `packages/`, docs, scripts, or tests. The
 returned `nsealr-browser-extension-package-build-v0` result includes the
 reviewed package-plan digest, route-config digest, selected account/route,
 content-script origins, extension id, local pairing digest,
-origin-permission mode, package digest, and per-file byte counts plus SHA-256
-hashes for the manifest, packaged popup HTML, and bundled entrypoints. Lab
-integration verifies both the explicit binding metadata and the files that were
-actually written. It still installs no
+popup mode, origin-permission mode, activeTab usage, package digest, and
+per-file byte counts plus SHA-256 hashes for the manifest, packaged popup HTML,
+and bundled entrypoints. Lab integration verifies both the explicit binding
+metadata and the files that were actually written. It still installs no
 native-host manifest, writes no extension storage, creates no grants, dispatches
 no signers, and holds no key material.
 The same private app has a browser-API-free sender context boundary. The future

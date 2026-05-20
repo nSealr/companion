@@ -134,6 +134,7 @@ describe("browser extension package build", () => {
         route_config_digest: routeConfigReview.route_config_digest,
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
+        popup_mode: "pending_requests",
         origin_permission_mode: "embedded",
         extension_id: chromiumExtensionId,
         local_pairing_digest: localPairingDigest,
@@ -166,6 +167,7 @@ describe("browser extension package build", () => {
         writes_extension_storage: false,
         stores_production_secrets: false,
         dispatches_signers: false,
+        uses_active_tab_permission: false,
         embeds_origin_permission_store: true,
         uses_extension_origin_permission_storage: false
       });
@@ -226,12 +228,14 @@ describe("browser extension package build", () => {
         route_config_digest: routeConfigReview.route_config_digest,
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
+        popup_mode: "pending_requests",
         origin_permission_mode: "none",
         content_script_origins: [],
         installs_native_host_manifest: false,
         writes_extension_storage: false,
         stores_production_secrets: false,
         dispatches_signers: false,
+        uses_active_tab_permission: false,
         embeds_origin_permission_store: false,
         uses_extension_origin_permission_storage: false
       });
@@ -294,6 +298,7 @@ describe("browser extension package build", () => {
         route_config_digest: routeConfigReview.route_config_digest,
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
+        popup_mode: "origin_permission_approval",
         origin_permission_mode: "extension_storage",
         extension_id: chromiumExtensionId,
         local_pairing_digest: localPairingDigest,
@@ -302,6 +307,7 @@ describe("browser extension package build", () => {
         writes_extension_storage: false,
         stores_production_secrets: false,
         dispatches_signers: false,
+        uses_active_tab_permission: true,
         embeds_origin_permission_store: false,
         uses_extension_origin_permission_storage: true
       });

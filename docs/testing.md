@@ -122,8 +122,9 @@ single-repository CI. Cross-repository drift remains guarded by
   `release-artifacts/browser-extension/`, requires the reviewed package-plan
   digest to match the manifest profile being built, writes manifest, popup
   HTML, and bundled entrypoints only after successful in-memory bundling,
-  returns explicit route, origin, extension, and pairing metadata plus a
-  package digest and per-file byte counts plus SHA-256 hashes, and still
+  returns explicit route, popup-mode, activeTab, origin, extension, and pairing
+  metadata plus a package digest and per-file byte counts plus SHA-256 hashes,
+  and still
   performs no native-host installation, build-time browser storage writes, key
   custody, or signer dispatch. Firefox package-build output is covered through
   the same builder with explicit Gecko extension settings. Package-plan and

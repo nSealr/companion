@@ -134,6 +134,7 @@ describe("browser extension package-build CLI", () => {
         out_dir: temp.outDir,
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
+        popup_mode: "pending_requests",
         origin_permission_mode: "embedded",
         extension_id: chromiumExtensionId,
         local_pairing_digest: localPairingDigest,
@@ -144,6 +145,7 @@ describe("browser extension package-build CLI", () => {
         writes_extension_storage: false,
         stores_production_secrets: false,
         dispatches_signers: false,
+        uses_active_tab_permission: false,
         embeds_origin_permission_store: true,
         uses_extension_origin_permission_storage: false
       });
@@ -209,11 +211,13 @@ describe("browser extension package-build CLI", () => {
         target: "chromium",
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
+        popup_mode: "origin_permission_approval",
         origin_permission_mode: "extension_storage",
         package_plan_digest: chromiumExtensionStoragePackagePlanDigest,
         extension_id: chromiumExtensionId,
         local_pairing_digest: localPairingDigest,
         content_script_origins: ["https://example.com"],
+        uses_active_tab_permission: true,
         embeds_origin_permission_store: false,
         uses_extension_origin_permission_storage: true
       });
@@ -250,9 +254,11 @@ describe("browser extension package-build CLI", () => {
         target: "firefox",
         route_account_id: "esp32-usb-slot-0",
         route_type: "esp32_usb_nip46",
+        popup_mode: "pending_requests",
         origin_permission_mode: "none",
         package_plan_digest: firefoxPackagePlanDigest,
         content_script_origins: [],
+        uses_active_tab_permission: false,
         embeds_origin_permission_store: false,
         uses_extension_origin_permission_storage: false
       });

@@ -1,27 +1,43 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const root = dirname(fileURLToPath(new URL("../package.json", import.meta.url)));
 
-export const publicPackages = [
-  "@nsealr/browser-provider",
-  "@nsealr/client",
-  "@nsealr/core",
-  "@nsealr/fixtures",
-  "@nsealr/framing",
-  "@nsealr/nip46",
-  "@nsealr/policy",
-  "@nsealr/protocol",
-  "@nsealr/qr",
-  "@nsealr/review",
-  "@nsealr/sdk",
-  "@nsealr/smartcard",
-  "@nsealr/transport"
-];
+const packagesRoot = join(root, "packages");
+
+function readJson(path) {
+  return JSON.parse(readFileSync(path, "utf-8"));
+}
+
+export function packageDirName(packageName) {
+  return packageName.replace("@nsealr/", "");
+}
+
+export function workspacePackageEntries() {
+  return readdirSync(packagesRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => ({
+      dir: entry.name,
+      manifest: readJson(join(packagesRoot, entry.name, "package.json"))
+    }))
+    .sort((left, right) => left.dir.localeCompare(right.dir));
+}
+
+export const workspacePackages = workspacePackageEntries();
+
+export const publicPackages = workspacePackages
+  .filter(({ manifest }) => manifest.publishConfig?.access === "public")
+  .map(({ manifest }) => manifest.name)
+  .sort();
+
+export const privatePackages = workspacePackages
+  .filter(({ manifest }) => manifest.private === true)
+  .map(({ manifest }) => manifest.name)
+  .sort();
 
 export function packageManagerCommand() {
   const npmExecPath = process.env.npm_execpath;
@@ -47,12 +63,8 @@ export function capture(command, args, options = {}) {
   return result.stdout;
 }
 
-export function packageDirName(packageName) {
-  return packageName.replace("@nsealr/", "");
-}
-
 export function sourceManifest(packageName) {
-  return JSON.parse(readFileSync(join(root, "packages", packageDirName(packageName), "package.json"), "utf-8"));
+  return readJson(join(root, "packages", packageDirName(packageName), "package.json"));
 }
 
 export function packageFilename(manifest) {
@@ -81,6 +93,58 @@ export function assertNoWorkspaceProtocols(value, path = "package.json") {
   if (value && typeof value === "object") {
     for (const [key, item] of Object.entries(value)) {
       assertNoWorkspaceProtocols(item, `${path}.${key}`);
+    }
+  }
+}
+
+function workspaceDependencyEntries(manifest) {
+  return ["dependencies", "peerDependencies", "optionalDependencies"].flatMap((section) => {
+    const dependencies = manifest[section];
+    if (!dependencies || typeof dependencies !== "object") return [];
+    return Object.entries(dependencies).map(([name, version]) => ({ section, name, version }));
+  });
+}
+
+export function assertCompanionPackageRegistry() {
+  const rootManifest = readJson(join(root, "package.json"));
+  const packageNames = new Set(workspacePackages.map(({ manifest }) => manifest.name));
+  const publicPackageSet = new Set(publicPackages);
+
+  assert(!publicPackageSet.has("@nsealr/dev-signer"), "@nsealr/dev-signer must stay private");
+  assert(privatePackages.includes("@nsealr/dev-signer"), "@nsealr/dev-signer must be registered as private");
+
+  for (const { dir, manifest } of workspacePackages) {
+    const expectedName = `@nsealr/${dir}`;
+    assert.equal(manifest.name, expectedName, `packages/${dir}/package.json name must match its directory`);
+    assert.equal(manifest.version, rootManifest.version, `${manifest.name} must use the synchronized root version`);
+
+    if (manifest.private === true) {
+      assert.equal(manifest.publishConfig, undefined, `${manifest.name} must not publish while private`);
+    } else {
+      assert.deepEqual(
+        manifest.publishConfig,
+        { access: "public", provenance: true },
+        `${manifest.name} must declare public npm provenance`
+      );
+    }
+
+    if (publicPackageSet.has(manifest.name)) {
+      for (const dependency of workspaceDependencyEntries(manifest)) {
+        if (!dependency.name.startsWith("@nsealr/")) continue;
+        assert(
+          packageNames.has(dependency.name),
+          `${manifest.name} ${dependency.section}.${dependency.name} must reference a workspace package`
+        );
+        assert(
+          publicPackageSet.has(dependency.name),
+          `${manifest.name} production ${dependency.section}.${dependency.name} must be public, not private/test-only`
+        );
+        assert.equal(
+          dependency.version,
+          "workspace:*",
+          `${manifest.name} ${dependency.section}.${dependency.name} must use workspace:* before packing`
+        );
+      }
     }
   }
 }

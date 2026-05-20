@@ -2,6 +2,7 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import {
+  assertCompanionPackageRegistry,
   assertPublicPackageTarball,
   fileIntegrity,
   packageFilename,
@@ -30,6 +31,7 @@ function assertSafeReleaseOutputDirectory(outDir) {
 
 const outDir = outputDirectoryFromArgs(process.argv.slice(2));
 assertSafeReleaseOutputDirectory(outDir);
+assertCompanionPackageRegistry();
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 

@@ -116,6 +116,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("package.json must expose API documentation regeneration")
     elif scripts.get("api-review:check") != "node scripts/check_api_review.mjs":
         errors.append("package.json must expose API review drift checks")
+    elif scripts.get("package-registry:check") != "node scripts/check_package_registry.mjs":
+        errors.append("package.json must expose package registry drift checks")
     elif scripts.get("browser-runtime-imports:check") != "node scripts/check_browser_runtime_imports.mjs":
         errors.append("package.json must expose browser runtime import-hygiene checks")
     elif scripts.get("browser-runtime-bundle:check") != "node scripts/check_browser_runtime_bundle.mjs":
@@ -130,7 +132,7 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("package.json must expose release-artifacts output safety checks")
     elif scripts.get("release-artifacts") != "node scripts/prepare_release_artifacts.mjs --out release-artifacts/packages":
         errors.append("package.json must expose release-artifacts preparation")
-    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm api-review:check && pnpm browser-runtime-imports:check && pnpm browser-runtime-bundle:check && pnpm browser-extension-security:check && pnpm public-imports:check && pnpm release-artifacts:safety && pnpm pack-smoke":
+    elif scripts.get("ci") != "pnpm build && pnpm typecheck && pnpm test && pnpm consumer-smoke && pnpm examples-smoke && pnpm readme-examples:check && pnpm api-docs:check && pnpm api-review:check && pnpm package-registry:check && pnpm browser-runtime-imports:check && pnpm browser-runtime-bundle:check && pnpm browser-extension-security:check && pnpm public-imports:check && pnpm release-artifacts:safety && pnpm pack-smoke":
         errors.append("package.json ci must build package artifacts, API review, and import-hygiene checks")
 
     makefile = makefile_path.read_text(encoding="utf-8")
@@ -152,6 +154,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile must expose API documentation regeneration")
     if "api-review:" not in makefile or "$(PNPM) api-review:check" not in makefile:
         errors.append("Makefile must run the API review drift check")
+    if "package-registry:" not in makefile or "$(PNPM) package-registry:check" not in makefile:
+        errors.append("Makefile must run the package registry drift check")
     if "browser-runtime-imports:" not in makefile or "$(PNPM) browser-runtime-imports:check" not in makefile:
         errors.append("Makefile must run the browser runtime import-hygiene check")
     if "browser-runtime-bundle:" not in makefile or "$(PNPM) browser-runtime-bundle:check" not in makefile:
@@ -168,6 +172,8 @@ def verify_companion_tooling(errors: list[str]) -> None:
         errors.append("Makefile must prepare release artifacts")
     if "ci:" not in makefile or "browser-runtime-imports" not in makefile.split("ci:", 1)[1].splitlines()[0]:
         errors.append("Makefile ci must include the browser runtime import-hygiene check")
+    if "ci:" not in makefile or "package-registry" not in makefile.split("ci:", 1)[1].splitlines()[0]:
+        errors.append("Makefile ci must include the package registry drift check")
     if "ci:" not in makefile or "browser-runtime-bundle" not in makefile.split("ci:", 1)[1].splitlines()[0]:
         errors.append("Makefile ci must include the browser runtime bundle-smoke check")
     if "ci:" not in makefile or "browser-extension-security" not in makefile.split("ci:", 1)[1].splitlines()[0]:
@@ -177,13 +183,20 @@ def verify_companion_tooling(errors: list[str]) -> None:
 
     if not changelog_path.exists() or "## Unreleased" not in changelog_path.read_text(encoding="utf-8"):
         errors.append("CHANGELOG.md must track unreleased package changes")
-    for rel in ["scripts/package_set.mjs", "scripts/prepare_release_artifacts.mjs", "scripts/check_release_artifacts_safety.mjs"]:
+    for rel in [
+        "scripts/package_set.mjs",
+        "scripts/check_package_registry.mjs",
+        "scripts/prepare_release_artifacts.mjs",
+        "scripts/check_release_artifacts_safety.mjs",
+    ]:
         if not (ROOT / rel).exists():
             errors.append(f"missing companion package release helper: {rel}")
     if not (ROOT / "scripts" / "check_api_docs.mjs").exists():
         errors.append("missing companion API documentation drift helper: scripts/check_api_docs.mjs")
     if not (ROOT / "scripts" / "check_api_review.mjs").exists():
         errors.append("missing companion API review drift helper: scripts/check_api_review.mjs")
+    if not (ROOT / "scripts" / "check_package_registry.mjs").exists():
+        errors.append("missing companion package registry drift helper: scripts/check_package_registry.mjs")
     if not (ROOT / "scripts" / "check_browser_runtime_imports.mjs").exists():
         errors.append("missing companion browser runtime import-hygiene helper: scripts/check_browser_runtime_imports.mjs")
     if not (ROOT / "scripts" / "check_browser_runtime_bundle.mjs").exists():

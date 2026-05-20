@@ -367,8 +367,11 @@ provenance requirements. `docs/api.md` is generated from the actual public packa
 entrypoints and checked in CI so exported symbols cannot drift invisibly.
 Package manifests now carry npm-facing descriptions, keywords, repository
 directories, issue tracker, homepage, MIT license, and public provenance
-`publishConfig`. Package README examples are executable TypeScript snippets
-checked against built package entrypoints in CI. `docs/api-review.md` records a
+`publishConfig`. The package registry check derives the public package set
+from those manifests and rejects private/test-only workspace dependencies in
+production dependency sections before release artifacts can be prepared.
+Package README examples are executable TypeScript snippets checked against
+built package entrypoints in CI. `docs/api-review.md` records a
 package-by-package public API review bound to the current `docs/api.md` digest.
 The manual release rehearsal manifest records every tarball's filename, byte
 count, and SHA-256 digest before artifact upload.

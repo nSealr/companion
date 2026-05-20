@@ -3,6 +3,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
+  assertCompanionPackageRegistry,
   assertPublicPackageTarball,
   packageFilename,
   packageManagerCommand,
@@ -10,6 +11,8 @@ import {
   run,
   sourceManifest
 } from "./package_set.mjs";
+
+assertCompanionPackageRegistry();
 
 function cleanNpmConsumerEnv() {
   const env = { ...process.env, npm_config_loglevel: "error" };

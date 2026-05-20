@@ -367,6 +367,11 @@ single-repository CI. Cross-repository drift remains guarded by
   `docs/api.md` digest and includes a review section for every publishable
   package. Intentional export changes must update both API docs and the API
   review before CI can pass.
+- `make package-registry` verifies that the public package set is derived from
+  actual package manifests, that private packages such as
+  `@nsealr/dev-signer` cannot enter the publishable set, and that public
+  packages do not depend on private/test-only workspace packages through
+  production dependency sections.
 - `make public-imports` verifies that production source for public packages
   imports other `@nsealr/*` packages only through reviewed public
   entrypoints/subpaths, keeps relative imports inside the package `src`

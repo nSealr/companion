@@ -6,7 +6,7 @@ else
 PNPM ?= npm exec --yes --package=pnpm@$(PNPM_VERSION) -- pnpm
 endif
 
-.PHONY: setup build test package-smoke examples-smoke readme-examples api-docs api-docs-update api-review browser-runtime-imports browser-runtime-bundle browser-extension-security public-imports release-artifacts-safety pack-smoke release-artifacts lint audit docs ci
+.PHONY: setup build test package-smoke examples-smoke readme-examples api-docs api-docs-update api-review package-registry browser-runtime-imports browser-runtime-bundle browser-extension-security public-imports release-artifacts-safety pack-smoke release-artifacts lint audit docs ci
 
 setup:
 	$(PNPM) install
@@ -41,6 +41,10 @@ api-docs-update:
 api-review:
 	python3 scripts/verify_repo.py
 	$(PNPM) api-review:check
+
+package-registry:
+	python3 scripts/verify_repo.py
+	$(PNPM) package-registry:check
 
 browser-runtime-imports:
 	python3 scripts/verify_repo.py
@@ -83,4 +87,4 @@ docs:
 	$(PNPM) api-docs:check
 	$(PNPM) api-review:check
 
-ci: setup build test package-smoke examples-smoke readme-examples api-docs api-review browser-runtime-imports browser-runtime-bundle browser-extension-security public-imports release-artifacts-safety pack-smoke lint audit docs
+ci: setup build test package-smoke examples-smoke readme-examples api-docs api-review package-registry browser-runtime-imports browser-runtime-bundle browser-extension-security public-imports release-artifacts-safety pack-smoke lint audit docs

@@ -1,20 +1,42 @@
 import assert from "node:assert/strict";
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const publicPackages = [
-  "@nsealr/browser-provider",
-  "@nsealr/client",
-  "@nsealr/core",
-  "@nsealr/fixtures",
-  "@nsealr/framing",
-  "@nsealr/nip46",
-  "@nsealr/policy",
-  "@nsealr/protocol",
-  "@nsealr/qr",
-  "@nsealr/review",
-  "@nsealr/sdk",
-  "@nsealr/smartcard",
-  "@nsealr/transport"
-] as const;
+type PackageManifest = {
+  name?: unknown;
+  publishConfig?: {
+    access?: unknown;
+  };
+};
+
+function readPackageManifest(path: string): PackageManifest {
+  return JSON.parse(readFileSync(path, "utf-8")) as PackageManifest;
+}
+
+function workspaceRoot(): string {
+  return join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
+}
+
+function collectPublicPackages(): string[] {
+  const packagesRoot = join(workspaceRoot(), "packages");
+  const packageNames = readdirSync(packagesRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => readPackageManifest(join(packagesRoot, entry.name, "package.json")))
+    .filter((manifest) => manifest.publishConfig?.access === "public")
+    .map((manifest) => {
+      if (typeof manifest.name !== "string") {
+        throw new Error("public package manifest must declare a name");
+      }
+      return manifest.name;
+    })
+    .sort();
+  assert(packageNames.length > 0, "consumer smoke must discover public packages from manifests");
+  assert(!packageNames.includes("@nsealr/dev-signer"), "consumer smoke must not import test-only dev signer");
+  return packageNames;
+}
+
+const publicPackages = collectPublicPackages();
 
 for (const packageName of publicPackages) {
   const module = await import(packageName);

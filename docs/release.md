@@ -38,6 +38,9 @@ Before any npm publication:
 - Public package manifests must declare npm-facing descriptions, keywords,
   repository directories, issue tracker, homepage, MIT license, and public
   provenance `publishConfig`.
+- `make package-registry` must confirm the publishable package set is derived
+  from package manifests and excludes private/test-only packages from
+  production dependency graphs.
 - Packed tarballs must install into a temporary consumer project and import by
   package name.
 - Executable SDK examples must pass against built package entrypoints.

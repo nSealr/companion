@@ -41,6 +41,9 @@ public npm release.
 - Public package import-hygiene gate that checks production source imports stay
   inside reviewed public package entrypoints/subpaths and never depend on
   private apps or test-only signer packages.
+- Package registry gate that derives the public package set from package
+  manifests and rejects private/test-only production dependencies before npm
+  artifact preparation.
 - `@nsealr/sdk` platform-neutral facade over curated public namespaces for app,
   browser-extension, and companion integrations without importing private
   signing helpers, Node-only fixtures, or host transport adapters.

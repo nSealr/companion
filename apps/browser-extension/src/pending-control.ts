@@ -447,8 +447,12 @@ function parseListResult(value: unknown): BrowserExtensionListPendingResponse["r
   if (value.stores_production_secrets !== false || value.contains_secret_material !== false) {
     throw new Error("browser extension control list result must be secretless");
   }
+  const pendingRequests = value.pending_requests.map(parseBrowserExtensionPendingRequestState);
+  if (pendingRequests.some((state) => state.status !== "pending")) {
+    throw new Error("browser extension control list result pending_requests must be active");
+  }
   return {
-    pending_requests: Object.freeze(value.pending_requests.map(parseBrowserExtensionPendingRequestState)),
+    pending_requests: Object.freeze(pendingRequests),
     stores_production_secrets: false,
     contains_secret_material: false
   };

@@ -112,32 +112,33 @@ export function installBrowserExtensionPopupView(
     chips.appendChild(createText("span", "nsealr-popup__chip", "No keys"));
     chips.appendChild(createText("span", "nsealr-popup__chip", "No event payload"));
 
-    const actions = options.document.createElement("div");
-    actions.className = "nsealr-popup__actions";
-    const cancel = options.document.createElement("button");
-    cancel.className = "nsealr-popup__button nsealr-popup__button--danger";
-    cancel.textContent = "Cancel";
-    cancel.setAttribute("type", "button");
-    cancel.setAttribute("data-pending-request-id", state.request_id);
-    if (cancel.dataset !== undefined) {
-      cancel.dataset.pendingRequestId = state.request_id;
-    }
-    cancel.addEventListener("click", () => {
-      cancel.disabled = true;
-      void options.controls.cancelPendingRequest(state.request_id)
-        .then(() => refresh())
-        .catch((error: unknown) => {
-          reportBrowserExtensionPopupError(error, options.onError);
-          setStatus("Unavailable");
-          cancel.disabled = false;
-        });
-    });
-    actions.appendChild(cancel);
-
     item.appendChild(head);
     item.appendChild(meta);
     item.appendChild(chips);
-    item.appendChild(actions);
+    if (state.status === "pending") {
+      const actions = options.document.createElement("div");
+      actions.className = "nsealr-popup__actions";
+      const cancel = options.document.createElement("button");
+      cancel.className = "nsealr-popup__button nsealr-popup__button--danger";
+      cancel.textContent = "Cancel";
+      cancel.setAttribute("type", "button");
+      cancel.setAttribute("data-pending-request-id", state.request_id);
+      if (cancel.dataset !== undefined) {
+        cancel.dataset.pendingRequestId = state.request_id;
+      }
+      cancel.addEventListener("click", () => {
+        cancel.disabled = true;
+        void options.controls.cancelPendingRequest(state.request_id)
+          .then(() => refresh())
+          .catch((error: unknown) => {
+            reportBrowserExtensionPopupError(error, options.onError);
+            setStatus("Unavailable");
+            cancel.disabled = false;
+          });
+      });
+      actions.appendChild(cancel);
+      item.appendChild(actions);
+    }
     return item;
   }
 
@@ -148,7 +149,8 @@ export function installBrowserExtensionPopupView(
       return;
     }
     list.replaceChildren(...states.map(renderRequest));
-    setStatus(`${states.length} pending`);
+    const pendingCount = states.filter((state) => state.status === "pending").length;
+    setStatus(`${pendingCount} pending`);
   }
 
   async function refresh(): Promise<void> {

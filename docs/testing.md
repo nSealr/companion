@@ -233,16 +233,18 @@ single-repository CI. Cross-repository drift remains guarded by
   tests prove the separate `nsealr-browser-extension-control-v0`
   `list_pending_requests`, `cancel_pending_request`, and
   `request_origin_permission_review` paths accept extension-internal senders,
-  reject page-origin senders, reject oversized pending-state lists, keep
-  list/cancel operations away from native messaging, route origin-review
+  reject page-origin senders, reject oversized pending-state lists, reject
+  settled states from `list_pending_requests`, keep list/cancel operations away
+  from native messaging, route origin-review
   requests through the background controller, and can use the background
   entrypoint's default in-memory lifecycle.
   Popup-control tests prove future visible UI can call the same list/cancel and
   origin-review protocol through injected `runtime.sendMessage`, rejects
-  mismatched or unsafe response envelopes, and remains secretless. Popup-view
+  mismatched, settled, or unsafe response envelopes, and remains secretless. Popup-view
   tests prove the visible pending-request card renders request id, selected
   route account/type, timestamps, and no-key/no-event-payload state while
-  keeping cancellation bound to the validated pending request id.
+  keeping cancellation bound to the validated pending request id and absent
+  from already settled states.
   Page-provider tests prove
   NIP-07 `getPublicKey` and `signEvent`
   calls become validated background requests, unsafe templates fail before the

@@ -188,4 +188,28 @@ describe("browser extension popup view", () => {
     expect(fake.status.textContent).toBe("Unavailable");
     expect(fake.list.children[0].textContent).toBe("Unavailable");
   });
+
+  it("does not render cancel actions for already settled states", async () => {
+    const fake = createFakeDocument();
+    installBrowserExtensionPopupView({
+      document: fake.document,
+      controls: {
+        async listPendingRequests(): Promise<readonly BrowserExtensionPendingRequestState[]> {
+          return [{
+            ...pendingState(),
+            status: "resolved"
+          }];
+        },
+        async cancelPendingRequest() {
+          throw new Error("settled state must not expose cancel");
+        }
+      }
+    });
+
+    await flushAsync();
+
+    expect(fake.status.textContent).toBe("0 pending");
+    expect(fake.list.children[0].children[0].children[1].textContent).toBe("Resolved");
+    expect(fake.list.children[0].children).toHaveLength(3);
+  });
 });

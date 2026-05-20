@@ -316,6 +316,29 @@ describe("browser extension popup pending request controls", () => {
       nextRequestId: () => "popup-list-unsafe"
     });
     await expect(unsafe.listPendingRequests()).rejects.toThrow(/event templates/u);
+
+    const settled = createBrowserExtensionPopupControls({
+      runtime: {
+        sendMessage(): unknown {
+          return {
+            protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+            version: 1,
+            request_id: "popup-list-settled",
+            ok: true,
+            result: {
+              pending_requests: [{
+                ...pendingState,
+                status: "resolved"
+              }],
+              stores_production_secrets: false,
+              contains_secret_material: false
+            }
+          };
+        }
+      },
+      nextRequestId: () => "popup-list-settled"
+    });
+    await expect(settled.listPendingRequests()).rejects.toThrow(/must be active/u);
   });
 
   it("surfaces deterministic control errors and local cancellation", async () => {

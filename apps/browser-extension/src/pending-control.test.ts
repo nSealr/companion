@@ -353,6 +353,16 @@ describe("browser extension pending request control boundary", () => {
       ...listResponse,
       result: {
         ...listResponse.result,
+        pending_requests: [{
+          ...pendingState,
+          status: "resolved"
+        }]
+      }
+    })).toThrow(/must be active/u);
+    expect(() => parseBrowserExtensionControlResponse({
+      ...listResponse,
+      result: {
+        ...listResponse.result,
         pending_requests: Array.from(
           { length: BROWSER_EXTENSION_MAX_ACTIVE_PENDING_REQUESTS + 1 },
           (_, index) => ({

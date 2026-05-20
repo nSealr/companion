@@ -595,8 +595,9 @@ separate `nsealr-browser-extension-control-v0` `list_pending_requests` and
 extension-internal senders only; page-origin senders cannot list or cancel
 pending requests. A popup-control client now wraps those messages over an
 injected `runtime.sendMessage`, validates response envelopes and secretless
-pending-state snapshots, rejects request-id mismatches, and exposes only
-list/cancel operations for the packaged action popup. The popup view renders
+active pending-state snapshots, rejects settled states and request-id
+mismatches, and exposes only list/cancel operations for the packaged action
+popup. The popup view renders
 only safe pending-state metadata: request id, method, status, page origin,
 optional app name, selected route account/type, timestamps, and explicit
 no-key/no-event-payload chips. The

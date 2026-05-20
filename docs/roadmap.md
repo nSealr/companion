@@ -572,9 +572,12 @@ counts, and SHA-256 digests, and still does not publish to npm.
   runtime-message boundary routes separate `nsealr-browser-extension-control-v0`
   `list_pending_requests` and `cancel_pending_request` messages from
   extension-internal senders only, so page-origin senders cannot list or cancel
-  active requests. A popup-control client now wraps those internal messages
-  over injected `runtime.sendMessage`, validates secretless responses, and
-  gives future popup UI a tested list/cancel command surface. The same control
+  active requests. The list-response boundary now accepts only active
+  `pending` states, keeping settled lifecycle snapshots out of the visible
+  pending-request channel. A popup-control client now wraps those internal
+  messages over injected `runtime.sendMessage`, validates secretless
+  responses, and gives future popup UI a tested list/cancel command surface.
+  The same control
   path can request origin-permission review metadata for the selected active
   page through the background controller, without approval, browser storage,
   grants, native-host installation, provider injection, signer dispatch, or key

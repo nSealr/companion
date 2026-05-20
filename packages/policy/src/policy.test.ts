@@ -145,6 +145,32 @@ describe("identity, recovery, and policy contracts", () => {
       }
     })).toThrow(/grant_constraints must be absent/u);
 
+    expect(() => parsePolicyProfile({
+      ...policy,
+      manual_review_required: [...(policy.manual_review_required as string[]), "auto_like"]
+    })).toThrow(/manual_review_required contains unsupported value auto_like/u);
+
+    expect(() => parsePolicyProfile({
+      ...policy,
+      forbidden_permissions: [...(policy.forbidden_permissions as string[]), "shadow_export"]
+    })).toThrow(/forbidden_permissions contains unsupported value shadow_export/u);
+
+    expect(() => parsePolicyProfile({
+      ...policy,
+      risk_tiers: {
+        ...(policy.risk_tiers as Record<string, string>),
+        reaction: "low_scoped"
+      }
+    })).toThrow(/risk_tiers contains unsupported key reaction/u);
+
+    expect(() => parsePolicyProfile({
+      ...policy,
+      risk_tiers: {
+        ...(policy.risk_tiers as Record<string, string>),
+        delete: "auto"
+      }
+    })).toThrow(/risk_tiers.delete uses unsupported tier auto/u);
+
     const grant = loadJson(resolve(specsRoot, "vectors/grants/esp32-usb-kind-1-session.json")) as Record<string, unknown>;
     expect(() => parseGrantDescriptor({
       ...grant,

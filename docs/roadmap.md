@@ -206,6 +206,12 @@ expiry, rate limits, revocation, audit, and device confirmation; one-use
 behavior must be represented by `rate_limit.max_uses: 1` rather than a second
 grant mode.
 
+Status note, 2026-05-20: companion policy parsing now also enforces the closed
+v0 policy-profile vocabulary from specs. Unsupported manual-review requirement
+names, forbidden-permission names, risk-tier keys, or risk-tier values are
+rejected before CLI, SDK, browser, or local-service code can treat them as
+policy metadata.
+
 Status note, 2026-05-19: companion policy parsing now accepts and validates the
 shared NIP-06 `recovery.source_fingerprint` field so secretless account
 descriptors stay aligned with QR vault source-review metadata. This does not

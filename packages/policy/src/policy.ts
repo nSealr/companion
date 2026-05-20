@@ -214,6 +214,26 @@ const CUSTODY_MODES = new Set([
 ]);
 const REVIEW_MODES = new Set(["device_display", "external_review", "external_policy", "display_less"]);
 const POLICY_SUPPORT_MODES = new Set(["manual_only", "scoped_automation", "external"]);
+const POLICY_REVIEW_REQUIREMENTS = new Set([
+  "connect",
+  "delete_event",
+  "nip04_decrypt",
+  "nip44_decrypt",
+  "policy_change",
+  "sign_event",
+  "switch_relays",
+  "unknown_method"
+]);
+const POLICY_FORBIDDEN_PERMISSIONS = new Set([
+  "companion_authoritative_policy_change",
+  "decrypt_without_review",
+  "export_secret",
+  "local_private_key_storage",
+  "trusted_review_claim",
+  "wildcard"
+]);
+const POLICY_RISK_NAMES = new Set(["decrypt", "delete", "kind:1", "policy_change", "profile", "sign_event", "unknown"]);
+const POLICY_RISK_TIERS = new Set(["device_review", "external_policy", "external_review", "low_scoped", "manual"]);
 const DEVICE_METHODS = new Set(["get_capabilities", "get_signing_status", "get_public_key", "sign_event"]);
 const DECRYPT_METHODS = new Set(["nip04_decrypt", "nip44_decrypt"]);
 const POLICY_DECISION_ROUTE_TYPES = new Set<RouteType>([
@@ -569,7 +589,18 @@ export function parsePolicyProfile(value: unknown): PolicyProfile {
   const mode = requireString(value.mode, "mode");
   if (mode !== "manual_only" && mode !== "scoped_automation") throw new Error("mode is unknown");
   const grantsAllowed = requireBoolean(value.grants_allowed, "grants_allowed");
+  const manualReviewRequired = requireStringArray(value.manual_review_required, "manual_review_required");
+  for (const requirement of manualReviewRequired) {
+    if (!POLICY_REVIEW_REQUIREMENTS.has(requirement)) {
+      throw new Error(`manual_review_required contains unsupported value ${requirement}`);
+    }
+  }
   const forbiddenPermissions = requireStringArray(value.forbidden_permissions, "forbidden_permissions");
+  for (const permission of forbiddenPermissions) {
+    if (!POLICY_FORBIDDEN_PERMISSIONS.has(permission)) {
+      throw new Error(`forbidden_permissions contains unsupported value ${permission}`);
+    }
+  }
   if (!forbiddenPermissions.includes("wildcard")) throw new Error("forbidden_permissions must include wildcard");
   if (!forbiddenPermissions.includes("export_secret")) throw new Error("forbidden_permissions must include export_secret");
   if (routeTypes.some((route) => QR_ROUTE_TYPES.has(route)) && (mode !== "manual_only" || grantsAllowed !== false)) {
@@ -605,8 +636,9 @@ export function parsePolicyProfile(value: unknown): PolicyProfile {
   }
   assertRecord(value.risk_tiers, "risk_tiers");
   for (const [riskName, riskTier] of Object.entries(value.risk_tiers)) {
-    if (typeof riskTier !== "string" || riskTier.length === 0) {
-      throw new Error(`risk_tiers.${riskName} must be a non-empty string`);
+    if (!POLICY_RISK_NAMES.has(riskName)) throw new Error(`risk_tiers contains unsupported key ${riskName}`);
+    if (typeof riskTier !== "string" || !POLICY_RISK_TIERS.has(riskTier)) {
+      throw new Error(`risk_tiers.${riskName} uses unsupported tier ${String(riskTier)}`);
     }
   }
   const policyId = requirePolicyId(value.policy_id, "policy_id");
@@ -617,7 +649,7 @@ export function parsePolicyProfile(value: unknown): PolicyProfile {
     route_types: routeTypes,
     mode,
     grants_allowed: grantsAllowed,
-    manual_review_required: requireStringArray(value.manual_review_required, "manual_review_required"),
+    manual_review_required: manualReviewRequired,
     forbidden_permissions: forbiddenPermissions,
     ...(value.grant_constraints !== undefined ? { grant_constraints: value.grant_constraints as Record<string, unknown> } : {}),
     risk_tiers: value.risk_tiers as Record<string, string>

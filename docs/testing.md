@@ -456,7 +456,9 @@ single-repository CI. Cross-repository drift remains guarded by
   the shared implementation-limit profile and invalid hardening vectors. Grant
   descriptor tests reject the removed `decision` field so the companion cannot
   revive an ambiguous grant mode outside expiry, rate-limit, revocation, audit,
-  and device-confirmation semantics.
+  and device-confirmation semantics. Policy-profile parser tests also reject
+  unsupported policy vocabulary so new manual-review, forbidden-permission, or
+  risk-tier strings cannot appear without a specs update.
 - CLI policy-change review tests covering
   `nsealr policy review-change --proposal ... --out ...` against shared
   policy-change vectors, including deterministic output and no output after a

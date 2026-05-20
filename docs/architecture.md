@@ -80,10 +80,11 @@ packages, but it must not export test-only signing as a production path.
   output directory only after successful in-memory bundling, embeds a
   digest-approved secretless static route config in the background bundle, and
   requires reviewed origin-permission store data before content scripts can be
-  packaged. It returns explicit route, origin, extension, and pairing metadata
-  plus a package digest and per-file byte counts plus SHA-256 hashes, writes no
-  extension storage, installs no native-host manifest, and remains a developer
-  artifact until a full bootstrap/config UX is reviewed.
+  packaged. It returns explicit route, popup mode, activeTab usage, origin,
+  extension, and pairing metadata plus a package digest and per-file byte
+  counts plus SHA-256 hashes, writes no extension storage, installs no
+  native-host manifest, and remains a developer artifact until a full
+  bootstrap/config UX is reviewed.
 - `packages/core`: NIP-01 event id and BIP-340 verification.
 - `packages/protocol`: schema validation, typed request/response models, the
   central nSealr v0 implementation limit profile used by companion parsers,

@@ -622,7 +622,11 @@ publishing to npm.
   browser storage APIs, and direct signing helper calls before package-build
   work can drift into browser-side key custody. A private browser-extension
   `package-plan` script now emits that JSON to stdout only, with no output-path
-  or installer behavior. Private `route-config-review` and
+  or installer behavior. It can also render the explicit
+  `extension-storage` origin-approval manifest profile for reviewed
+  content-script origins, pinning the same `activeTab` plus `storage`
+  permission boundary before package build without writing browser storage.
+  Private `route-config-review` and
   `route-config-approve` scripts now create digest-bound approval artifacts for
   the secretless selected route before package build. A private `package-build`
   script now creates an explicit developer artifact in a new output directory

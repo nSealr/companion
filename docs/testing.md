@@ -125,10 +125,9 @@ single-repository CI. Cross-repository drift remains guarded by
   package digest and per-file byte counts plus SHA-256 hashes, and still
   performs no native-host installation, build-time browser storage writes, key
   custody, or signer dispatch. Firefox package-build output is covered through
-  the same builder with explicit Gecko extension settings. A separate test
-  covers the explicit
-  storage-backed origin-approval build profile and pins its `activeTab` plus
-  `storage` permissions.
+  the same builder with explicit Gecko extension settings. Package-plan and
+  package-build tests both cover the explicit storage-backed origin-approval
+  profile and pin its `activeTab` plus `storage` permissions.
 - Browser-extension app tests cover the private internal message parser for
   `get_public_key` and `sign_event`, including unsupported-method rejection,
   malformed-envelope rejection, and shared signer-request validation for event
@@ -289,8 +288,10 @@ single-repository CI. Cross-repository drift remains guarded by
   Package-plan
   CLI tests prove the private
   browser-extension script renders deterministic JSON from explicit target and
-  content-script arguments, rejects incomplete or broad-match inputs, and has no
-  output-path/install behavior.
+  content-script arguments, rejects incomplete or broad-match inputs, keeps the
+  default embedded-origin profile storage-free, exposes the explicit
+  `extension-storage` origin-approval profile only for reviewed content-script
+  origins, and has no output-path/install behavior.
   Package-build tests require content-script artifacts to include an explicit
   extension id, reviewed origin-permission store, and local pairing digest
   before the packaged background embeds an origin gate. The result remains

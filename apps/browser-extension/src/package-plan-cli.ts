@@ -12,6 +12,7 @@ type PackagePlanCliOptions = {
   target?: BrowserExtensionTarget;
   firefoxExtensionId?: string;
   contentScriptMatches: string[];
+  originPermissionMode?: "embedded" | "extension_storage";
 };
 
 function takeOptionValue(args: string[], index: number, option: string): string {
@@ -49,6 +50,16 @@ function packagePlanOptionsFromArgs(args: string[]): BrowserExtensionManifestOpt
     } else if (arg === "--content-script-match") {
       options.contentScriptMatches.push(takeOptionValue(normalizedArgs, index, arg));
       index += 1;
+    } else if (arg === "--origin-permission-mode") {
+      if (options.originPermissionMode !== undefined) {
+        throw new Error("--origin-permission-mode must be specified only once");
+      }
+      const mode = takeOptionValue(normalizedArgs, index, arg);
+      if (mode !== "embedded" && mode !== "extension-storage") {
+        throw new Error("--origin-permission-mode must be embedded or extension-storage");
+      }
+      options.originPermissionMode = mode === "extension-storage" ? "extension_storage" : "embedded";
+      index += 1;
     } else {
       throw new Error(`unsupported browser-extension package-plan option: ${arg}`);
     }
@@ -60,11 +71,20 @@ function packagePlanOptionsFromArgs(args: string[]): BrowserExtensionManifestOpt
   if (options.target === "chromium" && options.firefoxExtensionId !== undefined) {
     throw new Error("--firefox-extension-id is only valid for Firefox package plans");
   }
+  if (options.originPermissionMode === "extension_storage" && options.contentScriptMatches.length === 0) {
+    throw new Error("--origin-permission-mode extension-storage requires at least one content-script match");
+  }
 
   return {
     target: options.target,
     ...(options.firefoxExtensionId !== undefined ? { firefoxExtensionId: options.firefoxExtensionId } : {}),
-    ...(options.contentScriptMatches.length > 0 ? { contentScriptMatches: options.contentScriptMatches } : {})
+    ...(options.contentScriptMatches.length > 0 ? { contentScriptMatches: options.contentScriptMatches } : {}),
+    ...(options.originPermissionMode === "extension_storage"
+      ? {
+          popupMode: "origin_permission_approval" as const,
+          originPermissionStorageMode: "extension" as const
+        }
+      : {})
   };
 }
 

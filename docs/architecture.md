@@ -521,8 +521,12 @@ deliberately does not build an installable extension, install native-host
 manifests, write browser storage, dispatch signers, or hold key material.
 The private `@nsealr/browser-extension` app exposes this boundary through
 `pnpm --filter @nsealr/browser-extension package-plan -- --target ...`, which
-prints JSON to stdout only. The command has no output-path option and performs
-no filesystem install or browser-storage mutation.
+prints JSON to stdout only. The command can now also render the explicit
+extension-storage origin-approval manifest profile through
+`--origin-permission-mode extension-storage`, requiring reviewed content-script
+origins and pinning `activeTab` plus `storage` before package build. It still
+has no output-path option and performs no filesystem install or browser-storage
+mutation.
 The `route-config-review` command first projects the selected account/route
 into `nsealr-browser-extension-route-config-review-v0`, binding the exact
 secretless route config to a digest without writing storage or approving a

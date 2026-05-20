@@ -49,6 +49,47 @@ describe("browser extension package-plan CLI", () => {
     expect(plan.manifest.browser_specific_settings.gecko.id).toBe("extension@nsealr.dev");
   });
 
+  it("renders an explicit extension-storage origin approval package plan", () => {
+    const plan = JSON.parse(browserExtensionPackagePlanJsonFromArgs([
+      "--target",
+      "chromium",
+      "--content-script-match",
+      "https://example.com/*",
+      "--origin-permission-mode",
+      "extension-storage"
+    ]));
+
+    expect(plan).toMatchObject({
+      format: BROWSER_EXTENSION_PACKAGE_PLAN_FORMAT,
+      target: "chromium",
+      popup_mode: "origin_permission_approval",
+      writes_extension_storage: false,
+      uses_extension_storage: true,
+      uses_active_tab_permission: true,
+      stores_production_secrets: false,
+      dispatches_signers: false
+    });
+    expect(plan.manifest.permissions).toEqual(["nativeMessaging", "activeTab", "storage"]);
+    expect(plan.manifest.content_scripts[0].matches).toEqual(["https://example.com/*"]);
+    expect("host_permissions" in plan.manifest).toBe(false);
+  });
+
+  it("keeps embedded origin-permission package plans storage-free", () => {
+    const plan = JSON.parse(browserExtensionPackagePlanJsonFromArgs([
+      "--target",
+      "chromium",
+      "--content-script-match",
+      "https://example.com/*",
+      "--origin-permission-mode",
+      "embedded"
+    ]));
+
+    expect(plan.popup_mode).toBe("pending_requests");
+    expect(plan.uses_extension_storage).toBe(false);
+    expect(plan.uses_active_tab_permission).toBe(false);
+    expect(plan.manifest.permissions).toEqual(["nativeMessaging"]);
+  });
+
   it("rejects unsupported or incomplete package-plan args before JSON output", () => {
     expect(() => browserExtensionPackagePlanJsonFromArgs([])).toThrow(/target is required/u);
     expect(() => browserExtensionPackagePlanJsonFromArgs([
@@ -85,6 +126,30 @@ describe("browser extension package-plan CLI", () => {
       "extension@nsealr.dev",
       "--firefox-extension-id",
       "other@nsealr.dev"
+    ])).toThrow(/specified only once/u);
+    expect(() => browserExtensionPackagePlanJsonFromArgs([
+      "--target",
+      "chromium",
+      "--origin-permission-mode",
+      "extension-storage"
+    ])).toThrow(/content-script match/u);
+    expect(() => browserExtensionPackagePlanJsonFromArgs([
+      "--target",
+      "chromium",
+      "--content-script-match",
+      "https://example.com/*",
+      "--origin-permission-mode",
+      "none"
+    ])).toThrow(/embedded or extension-storage/u);
+    expect(() => browserExtensionPackagePlanJsonFromArgs([
+      "--target",
+      "chromium",
+      "--content-script-match",
+      "https://example.com/*",
+      "--origin-permission-mode",
+      "embedded",
+      "--origin-permission-mode",
+      "extension-storage"
     ])).toThrow(/specified only once/u);
     expect(() => browserExtensionPackagePlanJsonFromArgs([
       "--target",

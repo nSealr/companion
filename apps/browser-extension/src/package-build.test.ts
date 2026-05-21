@@ -388,6 +388,39 @@ describe("browser extension package build", () => {
     }
   });
 
+  it("rejects popup HTML drift even when package-build file hashes are updated", async () => {
+    const temp = tempOutDir();
+    try {
+      const result = await buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: temp.outDir,
+        packagePlanDigest: chromiumPackagePlanDigest,
+        routeConfig,
+        routeConfigApproval,
+        contentScriptMatches: ["https://example.com/*"],
+        extensionId: chromiumExtensionId,
+        originPermissionStore: originPermissionStore(),
+        localPairingDigest
+      });
+      const popupHtmlPath = join(temp.outDir, BROWSER_EXTENSION_POPUP_HTML_FILE);
+      const popupHtml = readFileSync(popupHtmlPath, "utf8");
+      expect(popupHtml).toContain(`<script type="module" src="${BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE}"></script>`);
+      const tamperedPopupHtml = popupHtml.replace(
+        `<script type="module" src="${BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE}"></script>`,
+        `<script type="module" src="${BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE}"></script>\n  <script type="module" src="unexpected-popup.js"></script>`
+      );
+      writeFileSync(popupHtmlPath, tamperedPopupHtml, "utf8");
+
+      await expect(verifyBrowserExtensionPackageBuildDirectory(resultWithRehashedFile(
+        result,
+        BROWSER_EXTENSION_POPUP_HTML_FILE,
+        tamperedPopupHtml
+      ))).rejects.toThrow(/popup HTML/u);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
   it("rejects origin approval popup drift even when package-build file hashes are updated", async () => {
     const temp = tempOutDir();
     try {

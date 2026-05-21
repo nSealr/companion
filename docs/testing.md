@@ -132,8 +132,9 @@ single-repository CI. Cross-repository drift remains guarded by
   digest and per-file byte counts plus SHA-256 hashes. The package-owned
   `package-verify` script parses that build result, recomputes the package
   digest, checks the written manifest exactly against the reviewed package-plan
-  digest, checks popup HTML, packaged popup-mode binding, packaged background
-  native-host, route, and origin-permission metadata binding, packaged
+  digest, checks the popup HTML exactly against the deterministic template,
+  checks packaged popup-mode binding, packaged background native-host, route,
+  and origin-permission metadata binding, packaged
   content-script and page-script bridge/provider entrypoint bindings, bundled
   entrypoint byte counts and SHA-256 hashes, and rejects unexpected output
   files plus Node runtime references in packaged JavaScript, so release

@@ -733,8 +733,8 @@ counts, and SHA-256 digests, and still does not publish to npm.
   `package-verify` command now validates that build result against the written
   artifact directory, recomputes the digest, checks the manifest exactly
   against the reviewed package-plan digest, validates content-script bindings,
-  popup HTML, popup bundle binding to the reviewed `popup_mode`, native-host
-  binding, selected route metadata, and
+  the exact deterministic popup HTML, popup bundle binding to the reviewed
+  `popup_mode`, native-host binding, selected route metadata, and
   origin-permission metadata in the packaged background script,
   content-script/page-script bridge and provider entrypoint bindings, file
   hashes, exact output directory contents, and bundled JavaScript

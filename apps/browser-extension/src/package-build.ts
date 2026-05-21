@@ -998,11 +998,7 @@ export async function verifyBrowserExtensionPackageBuildDirectory(
   assertManifestMatchesPackageBuild(result, manifestJson);
 
   const popupHtml = fileContents.get(BROWSER_EXTENSION_POPUP_HTML_FILE);
-  if (
-    popupHtml === undefined ||
-    !popupHtml.includes(BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE) ||
-    !popupHtml.includes("nsealr-popup-root")
-  ) {
+  if (popupHtml === undefined || popupHtml !== browserExtensionPopupHtml()) {
     throw new Error("browser extension package popup HTML drifted");
   }
   assertPopupMatchesPackageBuild(result, fileContents.get(BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE));

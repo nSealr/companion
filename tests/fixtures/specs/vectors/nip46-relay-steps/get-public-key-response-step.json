@@ -51,7 +51,7 @@
     "creates_grants": false,
     "acknowledges_connect": false,
     "dispatches_signer": false,
-    "verifies_signature": true,
+    "relay_event_signature_verified": true,
     "stores_production_secrets": false,
     "persists_session_state": false
   },

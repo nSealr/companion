@@ -134,7 +134,7 @@ export type Nip46RelayResponseStep = {
   creates_grants: false;
   acknowledges_connect: false;
   dispatches_signer: false;
-  verifies_signature: boolean;
+  relay_event_signature_verified: boolean;
   stores_production_secrets: false;
   persists_session_state: false;
 };
@@ -976,7 +976,7 @@ export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayRespon
     creates_grants: false,
     acknowledges_connect: false,
     dispatches_signer: false,
-    verifies_signature: envelope.event_signature_verified,
+    relay_event_signature_verified: envelope.event_signature_verified,
     stores_production_secrets: false,
     persists_session_state: false
   };

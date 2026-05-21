@@ -1045,9 +1045,11 @@ from NIP-46 kind `24133` content plus descriptor-only parsing for official
 relay subscriptions, NIP-44 encryption/decryption, connection
 acknowledgements, permission persistence, or active auth-flow browser UX. Relay
 response-step evaluation accepts `connect` `result: "ack"` only as normalized
-metadata while keeping `acknowledges_connect: false`; it also accepts the
-official auth challenge shape only as normalized http(s) URL metadata without
-credentials or fragments. It never opens the URL or treats either response as
+metadata while keeping `acknowledges_connect: false`; it accepts
+`switch_relays` JSON relay-list and `null` results only as normalized metadata
+without opening or switching relay transports; it also accepts the official
+auth challenge shape only as normalized http(s) URL metadata without
+credentials or fragments. It never opens the URL or treats these responses as
 approval.
 For client-initiated `nostrconnect://` flows, the package can also verify an
 already decrypted connection-token response against the original local token
@@ -1068,8 +1070,8 @@ verification boundary. `ping` is answered locally with `pong` because it does
 not require a key-holding device. Signed-event responses are returned as
 NIP-46 result strings containing JSON-stringified Nostr events; public-key
 responses return the hex key string; connect ack relay responses remain
-metadata-only session input; nSealr error responses become NIP-46 error
-strings.
+metadata-only session input; switch-relays responses remain metadata-only
+relay-list input; nSealr error responses become NIP-46 error strings.
 
 This keeps NIP-46 as a host transport/bridge layer. Trusted event review and
 approval remain with the Raspberry, ESP32, smartcard-assisted, or future

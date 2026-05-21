@@ -189,7 +189,9 @@ describe("fixture loading", () => {
       "ping-response-step",
       "sign-event-error-response-step",
       "sign-event-request-step",
-      "sign-event-response-step"
+      "sign-event-response-step",
+      "switch-relays-no-change-response-step",
+      "switch-relays-response-step"
     ]);
     const requestStep = fixtures.nip46RelaySteps.find((vector) => vector.name === "ping-request-step");
     const responseStep = fixtures.nip46RelaySteps.find((vector) => vector.name === "sign-event-response-step");

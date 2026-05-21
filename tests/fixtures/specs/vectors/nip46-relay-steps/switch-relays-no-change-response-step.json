@@ -1,0 +1,56 @@
+{
+  "name": "switch-relays-no-change-response-step",
+  "format": "nsealr-nip46-relay-response-step-v0",
+  "direction": "remote_signer_to_client",
+  "event": {
+    "id": "edededededededededededededededededededededededededededededededed",
+    "kind": 24133,
+    "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+    "created_at": 1710000008,
+    "content": "nip44-v2-switch-relays-no-change-response-ciphertext-placeholder",
+    "tags": [
+      [
+        "p",
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ]
+    ],
+    "sig": "66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666"
+  },
+  "decrypted_message": {
+    "id": "nip46-switch-relays-2",
+    "result": "null"
+  },
+  "expected_step": {
+    "format": "nsealr-nip46-relay-response-step-v0",
+    "envelope": {
+      "format": "nsealr-nip46-relay-event-envelope-v0",
+      "direction": "remote_signer_to_client",
+      "sender_pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+      "recipient_pubkey": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "encrypted_content": "nip44-v2-switch-relays-no-change-response-ciphertext-placeholder",
+      "has_signed_event_fields": true,
+      "decrypts_content": false,
+      "opens_relay": false,
+      "creates_grants": false,
+      "stores_production_secrets": false
+    },
+    "message_id": "nip46-switch-relays-2",
+    "response_message": {
+      "id": "nip46-switch-relays-2",
+      "result": "null"
+    },
+    "result_type": "relay_no_change_result",
+    "relay_urls": null,
+    "signed_event_shape_checked": false,
+    "result_pubkey_bound_to_sender": false,
+    "decrypts_content": false,
+    "opens_relay": false,
+    "creates_grants": false,
+    "acknowledges_connect": false,
+    "dispatches_signer": false,
+    "verifies_signature": false,
+    "stores_production_secrets": false,
+    "persists_session_state": false
+  },
+  "scope": "NIP-46 relay response step evaluation for an already decrypted switch_relays null result. It records no relay change metadata only; it does not open relays, switch transports, decrypt NIP-44 content, acknowledge connect, activate a session, create grants, dispatch a signer, verify signatures, or persist session state."
+}

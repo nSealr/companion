@@ -292,7 +292,9 @@ describe("NIP-46 bridge payloads", () => {
       "ping-response-step",
       "sign-event-error-response-step",
       "sign-event-request-step",
-      "sign-event-response-step"
+      "sign-event-response-step",
+      "switch-relays-no-change-response-step",
+      "switch-relays-response-step"
     ]);
     for (const vector of fixtures.nip46RelaySteps) {
       const actual = vector.format === "nsealr-nip46-relay-response-step-v0"
@@ -345,6 +347,66 @@ describe("NIP-46 bridge payloads", () => {
       opens_relay: false,
       creates_grants: false,
       dispatches_signer: false,
+      persists_session_state: false
+    });
+  });
+
+  it("classifies already decrypted switch_relays responses without opening relays", () => {
+    const relayListStep = evaluateNip46RelayResponseStep({
+      direction: "remote_signer_to_client",
+      event: {
+        id: "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+        kind: 24133,
+        pubkey: "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        created_at: 1710000007,
+        content: "nip44-v2-switch-relays-response-ciphertext-placeholder",
+        tags: [
+          [
+            "p",
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          ]
+        ],
+        sig: "55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555"
+      },
+      decrypted_message: {
+        id: "nip46-switch-relays-1",
+        result: "[\"wss://relay3.example.com/\",\"wss://relay4.example.com/path\"]"
+      }
+    });
+    const noChangeStep = evaluateNip46RelayResponseStep({
+      direction: "remote_signer_to_client",
+      event: {
+        id: "edededededededededededededededededededededededededededededededed",
+        kind: 24133,
+        pubkey: "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        created_at: 1710000008,
+        content: "nip44-v2-switch-relays-no-change-response-ciphertext-placeholder",
+        tags: [
+          [
+            "p",
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          ]
+        ],
+        sig: "66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666"
+      },
+      decrypted_message: {
+        id: "nip46-switch-relays-2",
+        result: "null"
+      }
+    });
+
+    expect(relayListStep).toMatchObject({
+      result_type: "relay_list_result",
+      relay_urls: ["wss://relay3.example.com/", "wss://relay4.example.com/path"],
+      opens_relay: false,
+      creates_grants: false,
+      persists_session_state: false
+    });
+    expect(noChangeStep).toMatchObject({
+      result_type: "relay_no_change_result",
+      relay_urls: null,
+      opens_relay: false,
+      creates_grants: false,
       persists_session_state: false
     });
   });

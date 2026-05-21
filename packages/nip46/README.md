@@ -18,10 +18,10 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
   NIP-44 layer has supplied plaintext, returning deterministic bridge decisions
   or response-shape metadata. Public-key and signed-event response results are
   bound to the relay event sender before later session code can accept them,
-  connect ack responses remain metadata-only, and auth challenge responses
-  expose only safe http(s) URL metadata without credentials or fragments for
-  later UI, without relay I/O, signer dispatch, grant creation, signature
-  verification, URL opening, or session persistence.
+  connect ack and switch-relays responses remain metadata-only, and auth
+  challenge responses expose only safe http(s) URL metadata without credentials
+  or fragments for later UI, without relay I/O, signer dispatch, grant
+  creation, signature verification, URL opening, or session persistence.
 - Render auth challenge URL metadata into deterministic review pages and
   digest-bound approval artifacts without opening the URL, acknowledging
   `connect`, creating grants, opening relays, dispatching signers, storing
@@ -100,11 +100,13 @@ decision logic as local decrypted payload handling. Response steps shape-check
 NIP-46 response messages and signed-event result payloads, and bind
 public-key/signed-event result pubkeys to the relay event sender. Connect ack
 responses are accepted only as `result: "ack"` metadata and do not activate a
-session. Auth challenge responses are accepted only as `result: "auth_url"`
-plus a safe http(s) URL without credentials or fragments in `error`; the
-package returns that URL as metadata and does not open it. Relay steps still do
-not decrypt NIP-44 content, open relays, acknowledge `connect`, create grants,
-dispatch a signer, verify signatures, or persist session state.
+session. Switch-relays responses are accepted only as normalized relay-list or
+`null` no-change metadata and do not switch transports. Auth challenge
+responses are accepted only as `result: "auth_url"` plus a safe http(s) URL
+without credentials or fragments in `error`; the package returns that URL as
+metadata and does not open it. Relay steps still do not decrypt NIP-44 content,
+open relays, acknowledge `connect`, create grants, dispatch a signer, verify
+signatures, or persist session state.
 
 Auth challenge review is the next manual boundary after response-step
 normalization. The package renders the remote signer pubkey, client pubkey, and

@@ -10,6 +10,9 @@ public npm release.
 - NIP-46 relay response-step handling now recognizes `connect` `result:
   "ack"` as metadata-only output while keeping session activation, relay I/O,
   grants, signer dispatch, and persistence disabled.
+- NIP-46 relay response-step handling now recognizes `switch_relays` result
+  metadata, including normalized relay lists and `null` no-change responses,
+  without opening relays or mutating session state.
 - Local-service dispatch now rejects successful `get_public_key` and
   `sign_event` responses whose public key does not match the selected account
   route.

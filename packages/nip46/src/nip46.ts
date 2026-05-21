@@ -108,6 +108,8 @@ export type Nip46RelayResponseResultType =
   | "signed_event_result"
   | "public_key_result"
   | "connect_ack_result"
+  | "relay_list_result"
+  | "relay_no_change_result"
   | "pong_result"
   | "auth_challenge"
   | "error";
@@ -119,6 +121,7 @@ export type Nip46RelayResponseStep = {
   response_message: Nip46ResponseMessage;
   result_type: Nip46RelayResponseResultType;
   auth_url?: string;
+  relay_urls?: string[] | null;
   signed_event_shape_checked: boolean;
   result_pubkey_bound_to_sender: boolean;
   decrypts_content: false;
@@ -436,17 +439,17 @@ function requireSingleQueryParam(params: URLSearchParams, name: string): string 
   return values[0];
 }
 
-function requireRelayUrl(value: string): string {
+function requireRelayUrl(value: string, context = "NIP-46 connection URI relay"): string {
   let parsed: URL;
   try {
     parsed = new URL(value);
   } catch (error) {
-    throw new Error("NIP-46 connection URI relay must be a valid URL");
+    throw new Error(`${context} must be a valid URL`);
   }
   if (parsed.protocol !== "wss:" || parsed.username !== "" || parsed.password !== "" || parsed.hash !== "") {
-    throw new Error("NIP-46 connection URI relay must be a wss URL without credentials or fragment");
+    throw new Error(`${context} must be a wss URL without credentials or fragment`);
   }
-  if (parsed.hostname === "") throw new Error("NIP-46 connection URI relay host is required");
+  if (parsed.hostname === "") throw new Error(`${context} host is required`);
   return parsed.toString();
 }
 
@@ -682,7 +685,7 @@ function parseNip46ConnectionUriWithSecret(value: string): {
     }
   }
 
-  const relays = url.searchParams.getAll("relay").map(requireRelayUrl);
+  const relays = url.searchParams.getAll("relay").map((relay) => requireRelayUrl(relay));
   if (relays.length === 0) throw new Error("NIP-46 connection URI requires at least one relay");
   if (new Set(relays).size !== relays.length) throw new Error("NIP-46 connection URI relays must be unique");
 
@@ -827,6 +830,7 @@ function relayResponseResultType(message: Nip46ResponseMessage): {
   signedEventShapeChecked: boolean;
   resultPubkey?: string;
   authUrl?: string;
+  relayUrls?: string[] | null;
 } {
   if (message.result === "auth_url" && message.error !== undefined) {
     return { resultType: "auth_challenge", signedEventShapeChecked: false, authUrl: message.error };
@@ -851,6 +855,20 @@ function relayResponseResultType(message: Nip46ResponseMessage): {
   } catch (error) {
     throw new Error("NIP-46 response message result is not a supported v0 response shape");
   }
+  if (event === null) {
+    return { resultType: "relay_no_change_result", signedEventShapeChecked: false, relayUrls: null };
+  }
+  if (Array.isArray(event)) {
+    if (event.length === 0) throw new Error("NIP-46 switch_relays response relays must be a non-empty list or null");
+    const relayUrls = event.map((relay) => {
+      if (typeof relay !== "string") throw new Error("NIP-46 switch_relays response relays must be strings");
+      return requireRelayUrl(relay, "NIP-46 switch_relays response relay");
+    });
+    if (new Set(relayUrls).size !== relayUrls.length) {
+      throw new Error("NIP-46 switch_relays response relays must be unique");
+    }
+    return { resultType: "relay_list_result", signedEventShapeChecked: false, relayUrls };
+  }
   const shape = validateResponse({
     version: 1,
     request_id: message.id,
@@ -868,7 +886,8 @@ function relayResponseResultType(message: Nip46ResponseMessage): {
 
 export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayResponseStep {
   const { envelope, responseMessage } = parseNip46RelayResponseStepParts(value);
-  const { resultType, signedEventShapeChecked, resultPubkey, authUrl } = relayResponseResultType(responseMessage);
+  const { resultType, signedEventShapeChecked, resultPubkey, authUrl, relayUrls } =
+    relayResponseResultType(responseMessage);
   const resultPubkeyBoundToSender = resultPubkey !== undefined && resultPubkey === envelope.sender_pubkey;
   if (resultPubkey !== undefined && !resultPubkeyBoundToSender) {
     throw new Error(
@@ -884,6 +903,7 @@ export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayRespon
     response_message: responseMessage,
     result_type: resultType,
     ...(authUrl !== undefined && { auth_url: authUrl }),
+    ...(relayUrls !== undefined && { relay_urls: relayUrls }),
     signed_event_shape_checked: signedEventShapeChecked,
     result_pubkey_bound_to_sender: resultPubkeyBoundToSender,
     decrypts_content: false,

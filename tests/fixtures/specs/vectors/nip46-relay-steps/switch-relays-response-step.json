@@ -47,6 +47,8 @@
       "wss://relay4.example.com/path"
     ],
     "signed_event_shape_checked": false,
+    "signed_event_id_verified": false,
+    "signed_event_signature_verified": false,
     "result_pubkey_bound_to_sender": false,
     "decrypts_content": false,
     "opens_relay": false,

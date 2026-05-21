@@ -126,6 +126,8 @@ export type Nip46RelayResponseStep = {
   auth_url?: string;
   relay_urls?: string[] | null;
   signed_event_shape_checked: boolean;
+  signed_event_id_verified: boolean;
+  signed_event_signature_verified: boolean;
   result_pubkey_bound_to_sender: boolean;
   decrypts_content: false;
   opens_relay: false;
@@ -855,9 +857,11 @@ function parseNip46RelayResponseStepParts(value: unknown): {
   };
 }
 
-function relayResponseResultType(message: Nip46ResponseMessage): {
+function relayResponseResultType(message: Nip46ResponseMessage, senderPubkey: string): {
   resultType: Nip46RelayResponseResultType;
   signedEventShapeChecked: boolean;
+  signedEventIdVerified?: boolean;
+  signedEventSignatureVerified?: boolean;
   resultPubkey?: string;
   authUrl?: string;
   relayUrls?: string[] | null;
@@ -911,13 +915,42 @@ function relayResponseResultType(message: Nip46ResponseMessage): {
   if (!isRecord(event) || typeof event.pubkey !== "string" || !X_ONLY_PUBKEY.test(event.pubkey)) {
     throw new Error("NIP-46 signed-event response pubkey is invalid");
   }
-  return { resultType: "signed_event_result", signedEventShapeChecked: true, resultPubkey: event.pubkey };
+  if (event.pubkey !== senderPubkey) {
+    throw new Error("NIP-46 signed-event response pubkey does not match relay event sender");
+  }
+  const computedId = computeEventId({
+    pubkey: event.pubkey,
+    created_at: event.created_at as number,
+    kind: event.kind as number,
+    tags: event.tags as string[][],
+    content: event.content as string
+  });
+  if (event.id !== computedId) {
+    throw new Error("NIP-46 signed-event response id does not match NIP-01 canonical serialization");
+  }
+  if (!verifySchnorrSignature(event.pubkey, computedId, event.sig as string)) {
+    throw new Error("NIP-46 signed-event response signature is invalid");
+  }
+  return {
+    resultType: "signed_event_result",
+    signedEventShapeChecked: true,
+    signedEventIdVerified: true,
+    signedEventSignatureVerified: true,
+    resultPubkey: event.pubkey
+  };
 }
 
 export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayResponseStep {
   const { envelope, responseMessage } = parseNip46RelayResponseStepParts(value);
-  const { resultType, signedEventShapeChecked, resultPubkey, authUrl, relayUrls } =
-    relayResponseResultType(responseMessage);
+  const {
+    resultType,
+    signedEventShapeChecked,
+    signedEventIdVerified = false,
+    signedEventSignatureVerified = false,
+    resultPubkey,
+    authUrl,
+    relayUrls
+  } = relayResponseResultType(responseMessage, envelope.sender_pubkey);
   const resultPubkeyBoundToSender = resultPubkey !== undefined && resultPubkey === envelope.sender_pubkey;
   if (resultPubkey !== undefined && !resultPubkeyBoundToSender) {
     throw new Error(
@@ -935,6 +968,8 @@ export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayRespon
     ...(authUrl !== undefined && { auth_url: authUrl }),
     ...(relayUrls !== undefined && { relay_urls: relayUrls }),
     signed_event_shape_checked: signedEventShapeChecked,
+    signed_event_id_verified: signedEventIdVerified,
+    signed_event_signature_verified: signedEventSignatureVerified,
     result_pubkey_bound_to_sender: resultPubkeyBoundToSender,
     decrypts_content: false,
     opens_relay: false,

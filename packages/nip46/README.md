@@ -18,11 +18,12 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
 - Evaluate metadata-only relay request and response steps after a future
   NIP-44 layer has supplied plaintext, returning deterministic bridge decisions
   or response-shape metadata. Public-key and signed-event response results are
-  bound to the relay event sender before later session code can accept them,
-  connect ack and switch-relays responses remain metadata-only, and auth
-  challenge responses expose only safe http(s) URL metadata without credentials
-  or fragments for later UI, without relay I/O, signer dispatch, grant
-  creation, URL opening, or session persistence. Signed relay-event envelopes
+  bound to the relay event sender, and signed-event response results must have
+  a valid NIP-01 event id and BIP-340 signature before later session code can
+  accept them. Connect ack and switch-relays responses remain metadata-only,
+  and auth challenge responses expose only safe http(s) URL metadata without
+  credentials or fragments for later UI, without relay I/O, signer dispatch,
+  grant creation, URL opening, or session persistence. Signed relay-event envelopes
   are NIP-01 id checked and BIP-340 verified.
 - Render auth challenge URL metadata into deterministic review pages and
   digest-bound approval artifacts without opening the URL, acknowledging
@@ -102,7 +103,7 @@ Request steps reuse the same request validation, permission checks, and bridge
 decision logic as local decrypted payload handling, including local
 `switch_relays` `null` no-change responses that do not open or switch relay
 transports. Response steps shape-check NIP-46 response messages and signed-event
-result payloads, and bind
+result payloads, verify signed-event result ids/signatures, and bind
 public-key/signed-event result pubkeys to the relay event sender. Connect ack
 responses are accepted only as `result: "ack"` metadata and do not activate a
 session. Switch-relays responses are accepted only as normalized relay-list or

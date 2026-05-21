@@ -605,9 +605,10 @@ single-repository CI. Cross-repository drift remains guarded by
   outside `auth_url`, rejects auth URLs with credentials, fragments, or
   non-http(s) schemes, rejects unsafe switch-relays relay lists, and rejects
   public-key or signed-event results whose pubkey is not the relay event sender.
-  Signed relay-event envelopes are NIP-01 id checked and BIP-340 verified.
-  Neither opens relays, decrypts NIP-44 content, acknowledges `connect`,
-  creates grants, dispatches signers, or persists session state.
+  Signed relay-event envelopes and signed-event response results are NIP-01 id
+  checked and BIP-340 verified. Neither opens relays, decrypts NIP-44 content,
+  acknowledges `connect`, creates grants, dispatches signers, or persists
+  session state.
 - NIP-46 auth challenge review tests covering the shared auth URL review vector.
   Package code renders the remote signer pubkey, client pubkey, and URL into
   deterministic pages, binds them to `auth_challenge_digest`, writes approval

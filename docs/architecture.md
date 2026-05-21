@@ -159,7 +159,8 @@ packages, but it must not export test-only signing as a production path.
   request and response steps only after a future NIP-44 layer provides
   plaintext, reusing the same bridge-decision path for requests and
   shape-checking plaintext responses while binding public-key and signed-event
-  result pubkeys to the relay event sender. Auth challenge responses expose
+  result pubkeys to the relay event sender. Signed-event response results are
+  also NIP-01 id checked and BIP-340 verified. Auth challenge responses expose
   only safe http(s) URL metadata without credentials or fragments for later UI
   and do not open that URL. Signed relay-event envelopes are NIP-01 id checked
   and BIP-340 verified, while the package still avoids opening relays,

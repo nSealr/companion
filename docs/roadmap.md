@@ -156,8 +156,10 @@ relay request-step evaluation combines that envelope with an already decrypted
 message and reviewed permissions, returning the same bridge decision as local
 decrypted payload handling, while relay response-step evaluation shape-checks
 already decrypted NIP-46 responses and binds public-key/signed-event result
-pubkeys to the relay event sender. It accepts connect ack responses as
-metadata-only `result: "ack"` outputs that do not activate sessions. It
+pubkeys to the relay event sender. Signed-event response results are also
+NIP-01 id checked and BIP-340 verified before later session code can accept
+them. It accepts connect ack responses as metadata-only `result: "ack"` outputs
+that do not activate sessions. It
 accepts switch-relays responses as normalized relay-list or `null` no-change
 metadata without switching transports. It also accepts auth challenge responses
 as URL metadata only, requiring http(s) without credentials or fragments,

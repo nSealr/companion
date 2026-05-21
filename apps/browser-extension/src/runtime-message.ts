@@ -13,6 +13,7 @@ import {
   type BrowserExtensionPendingRequestState
 } from "./pending-request.js";
 import {
+  BROWSER_EXTENSION_CONTROL_PROTOCOL,
   handleBrowserExtensionControlMessage,
   isBrowserExtensionControlEnvelope,
   type BrowserExtensionControlResponse
@@ -76,6 +77,13 @@ function fallbackRequestId(value: unknown): string {
     return value.request_id;
   }
   return "invalid-browser-extension-request";
+}
+
+function fallbackControlRequestId(value: unknown): string {
+  if (isRecord(value) && isBrowserExtensionRequestId(value.request_id)) {
+    return value.request_id;
+  }
+  return "invalid-browser-extension-control-request";
 }
 
 function requireRuntimeString(value: unknown, label: string): string | undefined {
@@ -213,6 +221,39 @@ function reportRuntimeListenerError(error: unknown, onError: ((error: unknown) =
   }
 }
 
+function runtimeHandlerFailureResponse(value: unknown): BrowserExtensionRuntimeMessageResponse {
+  if (isBrowserExtensionControlEnvelope(value)) {
+    return {
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: fallbackControlRequestId(value),
+      ok: false,
+      error: {
+        code: "runtime_handler_failed",
+        message: "browser extension runtime control request failed",
+        retryable: false
+      }
+    };
+  }
+  return browserExtensionErrorResponse(
+    fallbackRequestId(value),
+    "runtime_handler_failed",
+    "browser extension runtime request failed"
+  );
+}
+
+function sendRuntimeResponse(
+  sendResponse: BrowserExtensionRuntimeMessageResponder,
+  response: BrowserExtensionRuntimeMessageResponse,
+  onError: ((error: unknown) => void) | undefined
+): void {
+  try {
+    sendResponse(response);
+  } catch (error) {
+    reportRuntimeListenerError(error, onError);
+  }
+}
+
 function startPendingRequest(
   value: unknown,
   sender: BrowserExtensionSenderInput,
@@ -249,9 +290,12 @@ export function installBrowserExtensionRuntimeMessageListener(
     void (async () => {
       try {
         const response = await handleBrowserExtensionRuntimeMessage(value, runtimeSender, handlerOptions);
-        if (!disposed) sendResponse(response);
+        if (!disposed) sendRuntimeResponse(sendResponse, response, options.onError);
       } catch (error) {
         reportRuntimeListenerError(error, options.onError);
+        if (!disposed) {
+          sendRuntimeResponse(sendResponse, runtimeHandlerFailureResponse(value), options.onError);
+        }
       }
     })();
     return true;

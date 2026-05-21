@@ -637,7 +637,11 @@ counts, and SHA-256 digests, and still does not publish to npm.
   request is going without exposing payloads or secrets. The lifecycle also
   owns a per-request cancel hook that aborts the in-flight native-message path
   and suppresses duplicate rejected-state drift after cancellation. The
-  background entrypoint now owns an in-memory lifecycle by default, and the
+  runtime listener now also converts unexpected handler failures into
+  deterministic `runtime_handler_failed` responses while reporting the internal
+  error only through the injected diagnostics callback, so browser callers do
+  not hang on silent extension failures. The background entrypoint now owns an
+  in-memory lifecycle by default, and the
   runtime-message boundary routes separate `nsealr-browser-extension-control-v0`
   `list_pending_requests` and `cancel_pending_request` messages from
   extension-internal senders only, so page-origin senders cannot list or cancel

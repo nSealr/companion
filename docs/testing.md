@@ -240,9 +240,11 @@ single-repository CI. Cross-repository drift remains guarded by
   `invalid_sender` responses before native messaging, and abort signals are
   forwarded before native messaging. They also prove the injected runtime
   listener installer returns `true` for asynchronous response delivery, sends
-  responses only through the injected responder, reports responder failures
-  through an injected error callback, and removes the listener through
-  `dispose()`. Pending-request tests prove the injected
+  responses only through the injected responder, converts unexpected handler
+  failures into deterministic `runtime_handler_failed` responses instead of
+  leaving callers without a response, reports responder failures through an
+  injected error callback, and removes the listener through `dispose()`.
+  Pending-request tests prove the injected
   `nsealr-browser-extension-pending-request-state-v0` lifecycle emits
   secretless pending/resolved/rejected/cancelled request state, cleans up
   active requests, rejects duplicate active ids, enforces the active-request

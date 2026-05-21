@@ -779,6 +779,55 @@ describe("browser extension runtime message boundary", () => {
     expect(nativeRequests).toEqual([]);
   });
 
+  it("returns deterministic listener failures instead of leaving browser callers without a response", async () => {
+    const runtime = createInjectedRuntimeOnMessage();
+    const responses: unknown[] = [];
+    const errors: unknown[] = [];
+
+    installBrowserExtensionRuntimeMessageListener({
+      runtimeOnMessage: runtime.runtimeOnMessage,
+      controller: {
+        async handleRequest() {
+          throw new Error("unexpected runtime handler failure");
+        },
+        async requestOriginPermissionReview() {
+          throw new Error("not reached");
+        },
+        async approveOriginPermission() {
+          throw new Error("not reached");
+        }
+      },
+      onError: (error) => {
+        errors.push(error);
+      }
+    });
+    expect(runtime.emit(
+      getPublicKeyRequest("runtime-listener-handler-failure"),
+      {
+        id: "extension@nsealr.dev",
+        url: "https://example.com/app"
+      },
+      (response) => {
+        responses.push(response);
+      }
+    )).toBe(true);
+    await flushAsyncListeners();
+
+    expect(responses).toEqual([{
+      protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+      version: 1,
+      request_id: "runtime-listener-handler-failure",
+      ok: false,
+      error: {
+        code: "runtime_handler_failed",
+        message: "browser extension runtime request failed",
+        retryable: false
+      }
+    }]);
+    expect(errors).toHaveLength(1);
+    expect((errors[0] as Error).message).toMatch(/unexpected runtime handler failure/u);
+  });
+
   it("does not receive runtime messages after disposal", async () => {
     const runtime = createInjectedRuntimeOnMessage();
     const controller = createBrowserExtensionBackgroundController({

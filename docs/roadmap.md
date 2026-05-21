@@ -646,8 +646,10 @@ counts, and SHA-256 digests, and still does not publish to npm.
   `list_pending_requests` and `cancel_pending_request` messages from
   extension-internal senders only, so page-origin senders cannot list or cancel
   active requests. The list-response boundary now accepts only active
-  `pending` states, keeping settled lifecycle snapshots out of the visible
-  pending-request channel. A popup-control client now wraps those internal
+  `pending` states and returns deterministic `list_failed` responses if the
+  internal pending lifecycle cannot enumerate active requests, keeping settled
+  lifecycle snapshots out of the visible pending-request channel. A
+  popup-control client now wraps those internal
   messages over injected `runtime.sendMessage`, validates secretless
   responses, and gives future popup UI a tested list/cancel command surface.
   The same control

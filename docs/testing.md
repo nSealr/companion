@@ -257,9 +257,10 @@ single-repository CI. Cross-repository drift remains guarded by
   `request_origin_permission_review` paths accept extension-internal senders,
   reject page-origin senders, reject oversized pending-state lists, reject
   settled states from `list_pending_requests`, keep list/cancel operations away
-  from native messaging, route origin-review
-  requests through the background controller, and can use the background
-  entrypoint's default in-memory lifecycle.
+  from native messaging, return deterministic `list_failed` responses if the
+  internal pending lifecycle cannot enumerate active requests, route
+  origin-review requests through the background controller, and can use the
+  background entrypoint's default in-memory lifecycle.
   Popup-control tests prove future visible UI can call the same list/cancel and
   origin-review protocol through injected `runtime.sendMessage`, rejects
   mismatched, settled, or unsafe response envelopes, and remains secretless. Popup-view

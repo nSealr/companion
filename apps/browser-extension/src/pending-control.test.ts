@@ -9,6 +9,7 @@ import {
 import {
   BROWSER_EXTENSION_MAX_ACTIVE_PENDING_REQUESTS,
   BROWSER_EXTENSION_PENDING_REQUEST_STATE_FORMAT,
+  type BrowserExtensionPendingRequestLifecycle,
   createBrowserExtensionPendingRequestLifecycle
 } from "./pending-request.js";
 import {
@@ -231,6 +232,48 @@ describe("browser extension pending request control boundary", () => {
         ],
         stores_production_secrets: false,
         contains_secret_material: false
+      }
+    });
+  });
+
+  it("returns deterministic list failures instead of propagating lifecycle exceptions", async () => {
+    const pendingRequests: BrowserExtensionPendingRequestLifecycle = {
+      start() {
+        throw new Error("not reached");
+      },
+      settle() {
+        throw new Error("not reached");
+      },
+      cancel() {
+        throw new Error("not reached");
+      },
+      abortSignal() {
+        return undefined;
+      },
+      active() {
+        throw new Error("pending lifecycle active failed");
+      }
+    };
+
+    await expect(handleBrowserExtensionControlMessage(
+      listRequest("control-list-failure"),
+      {
+        id: "extension@nsealr.dev",
+        url: "chrome-extension://extension-id/popup.html"
+      },
+      {
+        extensionId: "extension@nsealr.dev",
+        pendingRequests
+      }
+    )).resolves.toEqual({
+      protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
+      version: 1,
+      request_id: "control-list-failure",
+      ok: false,
+      error: {
+        code: "list_failed",
+        message: "pending request listing failed",
+        retryable: false
       }
     });
   });

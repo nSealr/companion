@@ -693,13 +693,19 @@ export async function handleBrowserExtensionControlMessage(
     return controlErrorResponse(request.request_id, "pending_requests_unavailable", "pending request control is unavailable");
   }
   if (request.method === "list_pending_requests") {
+    let pendingRequests: readonly BrowserExtensionPendingRequestState[];
+    try {
+      pendingRequests = options.pendingRequests.active();
+    } catch {
+      return controlErrorResponse(request.request_id, "list_failed", "pending request listing failed");
+    }
     return {
       protocol: BROWSER_EXTENSION_CONTROL_PROTOCOL,
       version: 1,
       request_id: request.request_id,
       ok: true,
       result: {
-        pending_requests: options.pendingRequests.active(),
+        pending_requests: pendingRequests,
         stores_production_secrets: false,
         contains_secret_material: false
       }

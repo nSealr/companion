@@ -132,11 +132,11 @@ single-repository CI. Cross-repository drift remains guarded by
   digest and per-file byte counts plus SHA-256 hashes. The package-owned
   `package-verify` script parses that build result, recomputes the package
   digest, checks the written manifest exactly against the reviewed package-plan
-  digest, checks popup HTML, packaged background native-host, route, and
-  origin-permission metadata binding, bundled entrypoint byte counts and
-  SHA-256 hashes, and rejects unexpected output files plus Node runtime
-  references in packaged JavaScript, so release rehearsals do not depend only
-  on external lab assertions. Package build still
+  digest, checks popup HTML, packaged popup-mode binding, packaged background
+  native-host, route, and origin-permission metadata binding, bundled
+  entrypoint byte counts and SHA-256 hashes, and rejects unexpected output
+  files plus Node runtime references in packaged JavaScript, so release
+  rehearsals do not depend only on external lab assertions. Package build still
   performs no native-host installation, build-time browser storage writes, key
   custody, or signer dispatch. Firefox package-build output is covered through
   the same builder with explicit Gecko extension settings. Package-plan and

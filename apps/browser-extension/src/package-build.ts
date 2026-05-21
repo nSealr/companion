@@ -894,6 +894,33 @@ function assertBackgroundMatchesPackageBuild(
   }
 }
 
+function assertPopupMatchesPackageBuild(
+  result: BrowserExtensionPackageBuildResult,
+  popupSource: string | undefined
+): void {
+  if (popupSource === undefined) {
+    throw new Error("browser extension package popup entrypoint is missing");
+  }
+  if (result.popup_mode === "pending_requests") {
+    if (
+      !popupSource.includes("list_pending_requests") ||
+      !popupSource.includes("cancel_pending_request") ||
+      !popupSource.includes("data-nsealr-popup")
+    ) {
+      throw new Error("browser extension package popup mode drifted");
+    }
+    return;
+  }
+  if (
+    !popupSource.includes("request_origin_permission_review") ||
+    !popupSource.includes("approve_origin_permission") ||
+    !popupSource.includes("active_tab") ||
+    !popupSource.includes("data-nsealr-popup-origin-permission")
+  ) {
+    throw new Error("browser extension package popup mode drifted");
+  }
+}
+
 async function assertPackageDirectoryContainsOnlyExpectedFiles(result: BrowserExtensionPackageBuildResult): Promise<void> {
   const expectedFiles = new Set<string>(result.files.map((file) => file.path));
   const actualFiles = new Set<string>();
@@ -952,6 +979,7 @@ export async function verifyBrowserExtensionPackageBuildDirectory(
   ) {
     throw new Error("browser extension package popup HTML drifted");
   }
+  assertPopupMatchesPackageBuild(result, fileContents.get(BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE));
 
   assertBackgroundMatchesPackageBuild(result, fileContents.get(BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE));
 

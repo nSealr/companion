@@ -358,6 +358,67 @@ describe("browser extension package build", () => {
     }
   });
 
+  it("rejects popup mode drift even when package-build file hashes are updated", async () => {
+    const temp = tempOutDir();
+    try {
+      const result = await buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: temp.outDir,
+        packagePlanDigest: chromiumPackagePlanDigest,
+        routeConfig,
+        routeConfigApproval,
+        contentScriptMatches: ["https://example.com/*"],
+        extensionId: chromiumExtensionId,
+        originPermissionStore: originPermissionStore(),
+        localPairingDigest
+      });
+      const popupPath = join(temp.outDir, BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE);
+      const popup = readFileSync(popupPath, "utf8");
+      expect(popup).toContain("list_pending_requests");
+      const tamperedPopup = popup.replace("list_pending_requests", "list_tampered_requests");
+      writeFileSync(popupPath, tamperedPopup, "utf8");
+
+      await expect(verifyBrowserExtensionPackageBuildDirectory(resultWithRehashedFile(
+        result,
+        BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE,
+        tamperedPopup
+      ))).rejects.toThrow(/popup mode/u);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
+  it("rejects origin approval popup drift even when package-build file hashes are updated", async () => {
+    const temp = tempOutDir();
+    try {
+      const result = await buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: temp.outDir,
+        packagePlanDigest: chromiumExtensionStoragePackagePlanDigest,
+        routeConfig,
+        routeConfigApproval,
+        contentScriptMatches: ["https://example.com/*"],
+        originPermissionMode: "extension_storage",
+        localPairingDigest
+      });
+      const popupPath = join(temp.outDir, BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE);
+      const popup = readFileSync(popupPath, "utf8");
+      expect(popup).toContain("request_origin_permission_review");
+      await expect(verifyBrowserExtensionPackageBuildDirectory(result)).resolves.toEqual(result);
+
+      const tamperedPopup = popup.replace("request_origin_permission_review", "request_tampered_permission_review");
+      writeFileSync(popupPath, tamperedPopup, "utf8");
+
+      await expect(verifyBrowserExtensionPackageBuildDirectory(resultWithRehashedFile(
+        result,
+        BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE,
+        tamperedPopup
+      ))).rejects.toThrow(/popup mode/u);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
   it("writes a Firefox package artifact with explicit browser settings", async () => {
     const temp = tempOutDir();
     try {

@@ -133,7 +133,8 @@ single-repository CI. Cross-repository drift remains guarded by
   `package-verify` script parses that build result, recomputes the package
   digest, checks the written manifest exactly against the reviewed package-plan
   digest, checks popup HTML, packaged popup-mode binding, packaged background
-  native-host, route, and origin-permission metadata binding, bundled
+  native-host, route, and origin-permission metadata binding, packaged
+  content-script and page-script bridge/provider entrypoint bindings, bundled
   entrypoint byte counts and SHA-256 hashes, and rejects unexpected output
   files plus Node runtime references in packaged JavaScript, so release
   rehearsals do not depend only on external lab assertions. Package build still

@@ -237,8 +237,9 @@ match the shared `contract_id`.
   build time, creating grants, dispatching signers, or holding key material.
   The package-owned verifier now rejects background bundle drift from that
   selected route, native-host name, and origin-permission metadata, and popup
-  bundle drift from the reviewed `popup_mode`, even when artifact file hashes
-  are recomputed.
+  bundle drift from the reviewed `popup_mode`. It also rejects content-script
+  and page-script bundle drift from their reviewed browser bridge/provider
+  entrypoints, even when artifact file hashes are recomputed.
 - `@nsealr/client` exposes the shared local-client identity parser, including
   the browser-safe `@nsealr/client/client-identity` subpath, used before
   pairing, route selection, signer-request validation, and response

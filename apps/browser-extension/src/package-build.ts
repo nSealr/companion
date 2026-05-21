@@ -921,6 +921,32 @@ function assertPopupMatchesPackageBuild(
   }
 }
 
+function assertContentScriptMatchesPackageBuild(contentScriptSource: string | undefined): void {
+  if (
+    contentScriptSource === undefined ||
+    !contentScriptSource.includes("installNsealrContentScriptEntrypoint") ||
+    !contentScriptSource.includes("nsealr-page-script") ||
+    !contentScriptSource.includes("nsealr-page-bridge-v0") ||
+    !contentScriptSource.includes("runtime.sendMessage") ||
+    !contentScriptSource.includes("postMessage")
+  ) {
+    throw new Error("browser extension package content-script binding drifted");
+  }
+}
+
+function assertPageScriptMatchesPackageBuild(pageScriptSource: string | undefined): void {
+  if (
+    pageScriptSource === undefined ||
+    !pageScriptSource.includes("installNsealrPageScriptEntrypoint") ||
+    !pageScriptSource.includes("nsealr-page-bridge-v0") ||
+    !pageScriptSource.includes("getPublicKey") ||
+    !pageScriptSource.includes("signEvent") ||
+    !pageScriptSource.includes("postMessage")
+  ) {
+    throw new Error("browser extension package page-script binding drifted");
+  }
+}
+
 async function assertPackageDirectoryContainsOnlyExpectedFiles(result: BrowserExtensionPackageBuildResult): Promise<void> {
   const expectedFiles = new Set<string>(result.files.map((file) => file.path));
   const actualFiles = new Set<string>();
@@ -982,6 +1008,8 @@ export async function verifyBrowserExtensionPackageBuildDirectory(
   assertPopupMatchesPackageBuild(result, fileContents.get(BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE));
 
   assertBackgroundMatchesPackageBuild(result, fileContents.get(BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE));
+  assertContentScriptMatchesPackageBuild(fileContents.get(BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE));
+  assertPageScriptMatchesPackageBuild(fileContents.get(BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE));
 
   return result;
 }

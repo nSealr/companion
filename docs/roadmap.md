@@ -735,8 +735,9 @@ counts, and SHA-256 digests, and still does not publish to npm.
   against the reviewed package-plan digest, validates content-script bindings,
   popup HTML, popup bundle binding to the reviewed `popup_mode`, native-host
   binding, selected route metadata, and
-  origin-permission metadata in the packaged background script, file hashes,
-  exact output directory contents, and bundled JavaScript
+  origin-permission metadata in the packaged background script,
+  content-script/page-script bridge and provider entrypoint bindings, file
+  hashes, exact output directory contents, and bundled JavaScript
   browser-runtime hygiene, and still avoids native-host installation,
   extension storage writes, key custody, and signer dispatch.
   The browser-extension manifest builder can still build a minimal

@@ -419,6 +419,70 @@ describe("browser extension package build", () => {
     }
   });
 
+  it("rejects content-script drift even when package-build file hashes are updated", async () => {
+    const temp = tempOutDir();
+    try {
+      const result = await buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: temp.outDir,
+        packagePlanDigest: chromiumPackagePlanDigest,
+        routeConfig,
+        routeConfigApproval,
+        contentScriptMatches: ["https://example.com/*"],
+        extensionId: chromiumExtensionId,
+        originPermissionStore: originPermissionStore(),
+        localPairingDigest
+      });
+      const contentScriptPath = join(temp.outDir, BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE);
+      const contentScript = readFileSync(contentScriptPath, "utf8");
+      expect(contentScript).toContain("installNsealrContentScriptEntrypoint");
+      const tamperedContentScript = contentScript
+        .split("installNsealrContentScriptEntrypoint")
+        .join("installTamperedContentScriptEntrypoint");
+      writeFileSync(contentScriptPath, tamperedContentScript, "utf8");
+
+      await expect(verifyBrowserExtensionPackageBuildDirectory(resultWithRehashedFile(
+        result,
+        BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
+        tamperedContentScript
+      ))).rejects.toThrow(/content-script binding/u);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
+  it("rejects page-script drift even when package-build file hashes are updated", async () => {
+    const temp = tempOutDir();
+    try {
+      const result = await buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: temp.outDir,
+        packagePlanDigest: chromiumPackagePlanDigest,
+        routeConfig,
+        routeConfigApproval,
+        contentScriptMatches: ["https://example.com/*"],
+        extensionId: chromiumExtensionId,
+        originPermissionStore: originPermissionStore(),
+        localPairingDigest
+      });
+      const pageScriptPath = join(temp.outDir, BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE);
+      const pageScript = readFileSync(pageScriptPath, "utf8");
+      expect(pageScript).toContain("installNsealrPageScriptEntrypoint");
+      const tamperedPageScript = pageScript
+        .split("installNsealrPageScriptEntrypoint")
+        .join("installTamperedPageScriptEntrypoint");
+      writeFileSync(pageScriptPath, tamperedPageScript, "utf8");
+
+      await expect(verifyBrowserExtensionPackageBuildDirectory(resultWithRehashedFile(
+        result,
+        BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE,
+        tamperedPageScript
+      ))).rejects.toThrow(/page-script binding/u);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
   it("writes a Firefox package artifact with explicit browser settings", async () => {
     const temp = tempOutDir();
     try {

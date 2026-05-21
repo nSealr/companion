@@ -181,7 +181,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: temp.outDir,
-        packagePlanDigest: chromiumPackagePlanDigest,
+        packagePlanReview: chromiumPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -287,7 +287,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: temp.outDir,
-        packagePlanDigest: chromiumPackagePlanDigest,
+        packagePlanReview: chromiumPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -329,7 +329,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: temp.outDir,
-        packagePlanDigest: chromiumPackagePlanDigest,
+        packagePlanReview: chromiumPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -361,7 +361,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: temp.outDir,
-        packagePlanDigest: chromiumPackagePlanDigest,
+        packagePlanReview: chromiumPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -393,7 +393,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: temp.outDir,
-        packagePlanDigest: chromiumPackagePlanDigest,
+        packagePlanReview: chromiumPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -425,7 +425,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: temp.outDir,
-        packagePlanDigest: chromiumPackagePlanDigest,
+        packagePlanReview: chromiumPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -460,7 +460,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: temp.outDir,
-        packagePlanDigest: chromiumExtensionStoragePackagePlanDigest,
+        packagePlanReview: chromiumExtensionStoragePackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -495,7 +495,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: temp.outDir,
-        packagePlanDigest: chromiumPackagePlanDigest,
+        packagePlanReview: chromiumPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -529,7 +529,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: temp.outDir,
-        packagePlanDigest: chromiumPackagePlanDigest,
+        packagePlanReview: chromiumPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -564,7 +564,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "firefox",
         outDir: temp.outDir,
-        packagePlanDigest: firefoxPackagePlanDigest,
+        packagePlanReview: firefoxPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         firefoxExtensionId
@@ -633,7 +633,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "firefox",
         outDir,
-        packagePlanDigest: firefoxPackagePlanDigest,
+        packagePlanReview: firefoxPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         firefoxExtensionId: "extension@nsealr.dev"
@@ -660,7 +660,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: temp.outDir,
-        packagePlanDigest: chromiumNoOriginPackagePlanDigest,
+        packagePlanReview: chromiumNoOriginPackagePlanReview,
         routeConfig,
         routeConfigApproval
       });
@@ -684,7 +684,7 @@ describe("browser extension package build", () => {
       const result = await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: temp.outDir,
-        packagePlanDigest: chromiumExtensionStoragePackagePlanDigest,
+        packagePlanReview: chromiumExtensionStoragePackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -738,14 +738,14 @@ describe("browser extension package build", () => {
       await buildBrowserExtensionPackage({
         target: "chromium",
         outDir: existing.outDir,
-        packagePlanDigest: chromiumNoOriginPackagePlanDigest,
+        packagePlanReview: chromiumNoOriginPackagePlanReview,
         routeConfig,
         routeConfigApproval
       });
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: existing.outDir,
-        packagePlanDigest: chromiumNoOriginPackagePlanDigest,
+        packagePlanReview: chromiumNoOriginPackagePlanReview,
         routeConfig,
         routeConfigApproval
       })).rejects.toThrow(/already exists/u);
@@ -753,7 +753,7 @@ describe("browser extension package build", () => {
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: invalidRoute.outDir,
-        packagePlanDigest: chromiumNoOriginPackagePlanDigest,
+        packagePlanReview: chromiumNoOriginPackagePlanReview,
         routeConfig: {
           format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
           account_id: "bad account id",
@@ -765,7 +765,7 @@ describe("browser extension package build", () => {
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: invalidRoute.outDir,
-        packagePlanDigest: chromiumNoOriginPackagePlanDigest,
+        packagePlanReview: chromiumNoOriginPackagePlanReview,
         routeConfig: {
           format: BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
           account_id: "esp32-qr-account-0",
@@ -777,7 +777,7 @@ describe("browser extension package build", () => {
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: invalidRoute.outDir,
-        packagePlanDigest: chromiumPackagePlanDigest,
+        packagePlanReview: chromiumPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"]
@@ -786,7 +786,7 @@ describe("browser extension package build", () => {
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: invalidRoute.outDir,
-        packagePlanDigest: chromiumPackagePlanDigest,
+        packagePlanReview: chromiumPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -797,7 +797,7 @@ describe("browser extension package build", () => {
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: invalidRoute.outDir,
-        packagePlanDigest: chromiumExtensionStoragePackagePlanDigest,
+        packagePlanReview: chromiumExtensionStoragePackagePlanReview,
         routeConfig,
         routeConfigApproval,
         popupMode: "origin_permission_approval",
@@ -809,7 +809,7 @@ describe("browser extension package build", () => {
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: invalidRoute.outDir,
-        packagePlanDigest: chromiumExtensionStoragePackagePlanDigest,
+        packagePlanReview: chromiumExtensionStoragePackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -821,7 +821,7 @@ describe("browser extension package build", () => {
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: invalidRoute.outDir,
-        packagePlanDigest: chromiumExtensionStoragePackagePlanDigest,
+        packagePlanReview: chromiumExtensionStoragePackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -833,7 +833,7 @@ describe("browser extension package build", () => {
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: invalidRoute.outDir,
-        packagePlanDigest: chromiumPackagePlanDigest,
+        packagePlanReview: chromiumPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -845,7 +845,7 @@ describe("browser extension package build", () => {
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: invalidRoute.outDir,
-        packagePlanDigest: chromiumPackagePlanDigest,
+        packagePlanReview: chromiumPackagePlanReview,
         routeConfig,
         routeConfigApproval,
         contentScriptMatches: ["https://example.com/*"],
@@ -857,7 +857,7 @@ describe("browser extension package build", () => {
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: invalidRoute.outDir,
-        packagePlanDigest: chromiumNoOriginPackagePlanDigest,
+        packagePlanReview: chromiumNoOriginPackagePlanReview,
         routeConfig,
         routeConfigApproval: {
           ...routeConfigApproval,
@@ -869,7 +869,7 @@ describe("browser extension package build", () => {
       await expect(buildBrowserExtensionPackage({
         target: "chromium",
         outDir: sourceTreeOutDir,
-        packagePlanDigest: chromiumNoOriginPackagePlanDigest,
+        packagePlanReview: chromiumNoOriginPackagePlanReview,
         routeConfig,
         routeConfigApproval
       })).rejects.toThrow(/outside the companion source tree/u);

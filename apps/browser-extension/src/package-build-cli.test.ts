@@ -112,15 +112,20 @@ function writeOriginPermissionStore(path: string): void {
 async function buildChromiumEmbeddedPackage(temp: { root: string; outDir: string }): Promise<Record<string, unknown>> {
   const approvalPath = join(temp.root, "route-config-approval.json");
   const originStorePath = join(temp.root, "origin-permission-store.json");
+  const packagePlanReviewPath = join(temp.root, "package-plan-review.json");
   writeRouteConfigApproval(approvalPath);
   writeOriginPermissionStore(originStorePath);
+  writePackagePlanReview(packagePlanReviewPath, {
+    target: "chromium",
+    contentScriptMatches: ["https://example.com/*"]
+  });
   return JSON.parse(await browserExtensionPackageBuildJsonFromArgs([
     "--target",
     "chromium",
     "--out-dir",
     temp.outDir,
-    "--package-plan-digest",
-    chromiumPackagePlanDigest,
+    "--package-plan-review",
+    packagePlanReviewPath,
     "--route-account-id",
     "esp32-usb-slot-0",
     "--route-type",
@@ -139,20 +144,61 @@ async function buildChromiumEmbeddedPackage(temp: { root: string; outDir: string
 }
 
 describe("browser extension package-build CLI", () => {
-  it("writes a Chromium package build from explicit args", async () => {
+  it("rejects package builds from a naked package-plan digest", async () => {
     const temp = tempBuildRoot();
     try {
       const approvalPath = join(temp.root, "route-config-approval.json");
       const originStorePath = join(temp.root, "origin-permission-store.json");
       writeRouteConfigApproval(approvalPath);
       writeOriginPermissionStore(originStorePath);
-      const result = JSON.parse(await browserExtensionPackageBuildJsonFromArgs([
+
+      await expect(browserExtensionPackageBuildJsonFromArgs([
         "--target",
         "chromium",
         "--out-dir",
         temp.outDir,
         "--package-plan-digest",
         chromiumPackagePlanDigest,
+        "--route-account-id",
+        "esp32-usb-slot-0",
+        "--route-type",
+        "esp32_usb_nip46",
+        "--route-config-approval",
+        approvalPath,
+        "--extension-id",
+        chromiumExtensionId,
+        "--origin-permission-store",
+        originStorePath,
+        "--local-pairing-digest",
+        localPairingDigest,
+        "--content-script-match",
+        "https://example.com/*"
+      ])).rejects.toThrow(/package-plan-review/u);
+      expect(existsSync(temp.outDir)).toBe(false);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
+  it("writes a Chromium package build from explicit args", async () => {
+    const temp = tempBuildRoot();
+    try {
+      const approvalPath = join(temp.root, "route-config-approval.json");
+      const originStorePath = join(temp.root, "origin-permission-store.json");
+      const packagePlanReviewPath = join(temp.root, "package-plan-review.json");
+      writeRouteConfigApproval(approvalPath);
+      writeOriginPermissionStore(originStorePath);
+      writePackagePlanReview(packagePlanReviewPath, {
+        target: "chromium",
+        contentScriptMatches: ["https://example.com/*"]
+      });
+      const result = JSON.parse(await browserExtensionPackageBuildJsonFromArgs([
+        "--target",
+        "chromium",
+        "--out-dir",
+        temp.outDir,
+        "--package-plan-review",
+        packagePlanReviewPath,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-type",
@@ -217,12 +263,7 @@ describe("browser extension package-build CLI", () => {
       ]);
       expect(existsSync(join(temp.outDir, "manifest.json"))).toBe(true);
       const buildResultPath = join(temp.root, "package-build-result.json");
-      const packagePlanReviewPath = join(temp.root, "package-plan-review.json");
       writeFileSync(buildResultPath, `${JSON.stringify(result, null, 2)}\n`, "utf8");
-      writePackagePlanReview(packagePlanReviewPath, {
-        target: "chromium",
-        contentScriptMatches: ["https://example.com/*"]
-      });
       await expect(browserExtensionPackageVerifyJsonFromArgs([
         "--build-result",
         buildResultPath
@@ -289,14 +330,21 @@ describe("browser extension package-build CLI", () => {
     const temp = tempBuildRoot();
     try {
       const approvalPath = join(temp.root, "route-config-approval.json");
+      const packagePlanReviewPath = join(temp.root, "extension-storage-package-plan-review.json");
       writeRouteConfigApproval(approvalPath);
+      writePackagePlanReview(packagePlanReviewPath, {
+        target: "chromium",
+        popupMode: "origin_permission_approval",
+        originPermissionStorageMode: "extension",
+        contentScriptMatches: ["https://example.com/*"]
+      });
       const result = JSON.parse(await browserExtensionPackageBuildJsonFromArgs([
         "--target",
         "chromium",
         "--out-dir",
         temp.outDir,
-        "--package-plan-digest",
-        chromiumExtensionStoragePackagePlanDigest,
+        "--package-plan-review",
+        packagePlanReviewPath,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-type",
@@ -338,7 +386,12 @@ describe("browser extension package-build CLI", () => {
     const temp = tempBuildRoot();
     try {
       const approvalPath = join(temp.root, "route-config-approval.json");
+      const packagePlanReviewPath = join(temp.root, "firefox-package-plan-review.json");
       writeRouteConfigApproval(approvalPath);
+      writePackagePlanReview(packagePlanReviewPath, {
+        target: "firefox",
+        firefoxExtensionId: "extension@nsealr.dev"
+      });
       const result = JSON.parse(await browserExtensionPackageBuildJsonFromArgs([
         "--target",
         "firefox",
@@ -346,8 +399,8 @@ describe("browser extension package-build CLI", () => {
         "extension@nsealr.dev",
         "--out-dir",
         temp.outDir,
-        "--package-plan-digest",
-        firefoxPackagePlanDigest,
+        "--package-plan-review",
+        packagePlanReviewPath,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-type",
@@ -392,16 +445,26 @@ describe("browser extension package-build CLI", () => {
       "chromium",
       "--out-dir",
       "/tmp/nsealr-unused",
-      "--package-plan-digest",
-      "0".repeat(64),
+      "--package-plan-review",
+      "/tmp/nsealr-unused-package-plan-review.json",
       "--route-account-id",
       "esp32-usb-slot-0"
     ])).rejects.toThrow(/route-config-approval/u);
     try {
       const approvalPath = join(temp.root, "route-config-approval.json");
       const originStorePath = join(temp.root, "origin-permission-store.json");
+      const packagePlanReviewPath = join(temp.root, "package-plan-review.json");
+      const mismatchedPackagePlanReviewPath = join(temp.root, "mismatched-package-plan-review.json");
       writeRouteConfigApproval(approvalPath);
       writeOriginPermissionStore(originStorePath);
+      writePackagePlanReview(packagePlanReviewPath, {
+        target: "chromium",
+        contentScriptMatches: ["https://example.com/*"]
+      });
+      writePackagePlanReview(mismatchedPackagePlanReviewPath, {
+        target: "firefox",
+        firefoxExtensionId: "extension@nsealr.dev"
+      });
       await expect(browserExtensionPackageBuildJsonFromArgs([
         "--target",
         "chromium",
@@ -413,7 +476,7 @@ describe("browser extension package-build CLI", () => {
         "esp32_usb_nip46",
         "--route-config-approval",
         approvalPath
-      ])).rejects.toThrow(/package-plan-digest/u);
+      ])).rejects.toThrow(/package-plan-review/u);
       await expect(browserExtensionPackageBuildJsonFromArgs([
         "--target",
         "chromium",
@@ -421,8 +484,8 @@ describe("browser extension package-build CLI", () => {
         "firefox",
         "--out-dir",
         temp.outDir,
-        "--package-plan-digest",
-        chromiumPackagePlanDigest,
+        "--package-plan-review",
+        packagePlanReviewPath,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-config-approval",
@@ -433,8 +496,8 @@ describe("browser extension package-build CLI", () => {
         "chromium",
         "--out-dir",
         temp.outDir,
-        "--package-plan-digest",
-        chromiumPackagePlanDigest,
+        "--package-plan-review",
+        packagePlanReviewPath,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-config-approval",
@@ -452,8 +515,8 @@ describe("browser extension package-build CLI", () => {
         "chromium",
         "--out-dir",
         temp.outDir,
-        "--package-plan-digest",
-        chromiumPackagePlanDigest,
+        "--package-plan-review",
+        packagePlanReviewPath,
         "--route-account-id",
         "esp32-qr-account-0",
         "--route-type",
@@ -466,8 +529,8 @@ describe("browser extension package-build CLI", () => {
         "chromium",
         "--out-dir",
         temp.outDir,
-        "--package-plan-digest",
-        chromiumPackagePlanDigest,
+        "--package-plan-review",
+        packagePlanReviewPath,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-type",
@@ -482,8 +545,8 @@ describe("browser extension package-build CLI", () => {
         "chromium",
         "--out-dir",
         temp.outDir,
-        "--package-plan-digest",
-        chromiumPackagePlanDigest,
+        "--package-plan-review",
+        packagePlanReviewPath,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-type",
@@ -502,8 +565,8 @@ describe("browser extension package-build CLI", () => {
         "chromium",
         "--out-dir",
         temp.outDir,
-        "--package-plan-digest",
-        "0".repeat(64),
+        "--package-plan-review",
+        mismatchedPackagePlanReviewPath,
         "--route-account-id",
         "esp32-usb-slot-0",
         "--route-type",
@@ -518,7 +581,7 @@ describe("browser extension package-build CLI", () => {
         localPairingDigest,
         "--content-script-match",
         "https://example.com/*"
-      ])).rejects.toThrow(/package plan digest mismatch/u);
+      ])).rejects.toThrow(/package-plan review digest mismatch/u);
     } finally {
       temp.cleanup();
     }

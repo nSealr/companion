@@ -564,7 +564,7 @@ extension-storage origin-approval manifest profile through
 `--origin-permission-mode extension-storage`, requiring reviewed content-script
 origins and pinning `activeTab` plus `storage` before package build. With
 `--review`, it wraps the exact package plan in a digest-bound review envelope
-whose digest must be supplied to `package-build`. It still has no output-path
+that must be supplied intact to `package-build`. It still has no output-path
 option and performs no filesystem install or browser-storage mutation.
 The `route-config-review` command first projects the selected account/route
 into `nsealr-browser-extension-route-config-review-v0`, binding the exact
@@ -573,8 +573,8 @@ client grant. The `route-config-approve` command turns that review into a
 digest-confirmed approval artifact after the reviewed route-config digest is
 supplied. Its `package-build` command then writes only a reviewed developer
 artifact to a new explicit output directory after in-memory bundling succeeds,
-the supplied `package-plan` digest matches the package plan being built, and
-the supplied route-config approval matches the embedded route config. The
+the supplied `package-plan --review` artifact matches the package plan being
+built, and the supplied route-config approval matches the embedded route config. The
 output directory must either be outside the companion source tree or a child of
 `release-artifacts/browser-extension/`, so a package rehearsal cannot create
 unreviewed files under `apps/`, `packages/`, docs, scripts, or tests. The

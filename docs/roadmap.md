@@ -712,14 +712,14 @@ counts, and SHA-256 digests, and still does not publish to npm.
   `extension-storage` origin-approval manifest profile for reviewed
   content-script origins, pinning the same `activeTab` plus `storage`
   permission boundary before package build without writing browser storage,
-  and `--review` emits the digest-bound package-plan review artifact required
-  by `package-build`.
+  and `--review` emits the digest-bound package-plan review artifact that
+  `package-build` requires intact.
   Private `route-config-review` and
   `route-config-approve` scripts now create digest-bound approval artifacts for
   the secretless selected route before package build. A private `package-build`
   script now creates an explicit developer artifact in a new output directory
   only after successful in-memory bundling and a matching reviewed
-  package-plan digest, embeds that approved secretless static route config,
+  package-plan review artifact, embeds that approved secretless static route config,
   and requires a reviewed origin-permission store before content scripts can
   be packaged. That store is embedded as secretless
   background gate data, not browser storage. The output directory is now

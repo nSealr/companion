@@ -231,6 +231,12 @@ public npm release.
   boundaries for future SDK, browser extension, desktop, and CLI access
   surfaces.
 
+### Changed
+
+- Browser-extension `package-build` now requires the full digest-bound
+  package-plan review artifact instead of accepting a naked package-plan
+  digest string.
+
 ### Release Status
 
 - No `@nsealr/*` companion packages have been published to npm.

@@ -126,7 +126,7 @@ single-repository CI. Cross-repository drift remains guarded by
   the companion source tree unless it is under
   `release-artifacts/browser-extension/`, and package verification enforces
   the same safe artifact-location rule. It requires the reviewed package-plan
-  digest to match the manifest profile being built, writes manifest, popup
+  artifact to match the manifest profile being built, writes manifest, popup
   HTML, and bundled entrypoints only after successful in-memory bundling,
   returns explicit route, shared native-host name, manifest-permissions,
   popup-mode, activeTab, origin, extension, and pairing metadata plus a package
@@ -316,7 +316,7 @@ single-repository CI. Cross-repository drift remains guarded by
   `extension-storage` origin-approval profile only for reviewed content-script
   origins, renders a digest-bound review envelope for package-build gating, and
   has no output-path/install behavior.
-  Package-build tests require a reviewed package-plan digest plus explicit
+  Package-build tests require a reviewed package-plan artifact plus explicit
   extension id, reviewed origin-permission store, and local pairing digest
   before content-script artifacts can embed an origin gate. Storage-backed
   package-build tests prove the build can omit static extension-id metadata and

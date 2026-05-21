@@ -42,7 +42,7 @@ export type BrowserExtensionPackageOriginPermissionMode = "embedded" | "extensio
 
 export type BrowserExtensionPackageBuildOptions = BrowserExtensionManifestOptions & {
   outDir: string;
-  packagePlanDigest: string;
+  packagePlanReview: unknown;
   routeConfig: unknown;
   routeConfigApproval: unknown;
   extensionId?: string;
@@ -863,6 +863,21 @@ function assertPackagePlanReviewMatchesPackageBuild(
   return parsedReview;
 }
 
+function assertPackagePlanReviewMatchesPackagePlan(
+  packagePlanReview: unknown,
+  expectedPackagePlan: BrowserExtensionPackagePlan,
+  expectedPackagePlanDigest: string
+): BrowserExtensionPackagePlanReview {
+  const parsedReview = parseBrowserExtensionPackagePlanReview(packagePlanReview);
+  if (parsedReview.package_plan_digest !== expectedPackagePlanDigest) {
+    throw new Error("browser extension package-plan review digest mismatch");
+  }
+  if (JSON.stringify(parsedReview.package_plan) !== JSON.stringify(expectedPackagePlan)) {
+    throw new Error("browser extension package-plan review does not match package build");
+  }
+  return parsedReview;
+}
+
 function requirePackagePlanReviewOption(options: BrowserExtensionPackageVerifyOptions | undefined): unknown {
   if (options === undefined || options.packagePlanReview === undefined) {
     throw new Error("browser extension package-plan review is required for package verification");
@@ -1069,13 +1084,7 @@ export async function buildBrowserExtensionPackage(
       : {})
   }));
   const packagePlanDigest = browserExtensionPackagePlanDigest(plan);
-  const reviewedPackagePlanDigest = requireLowerHex64(
-    options.packagePlanDigest,
-    "browser extension package plan digest"
-  );
-  if (reviewedPackagePlanDigest !== packagePlanDigest) {
-    throw new Error("browser extension package plan digest mismatch");
-  }
+  assertPackagePlanReviewMatchesPackagePlan(options.packagePlanReview, plan, packagePlanDigest);
   const originPermissions = originPermissionsForPackage(options, plan);
   const contentScriptOrigins = packagedContentScriptOrigins(plan);
   const buildResult = await esbuild({

@@ -345,7 +345,7 @@ describe("NIP-46 bridge payloads", () => {
     const step = evaluateNip46RelayResponseStep({
       direction: "remote_signer_to_client",
       event: {
-        id: "abababababababababababababababababababababababababababababababab",
+        id: "5b49f326b62609219e3106d02990684c9ff855a5a0f2051afcf7d907c40d66ea",
         kind: 24133,
         pubkey: "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
         created_at: 1710000006,
@@ -356,7 +356,7 @@ describe("NIP-46 bridge payloads", () => {
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
           ]
         ],
-        sig: "44444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444"
+        sig: "11fe4644fc3f8a09b2d2b61aff883128654b7ea54951052dbf3afbacbf7f014fbd14653f350fc996a010835ec6c3f84cad5ce9f1a5b9b33d7eb06025b233ff2a"
       },
       decrypted_message: {
         id: "nip46-connect-1",
@@ -384,7 +384,7 @@ describe("NIP-46 bridge payloads", () => {
     const relayListStep = evaluateNip46RelayResponseStep({
       direction: "remote_signer_to_client",
       event: {
-        id: "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+        id: "fb28d105e99a675fad0822b246be6840ed480d77a4dac5ec67f3efbb3acb6a8a",
         kind: 24133,
         pubkey: "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
         created_at: 1710000007,
@@ -395,7 +395,7 @@ describe("NIP-46 bridge payloads", () => {
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
           ]
         ],
-        sig: "55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555"
+        sig: "b6f140ddfecb724a0f71e84c498815d6dd2be346675bedece0f6a668e2a96d500432b46eb883cb1e0afd59afe0be62ad826362da6a1fdd07b7d20536cef701c7"
       },
       decrypted_message: {
         id: "nip46-switch-relays-1",
@@ -405,7 +405,7 @@ describe("NIP-46 bridge payloads", () => {
     const noChangeStep = evaluateNip46RelayResponseStep({
       direction: "remote_signer_to_client",
       event: {
-        id: "edededededededededededededededededededededededededededededededed",
+        id: "056e0a10bab0c4788aa73e82cad9f2e1dbcb15bb1345dcd0d3dd191dc8637d25",
         kind: 24133,
         pubkey: "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
         created_at: 1710000008,
@@ -416,7 +416,7 @@ describe("NIP-46 bridge payloads", () => {
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
           ]
         ],
-        sig: "66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666"
+        sig: "96be56d454bb457c722a6bd2aa51c45f50cecc84712741a23f066e47ba08ef9aaf0719a83b4997c718b39b8a14041dd6a838e051f66bdc77d58e57e31dac69c5"
       },
       decrypted_message: {
         id: "nip46-switch-relays-2",

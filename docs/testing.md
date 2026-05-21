@@ -592,9 +592,10 @@ single-repository CI. Cross-repository drift remains guarded by
   forbidden bunker client metadata, and missing `nostrconnect` secrets.
 - NIP-46 relay event envelope tests covering shared `kind:24133` request and
   response vectors. The parser checks sender pubkey, exactly one recipient `p`
-  tag, opaque encrypted content, and optional signed-event field shapes without
-  decrypting NIP-44 content, opening relays, creating grants, or reaching
-  signer transport.
+  tag, opaque encrypted content, tag arrays made only of strings, and optional
+  signed relay-event fields. When signed fields are present it verifies the
+  NIP-01 event id and BIP-340 relay event signature without decrypting NIP-44
+  content, opening relays, creating grants, or reaching signer transport.
 - NIP-46 relay step tests covering shared post-decryption request and response
   vectors. The request evaluator binds the validated relay event envelope,
   plaintext message, and reviewed permissions to the same bridge decision path
@@ -604,9 +605,9 @@ single-repository CI. Cross-repository drift remains guarded by
   outside `auth_url`, rejects auth URLs with credentials, fragments, or
   non-http(s) schemes, rejects unsafe switch-relays relay lists, and rejects
   public-key or signed-event results whose pubkey is not the relay event sender.
+  Signed relay-event envelopes are NIP-01 id checked and BIP-340 verified.
   Neither opens relays, decrypts NIP-44 content, acknowledges `connect`,
-  creates grants, dispatches signers, verifies signatures, or persists session
-  state.
+  creates grants, dispatches signers, or persists session state.
 - NIP-46 auth challenge review tests covering the shared auth URL review vector.
   Package code renders the remote signer pubkey, client pubkey, and URL into
   deterministic pages, binds them to `auth_challenge_digest`, writes approval

@@ -3,7 +3,7 @@
   "format": "nsealr-nip46-relay-response-step-v0",
   "direction": "remote_signer_to_client",
   "event": {
-    "id": "edededededededededededededededededededededededededededededededed",
+    "id": "056e0a10bab0c4788aa73e82cad9f2e1dbcb15bb1345dcd0d3dd191dc8637d25",
     "kind": 24133,
     "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
     "created_at": 1710000008,
@@ -14,7 +14,7 @@
         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
       ]
     ],
-    "sig": "66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666"
+    "sig": "96be56d454bb457c722a6bd2aa51c45f50cecc84712741a23f066e47ba08ef9aaf0719a83b4997c718b39b8a14041dd6a838e051f66bdc77d58e57e31dac69c5"
   },
   "decrypted_message": {
     "id": "nip46-switch-relays-2",
@@ -29,6 +29,8 @@
       "recipient_pubkey": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "encrypted_content": "nip44-v2-switch-relays-no-change-response-ciphertext-placeholder",
       "has_signed_event_fields": true,
+      "event_id_verified": true,
+      "event_signature_verified": true,
       "decrypts_content": false,
       "opens_relay": false,
       "creates_grants": false,
@@ -48,9 +50,9 @@
     "creates_grants": false,
     "acknowledges_connect": false,
     "dispatches_signer": false,
-    "verifies_signature": false,
+    "verifies_signature": true,
     "stores_production_secrets": false,
     "persists_session_state": false
   },
-  "scope": "NIP-46 relay response step evaluation for an already decrypted switch_relays null result. It records no relay change metadata only; it does not open relays, switch transports, decrypt NIP-44 content, acknowledge connect, activate a session, create grants, dispatch a signer, verify signatures, or persist session state."
+  "scope": "NIP-46 relay response step evaluation for an already decrypted switch_relays null result. It verifies the relay event signature and records no relay change metadata only; it does not open relays, switch transports, decrypt NIP-44 content, acknowledge connect, activate a session, create grants, dispatch a signer, or persist session state."
 }

@@ -431,7 +431,9 @@ match the shared `contract_id`.
   supplied by a future decryption layer, returning bridge decisions or
   response-shape metadata, including auth challenge URL metadata without
   credentials or fragments, without relay I/O, grant creation, signer dispatch,
-  URL opening, signature verification, or session persistence. Shared specs
+  URL opening, or session persistence. Relay event envelopes with signed fields
+  are NIP-01 id checked and BIP-340 verified before metadata is accepted.
+  Shared specs
   vectors now also pin `approved_pending_ack` session checkpoints and a
   pending-session request gate that rejects signer dispatch with
   `connect_ack_pending` until a future acknowledged-session contract exists.

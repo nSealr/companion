@@ -312,6 +312,9 @@ importers:
       '@noble/hashes':
         specifier: 2.2.0
         version: 2.2.0
+      '@nsealr/core':
+        specifier: workspace:*
+        version: link:../core
       '@nsealr/protocol':
         specifier: workspace:*
         version: link:../protocol

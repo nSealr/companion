@@ -148,9 +148,10 @@ secretless result discovers the remote signer pubkey from the response envelope
 and still avoids relay I/O, NIP-44 derivation, `connect` acknowledgement, grant
 creation, signer dispatch, and persistence. The first M5 relay boundary is now
 package-owned: NIP-46 `kind:24133` relay event envelopes are parsed into
-sender pubkey, recipient `p` tag, encrypted-content, and signed-field metadata
-without opening relays, decrypting NIP-44 content, creating grants, or
-dispatching to signers. The next M5 relay boundaries are also package-owned:
+sender pubkey, recipient `p` tag, encrypted-content, and signed relay-event
+verification metadata without opening relays, decrypting NIP-44 content,
+creating grants, or dispatching to signers. Signed fields are NIP-01 id checked
+and BIP-340 verified. The next M5 relay boundaries are also package-owned:
 relay request-step evaluation combines that envelope with an already decrypted
 message and reviewed permissions, returning the same bridge decision as local
 decrypted payload handling, while relay response-step evaluation shape-checks
@@ -162,8 +163,9 @@ metadata without switching transports. It also accepts auth challenge responses
 as URL metadata only, requiring http(s) without credentials or fragments,
 without opening the URL or treating arbitrary result/error pairs as valid.
 These boundaries avoid relay I/O, NIP-44 decryption, `connect`
-acknowledgement, grant creation, signer dispatch, signature verification, or
-session persistence.
+acknowledgement, grant creation, signer dispatch, or session persistence.
+Signed relay-event envelopes are now NIP-01 id checked and BIP-340 verified
+before response-step metadata is accepted.
 The auth challenge boundary now also has deterministic review/approval
 artifacts: `packages/nip46` can render the remote signer pubkey, client pubkey,
 and URL into review pages, and `nsealr nip46 approve-auth-challenge` writes an

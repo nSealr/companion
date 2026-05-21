@@ -34,6 +34,7 @@
   "types": "./dist/index.d.ts",
   "dependencies": {
     "@noble/hashes": "2.2.0",
+    "@nsealr/core": "workspace:*",
     "@nsealr/protocol": "workspace:*"
   },
   "devDependencies": {

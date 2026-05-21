@@ -159,8 +159,9 @@ relay request and response steps only
 after plaintext has been
 supplied by a future NIP-44 layer: request steps return deterministic bridge
 decisions, while response steps shape-check plaintext signed-event, public-key,
-ping, auth challenge, and error responses without opening relays, opening auth
-URLs, accepting URL credentials/fragments, or verifying signatures.
+ping, auth challenge, and error responses after signed relay-event envelopes
+are NIP-01 id checked and BIP-340 verified, without opening relays, opening
+auth URLs, or accepting URL credentials/fragments.
 Auth challenge review renders only the remote signer pubkey, client pubkey, and
 auth URL, and approval requires the reviewed auth challenge digest while
 recording false side-effect flags for URL opening, relay opening, connect
@@ -174,7 +175,8 @@ persistence.
 Approved `sign_event` inputs must be kind-scoped before signer routing. The
 connection URI parser records only secret presence, not the secret value. Relay
 event envelope parsing exposes only sender/recipient/content metadata and
-signed-field shape; it does not verify signatures or decrypt NIP-44 content.
+signed-field verification; it verifies signed relay event ids/signatures
+without decrypting NIP-44 content.
 Session lifecycle parsing records `approved_pending_ack` checkpoint metadata
 only and rejects secret material, NIP-44 key derivation, relay opening, connect
 acknowledgement, grant creation, signer dispatch, production secret storage,

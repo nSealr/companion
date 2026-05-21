@@ -3,7 +3,7 @@
   "format": "nsealr-nip46-relay-response-step-v0",
   "direction": "remote_signer_to_client",
   "event": {
-    "id": "abababababababababababababababababababababababababababababababab",
+    "id": "5b49f326b62609219e3106d02990684c9ff855a5a0f2051afcf7d907c40d66ea",
     "kind": 24133,
     "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
     "created_at": 1710000006,
@@ -14,7 +14,7 @@
         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
       ]
     ],
-    "sig": "44444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444"
+    "sig": "11fe4644fc3f8a09b2d2b61aff883128654b7ea54951052dbf3afbacbf7f014fbd14653f350fc996a010835ec6c3f84cad5ce9f1a5b9b33d7eb06025b233ff2a"
   },
   "decrypted_message": {
     "id": "nip46-connect-1",
@@ -29,6 +29,8 @@
       "recipient_pubkey": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "encrypted_content": "nip44-v2-connect-ack-response-ciphertext-placeholder",
       "has_signed_event_fields": true,
+      "event_id_verified": true,
+      "event_signature_verified": true,
       "decrypts_content": false,
       "opens_relay": false,
       "creates_grants": false,
@@ -47,9 +49,9 @@
     "creates_grants": false,
     "acknowledges_connect": false,
     "dispatches_signer": false,
-    "verifies_signature": false,
+    "verifies_signature": true,
     "stores_production_secrets": false,
     "persists_session_state": false
   },
-  "scope": "NIP-46 relay response step evaluation for an already decrypted connect acknowledgement result. It validates the relay event envelope and plaintext response shape only; it does not open relays, decrypt NIP-44 content, acknowledge connect, activate a session, create grants, dispatch a signer, verify signatures, or persist session state."
+  "scope": "NIP-46 relay response step evaluation for an already decrypted connect acknowledgement result. It validates the plaintext response shape and verifies the relay event signature only; it does not open relays, decrypt NIP-44 content, acknowledge connect, activate a session, create grants, dispatch a signer, or persist session state."
 }

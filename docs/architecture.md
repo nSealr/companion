@@ -161,9 +161,10 @@ packages, but it must not export test-only signing as a production path.
   shape-checking plaintext responses while binding public-key and signed-event
   result pubkeys to the relay event sender. Auth challenge responses expose
   only safe http(s) URL metadata without credentials or fragments for later UI
-  and do not open that URL. It still does this without opening relays,
-  acknowledging `connect`, creating grants, dispatching signers, verifying
-  signatures, or persisting session state.
+  and do not open that URL. Signed relay-event envelopes are NIP-01 id checked
+  and BIP-340 verified, while the package still avoids opening relays,
+  acknowledging `connect`, creating grants, dispatching signers, or persisting
+  session state.
   It also evaluates a pending-session request gate for
   `approved_pending_ack` checkpoints: relay sender/recipient binding and
   expiry are checked, but signer dispatch is rejected with

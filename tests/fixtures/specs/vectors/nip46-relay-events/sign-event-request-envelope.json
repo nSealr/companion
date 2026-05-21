@@ -20,6 +20,8 @@
     "recipient_pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
     "encrypted_content": "nip44-v2-ciphertext-placeholder",
     "has_signed_event_fields": false,
+    "event_id_verified": false,
+    "event_signature_verified": false,
     "decrypts_content": false,
     "opens_relay": false,
     "creates_grants": false,

@@ -22,7 +22,8 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
   connect ack and switch-relays responses remain metadata-only, and auth
   challenge responses expose only safe http(s) URL metadata without credentials
   or fragments for later UI, without relay I/O, signer dispatch, grant
-  creation, signature verification, URL opening, or session persistence.
+  creation, URL opening, or session persistence. Signed relay-event envelopes
+  are NIP-01 id checked and BIP-340 verified.
 - Render auth challenge URL metadata into deterministic review pages and
   digest-bound approval artifacts without opening the URL, acknowledging
   `connect`, creating grants, opening relays, dispatching signers, storing
@@ -91,9 +92,10 @@ and `persists_session_state: false`.
 
 Relay event envelope parsing is also non-committal. It validates the event kind,
 sender pubkey, exactly one recipient `p` tag, opaque encrypted content, and
-optional signed-event field shapes. It does not verify signatures, decrypt
-NIP-44 content, open relays, persist grants, acknowledge `connect`, or reach
-signer I/O. Those layers remain blocked on separate policy and session gates.
+tag arrays made only of strings. When signed fields are present, it verifies the
+NIP-01 event id and BIP-340 relay event signature. It does not decrypt NIP-44
+content, open relays, persist grants, acknowledge `connect`, or reach signer
+I/O. Those layers remain blocked on separate policy and session gates.
 
 Relay step evaluation starts from an envelope and an already decrypted message.
 Request steps reuse the same request validation, permission checks, and bridge

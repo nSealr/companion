@@ -16,9 +16,9 @@
           "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         ]
       ],
-      "id": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "id": "6b5ac3fd19bded40154f212cf38586483fcfdf9119734b1cdb303b363e6e6443",
       "created_at": 1710000002,
-      "sig": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      "sig": "df58cbb5061ca40ef4b16608349bfbffcfcda2ef38c79b0803dd6de4f1e7dc15ff387fed09338d0beb2acc3e6293f90bf3603a46e81efbf64c85e507167d3c5d"
     },
     "decrypted_message": {
       "id": "nip46-get-public-key-1",

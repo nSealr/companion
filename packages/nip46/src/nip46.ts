@@ -1,5 +1,6 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
+import { computeEventId, verifySchnorrSignature } from "@nsealr/core";
 import { compactJsonUtf8ByteLength, NSEALR_V0_LIMITS, validateRequest, validateResponse } from "@nsealr/protocol";
 
 export type Nip46RequestMessage = {
@@ -84,6 +85,8 @@ export type Nip46RelayEventEnvelope = {
   recipient_pubkey: string;
   encrypted_content: string;
   has_signed_event_fields: boolean;
+  event_id_verified: boolean;
+  event_signature_verified: boolean;
   decrypts_content: false;
   opens_relay: false;
   creates_grants: false;
@@ -129,7 +132,7 @@ export type Nip46RelayResponseStep = {
   creates_grants: false;
   acknowledges_connect: false;
   dispatches_signer: false;
-  verifies_signature: false;
+  verifies_signature: boolean;
   stores_production_secrets: false;
   persists_session_state: false;
 };
@@ -429,6 +432,24 @@ function requireSignedEventFields(value: Record<string, unknown>): boolean {
   }
   if (typeof value.sig !== "string" || !HEX_64_BYTE.test(value.sig)) {
     throw new Error("NIP-46 relay event sig must be 64-byte lowercase hex");
+  }
+  return true;
+}
+
+function verifySignedRelayEvent(value: Record<string, unknown>, senderPubkey: string, tags: string[][]): boolean {
+  if (!requireSignedEventFields(value)) return false;
+  const computedId = computeEventId({
+    pubkey: senderPubkey,
+    created_at: value.created_at as number,
+    kind: 24133,
+    tags,
+    content: value.content as string
+  });
+  if (value.id !== computedId) {
+    throw new Error("NIP-46 relay event id does not match NIP-01 canonical serialization");
+  }
+  if (!verifySchnorrSignature(senderPubkey, computedId, value.sig as string)) {
+    throw new Error("NIP-46 relay event signature is invalid");
   }
   return true;
 }
@@ -761,12 +782,19 @@ export function parseNip46RelayEventEnvelope(
     throw new Error("NIP-46 relay event content must be a non-empty encrypted string");
   }
   if (!Array.isArray(value.tags)) throw new Error("NIP-46 relay event tags must be an array");
-  const pTags = value.tags.filter((tag): tag is unknown[] => Array.isArray(tag) && tag[0] === "p");
+  for (const tag of value.tags) {
+    if (!Array.isArray(tag)) throw new Error("NIP-46 relay event tag must be an array");
+    if (!tag.every((field) => typeof field === "string")) {
+      throw new Error("NIP-46 relay event tag fields must be strings");
+    }
+  }
+  const tags = value.tags as string[][];
+  const pTags = tags.filter((tag) => tag[0] === "p");
   if (pTags.length !== 1) throw new Error("NIP-46 relay event must include exactly one p tag");
   const pTag = pTags[0];
   if (pTag.length !== 2) throw new Error("NIP-46 relay event p tag must contain only marker and pubkey");
   const recipientPubkey = requireXOnlyPubkey(pTag[1], "relay event p tag pubkey");
-  const hasSignedEventFields = requireSignedEventFields(value);
+  const hasSignedEventFields = verifySignedRelayEvent(value, senderPubkey, tags);
   return {
     format: "nsealr-nip46-relay-event-envelope-v0",
     direction: checkedDirection,
@@ -774,6 +802,8 @@ export function parseNip46RelayEventEnvelope(
     recipient_pubkey: recipientPubkey,
     encrypted_content: value.content,
     has_signed_event_fields: hasSignedEventFields,
+    event_id_verified: hasSignedEventFields,
+    event_signature_verified: hasSignedEventFields,
     decrypts_content: false,
     opens_relay: false,
     creates_grants: false,
@@ -911,7 +941,7 @@ export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayRespon
     creates_grants: false,
     acknowledges_connect: false,
     dispatches_signer: false,
-    verifies_signature: false,
+    verifies_signature: envelope.event_signature_verified,
     stores_production_secrets: false,
     persists_session_state: false
   };

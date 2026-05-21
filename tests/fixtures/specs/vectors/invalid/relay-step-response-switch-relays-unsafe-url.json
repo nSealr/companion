@@ -16,9 +16,9 @@
           "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         ]
       ],
-      "id": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "id": "fb28d105e99a675fad0822b246be6840ed480d77a4dac5ec67f3efbb3acb6a8a",
       "created_at": 1710000007,
-      "sig": "55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555"
+      "sig": "b6f140ddfecb724a0f71e84c498815d6dd2be346675bedece0f6a668e2a96d500432b46eb883cb1e0afd59afe0be62ad826362da6a1fdd07b7d20536cef701c7"
     },
     "decrypted_message": {
       "id": "nip46-switch-relays-1",

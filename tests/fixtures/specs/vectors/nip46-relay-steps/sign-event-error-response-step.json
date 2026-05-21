@@ -3,7 +3,7 @@
   "format": "nsealr-nip46-relay-response-step-v0",
   "direction": "remote_signer_to_client",
   "event": {
-    "id": "9999999999999999999999999999999999999999999999999999999999999999",
+    "id": "5a1db0a818c37f446bcfcb0d7590dad286844f6acb4a5ef4597c12e2e73ea464",
     "kind": 24133,
     "pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
     "created_at": 1710000004,
@@ -14,7 +14,7 @@
         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
       ]
     ],
-    "sig": "22222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222"
+    "sig": "2691e0f890f481412d7acfbf833e42910ba23ffc2a20d0a6d1b3e9f08dfe73ae042b4d9d1a2feae7107e7952a81c850ce558ebce8a1c244c9912a963bd14c352"
   },
   "decrypted_message": {
     "id": "nip46-req-denied-1",
@@ -29,6 +29,8 @@
       "recipient_pubkey": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "encrypted_content": "nip44-v2-sign-event-error-response-ciphertext-placeholder",
       "has_signed_event_fields": true,
+      "event_id_verified": true,
+      "event_signature_verified": true,
       "decrypts_content": false,
       "opens_relay": false,
       "creates_grants": false,
@@ -47,9 +49,9 @@
     "creates_grants": false,
     "acknowledges_connect": false,
     "dispatches_signer": false,
-    "verifies_signature": false,
+    "verifies_signature": true,
     "stores_production_secrets": false,
     "persists_session_state": false
   },
-  "scope": "NIP-46 relay response step evaluation for an already decrypted signer error response. It validates the relay event envelope and plaintext response shape without opening relays, decrypting NIP-44 content, acknowledging connect, creating grants, dispatching a signer, verifying signatures, or persisting session state."
+  "scope": "NIP-46 relay response step evaluation for an already decrypted signer error response. It validates the plaintext response shape and verifies the relay event signature without opening relays, decrypting NIP-44 content, acknowledging connect, creating grants, dispatching a signer, or persisting session state."
 }

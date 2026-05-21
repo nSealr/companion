@@ -43,7 +43,8 @@ assert(
     normalizedReview.includes("evaluates relay request and response steps") &&
     normalizedReview.includes("relay request/response steps") &&
     normalizedReview.includes("digest-bound connect review and approval artifacts") &&
-    normalizedReview.includes("does not verify signatures or decrypt NIP-44 content") &&
+    normalizedReview.includes("verifies signed relay event ids/signatures") &&
+    normalizedReview.includes("without decrypting NIP-44 content") &&
     normalizedReview.includes("without opening relays"),
   "docs/api-review.md must preserve the current NIP-46 boundary"
 );

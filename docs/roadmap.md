@@ -682,9 +682,12 @@ counts, and SHA-256 digests, and still does not publish to npm.
   gates already received page messages by expected source and normalized origin
   before forwarding nSealr page-bridge envelopes, an injected content-window
   listener installer can register that boundary on an explicit target with
-  explicit teardown and injected response posting, and a response-poster adapter
-  now posts extension responses only to reviewed `postMessage` targets and
-  normalized page origins.
+  explicit teardown and injected response posting, and now converts unexpected
+  downstream failures for parseable accepted bridge requests into deterministic
+  `content_window_bridge_failed` responses while keeping internal details on
+  injected diagnostics. A response-poster adapter now posts extension
+  responses only to reviewed `postMessage` targets and normalized page
+  origins.
   The matching page-window bridge exchange now posts validated page requests to
   the exact reviewed origin, accepts only matching extension responses, and
   cleans up listeners on response, abort, timeout, or posting failure. Pure

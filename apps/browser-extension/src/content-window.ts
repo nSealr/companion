@@ -2,8 +2,10 @@ import {
   handleBrowserExtensionContentScriptBridgeMessage,
   type BrowserExtensionContentScriptBackgroundRequester
 } from "./content-script.js";
+import { browserExtensionErrorResponse } from "./messages.js";
 import {
   BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL,
+  parseBrowserExtensionPageBridgeRequest,
   type BrowserExtensionPageBridgeResponse
 } from "./page-bridge.js";
 import {
@@ -123,6 +125,33 @@ function reportListenerError(error: unknown, onError: ((error: unknown) => void)
   }
 }
 
+function contentWindowBridgeFailureResponse(
+  event: unknown,
+  options: BrowserExtensionContentWindowBridgeOptions
+): BrowserExtensionPageBridgeResponse | undefined {
+  try {
+    if (!isRecord(event)) return undefined;
+    if (event.source !== options.expectedSource) return undefined;
+    const expectedOrigin = requireExpectedPageOrigin(options.expectedOrigin);
+    if (normalizeBrowserExtensionPageOrigin(event.origin) !== expectedOrigin) return undefined;
+    if (!isIncomingPageBridgeEnvelope(event.data)) return undefined;
+    const bridgeRequest = parseBrowserExtensionPageBridgeRequest(event.data);
+    return {
+      protocol: BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL,
+      version: 1,
+      direction: "extension_to_page",
+      request_id: bridgeRequest.request_id,
+      response: browserExtensionErrorResponse(
+        bridgeRequest.request_id,
+        "content_window_bridge_failed",
+        "browser content-window bridge request failed"
+      )
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 export function installBrowserExtensionContentWindowBridgeListener(
   options: BrowserExtensionContentWindowListenerOptions
 ): BrowserExtensionContentWindowListenerHandle {
@@ -142,6 +171,14 @@ export function installBrowserExtensionContentWindowBridgeListener(
         await options.postResponse(response, requireResponseTarget(event));
       } catch (error) {
         reportListenerError(error, options.onError);
+        if (disposed) return;
+        const response = contentWindowBridgeFailureResponse(event, bridgeOptions);
+        if (response === undefined) return;
+        try {
+          await options.postResponse(response, requireResponseTarget(event));
+        } catch (responseError) {
+          reportListenerError(responseError, options.onError);
+        }
       }
     })();
   };

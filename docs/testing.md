@@ -353,7 +353,9 @@ single-repository CI. Cross-repository drift remains guarded by
   reviewed `postMessage` targets and normalized page origins, and that the
   injected listener installer registers only on an explicit target, posts
   accepted responses only through an injected poster, reports malformed nSealr
-  envelopes through an injected error callback,
+  envelopes through an injected error callback, and returns deterministic
+  `content_window_bridge_failed` responses for parseable accepted bridge
+  requests when downstream handling fails unexpectedly,
   and removes the listener through `dispose()`. Page-window
   bridge-exchange tests prove the page side posts only to the exact reviewed
   origin, accepts only matching extension responses, ignores unrelated

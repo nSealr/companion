@@ -361,6 +361,62 @@ describe("browser extension content-window bridge boundary", () => {
     expect(injectedWindow.listenerCount()).toBe(0);
   });
 
+  it("posts deterministic listener failures for accepted bridge requests", async () => {
+    const pageWindow = {};
+    const injectedWindow = createInjectedWindowTarget();
+    const responses: unknown[] = [];
+    const errors: unknown[] = [];
+    const backgroundFailure = new Error("background bridge failed");
+
+    installBrowserExtensionContentWindowBridgeListener({
+      target: injectedWindow.target,
+      expectedSource: pageWindow,
+      expectedOrigin: "https://example.com",
+      sender,
+      requestBackground: () => {
+        throw backgroundFailure;
+      },
+      postResponse: (response, target) => {
+        responses.push({ response, target });
+      },
+      onError: (error) => {
+        errors.push(error);
+      }
+    });
+
+    injectedWindow.dispatch({
+      source: pageWindow,
+      origin: "https://example.com",
+      data: pageBridgeRequest("content-window-listener-failure")
+    });
+    await flushAsyncListeners();
+
+    expect(errors).toEqual([backgroundFailure]);
+    expect(responses).toEqual([{
+      response: {
+        protocol: BROWSER_EXTENSION_PAGE_BRIDGE_PROTOCOL,
+        version: 1,
+        direction: "extension_to_page",
+        request_id: "content-window-listener-failure",
+        response: {
+          protocol: BROWSER_EXTENSION_MESSAGE_PROTOCOL,
+          version: 1,
+          request_id: "content-window-listener-failure",
+          ok: false,
+          error: {
+            code: "content_window_bridge_failed",
+            message: "browser content-window bridge request failed",
+            retryable: false
+          }
+        }
+      },
+      target: {
+        source: pageWindow,
+        origin: "https://example.com"
+      }
+    }]);
+  });
+
   it("ignores unrelated listener messages and extension responses", async () => {
     const pageWindow = {};
     const injectedWindow = createInjectedWindowTarget();

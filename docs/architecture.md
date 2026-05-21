@@ -502,9 +502,13 @@ The content-window listener installer is the next thin adapter around that
 event handler. It registers a `message` listener only on an injected target,
 returns an explicit `dispose()` handle, posts accepted bridge responses only
 through an injected response poster, and reports malformed nSealr envelopes
-through an injected error callback. It still does not touch global `window`,
-browser runtime APIs, extension storage, grants, provider injection, signer
-dispatch, or key material.
+through an injected error callback. If an accepted page-bridge request reaches
+the listener and the downstream background path fails unexpectedly, the
+listener reports the internal exception through that callback and posts a
+generic `content_window_bridge_failed` response back to the page instead of
+leaving the page-side provider waiting for a timeout. It still does not touch
+global `window`, browser runtime APIs, extension storage, grants, provider
+injection, signer dispatch, or key material.
 The content-window response poster is the reviewed default poster for that
 listener. It sends extension responses only through the `postMessage` function
 on the accepted message source and only to a normalized HTTPS or localhost page

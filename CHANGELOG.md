@@ -13,6 +13,10 @@ public npm release.
 - NIP-46 relay response-step handling now recognizes `switch_relays` result
   metadata, including normalized relay lists and `null` no-change responses,
   without opening relays or mutating session state.
+- NIP-46 already-decrypted request handling now recognizes `switch_relays` as
+  a permission-gated local no-change response (`result: "null"`) without
+  opening relays, switching transports, dispatching signers, or persisting
+  session state.
 - Local-service dispatch now rejects successful `get_public_key` and
   `sign_event` responses whose public key does not match the selected account
   route.

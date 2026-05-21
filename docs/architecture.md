@@ -147,8 +147,9 @@ packages, but it must not export test-only signing as a production path.
   simulator or PC/SC transport. Test-only APDU simulation is private
   `@nsealr/dev-signer` code, not public smartcard API.
 - `packages/nip46`: decrypted NIP-46 payload bridge for `get_public_key`,
-  `sign_event`, local `ping`, and conversion from nSealr responses back to
-  NIP-46 result/error strings. It also validates requested permission strings
+  `sign_event`, local `ping`, local `switch_relays` no-change metadata, and
+  conversion from nSealr responses back to NIP-46 result/error strings. It also
+  validates requested permission strings
   and policy files, and parses `connect` messages into review intents,
   deterministic review pages, and digest-bound local approval artifacts for
   later policy work. It now parses NIP-46
@@ -1067,11 +1068,13 @@ which URL was reviewed, but still records `opens_url: false`,
 The bridge maps `get_public_key` and `sign_event` messages into standard
 nSealr v1 requests so any signer transport can handle them behind the same
 verification boundary. `ping` is answered locally with `pong` because it does
-not require a key-holding device. Signed-event responses are returned as
-NIP-46 result strings containing JSON-stringified Nostr events; public-key
-responses return the hex key string; connect ack relay responses remain
-metadata-only session input; switch-relays responses remain metadata-only
-relay-list input; nSealr error responses become NIP-46 error strings.
+not require a key-holding device. `switch_relays` is answered locally with
+`result: "null"` no-change metadata until a later relay-session engine owns
+live relay switching. Signed-event responses are returned as NIP-46 result
+strings containing JSON-stringified Nostr events; public-key responses return
+the hex key string; connect ack relay responses remain metadata-only session
+input; switch-relays responses remain metadata-only relay-list input; nSealr
+error responses become NIP-46 error strings.
 
 This keeps NIP-46 as a host transport/bridge layer. Trusted event review and
 approval remain with the Raspberry, ESP32, smartcard-assisted, or future

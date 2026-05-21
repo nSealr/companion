@@ -135,7 +135,8 @@ describe("fixture loading", () => {
       "get-public-key",
       "ping",
       "sign-event-kind-1-basic",
-      "sign-event-user-rejected"
+      "sign-event-user-rejected",
+      "switch-relays-no-change"
     ]));
     expect(fixtures.nip46Payloads[0].format).toBe("nip46-decrypted-payload-v0");
   });

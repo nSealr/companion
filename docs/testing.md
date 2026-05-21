@@ -567,9 +567,10 @@ single-repository CI. Cross-repository drift remains guarded by
   `--review-acknowledged` and `request -> smartcard-sim-sign ->
   verify-response`.
 - NIP-46 payload bridge tests covering already-decrypted `sign_event` and
-  `get_public_key` messages, local `ping`, nSealr response mapping, and
-  rejection of unsafe or unsupported payloads. The same tests consume shared
-  `nSealr/specs` NIP-46 payload vectors.
+  `get_public_key` messages, local `ping`, local `switch_relays` no-change
+  metadata, nSealr response mapping, and rejection of unsafe or unsupported
+  payloads. The same tests consume shared `nSealr/specs` NIP-46 payload
+  vectors.
 - NIP-46 requested-permission parser tests covering method-only permissions,
   `sign_event:<kind>` selectors, empty permission strings, and rejection of
   malformed or unsupported entries.

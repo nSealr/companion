@@ -5,7 +5,8 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
 ## Purpose
 
 - Convert already-decrypted `get_public_key` and `sign_event` payloads into
-  nSealr requests or deterministic local responses.
+  nSealr requests, and deterministic local `ping` / `switch_relays`
+  responses.
 - Parse `connect` messages into review intents, deterministic review pages, and
   digest-bound local approval artifacts.
 - Parse `bunker://` and `nostrconnect://` connection URIs into descriptor-only
@@ -96,8 +97,10 @@ signer I/O. Those layers remain blocked on separate policy and session gates.
 
 Relay step evaluation starts from an envelope and an already decrypted message.
 Request steps reuse the same request validation, permission checks, and bridge
-decision logic as local decrypted payload handling. Response steps shape-check
-NIP-46 response messages and signed-event result payloads, and bind
+decision logic as local decrypted payload handling, including local
+`switch_relays` `null` no-change responses that do not open or switch relay
+transports. Response steps shape-check NIP-46 response messages and signed-event
+result payloads, and bind
 public-key/signed-event result pubkeys to the relay event sender. Connect ack
 responses are accepted only as `result: "ack"` metadata and do not activate a
 session. Switch-relays responses are accepted only as normalized relay-list or

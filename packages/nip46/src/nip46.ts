@@ -1697,6 +1697,10 @@ export function nip46PermissionRequirementFromRequest(value: unknown): Nip46Perm
     if (message.params.length !== 0) throw new Error("NIP-46 ping params must be empty");
     return { method: "ping" };
   }
+  if (message.method === "switch_relays") {
+    if (message.params.length !== 0) throw new Error("NIP-46 switch_relays params must be empty");
+    return { method: "switch_relays" };
+  }
   if (message.method === "get_public_key") {
     if (message.params.length !== 0) throw new Error("NIP-46 get_public_key params must be empty");
     return { method: "get_public_key" };
@@ -1760,9 +1764,9 @@ export function decideNip46BridgeAction(
     };
   }
 
-  if (message.method === "ping") {
+  if (message.method === "ping" || message.method === "switch_relays") {
     const response = respondToLocalNip46Request(message);
-    if (response === undefined) throw new Error("NIP-46 ping response was not generated");
+    if (response === undefined) throw new Error(`NIP-46 ${message.method} response was not generated`);
     return {
       type: "local_response",
       permission_requirement: requirement,
@@ -1779,12 +1783,21 @@ export function decideNip46BridgeAction(
 
 export function respondToLocalNip46Request(value: unknown): Nip46ResponseMessage | undefined {
   const message = requireMessage(value);
-  if (message.method !== "ping") return undefined;
-  if (message.params.length !== 0) throw new Error("NIP-46 ping params must be empty");
-  return {
-    id: message.id,
-    result: "pong"
-  };
+  if (message.method === "ping") {
+    if (message.params.length !== 0) throw new Error("NIP-46 ping params must be empty");
+    return {
+      id: message.id,
+      result: "pong"
+    };
+  }
+  if (message.method === "switch_relays") {
+    if (message.params.length !== 0) throw new Error("NIP-46 switch_relays params must be empty");
+    return {
+      id: message.id,
+      result: "null"
+    };
+  }
+  return undefined;
 }
 
 export function nsealrRequestFromNip46(value: unknown): NSealrBridgeRequest {

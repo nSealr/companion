@@ -95,7 +95,7 @@ production-grade browser/native USB/WebSerial binding.
 
 - Decrypted JSON-RPC-like content mapping.
 - `get_public_key` and `sign_event` request conversion to nSealr requests.
-- Local `ping` handling.
+- Local `ping` and `switch_relays` no-change handling.
 - nSealr response conversion back to NIP-46 result/error strings.
 - Requested permission string parsing for future `connect` review.
 - `connect` request parsing into explicit policy-review intents.
@@ -104,8 +104,9 @@ production-grade browser/native USB/WebSerial binding.
 - Digest-bound local `connect` approval artifact generation without
   acknowledging the client.
 - Request permission matching against explicit in-memory grant inputs.
-- Bridge decisions for permitted signer routing, local `ping`, `connect`
-  review, and denied permissions.
+- Bridge decisions for permitted signer routing, local `ping`, local
+  `switch_relays` no-change metadata, `connect` review, and denied
+  permissions.
 - CLI decision harness for already-decrypted NIP-46 payloads.
 - Read-only policy-file input for the CLI decision harness.
 - Descriptor-only parsing for official `bunker://` and `nostrconnect://`

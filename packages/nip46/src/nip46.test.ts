@@ -132,6 +132,31 @@ describe("NIP-46 bridge payloads", () => {
     });
   });
 
+  it("handles switch_relays as local no-change metadata without relay I/O", () => {
+    const message = { id: "nip46-switch-relays-1", method: "switch_relays", params: [] };
+
+    expect(nip46PermissionRequirementFromRequest(message)).toEqual({ method: "switch_relays" });
+    expect(respondToLocalNip46Request(message)).toEqual({
+      id: "nip46-switch-relays-1",
+      result: "null"
+    });
+    expect(decideNip46BridgeAction(message, parseNip46Permissions("switch_relays"))).toEqual({
+      type: "local_response",
+      permission_requirement: { method: "switch_relays" },
+      response_message: {
+        id: "nip46-switch-relays-1",
+        result: "null"
+      }
+    });
+    expect(() =>
+      respondToLocalNip46Request({
+        id: "nip46-switch-relays-1",
+        method: "switch_relays",
+        params: ["wss://relay.example.com/"]
+      })
+    ).toThrow(/switch_relays params must be empty/u);
+  });
+
   it("matches shared NIP-46 bridge vectors from the specs repository", () => {
     const fixtures = loadSpecsFixtures(specsRoot);
     const signEvent = fixtures.nip46Payloads.find((vector) => vector.name === "sign-event-kind-1-basic");
@@ -139,6 +164,7 @@ describe("NIP-46 bridge payloads", () => {
     const connect = fixtures.nip46Payloads.find((vector) => vector.name === "connect-policy-review");
     const getPublicKey = fixtures.nip46Payloads.find((vector) => vector.name === "get-public-key");
     const ping = fixtures.nip46Payloads.find((vector) => vector.name === "ping");
+    const switchRelays = fixtures.nip46Payloads.find((vector) => vector.name === "switch-relays-no-change");
 
     if (connect?.connect_review === undefined || connect.connect_approval === undefined) {
       throw new Error("missing connect review fixture");
@@ -167,7 +193,10 @@ describe("NIP-46 bridge payloads", () => {
       getPublicKey?.response_message
     );
     expect(respondToLocalNip46Request(ping?.request_message)).toEqual(ping?.local_response_message);
-    for (const vector of [signEvent, rejectedSignEvent, getPublicKey, ping]) {
+    expect(respondToLocalNip46Request(switchRelays?.request_message)).toEqual(
+      switchRelays?.local_response_message
+    );
+    for (const vector of [signEvent, rejectedSignEvent, getPublicKey, ping, switchRelays]) {
       expect(nip46PermissionRequirementFromRequest(vector?.request_message)).toEqual(vector?.permission_requirement);
       for (const check of vector?.permission_checks ?? []) {
         expect(isNip46RequestPermitted(vector?.request_message, check.granted_permissions)).toBe(check.permitted);
@@ -869,6 +898,26 @@ describe("NIP-46 bridge payloads", () => {
       response_message: {
         id: "ping-1",
         error: "permission_denied: request requires approved permission ping"
+      }
+    });
+
+    expect(
+      decideNip46BridgeAction(
+        {
+          id: "switch-relays-1",
+          method: "switch_relays",
+          params: []
+        },
+        parseNip46Permissions("switch_relays")
+      )
+    ).toEqual({
+      type: "local_response",
+      permission_requirement: {
+        method: "switch_relays"
+      },
+      response_message: {
+        id: "switch-relays-1",
+        result: "null"
       }
     });
 

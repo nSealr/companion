@@ -458,7 +458,7 @@ function validateNip46PayloadFixture(name: string, fixture: unknown): void {
     throw new Error(`invalid NIP-46 fixture ${name}: request_message must be an object`);
   }
   validateNip46BridgeDecisionFixtures(name, fixture);
-  if (fixture.request_message.method === "ping") {
+  if (fixture.request_message.method === "ping" || fixture.request_message.method === "switch_relays") {
     validateNip46PermissionPolicyFixture(name, fixture);
     assertJsonEqual(
       respondToLocalNip46Request(fixture.request_message),

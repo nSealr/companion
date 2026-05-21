@@ -416,7 +416,8 @@ match the shared `contract_id`.
   constructing response APDUs, and rejects malformed reader-provider
   output before reader connection.
 - `packages/nip46` implements the first decrypted NIP-46 payload bridge for
-  `get_public_key`, `sign_event`, local `ping`, and nSealr response mapping.
+  `get_public_key`, `sign_event`, local `ping`, local `switch_relays`
+  no-change metadata, and nSealr response mapping.
   It also parses `connect` requests into policy-review intents, deterministic
   review pages, and digest-bound local approval artifacts, validates requested
   permission strings, and owns the read-only policy-file parser used by the

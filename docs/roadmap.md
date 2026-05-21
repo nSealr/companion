@@ -731,9 +731,10 @@ counts, and SHA-256 digests, and still does not publish to npm.
   metadata plus a package digest and per-file byte counts and SHA-256 hashes.
   A package-owned
   `package-verify` command now validates that build result against the written
-  artifact directory, recomputes the digest, checks manifest/content-script
-  bindings, popup HTML, native-host binding in the packaged background script,
-  file hashes, exact output directory contents, and bundled JavaScript
+  artifact directory, recomputes the digest, checks the manifest exactly
+  against the reviewed package-plan digest, validates content-script bindings,
+  popup HTML, native-host binding in the packaged background script, file
+  hashes, exact output directory contents, and bundled JavaScript
   browser-runtime hygiene, and still avoids native-host installation,
   extension storage writes, key custody, and signer dispatch.
   The browser-extension manifest builder can still build a minimal

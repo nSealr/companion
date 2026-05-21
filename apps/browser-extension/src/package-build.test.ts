@@ -255,6 +255,49 @@ describe("browser extension package build", () => {
     }
   });
 
+  it("rejects manifest drift even when package-build file hashes are updated", async () => {
+    const temp = tempOutDir();
+    try {
+      const result = await buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: temp.outDir,
+        packagePlanDigest: chromiumPackagePlanDigest,
+        routeConfig,
+        routeConfigApproval,
+        contentScriptMatches: ["https://example.com/*"],
+        extensionId: chromiumExtensionId,
+        originPermissionStore: originPermissionStore(),
+        localPairingDigest
+      });
+      const manifestPath = join(temp.outDir, "manifest.json");
+      const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+      manifest.name = "nSealr Drifted";
+      const tamperedManifest = `${JSON.stringify(manifest, null, 2)}\n`;
+      writeFileSync(manifestPath, tamperedManifest, "utf8");
+      const tamperedFiles = result.files.map((file) => (
+        file.path === "manifest.json"
+          ? {
+              ...file,
+              bytes: new TextEncoder().encode(tamperedManifest).byteLength,
+              sha256: sha256Utf8Hex(tamperedManifest)
+            }
+          : file
+      ));
+
+      await expect(verifyBrowserExtensionPackageBuildDirectory({
+        ...result,
+        files: tamperedFiles,
+        package_digest: sha256Utf8Hex(JSON.stringify({
+          format: "nsealr-browser-extension-package-digest-v0",
+          target: result.target,
+          files: tamperedFiles
+        }))
+      })).rejects.toThrow(/manifest drifted/u);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
   it("writes a Firefox package artifact with explicit browser settings", async () => {
     const temp = tempOutDir();
     try {

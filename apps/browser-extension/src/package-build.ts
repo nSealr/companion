@@ -769,6 +769,13 @@ function assertManifestMatchesPackageBuild(
   if (!isRecord(manifest)) {
     throw new Error("browser extension package manifest must be an object");
   }
+  const expectedPackagePlan = expectedPackagePlanForBuildResult(result, manifest);
+  if (browserExtensionPackagePlanDigest(expectedPackagePlan) !== result.package_plan_digest) {
+    throw new Error("browser extension package plan digest mismatch");
+  }
+  if (JSON.stringify(manifest) !== JSON.stringify(expectedPackagePlan.manifest)) {
+    throw new Error("browser extension package manifest drifted");
+  }
   if (JSON.stringify(manifest.permissions) !== JSON.stringify(result.manifest_permissions)) {
     throw new Error("browser extension package manifest permissions drifted");
   }
@@ -826,6 +833,34 @@ function assertManifestMatchesPackageBuild(
   if (JSON.stringify(manifest.web_accessible_resources) !== JSON.stringify(expectedResources)) {
     throw new Error("browser extension package manifest page-script resource drifted");
   }
+}
+
+function expectedPackagePlanForBuildResult(
+  result: BrowserExtensionPackageBuildResult,
+  manifest: Record<string, unknown>
+): BrowserExtensionPackagePlan {
+  const contentScriptMatches = result.content_script_origins.map((origin) => `${origin}/*`);
+  return assertBrowserExtensionPackagePlan(buildBrowserExtensionPackagePlan({
+    target: result.target,
+    ...(contentScriptMatches.length > 0 ? { contentScriptMatches } : {}),
+    ...(result.popup_mode !== "pending_requests" ? { popupMode: result.popup_mode } : {}),
+    ...(result.origin_permission_mode === "extension_storage" ? { originPermissionStorageMode: "extension" } : {}),
+    ...(result.target === "firefox" ? { firefoxExtensionId: firefoxExtensionIdFromManifest(manifest) } : {})
+  }));
+}
+
+function firefoxExtensionIdFromManifest(manifest: Record<string, unknown>): string {
+  if (
+    !isRecord(manifest.browser_specific_settings) ||
+    !isRecord(manifest.browser_specific_settings.gecko) ||
+    typeof manifest.browser_specific_settings.gecko.id !== "string"
+  ) {
+    throw new Error("browser extension package Firefox settings drifted");
+  }
+  return requireExtensionId(
+    manifest.browser_specific_settings.gecko.id,
+    "browser extension package Firefox extension id"
+  );
 }
 
 async function assertPackageDirectoryContainsOnlyExpectedFiles(result: BrowserExtensionPackageBuildResult): Promise<void> {

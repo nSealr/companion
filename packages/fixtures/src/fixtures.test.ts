@@ -183,6 +183,7 @@ describe("fixture loading", () => {
     const fixtures = loadSpecsFixtures(resolveSpecsRoot());
     expect(fixtures.nip46RelaySteps.map((vector) => vector.name)).toEqual([
       "auth-challenge-response-step",
+      "connect-ack-response-step",
       "get-public-key-response-step",
       "ping-request-step",
       "ping-response-step",

@@ -598,10 +598,11 @@ single-repository CI. Cross-repository drift remains guarded by
   vectors. The request evaluator binds the validated relay event envelope,
   plaintext message, and reviewed permissions to the same bridge decision path
   used by local decrypted payloads. The response evaluator shape-checks
-  plaintext signed-event, public-key, ping, auth challenge, and error response
-  messages, rejects arbitrary result/error pairs outside `auth_url`, rejects
-  auth URLs with credentials, fragments, or non-http(s) schemes, and rejects
-  public-key or signed-event results whose pubkey is not the relay event sender.
+  plaintext signed-event, public-key, connect ack, ping, auth challenge, and
+  error response messages, rejects arbitrary result/error pairs outside
+  `auth_url`, rejects auth URLs with credentials, fragments, or non-http(s)
+  schemes, and rejects public-key or signed-event results whose pubkey is not
+  the relay event sender.
   Neither opens relays, decrypts NIP-44 content, acknowledges `connect`,
   creates grants, dispatches signers, verifies signatures, or persists session
   state.

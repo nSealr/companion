@@ -154,12 +154,13 @@ relay request-step evaluation combines that envelope with an already decrypted
 message and reviewed permissions, returning the same bridge decision as local
 decrypted payload handling, while relay response-step evaluation shape-checks
 already decrypted NIP-46 responses and binds public-key/signed-event result
-pubkeys to the relay event sender. It also accepts auth challenge responses as
-URL metadata only, requiring http(s) without credentials or fragments, without
-opening the URL or treating arbitrary result/error pairs as valid. Both avoid
-relay I/O, NIP-44 decryption, `connect`
-acknowledgement, grant creation, signer dispatch, signature verification, or
-session persistence.
+pubkeys to the relay event sender. It accepts connect ack responses as
+metadata-only `result: "ack"` outputs that do not activate sessions. It also
+accepts auth challenge responses as URL metadata only, requiring http(s)
+without credentials or fragments, without opening the URL or treating
+arbitrary result/error pairs as valid. Both avoid relay I/O, NIP-44 decryption,
+`connect` acknowledgement, grant creation, signer dispatch, signature
+verification, or session persistence.
 The auth challenge boundary now also has deterministic review/approval
 artifacts: `packages/nip46` can render the remote signer pubkey, client pubkey,
 and URL into review pages, and `nsealr nip46 approve-auth-challenge` writes an
@@ -797,7 +798,9 @@ counts, and SHA-256 digests, and still does not publish to npm.
   material and performs no relay, NIP-44, ack, grant, signer dispatch,
   production storage, or persistence side effects. The companion can now create
   that checkpoint from a reviewed connect artifact and matching approval, but
-  it still does not acknowledge `connect` or run a relay session.
+  it still does not acknowledge `connect` or run a relay session. Metadata-only
+  `connect` ack response-step parsing exists as conformance groundwork, but it
+  does not change the pending-ack session gate.
 - WebUSB/HID/CDC/WebSerial transports and persistent signer sessions.
 - PC/SC smartcard adapter backed by the implemented APDU codec and
   `SmartcardSigner` boundary.

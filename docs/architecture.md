@@ -1043,10 +1043,12 @@ The first NIP-46 module handles only already-decrypted JSON-RPC-like payloads
 from NIP-46 kind `24133` content plus descriptor-only parsing for official
 `bunker://` and `nostrconnect://` connection tokens. It does not implement
 relay subscriptions, NIP-44 encryption/decryption, connection
-acknowledgements, permission persistence, or active auth-flow browser UX. Relay response
-step evaluation accepts the official auth challenge shape only as normalized
-http(s) URL metadata without credentials or fragments; it never opens the URL
-or treats it as approval.
+acknowledgements, permission persistence, or active auth-flow browser UX. Relay
+response-step evaluation accepts `connect` `result: "ack"` only as normalized
+metadata while keeping `acknowledges_connect: false`; it also accepts the
+official auth challenge shape only as normalized http(s) URL metadata without
+credentials or fragments. It never opens the URL or treats either response as
+approval.
 For client-initiated `nostrconnect://` flows, the package can also verify an
 already decrypted connection-token response against the original local token
 secret without storing or echoing that secret. The output is secretless
@@ -1065,8 +1067,9 @@ nSealr v1 requests so any signer transport can handle them behind the same
 verification boundary. `ping` is answered locally with `pong` because it does
 not require a key-holding device. Signed-event responses are returned as
 NIP-46 result strings containing JSON-stringified Nostr events; public-key
-responses return the hex key string; nSealr error responses become NIP-46
-error strings.
+responses return the hex key string; connect ack relay responses remain
+metadata-only session input; nSealr error responses become NIP-46 error
+strings.
 
 This keeps NIP-46 as a host transport/bridge layer. Trusted event review and
 approval remain with the Raspberry, ESP32, smartcard-assisted, or future

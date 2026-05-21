@@ -286,6 +286,7 @@ describe("NIP-46 bridge payloads", () => {
 
     expect(fixtures.nip46RelaySteps.map((vector) => vector.name)).toEqual([
       "auth-challenge-response-step",
+      "connect-ack-response-step",
       "get-public-key-response-step",
       "ping-request-step",
       "ping-response-step",
@@ -304,6 +305,45 @@ describe("NIP-46 bridge payloads", () => {
       result_type: "auth_challenge",
       auth_url: "https://remote-signer.example.com/auth?challenge=nip46-auth-1",
       opens_relay: false,
+      dispatches_signer: false,
+      persists_session_state: false
+    });
+  });
+
+  it("classifies already decrypted connect ack relay responses without activating sessions", () => {
+    const step = evaluateNip46RelayResponseStep({
+      direction: "remote_signer_to_client",
+      event: {
+        id: "abababababababababababababababababababababababababababababababab",
+        kind: 24133,
+        pubkey: "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        created_at: 1710000006,
+        content: "nip44-v2-connect-ack-response-ciphertext-placeholder",
+        tags: [
+          [
+            "p",
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          ]
+        ],
+        sig: "44444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444"
+      },
+      decrypted_message: {
+        id: "nip46-connect-1",
+        result: "ack"
+      }
+    });
+
+    expect(step).toMatchObject({
+      result_type: "connect_ack_result",
+      response_message: {
+        id: "nip46-connect-1",
+        result: "ack"
+      },
+      signed_event_shape_checked: false,
+      result_pubkey_bound_to_sender: false,
+      acknowledges_connect: false,
+      opens_relay: false,
+      creates_grants: false,
       dispatches_signer: false,
       persists_session_state: false
     });

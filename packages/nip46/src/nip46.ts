@@ -107,6 +107,7 @@ export type Nip46RelayRequestStep = {
 export type Nip46RelayResponseResultType =
   | "signed_event_result"
   | "public_key_result"
+  | "connect_ack_result"
   | "pong_result"
   | "auth_challenge"
   | "error";
@@ -837,6 +838,9 @@ function relayResponseResultType(message: Nip46ResponseMessage): {
   if (result === undefined) throw new Error("NIP-46 response message result is missing");
   if (X_ONLY_PUBKEY.test(result)) {
     return { resultType: "public_key_result", signedEventShapeChecked: false, resultPubkey: result };
+  }
+  if (result === "ack") {
+    return { resultType: "connect_ack_result", signedEventShapeChecked: false };
   }
   if (result === "pong") {
     return { resultType: "pong_result", signedEventShapeChecked: false };

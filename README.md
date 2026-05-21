@@ -235,6 +235,9 @@ match the shared `contract_id`.
   usage, and origin-permission mode it packaged,
   while still not installing a browser extension, writing extension storage at
   build time, creating grants, dispatching signers, or holding key material.
+  The package-owned verifier now rejects background bundle drift from that
+  selected route, native-host name, and origin-permission metadata even when
+  artifact file hashes are recomputed.
 - `@nsealr/client` exposes the shared local-client identity parser, including
   the browser-safe `@nsealr/client/client-identity` subpath, used before
   pairing, route selection, signer-request validation, and response

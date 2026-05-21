@@ -113,6 +113,49 @@ function originPermissionStore(methods: Array<"get_public_key" | "sign_event"> =
   });
 }
 
+type RehashablePackageResult = {
+  target: "chromium" | "firefox";
+  files: readonly {
+    path: string;
+    bytes: number;
+    sha256: string;
+  }[];
+  package_digest: string;
+};
+
+function packageDigestForFiles(target: "chromium" | "firefox", files: RehashablePackageResult["files"]): string {
+  return sha256Utf8Hex(JSON.stringify({
+    format: "nsealr-browser-extension-package-digest-v0",
+    target,
+    files
+  }));
+}
+
+function resultWithRehashedFile<T extends RehashablePackageResult>(
+  result: T,
+  path: string,
+  source: string
+): T {
+  let found = false;
+  const files = result.files.map((file) => {
+    if (file.path !== path) return file;
+    found = true;
+    return {
+      ...file,
+      bytes: new TextEncoder().encode(source).byteLength,
+      sha256: sha256Utf8Hex(source)
+    };
+  });
+  if (!found) {
+    throw new Error(`browser extension package test result is missing ${path}`);
+  }
+  return {
+    ...result,
+    files,
+    package_digest: packageDigestForFiles(result.target, files)
+  };
+}
+
 describe("browser extension package build", () => {
   it("writes a deterministic secretless package artifact to a new output directory", async () => {
     const temp = tempOutDir();
@@ -274,25 +317,42 @@ describe("browser extension package build", () => {
       manifest.name = "nSealr Drifted";
       const tamperedManifest = `${JSON.stringify(manifest, null, 2)}\n`;
       writeFileSync(manifestPath, tamperedManifest, "utf8");
-      const tamperedFiles = result.files.map((file) => (
-        file.path === "manifest.json"
-          ? {
-              ...file,
-              bytes: new TextEncoder().encode(tamperedManifest).byteLength,
-              sha256: sha256Utf8Hex(tamperedManifest)
-            }
-          : file
-      ));
 
-      await expect(verifyBrowserExtensionPackageBuildDirectory({
-        ...result,
-        files: tamperedFiles,
-        package_digest: sha256Utf8Hex(JSON.stringify({
-          format: "nsealr-browser-extension-package-digest-v0",
-          target: result.target,
-          files: tamperedFiles
-        }))
-      })).rejects.toThrow(/manifest drifted/u);
+      await expect(verifyBrowserExtensionPackageBuildDirectory(resultWithRehashedFile(
+        result,
+        "manifest.json",
+        tamperedManifest
+      ))).rejects.toThrow(/manifest drifted/u);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
+  it("rejects background route drift even when package-build file hashes are updated", async () => {
+    const temp = tempOutDir();
+    try {
+      const result = await buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: temp.outDir,
+        packagePlanDigest: chromiumPackagePlanDigest,
+        routeConfig,
+        routeConfigApproval,
+        contentScriptMatches: ["https://example.com/*"],
+        extensionId: chromiumExtensionId,
+        originPermissionStore: originPermissionStore(),
+        localPairingDigest
+      });
+      const backgroundPath = join(temp.outDir, BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE);
+      const background = readFileSync(backgroundPath, "utf8");
+      expect(background).toContain(routeConfig.account_id);
+      const tamperedBackground = background.replace(routeConfig.account_id, "esp32-usb-slot-drifted");
+      writeFileSync(backgroundPath, tamperedBackground, "utf8");
+
+      await expect(verifyBrowserExtensionPackageBuildDirectory(resultWithRehashedFile(
+        result,
+        BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
+        tamperedBackground
+      ))).rejects.toThrow(/route metadata/u);
     } finally {
       temp.cleanup();
     }
@@ -353,24 +413,11 @@ describe("browser extension package build", () => {
         "utf8"
       );
       const tamperedManifest = readFileSync(manifestPath, "utf8");
-      const tamperedFiles = result.files.map((file) => (
-        file.path === "manifest.json"
-          ? {
-              ...file,
-              bytes: new TextEncoder().encode(tamperedManifest).byteLength,
-              sha256: sha256Utf8Hex(tamperedManifest)
-            }
-          : file
-      ));
-      await expect(verifyBrowserExtensionPackageBuildDirectory({
-        ...result,
-        files: tamperedFiles,
-        package_digest: sha256Utf8Hex(JSON.stringify({
-          format: "nsealr-browser-extension-package-digest-v0",
-          target: "firefox",
-          files: tamperedFiles
-        }))
-      })).rejects.toThrow(/Firefox extension id/u);
+      await expect(verifyBrowserExtensionPackageBuildDirectory(resultWithRehashedFile(
+        result,
+        "manifest.json",
+        tamperedManifest
+      ))).rejects.toThrow(/Firefox extension id/u);
     } finally {
       temp.cleanup();
     }

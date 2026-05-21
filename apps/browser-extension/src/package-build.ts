@@ -863,6 +863,37 @@ function firefoxExtensionIdFromManifest(manifest: Record<string, unknown>): stri
   );
 }
 
+function assertBackgroundMatchesPackageBuild(
+  result: BrowserExtensionPackageBuildResult,
+  backgroundSource: string | undefined
+): void {
+  if (backgroundSource === undefined || !backgroundSource.includes(result.native_host_name)) {
+    throw new Error("browser extension package background native-host binding drifted");
+  }
+  if (!backgroundSource.includes(result.route_account_id) || !backgroundSource.includes(result.route_type)) {
+    throw new Error("browser extension package background route metadata drifted");
+  }
+  if (result.origin_permission_mode === "embedded") {
+    if (
+      result.extension_id === undefined ||
+      result.local_pairing_digest === undefined ||
+      !backgroundSource.includes(result.extension_id) ||
+      !backgroundSource.includes(result.local_pairing_digest)
+    ) {
+      throw new Error("browser extension package background embedded origin metadata drifted");
+    }
+  }
+  if (result.origin_permission_mode === "extension_storage") {
+    if (
+      result.local_pairing_digest === undefined ||
+      !backgroundSource.includes(result.local_pairing_digest) ||
+      !backgroundSource.includes("originPermissionStorage")
+    ) {
+      throw new Error("browser extension package background extension-storage origin metadata drifted");
+    }
+  }
+}
+
 async function assertPackageDirectoryContainsOnlyExpectedFiles(result: BrowserExtensionPackageBuildResult): Promise<void> {
   const expectedFiles = new Set<string>(result.files.map((file) => file.path));
   const actualFiles = new Set<string>();
@@ -922,10 +953,7 @@ export async function verifyBrowserExtensionPackageBuildDirectory(
     throw new Error("browser extension package popup HTML drifted");
   }
 
-  const backgroundSource = fileContents.get(BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE);
-  if (backgroundSource === undefined || !backgroundSource.includes(result.native_host_name)) {
-    throw new Error("browser extension package background native-host binding drifted");
-  }
+  assertBackgroundMatchesPackageBuild(result, fileContents.get(BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE));
 
   return result;
 }

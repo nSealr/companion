@@ -1,4 +1,4 @@
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { sha256Utf8Hex } from "@nsealr/core";
@@ -828,11 +828,31 @@ function assertManifestMatchesPackageBuild(
   }
 }
 
+async function assertPackageDirectoryContainsOnlyExpectedFiles(result: BrowserExtensionPackageBuildResult): Promise<void> {
+  const expectedFiles = new Set<string>(result.files.map((file) => file.path));
+  const actualFiles = new Set<string>();
+  for (const entry of await readdir(result.out_dir, { withFileTypes: true })) {
+    if (!entry.isFile()) {
+      throw new Error(`browser extension package unexpected output entry: ${entry.name}`);
+    }
+    if (!expectedFiles.has(entry.name)) {
+      throw new Error(`browser extension package unexpected output file: ${entry.name}`);
+    }
+    actualFiles.add(entry.name);
+  }
+  for (const expectedFile of expectedFiles) {
+    if (!actualFiles.has(expectedFile)) {
+      throw new Error(`browser extension package missing output file: ${expectedFile}`);
+    }
+  }
+}
+
 export async function verifyBrowserExtensionPackageBuildDirectory(
   value: unknown
 ): Promise<BrowserExtensionPackageBuildResult> {
   const result = parseBrowserExtensionPackageBuildResult(value);
   const fileContents = new Map<string, string>();
+  await assertPackageDirectoryContainsOnlyExpectedFiles(result);
 
   for (const file of result.files) {
     const source = await readFile(join(result.out_dir, file.path), "utf8");

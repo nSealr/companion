@@ -101,6 +101,35 @@ function writeOriginPermissionStore(path: string): void {
   writeFileSync(path, `${JSON.stringify(store, null, 2)}\n`, "utf8");
 }
 
+async function buildChromiumEmbeddedPackage(temp: { root: string; outDir: string }): Promise<Record<string, unknown>> {
+  const approvalPath = join(temp.root, "route-config-approval.json");
+  const originStorePath = join(temp.root, "origin-permission-store.json");
+  writeRouteConfigApproval(approvalPath);
+  writeOriginPermissionStore(originStorePath);
+  return JSON.parse(await browserExtensionPackageBuildJsonFromArgs([
+    "--target",
+    "chromium",
+    "--out-dir",
+    temp.outDir,
+    "--package-plan-digest",
+    chromiumPackagePlanDigest,
+    "--route-account-id",
+    "esp32-usb-slot-0",
+    "--route-type",
+    "esp32_usb_nip46",
+    "--route-config-approval",
+    approvalPath,
+    "--extension-id",
+    chromiumExtensionId,
+    "--origin-permission-store",
+    originStorePath,
+    "--local-pairing-digest",
+    localPairingDigest,
+    "--content-script-match",
+    "https://example.com/*"
+  ]));
+}
+
 describe("browser extension package-build CLI", () => {
   it("writes a Chromium package build from explicit args", async () => {
     const temp = tempBuildRoot();
@@ -185,6 +214,23 @@ describe("browser extension package-build CLI", () => {
         "--build-result",
         buildResultPath
       ])).resolves.toBe(`${JSON.stringify(result, null, 2)}\n`);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
+  it("rejects package artifacts with unexpected output files", async () => {
+    const temp = tempBuildRoot();
+    try {
+      const result = await buildChromiumEmbeddedPackage(temp);
+      const buildResultPath = join(temp.root, "package-build-result.json");
+      writeFileSync(buildResultPath, `${JSON.stringify(result, null, 2)}\n`, "utf8");
+      writeFileSync(join(temp.outDir, "unexpected.js"), "globalThis.nsealrUnexpected = true;\n", "utf8");
+
+      await expect(browserExtensionPackageVerifyJsonFromArgs([
+        "--build-result",
+        buildResultPath
+      ])).rejects.toThrow(/unexpected output file/u);
     } finally {
       temp.cleanup();
     }

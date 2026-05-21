@@ -23,7 +23,8 @@ import {
 } from "./origin-permission-store.js";
 import {
   browserExtensionPackagePlanDigest,
-  buildBrowserExtensionPackagePlan
+  buildBrowserExtensionPackagePlan,
+  createBrowserExtensionPackagePlanReview
 } from "./package-plan.js";
 import {
   BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
@@ -62,20 +63,37 @@ const localPairingDigest = "d".repeat(64);
 const chromiumNoOriginPackagePlanDigest = browserExtensionPackagePlanDigest(buildBrowserExtensionPackagePlan({
   target: "chromium"
 }));
+const chromiumNoOriginPackagePlanReview = createBrowserExtensionPackagePlanReview({
+  target: "chromium"
+});
 const chromiumPackagePlanDigest = browserExtensionPackagePlanDigest(buildBrowserExtensionPackagePlan({
   target: "chromium",
   contentScriptMatches: ["https://example.com/*"]
 }));
+const chromiumPackagePlanReview = createBrowserExtensionPackagePlanReview({
+  target: "chromium",
+  contentScriptMatches: ["https://example.com/*"]
+});
 const chromiumExtensionStoragePackagePlanDigest = browserExtensionPackagePlanDigest(buildBrowserExtensionPackagePlan({
   target: "chromium",
   popupMode: "origin_permission_approval",
   originPermissionStorageMode: "extension",
   contentScriptMatches: ["https://example.com/*"]
 }));
+const chromiumExtensionStoragePackagePlanReview = createBrowserExtensionPackagePlanReview({
+  target: "chromium",
+  popupMode: "origin_permission_approval",
+  originPermissionStorageMode: "extension",
+  contentScriptMatches: ["https://example.com/*"]
+});
 const firefoxPackagePlanDigest = browserExtensionPackagePlanDigest(buildBrowserExtensionPackagePlan({
   target: "firefox",
   firefoxExtensionId: "extension@nsealr.dev"
 }));
+const firefoxPackagePlanReview = createBrowserExtensionPackagePlanReview({
+  target: "firefox",
+  firefoxExtensionId: "extension@nsealr.dev"
+});
 
 function originPermissionStore(methods: Array<"get_public_key" | "sign_event"> = ["get_public_key", "sign_event"]): unknown {
   const requestedMethods = methods.map((method) => {
@@ -227,7 +245,10 @@ describe("browser extension package build", () => {
         expect(file.sha256).toBe(sha256Utf8Hex(source));
       }
       expect(parseBrowserExtensionPackageBuildResult(result)).toEqual(result);
-      await expect(verifyBrowserExtensionPackageBuildDirectory(result)).resolves.toEqual(result);
+      await expect(verifyBrowserExtensionPackageBuildDirectory(result)).rejects.toThrow(/package-plan review is required/u);
+      await expect(verifyBrowserExtensionPackageBuildDirectory(result, {
+        packagePlanReview: chromiumPackagePlanReview
+      })).resolves.toEqual(result);
       expect(readFileSync(join(temp.outDir, BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE), "utf8")).toContain(
         NATIVE_HOST_NAME
       );
@@ -275,7 +296,9 @@ describe("browser extension package build", () => {
         localPairingDigest
       });
 
-      await expect(verifyBrowserExtensionPackageBuildDirectory(result)).resolves.toEqual(result);
+      await expect(verifyBrowserExtensionPackageBuildDirectory(result, {
+        packagePlanReview: chromiumPackagePlanReview
+      })).resolves.toEqual(result);
       expect(() => parseBrowserExtensionPackageBuildResult({
         ...result,
         package_digest: "0".repeat(64)
@@ -292,7 +315,9 @@ describe("browser extension package build", () => {
       const manifestPath = join(temp.outDir, "manifest.json");
       const originalManifest = readFileSync(manifestPath, "utf8");
       writeFileSync(manifestPath, originalManifest.replace("\"nativeMessaging\"", "\"storage\""), "utf8");
-      await expect(verifyBrowserExtensionPackageBuildDirectory(result)).rejects.toThrow(/byte count mismatch/u);
+      await expect(verifyBrowserExtensionPackageBuildDirectory(result, {
+        packagePlanReview: chromiumPackagePlanReview
+      })).rejects.toThrow(/byte count mismatch/u);
     } finally {
       temp.cleanup();
     }
@@ -322,7 +347,9 @@ describe("browser extension package build", () => {
         result,
         "manifest.json",
         tamperedManifest
-      ))).rejects.toThrow(/manifest drifted/u);
+      ), {
+        packagePlanReview: chromiumPackagePlanReview
+      })).rejects.toThrow(/manifest drifted/u);
     } finally {
       temp.cleanup();
     }
@@ -352,7 +379,9 @@ describe("browser extension package build", () => {
         result,
         BROWSER_EXTENSION_BACKGROUND_ENTRYPOINT_FILE,
         tamperedBackground
-      ))).rejects.toThrow(/route metadata/u);
+      ), {
+        packagePlanReview: chromiumPackagePlanReview
+      })).rejects.toThrow(/route metadata/u);
     } finally {
       temp.cleanup();
     }
@@ -382,7 +411,9 @@ describe("browser extension package build", () => {
         result,
         BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE,
         tamperedPopup
-      ))).rejects.toThrow(/popup mode/u);
+      ), {
+        packagePlanReview: chromiumPackagePlanReview
+      })).rejects.toThrow(/popup mode/u);
     } finally {
       temp.cleanup();
     }
@@ -415,7 +446,9 @@ describe("browser extension package build", () => {
         result,
         BROWSER_EXTENSION_POPUP_HTML_FILE,
         tamperedPopupHtml
-      ))).rejects.toThrow(/popup HTML/u);
+      ), {
+        packagePlanReview: chromiumPackagePlanReview
+      })).rejects.toThrow(/popup HTML/u);
     } finally {
       temp.cleanup();
     }
@@ -437,7 +470,9 @@ describe("browser extension package build", () => {
       const popupPath = join(temp.outDir, BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE);
       const popup = readFileSync(popupPath, "utf8");
       expect(popup).toContain("request_origin_permission_review");
-      await expect(verifyBrowserExtensionPackageBuildDirectory(result)).resolves.toEqual(result);
+      await expect(verifyBrowserExtensionPackageBuildDirectory(result, {
+        packagePlanReview: chromiumExtensionStoragePackagePlanReview
+      })).resolves.toEqual(result);
 
       const tamperedPopup = popup.replace("request_origin_permission_review", "request_tampered_permission_review");
       writeFileSync(popupPath, tamperedPopup, "utf8");
@@ -446,7 +481,9 @@ describe("browser extension package build", () => {
         result,
         BROWSER_EXTENSION_POPUP_ENTRYPOINT_FILE,
         tamperedPopup
-      ))).rejects.toThrow(/popup mode/u);
+      ), {
+        packagePlanReview: chromiumExtensionStoragePackagePlanReview
+      })).rejects.toThrow(/popup mode/u);
     } finally {
       temp.cleanup();
     }
@@ -478,7 +515,9 @@ describe("browser extension package build", () => {
         result,
         BROWSER_EXTENSION_CONTENT_SCRIPT_ENTRYPOINT_FILE,
         tamperedContentScript
-      ))).rejects.toThrow(/content-script binding/u);
+      ), {
+        packagePlanReview: chromiumPackagePlanReview
+      })).rejects.toThrow(/content-script binding/u);
     } finally {
       temp.cleanup();
     }
@@ -510,7 +549,9 @@ describe("browser extension package build", () => {
         result,
         BROWSER_EXTENSION_PAGE_SCRIPT_ENTRYPOINT_FILE,
         tamperedPageScript
-      ))).rejects.toThrow(/page-script binding/u);
+      ), {
+        packagePlanReview: chromiumPackagePlanReview
+      })).rejects.toThrow(/page-script binding/u);
     } finally {
       temp.cleanup();
     }
@@ -561,7 +602,9 @@ describe("browser extension package build", () => {
       });
       expect("content_scripts" in manifest).toBe(false);
       expect("host_permissions" in manifest).toBe(false);
-      await expect(verifyBrowserExtensionPackageBuildDirectory(result)).resolves.toEqual(result);
+      await expect(verifyBrowserExtensionPackageBuildDirectory(result, {
+        packagePlanReview: firefoxPackagePlanReview
+      })).resolves.toEqual(result);
 
       const manifestPath = join(temp.outDir, "manifest.json");
       const originalManifest = readFileSync(manifestPath, "utf8");
@@ -575,7 +618,9 @@ describe("browser extension package build", () => {
         result,
         "manifest.json",
         tamperedManifest
-      ))).rejects.toThrow(/Firefox extension id/u);
+      ), {
+        packagePlanReview: firefoxPackagePlanReview
+      })).rejects.toThrow(/Firefox extension id/u);
     } finally {
       temp.cleanup();
     }
@@ -624,6 +669,8 @@ describe("browser extension package build", () => {
       await expect(verifyBrowserExtensionPackageBuildDirectory({
         ...result,
         out_dir: unsafeOutDir
+      }, {
+        packagePlanReview: chromiumNoOriginPackagePlanReview
       })).rejects.toThrow(/outside the companion source tree/u);
     } finally {
       rmSync(unsafeOutDir, { recursive: true, force: true });

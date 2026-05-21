@@ -90,7 +90,7 @@ export type BrowserExtensionPackageBuildResult = {
 };
 
 export type BrowserExtensionPackageVerifyOptions = {
-  packagePlanReview?: unknown;
+  packagePlanReview: unknown;
 };
 
 const PACKAGE_OUTPUT_DIR = "browser-extension-package";
@@ -851,11 +851,8 @@ function assertManifestMatchesPackageBuild(
 function assertPackagePlanReviewMatchesPackageBuild(
   result: BrowserExtensionPackageBuildResult,
   expectedPackagePlan: BrowserExtensionPackagePlan,
-  packagePlanReview: unknown | undefined
+  packagePlanReview: unknown
 ): BrowserExtensionPackagePlanReview | undefined {
-  if (packagePlanReview === undefined) {
-    return undefined;
-  }
   const parsedReview = parseBrowserExtensionPackagePlanReview(packagePlanReview);
   if (parsedReview.package_plan_digest !== result.package_plan_digest) {
     throw new Error("browser extension package-plan review digest mismatch");
@@ -864,6 +861,13 @@ function assertPackagePlanReviewMatchesPackageBuild(
     throw new Error("browser extension package-plan review does not match package build");
   }
   return parsedReview;
+}
+
+function requirePackagePlanReviewOption(options: BrowserExtensionPackageVerifyOptions | undefined): unknown {
+  if (options === undefined || options.packagePlanReview === undefined) {
+    throw new Error("browser extension package-plan review is required for package verification");
+  }
+  return options.packagePlanReview;
 }
 
 function expectedPackagePlanForBuildResult(
@@ -999,9 +1003,10 @@ async function assertPackageDirectoryContainsOnlyExpectedFiles(result: BrowserEx
 
 export async function verifyBrowserExtensionPackageBuildDirectory(
   value: unknown,
-  options: BrowserExtensionPackageVerifyOptions = {}
+  options?: BrowserExtensionPackageVerifyOptions
 ): Promise<BrowserExtensionPackageBuildResult> {
   const result = parseBrowserExtensionPackageBuildResult(value);
+  const packagePlanReview = requirePackagePlanReviewOption(options);
   const fileContents = new Map<string, string>();
   await assertPackageDirectoryContainsOnlyExpectedFiles(result);
 
@@ -1028,7 +1033,7 @@ export async function verifyBrowserExtensionPackageBuildDirectory(
     throw new Error("browser extension package manifest is missing");
   }
   const expectedPackagePlan = assertManifestMatchesPackageBuild(result, manifestJson);
-  assertPackagePlanReviewMatchesPackageBuild(result, expectedPackagePlan, options.packagePlanReview);
+  assertPackagePlanReviewMatchesPackageBuild(result, expectedPackagePlan, packagePlanReview);
 
   const popupHtml = fileContents.get(BROWSER_EXTENSION_POPUP_HTML_FILE);
   if (popupHtml === undefined || popupHtml !== browserExtensionPopupHtml()) {

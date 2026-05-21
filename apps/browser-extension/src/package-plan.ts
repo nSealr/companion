@@ -315,6 +315,9 @@ export function parseBrowserExtensionPackagePlanReview(value: unknown): BrowserE
   if (value.format !== BROWSER_EXTENSION_PACKAGE_PLAN_REVIEW_FORMAT) {
     throw new Error("browser extension package-plan review format is unsupported");
   }
+  if (!isRecord(value.package_plan)) {
+    throw new Error("browser extension package-plan review package_plan must be an object");
+  }
   const packagePlan = assertBrowserExtensionPackagePlan(value.package_plan as BrowserExtensionPackagePlan);
   const packagePlanDigest = requireLowerHex64(
     value.package_plan_digest,

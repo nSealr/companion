@@ -731,9 +731,10 @@ counts, and SHA-256 digests, and still does not publish to npm.
   metadata plus a package digest and per-file byte counts and SHA-256 hashes.
   A package-owned
   `package-verify` command now validates that build result against the written
-  artifact directory, rejects source-tree artifact paths outside
+  artifact directory and the external digest-bound package-plan review, rejects
+  source-tree artifact paths outside
   `release-artifacts/browser-extension/`, recomputes the digest, checks the
-  manifest exactly against the reviewed package-plan digest, validates
+  manifest exactly against the reviewed package-plan digest and plan body, validates
   content-script bindings, the exact deterministic popup HTML, popup bundle
   binding to the reviewed `popup_mode`, native-host binding, selected route
   metadata, and

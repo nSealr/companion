@@ -588,15 +588,17 @@ integration verifies both the explicit binding metadata and the files that were
 actually written. It still installs no native-host manifest, writes no extension
 storage, creates no grants, dispatches no signers, and holds no key material.
 `package-verify` is the package-owned audit path for an already written
-developer artifact: it parses the package-build result, recomputes the package
-digest, rejects source-tree artifact paths outside
+developer artifact: it requires the digest-bound `package-plan --review`
+artifact in addition to the package-build result, parses both artifacts,
+recomputes the package digest, rejects source-tree artifact paths outside
 `release-artifacts/browser-extension/`, rechecks the exact manifest against the
-reviewed package-plan digest, the exact popup HTML against the deterministic
-template, popup bundle binding to the reviewed `popup_mode`, native-host
-binding, selected route metadata, origin-permission metadata in the packaged
-background script, content-script bridge entrypoint binding, page-script
-provider entrypoint binding, file hashes, byte counts, exact output directory
-contents, and bundled JavaScript browser-runtime hygiene, and writes no files.
+externally reviewed package-plan digest and plan body, the exact popup HTML
+against the deterministic template, popup bundle binding to the reviewed
+`popup_mode`, native-host binding, selected route metadata, origin-permission
+metadata in the packaged background script, content-script bridge entrypoint
+binding, page-script provider entrypoint binding, file hashes, byte counts,
+exact output directory contents, and bundled JavaScript browser-runtime
+hygiene, and writes no files.
 The same private app has a browser-API-free sender context boundary. The future
 adapter must pass only sanitized `extension_id`, `page_origin` or `page_url`,
 and optional reviewed app name. The boundary strips full URLs down to origins,

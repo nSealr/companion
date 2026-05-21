@@ -4,6 +4,7 @@ import { verifyBrowserExtensionPackageBuildDirectory } from "./package-build.js"
 
 type PackageVerifyCliOptions = {
   buildResultPath?: string;
+  packagePlanReviewPath?: string;
 };
 
 function takeOptionValue(args: string[], index: number, option: string): string {
@@ -24,6 +25,12 @@ function parsePackageVerifyArgs(args: string[]): PackageVerifyCliOptions {
         throw new Error("--build-result must be specified only once");
       }
       options.buildResultPath = takeOptionValue(normalizedArgs, index, arg);
+      index += 1;
+    } else if (arg === "--package-plan-review") {
+      if (options.packagePlanReviewPath !== undefined) {
+        throw new Error("--package-plan-review must be specified only once");
+      }
+      options.packagePlanReviewPath = takeOptionValue(normalizedArgs, index, arg);
       index += 1;
     } else {
       throw new Error(`unsupported browser-extension package-verify option: ${arg}`);
@@ -46,8 +53,17 @@ export async function browserExtensionPackageVerifyJsonFromArgs(args: string[]):
   if (options.buildResultPath === undefined) {
     throw new Error("--build-result is required");
   }
+  if (options.packagePlanReviewPath === undefined) {
+    throw new Error("--package-plan-review is required");
+  }
   const result = await verifyBrowserExtensionPackageBuildDirectory(
-    readJsonFile(options.buildResultPath, "browser extension package build result")
+    readJsonFile(options.buildResultPath, "browser extension package build result"),
+    {
+      packagePlanReview: readJsonFile(
+        options.packagePlanReviewPath,
+        "browser extension package-plan review"
+      )
+    }
   );
   return `${JSON.stringify(result, null, 2)}\n`;
 }

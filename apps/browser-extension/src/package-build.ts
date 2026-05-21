@@ -15,7 +15,9 @@ import {
   assertBrowserExtensionPackagePlan,
   browserExtensionPackagePlanDigest,
   buildBrowserExtensionPackagePlan,
-  type BrowserExtensionPackagePlan
+  parseBrowserExtensionPackagePlanReview,
+  type BrowserExtensionPackagePlan,
+  type BrowserExtensionPackagePlanReview
 } from "./package-plan.js";
 import {
   BROWSER_EXTENSION_ROUTE_CONFIG_FORMAT,
@@ -85,6 +87,10 @@ export type BrowserExtensionPackageBuildResult = {
   uses_active_tab_permission: boolean;
   embeds_origin_permission_store: boolean;
   uses_extension_origin_permission_storage: boolean;
+};
+
+export type BrowserExtensionPackageVerifyOptions = {
+  packagePlanReview?: unknown;
 };
 
 const PACKAGE_OUTPUT_DIR = "browser-extension-package";
@@ -765,7 +771,7 @@ export function parseBrowserExtensionPackageBuildResult(value: unknown): Browser
 function assertManifestMatchesPackageBuild(
   result: BrowserExtensionPackageBuildResult,
   manifestJson: string
-): void {
+): BrowserExtensionPackagePlan {
   let manifest: unknown;
   try {
     manifest = JSON.parse(manifestJson);
@@ -818,7 +824,7 @@ function assertManifestMatchesPackageBuild(
     if ("content_scripts" in manifest || "web_accessible_resources" in manifest) {
       throw new Error("browser extension package ungated manifest must not include content-script resources");
     }
-    return;
+    return expectedPackagePlan;
   }
 
   const matches = result.content_script_origins.map((origin) => `${origin}/*`);
@@ -839,6 +845,25 @@ function assertManifestMatchesPackageBuild(
   if (JSON.stringify(manifest.web_accessible_resources) !== JSON.stringify(expectedResources)) {
     throw new Error("browser extension package manifest page-script resource drifted");
   }
+  return expectedPackagePlan;
+}
+
+function assertPackagePlanReviewMatchesPackageBuild(
+  result: BrowserExtensionPackageBuildResult,
+  expectedPackagePlan: BrowserExtensionPackagePlan,
+  packagePlanReview: unknown | undefined
+): BrowserExtensionPackagePlanReview | undefined {
+  if (packagePlanReview === undefined) {
+    return undefined;
+  }
+  const parsedReview = parseBrowserExtensionPackagePlanReview(packagePlanReview);
+  if (parsedReview.package_plan_digest !== result.package_plan_digest) {
+    throw new Error("browser extension package-plan review digest mismatch");
+  }
+  if (JSON.stringify(parsedReview.package_plan) !== JSON.stringify(expectedPackagePlan)) {
+    throw new Error("browser extension package-plan review does not match package build");
+  }
+  return parsedReview;
 }
 
 function expectedPackagePlanForBuildResult(
@@ -973,7 +998,8 @@ async function assertPackageDirectoryContainsOnlyExpectedFiles(result: BrowserEx
 }
 
 export async function verifyBrowserExtensionPackageBuildDirectory(
-  value: unknown
+  value: unknown,
+  options: BrowserExtensionPackageVerifyOptions = {}
 ): Promise<BrowserExtensionPackageBuildResult> {
   const result = parseBrowserExtensionPackageBuildResult(value);
   const fileContents = new Map<string, string>();
@@ -1001,7 +1027,8 @@ export async function verifyBrowserExtensionPackageBuildDirectory(
   if (manifestJson === undefined) {
     throw new Error("browser extension package manifest is missing");
   }
-  assertManifestMatchesPackageBuild(result, manifestJson);
+  const expectedPackagePlan = assertManifestMatchesPackageBuild(result, manifestJson);
+  assertPackagePlanReviewMatchesPackageBuild(result, expectedPackagePlan, options.packagePlanReview);
 
   const popupHtml = fileContents.get(BROWSER_EXTENSION_POPUP_HTML_FILE);
   if (popupHtml === undefined || popupHtml !== browserExtensionPopupHtml()) {

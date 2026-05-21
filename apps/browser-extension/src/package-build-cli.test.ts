@@ -23,7 +23,8 @@ import {
 } from "./origin-permission-store.js";
 import {
   browserExtensionPackagePlanDigest,
-  buildBrowserExtensionPackagePlan
+  buildBrowserExtensionPackagePlan,
+  createBrowserExtensionPackagePlanReview
 } from "./package-plan.js";
 
 function tempBuildRoot(): { root: string; outDir: string; cleanup(): void } {
@@ -48,6 +49,13 @@ function writeRouteConfigApproval(path: string): void {
     approvedAt: 1_900_000_000
   });
   writeFileSync(path, `${JSON.stringify(approval, null, 2)}\n`, "utf8");
+}
+
+function writePackagePlanReview(
+  path: string,
+  options: Parameters<typeof createBrowserExtensionPackagePlanReview>[0]
+): void {
+  writeFileSync(path, `${JSON.stringify(createBrowserExtensionPackagePlanReview(options), null, 2)}\n`, "utf8");
 }
 
 const localPairingDigest = "d".repeat(64);
@@ -209,11 +217,45 @@ describe("browser extension package-build CLI", () => {
       ]);
       expect(existsSync(join(temp.outDir, "manifest.json"))).toBe(true);
       const buildResultPath = join(temp.root, "package-build-result.json");
+      const packagePlanReviewPath = join(temp.root, "package-plan-review.json");
       writeFileSync(buildResultPath, `${JSON.stringify(result, null, 2)}\n`, "utf8");
+      writePackagePlanReview(packagePlanReviewPath, {
+        target: "chromium",
+        contentScriptMatches: ["https://example.com/*"]
+      });
       await expect(browserExtensionPackageVerifyJsonFromArgs([
         "--build-result",
         buildResultPath
+      ])).rejects.toThrow(/package-plan-review is required/u);
+      await expect(browserExtensionPackageVerifyJsonFromArgs([
+        "--build-result",
+        buildResultPath,
+        "--package-plan-review",
+        packagePlanReviewPath
       ])).resolves.toBe(`${JSON.stringify(result, null, 2)}\n`);
+    } finally {
+      temp.cleanup();
+    }
+  });
+
+  it("rejects package verification against a different reviewed package plan", async () => {
+    const temp = tempBuildRoot();
+    try {
+      const result = await buildChromiumEmbeddedPackage(temp);
+      const buildResultPath = join(temp.root, "package-build-result.json");
+      const packagePlanReviewPath = join(temp.root, "wrong-package-plan-review.json");
+      writeFileSync(buildResultPath, `${JSON.stringify(result, null, 2)}\n`, "utf8");
+      writePackagePlanReview(packagePlanReviewPath, {
+        target: "firefox",
+        firefoxExtensionId: "extension@nsealr.dev"
+      });
+
+      await expect(browserExtensionPackageVerifyJsonFromArgs([
+        "--build-result",
+        buildResultPath,
+        "--package-plan-review",
+        packagePlanReviewPath
+      ])).rejects.toThrow(/package-plan review digest mismatch/u);
     } finally {
       temp.cleanup();
     }
@@ -226,10 +268,17 @@ describe("browser extension package-build CLI", () => {
       const buildResultPath = join(temp.root, "package-build-result.json");
       writeFileSync(buildResultPath, `${JSON.stringify(result, null, 2)}\n`, "utf8");
       writeFileSync(join(temp.outDir, "unexpected.js"), "globalThis.nsealrUnexpected = true;\n", "utf8");
+      const packagePlanReviewPath = join(temp.root, "package-plan-review.json");
+      writePackagePlanReview(packagePlanReviewPath, {
+        target: "chromium",
+        contentScriptMatches: ["https://example.com/*"]
+      });
 
       await expect(browserExtensionPackageVerifyJsonFromArgs([
         "--build-result",
-        buildResultPath
+        buildResultPath,
+        "--package-plan-review",
+        packagePlanReviewPath
       ])).rejects.toThrow(/unexpected output file/u);
     } finally {
       temp.cleanup();

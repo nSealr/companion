@@ -71,6 +71,35 @@ export type BrowserExtensionPackagePlanReview = {
   dispatches_signers: false;
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasOnlyKeys(value: Record<string, unknown>, allowedKeys: readonly string[]): boolean {
+  return Object.keys(value).every((key) => allowedKeys.includes(key));
+}
+
+function requireLowerHex64(value: unknown, label: string): string {
+  if (typeof value !== "string" || !/^[0-9a-f]{64}$/u.test(value)) {
+    throw new Error(`${label} must be 32-byte lowercase hex`);
+  }
+  return value;
+}
+
+function requireTrue(value: unknown, label: string): true {
+  if (value !== true) {
+    throw new Error(`${label} must be true`);
+  }
+  return true;
+}
+
+function requireFalse(value: unknown, label: string): false {
+  if (value !== false) {
+    throw new Error(`${label} must be false`);
+  }
+  return false;
+}
+
 function packageEntrypoints(): BrowserExtensionPackagePlan["entrypoints"] {
   return Object.freeze([
     Object.freeze({
@@ -264,6 +293,60 @@ export function createBrowserExtensionPackagePlanReview(
     writes_extension_storage: false,
     stores_production_secrets: false,
     dispatches_signers: false
+  });
+}
+
+export function parseBrowserExtensionPackagePlanReview(value: unknown): BrowserExtensionPackagePlanReview {
+  if (!isRecord(value)) {
+    throw new Error("browser extension package-plan review must be an object");
+  }
+  if (!hasOnlyKeys(value, [
+    "format",
+    "package_plan_digest",
+    "package_plan",
+    "requires_user_review",
+    "installs_native_host_manifest",
+    "writes_extension_storage",
+    "stores_production_secrets",
+    "dispatches_signers"
+  ])) {
+    throw new Error("browser extension package-plan review has unsupported fields");
+  }
+  if (value.format !== BROWSER_EXTENSION_PACKAGE_PLAN_REVIEW_FORMAT) {
+    throw new Error("browser extension package-plan review format is unsupported");
+  }
+  const packagePlan = assertBrowserExtensionPackagePlan(value.package_plan as BrowserExtensionPackagePlan);
+  const packagePlanDigest = requireLowerHex64(
+    value.package_plan_digest,
+    "browser extension package-plan review package_plan_digest"
+  );
+  if (packagePlanDigest !== browserExtensionPackagePlanDigest(packagePlan)) {
+    throw new Error("browser extension package-plan review digest mismatch");
+  }
+  return Object.freeze({
+    format: BROWSER_EXTENSION_PACKAGE_PLAN_REVIEW_FORMAT,
+    package_plan_digest: packagePlanDigest,
+    package_plan: packagePlan,
+    requires_user_review: requireTrue(
+      value.requires_user_review,
+      "browser extension package-plan review requires_user_review"
+    ),
+    installs_native_host_manifest: requireFalse(
+      value.installs_native_host_manifest,
+      "browser extension package-plan review installs_native_host_manifest"
+    ),
+    writes_extension_storage: requireFalse(
+      value.writes_extension_storage,
+      "browser extension package-plan review writes_extension_storage"
+    ),
+    stores_production_secrets: requireFalse(
+      value.stores_production_secrets,
+      "browser extension package-plan review stores_production_secrets"
+    ),
+    dispatches_signers: requireFalse(
+      value.dispatches_signers,
+      "browser extension package-plan review dispatches_signers"
+    )
   });
 }
 

@@ -235,11 +235,13 @@ match the shared `contract_id`.
   usage, and origin-permission mode it packaged,
   while still not installing a browser extension, writing extension storage at
   build time, creating grants, dispatching signers, or holding key material.
-  The package-owned verifier now rejects background bundle drift from that
-  selected route, native-host name, and origin-permission metadata, and popup
-  bundle drift from the reviewed `popup_mode`. It also rejects content-script
-  and page-script bundle drift from their reviewed browser bridge/provider
-  entrypoints, even when artifact file hashes are recomputed.
+  The package-owned verifier now requires the digest-bound package-plan review
+  artifact before accepting a package-build result. It rejects background
+  bundle drift from the selected route, native-host name, and origin-permission
+  metadata, and popup bundle drift from the reviewed `popup_mode`. It also
+  rejects content-script and page-script bundle drift from their reviewed
+  browser bridge/provider entrypoints, even when artifact file hashes are
+  recomputed.
 - `@nsealr/client` exposes the shared local-client identity parser, including
   the browser-safe `@nsealr/client/client-identity` subpath, used before
   pairing, route selection, signer-request validation, and response

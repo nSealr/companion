@@ -15,6 +15,9 @@ public npm release.
   permission mode metadata in addition to file hashes.
 - Browser-extension package-build tests now cover Firefox manifest output in
   addition to Chromium package artifacts.
+- Browser-extension `package-verify` now requires the digest-bound package-plan
+  review artifact and rejects mismatched review/build bindings before accepting
+  a developer package artifact.
 - Browser-extension package builds can now opt into a storage-backed
   origin-approval profile that requests `activeTab` and `storage`, loads
   approved origins through the reviewed storage adapter, and wires the packaged

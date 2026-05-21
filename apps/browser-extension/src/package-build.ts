@@ -133,11 +133,7 @@ async function pathExists(path: string): Promise<boolean> {
   }
 }
 
-function requireOutDir(value: string): string {
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error("browser extension package out-dir is required");
-  }
-  const outDir = resolve(value);
+function requireSafePackageOutputPath(outDir: string): string {
   if (outDir === "/" || outDir === process.cwd()) {
     throw new Error("browser extension package out-dir is unsafe");
   }
@@ -147,6 +143,14 @@ function requireOutDir(value: string): string {
     );
   }
   return outDir;
+}
+
+function requireOutDir(value: string): string {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error("browser extension package out-dir is required");
+  }
+  const outDir = resolve(value);
+  return requireSafePackageOutputPath(outDir);
 }
 
 function requireLowerHex64(value: unknown, label: string): string {
@@ -697,7 +701,9 @@ export function parseBrowserExtensionPackageBuildResult(value: unknown): Browser
   const result: BrowserExtensionPackageBuildResult = Object.freeze({
     format: BROWSER_EXTENSION_PACKAGE_BUILD_FORMAT,
     target,
-    out_dir: requireAbsoluteResultPath(value.out_dir, "browser extension package build out_dir"),
+    out_dir: requireSafePackageOutputPath(
+      requireAbsoluteResultPath(value.out_dir, "browser extension package build out_dir")
+    ),
     package_plan_digest: requireLowerHex64(value.package_plan_digest, "browser extension package build package_plan_digest"),
     route_config_digest: requireLowerHex64(value.route_config_digest, "browser extension package build route_config_digest"),
     route_account_id: routeConfig.account_id,

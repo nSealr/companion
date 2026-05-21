@@ -124,7 +124,8 @@ single-repository CI. Cross-repository drift remains guarded by
   or display-less smartcard routing; package-build requires that approval
   before embedding the route config, requires a new output directory outside
   the companion source tree unless it is under
-  `release-artifacts/browser-extension/`, requires the reviewed package-plan
+  `release-artifacts/browser-extension/`, and package verification enforces
+  the same safe artifact-location rule. It requires the reviewed package-plan
   digest to match the manifest profile being built, writes manifest, popup
   HTML, and bundled entrypoints only after successful in-memory bundling,
   returns explicit route, shared native-host name, manifest-permissions,

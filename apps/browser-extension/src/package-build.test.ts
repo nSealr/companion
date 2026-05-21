@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { NATIVE_HOST_NAME } from "@nsealr/client";
 import { sha256Utf8Hex } from "@nsealr/core";
 import { tmpdir } from "node:os";
@@ -598,6 +598,36 @@ describe("browser extension package build", () => {
       expect(existsSync(join(outDir, "manifest.json"))).toBe(true);
     } finally {
       rmSync(outDir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects source-tree artifact paths during package verification", async () => {
+    const temp = tempOutDir();
+    const unsafeOutDir = join(
+      companionRoot,
+      "apps",
+      "browser-extension",
+      "src",
+      `generated-extension-verify-test-${process.pid}`
+    );
+    rmSync(unsafeOutDir, { recursive: true, force: true });
+    try {
+      const result = await buildBrowserExtensionPackage({
+        target: "chromium",
+        outDir: temp.outDir,
+        packagePlanDigest: chromiumNoOriginPackagePlanDigest,
+        routeConfig,
+        routeConfigApproval
+      });
+      cpSync(temp.outDir, unsafeOutDir, { recursive: true });
+
+      await expect(verifyBrowserExtensionPackageBuildDirectory({
+        ...result,
+        out_dir: unsafeOutDir
+      })).rejects.toThrow(/outside the companion source tree/u);
+    } finally {
+      rmSync(unsafeOutDir, { recursive: true, force: true });
+      temp.cleanup();
     }
   });
 

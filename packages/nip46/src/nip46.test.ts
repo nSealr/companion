@@ -24,6 +24,7 @@ import {
   parseNip46ConnectReview,
   parseNip46PolicyFile,
   parseNip46RelayEventEnvelope,
+  parseNip46SessionActive,
   parseNip46SessionLifecycle,
   nsealrRequestFromNip46,
   parseNip46Permissions,
@@ -939,5 +940,33 @@ describe("NIP-46 bridge payloads", () => {
         requested_permissions: [{ method: "sign_event", parameter: "1", event_kind: 1 }]
       }
     });
+  });
+});
+
+describe("parseNip46SessionActive", () => {
+  const loadActiveSession = (stem: string): Record<string, unknown> =>
+    (load(`vectors/nip46-sessions-active/${stem}.json`) as { session: Record<string, unknown> }).session;
+
+  it("accepts every official active-session phase vector", () => {
+    for (const stem of ["connect-ack-kind-1", "session-active-kind-1", "session-closed-kind-1"]) {
+      const parsed = parseNip46SessionActive(loadActiveSession(stem));
+      expect(parsed.format).toBe("nsealr-nip46-session-active-v0");
+      expect(parsed.persists_session_state).toBe(true);
+    }
+  });
+
+  it("rejects an unknown phase", () => {
+    const session = loadActiveSession("connect-ack-kind-1");
+    expect(() => parseNip46SessionActive({ ...session, phase: "warming_up" })).toThrow("phase must be one of");
+  });
+
+  it("rejects production-secret storage and secret persisted fields", () => {
+    const session = loadActiveSession("connect-ack-kind-1");
+    expect(() => parseNip46SessionActive({ ...session, stores_production_secrets: true })).toThrow(
+      "stores_production_secrets must be false"
+    );
+    expect(() =>
+      parseNip46SessionActive({ ...session, persisted_state: { fields: ["nip44_key"], contains_secret_material: false } })
+    ).toThrow("persisted_state.fields must not include secret field nip44_key");
   });
 });

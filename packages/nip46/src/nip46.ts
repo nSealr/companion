@@ -544,7 +544,7 @@ function requireMessage(value: unknown): Nip46RequestMessage {
   };
 }
 
-function requireResponseMessage(value: unknown): Nip46ResponseMessage {
+export function requireResponseMessage(value: unknown): Nip46ResponseMessage {
   if (!isRecord(value)) throw new Error("NIP-46 response message must be an object");
   if (compactJsonUtf8ByteLength(value) > NSEALR_V0_LIMITS.max_nip46_decrypted_message_json_bytes) {
     throw new Error("NIP-46 decrypted response JSON exceeds max_nip46_decrypted_message_json_bytes");

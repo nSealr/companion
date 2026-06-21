@@ -36,7 +36,8 @@
     "@noble/curves": "2.2.0",
     "@noble/hashes": "2.2.0",
     "@nsealr/core": "workspace:*",
-    "@nsealr/protocol": "workspace:*"
+    "@nsealr/protocol": "workspace:*",
+    "nostr-tools": "2.23.3"
   },
   "devDependencies": {
     "@nsealr/fixtures": "workspace:*"

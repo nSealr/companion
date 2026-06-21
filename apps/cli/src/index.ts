@@ -57,6 +57,7 @@ import {
   parseNip46PolicyFile,
   parseNip46Permissions,
   parseNip46RelayEventEnvelope,
+  parseNip46SessionActive,
   parseNip46SessionLifecycle,
   reviewNip46AuthChallengeStep,
   reviewNip46ConnectMessage,
@@ -624,6 +625,12 @@ function validateInvalidHardeningFixture(fixture: {
   if (fixture.category === "nip46-session") {
     expectFixtureRejection(fixture.name, fixture.expected_error, () => {
       parseNip46SessionLifecycle(fixture.session);
+    });
+    return;
+  }
+  if (fixture.category === "nip46-session-active") {
+    expectFixtureRejection(fixture.name, fixture.expected_error, () => {
+      parseNip46SessionActive(fixture.session);
     });
     return;
   }

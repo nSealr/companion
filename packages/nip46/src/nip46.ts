@@ -329,6 +329,18 @@ const NIP46_SESSION_SECRET_FIELDS = new Set([
   "seed",
   "passphrase"
 ]);
+const NIP46_SESSION_ACTIVE_PHASES = new Set(["connect_ack", "session_active", "session_closed"]);
+const NIP46_SESSION_ACTIVE_ALWAYS_FALSE = [
+  "secret_value_stored",
+  "contains_secret_material",
+  "stores_production_secrets"
+] as const;
+// Exact expected lifecycle-flag values per active-session phase (machine-checkable).
+const NIP46_SESSION_ACTIVE_PHASE_FLAGS = {
+  connect_ack: { acknowledges_connect: true, derives_nip44_key: true, opens_relay: true, dispatches_signer: false },
+  session_active: { acknowledges_connect: true, derives_nip44_key: true, opens_relay: true, dispatches_signer: true },
+  session_closed: { acknowledges_connect: true, derives_nip44_key: false, opens_relay: false, dispatches_signer: false }
+} as const;
 const X_ONLY_PUBKEY = /^[0-9a-f]{64}$/u;
 const HEX_64_BYTE = /^[0-9a-f]{128}$/u;
 const CONNECT_REVIEW_DIGEST_FORMAT = "nsealr-nip46-connect-digest-v0";
@@ -1691,6 +1703,145 @@ export function parseNip46SessionLifecycle(value: unknown): Nip46SessionLifecycl
     dispatches_signer: false,
     stores_production_secrets: false,
     persists_session_state: false,
+    scope
+  };
+}
+
+export type Nip46SessionActivePhase = "connect_ack" | "session_active" | "session_closed";
+
+export type Nip46SessionActive = {
+  name: string;
+  format: "nsealr-nip46-session-active-v0";
+  phase: Nip46SessionActivePhase;
+  client_pubkey: string;
+  remote_signer_pubkey: string;
+  relays: string[];
+  connect_digest: string;
+  approved_permissions: Nip46Permission[];
+  nip44: { event_kind: 24133; payload_encrypted: true; version: 2 };
+  acknowledges_connect: boolean;
+  derives_nip44_key: boolean;
+  opens_relay: boolean;
+  dispatches_signer: boolean;
+  creates_grants: boolean;
+  persists_session_state: true;
+  persisted_state: { fields: string[]; contains_secret_material: false };
+  secret_present: boolean;
+  secret_value_stored: false;
+  contains_secret_material: false;
+  stores_production_secrets: false;
+  scope: string;
+};
+
+function requireNip46SessionActivePhase(value: unknown): Nip46SessionActivePhase {
+  if (typeof value !== "string" || !NIP46_SESSION_ACTIVE_PHASES.has(value)) {
+    throw new Error("phase must be one of connect_ack, session_active, session_closed");
+  }
+  return value as Nip46SessionActivePhase;
+}
+
+export function parseNip46SessionActive(value: unknown): Nip46SessionActive {
+  if (!isRecord(value)) throw new Error("NIP-46 active session must be an object");
+  assertNoSessionSecretMaterial(value);
+  assertOnlyKeys(
+    value,
+    [
+      "name",
+      "format",
+      "phase",
+      "client_pubkey",
+      "remote_signer_pubkey",
+      "relays",
+      "connect_digest",
+      "approved_permissions",
+      "nip44",
+      "acknowledges_connect",
+      "derives_nip44_key",
+      "opens_relay",
+      "dispatches_signer",
+      "creates_grants",
+      "persists_session_state",
+      "persisted_state",
+      "secret_present",
+      "secret_value_stored",
+      "contains_secret_material",
+      "stores_production_secrets",
+      "scope"
+    ],
+    "NIP-46 active session"
+  );
+  if (value.format !== "nsealr-nip46-session-active-v0") {
+    throw new Error("NIP-46 active session format is invalid");
+  }
+  const name = requireNip46SessionName(value.name);
+  const phase = requireNip46SessionActivePhase(value.phase);
+  const clientPubkey = requireXOnlyPubkey(value.client_pubkey, "active session client pubkey");
+  const remoteSignerPubkey = requireXOnlyPubkey(value.remote_signer_pubkey, "active session remote-signer pubkey");
+  const relays = requireRelayList(value.relays);
+  const connectDigest = requireLowerHex64(value.connect_digest, "NIP-46 active session connect_digest");
+  const approvedPermissions = parseSessionPermissions(value.approved_permissions, "approved_permissions");
+  if (approvedPermissions.length === 0) throw new Error("approved_permissions must be non-empty");
+
+  const nip44 = value.nip44;
+  if (!isRecord(nip44)) throw new Error("nip44 must be an object");
+  assertOnlyKeys(nip44, ["event_kind", "payload_encrypted", "version"], "nip44");
+  if (nip44.event_kind !== 24133) throw new Error("nip44.event_kind must be 24133");
+  if (nip44.payload_encrypted !== true) throw new Error("nip44.payload_encrypted must be true");
+  if (nip44.version !== 2) throw new Error("nip44.version must be 2");
+
+  if (value.persists_session_state !== true) throw new Error("persists_session_state must be true");
+  const persistedState = value.persisted_state;
+  if (!isRecord(persistedState)) throw new Error("persisted_state must be an object");
+  assertOnlyKeys(persistedState, ["fields", "contains_secret_material"], "persisted_state");
+  const fields = persistedState.fields;
+  if (!Array.isArray(fields) || fields.length === 0 || !fields.every((field) => typeof field === "string" && field.length > 0)) {
+    throw new Error("persisted_state.fields must be a non-empty string list");
+  }
+  for (const field of fields) {
+    if (NIP46_SESSION_SECRET_FIELDS.has(field.toLowerCase())) {
+      throw new Error(`persisted_state.fields must not include secret field ${field}`);
+    }
+  }
+  if (persistedState.contains_secret_material !== false) {
+    throw new Error("persisted_state.contains_secret_material must be false");
+  }
+
+  if (typeof value.secret_present !== "boolean") throw new Error("secret_present must be boolean");
+  for (const flag of NIP46_SESSION_ACTIVE_ALWAYS_FALSE) requireFalseSessionFlag(value, flag);
+  const expectedFlags = NIP46_SESSION_ACTIVE_PHASE_FLAGS[phase];
+  for (const [flag, expected] of Object.entries(expectedFlags)) {
+    if (value[flag] !== expected) throw new Error(`${flag} must be ${expected} in phase ${phase}`);
+  }
+  if (typeof value.creates_grants !== "boolean") throw new Error("creates_grants must be boolean");
+  if (typeof value.scope !== "string" || value.scope.length === 0) {
+    throw new Error("active session scope must be a non-empty string");
+  }
+  const scope = value.scope;
+  for (const required of ["NIP-44", "relay", "persist", "secret material"]) {
+    if (!scope.includes(required)) throw new Error(`active session scope must mention ${required}`);
+  }
+
+  return {
+    name,
+    format: "nsealr-nip46-session-active-v0",
+    phase,
+    client_pubkey: clientPubkey,
+    remote_signer_pubkey: remoteSignerPubkey,
+    relays,
+    connect_digest: connectDigest,
+    approved_permissions: approvedPermissions,
+    nip44: { event_kind: 24133, payload_encrypted: true, version: 2 },
+    acknowledges_connect: expectedFlags.acknowledges_connect,
+    derives_nip44_key: expectedFlags.derives_nip44_key,
+    opens_relay: expectedFlags.opens_relay,
+    dispatches_signer: expectedFlags.dispatches_signer,
+    creates_grants: value.creates_grants,
+    persists_session_state: true,
+    persisted_state: { fields: fields as string[], contains_secret_material: false },
+    secret_present: value.secret_present,
+    secret_value_stored: false,
+    contains_secret_material: false,
+    stores_production_secrets: false,
     scope
   };
 }

@@ -33,6 +33,7 @@
   },
   "types": "./dist/index.d.ts",
   "dependencies": {
+    "@noble/curves": "2.2.0",
     "@noble/hashes": "2.2.0",
     "@nsealr/core": "workspace:*",
     "@nsealr/protocol": "workspace:*"

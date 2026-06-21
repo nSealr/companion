@@ -317,7 +317,7 @@ const NIP46_SESSION_FALSE_FIELDS = [
   "stores_production_secrets",
   "persists_session_state"
 ] as const;
-const NIP46_SESSION_SECRET_FIELDS = new Set([
+export const NIP46_SESSION_SECRET_FIELDS = new Set([
   "secret",
   "shared_secret",
   "session_secret",
@@ -336,7 +336,7 @@ const NIP46_SESSION_ACTIVE_ALWAYS_FALSE = [
   "stores_production_secrets"
 ] as const;
 // Exact expected lifecycle-flag values per active-session phase (machine-checkable).
-const NIP46_SESSION_ACTIVE_PHASE_FLAGS = {
+export const NIP46_SESSION_ACTIVE_PHASE_FLAGS = {
   connect_ack: { acknowledges_connect: true, derives_nip44_key: true, opens_relay: true, dispatches_signer: false },
   session_active: { acknowledges_connect: true, derives_nip44_key: true, opens_relay: true, dispatches_signer: true },
   session_closed: { acknowledges_connect: true, derives_nip44_key: false, opens_relay: false, dispatches_signer: false }

@@ -56,8 +56,10 @@ export class InMemoryRelay implements RelayTransport {
   async publish(event: RelayEvent): Promise<void> {
     if (this.closed) throw new Error("relay is closed");
     this.events.push(event);
-    for (const listener of this.listeners) {
-      if (eventMatchesFilter(event, listener.filter)) listener.onEvent(event);
+    // Snapshot listeners so a handler subscribing/closing during fan-out cannot
+    // perturb this delivery (well-defined dispatch).
+    for (const listener of [...this.listeners]) {
+      if (this.listeners.has(listener) && eventMatchesFilter(event, listener.filter)) listener.onEvent(event);
     }
   }
 

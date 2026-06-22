@@ -43,4 +43,15 @@ describe("nip46 session protocol", () => {
     const event = buildNip46RequestEvent(clientSk, remotePub, "hello", 1700000000);
     expect(() => decryptNip46Event(remoteSk, { ...event, kind: 1 })).toThrow();
   });
+
+  it("rejects tampered content (event id no longer matches)", () => {
+    const event = buildNip46RequestEvent(clientSk, remotePub, "hello", 1700000000);
+    expect(() => decryptNip46Event(remoteSk, { ...event, content: `${event.content}x` })).toThrow();
+  });
+
+  it("rejects an event addressed to a different recipient", () => {
+    const event = buildNip46RequestEvent(clientSk, remotePub, "hello", 1700000000);
+    const otherSk = schnorr.utils.randomSecretKey();
+    expect(() => decryptNip46Event(otherSk, event)).toThrow(/not addressed/);
+  });
 });

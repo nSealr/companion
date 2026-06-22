@@ -62,6 +62,9 @@ export class Nip46SessionManager {
     return this.phaseValue;
   }
 
+  // v0 scope: supports remote signers that ack `connect` directly. A signer that
+  // answers with an `auth_url` challenge is surfaced as a connect failure here;
+  // the auth-challenge review/approval flow (nip46.ts) is not yet wired in.
   async connect(): Promise<void> {
     if (this.phaseValue !== "idle") throw new Error(`cannot connect from phase ${this.phaseValue}`);
     if (this.connecting) throw new Error("NIP-46 connect already in progress");
@@ -72,6 +75,12 @@ export class Nip46SessionManager {
       if (response.error !== undefined) throw new Error(`NIP-46 connect rejected: ${response.error}`);
       if (response.result !== "ack") throw new Error(`NIP-46 connect expected "ack", got ${String(response.result)}`);
       this.phaseValue = "session_active";
+    } catch (error) {
+      // A failed connect must not leak the subscription, and must leave the manager
+      // retryable from `idle` (ensureSubscribed re-subscribes cleanly).
+      this.subscription?.close();
+      this.subscription = undefined;
+      throw error;
     } finally {
       this.connecting = false;
     }
@@ -98,6 +107,7 @@ export class Nip46SessionManager {
   }
 
   async close(): Promise<void> {
+    if (this.phaseValue === "session_closed") return;
     this.phaseValue = "session_closed";
     this.subscription?.close();
     this.subscription = undefined;
@@ -124,6 +134,9 @@ export class Nip46SessionManager {
     if (pending.timer !== undefined) clearTimeout(pending.timer);
   }
 
+  // Note: a concurrent close() is the authority that rejects in-flight pendings.
+  // The pending is registered synchronously below before the first await, so close()
+  // always sees and rejects it; hence no post-publish phase re-check is needed.
   private async sendRequest(method: string, params: string[], id: string = this.randomId()): Promise<Nip46ResponseMessage> {
     if (this.phaseValue === "session_closed") throw new Error("NIP-46 session is closed");
     const message = JSON.stringify({ id, method, params });

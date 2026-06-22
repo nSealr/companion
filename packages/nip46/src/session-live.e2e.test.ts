@@ -68,7 +68,7 @@ describe.skipIf(!process.env.NSEALR_LIVE_E2E)("NIP-46 live e2e over a Docker rel
 
     // Remote signer counterparty on its own relay connection.
     const remoteRelay = new NostrToolsRelay([RELAY_URL]);
-    await remoteRelay.subscribe({ kinds: [24133], "#p": [remotePub] }, (event) => {
+    const remoteSubscription = await remoteRelay.subscribe({ kinds: [24133], "#p": [remotePub] }, (event) => {
       void (async () => {
         try {
           const message = JSON.parse(decryptNip46Event(remoteSk, event)) as { id: string; method: string; params: string[] };
@@ -100,6 +100,7 @@ describe.skipIf(!process.env.NSEALR_LIVE_E2E)("NIP-46 live e2e over a Docker rel
     expect(verifySchnorrSignature(signed.pubkey, signed.id, signed.sig)).toBe(true);
 
     await session.close();
+    remoteSubscription.close();
     await remoteRelay.close();
   }, 40000);
 });

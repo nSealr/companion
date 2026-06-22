@@ -45,6 +45,13 @@ export function decryptNip46Event(recipientSecretKey: string | Uint8Array, event
   if (event.kind !== NIP46_EVENT_KIND) throw new Error(`NIP-46 event kind must be ${NIP46_EVENT_KIND}`);
   if (computeEventId(event) !== event.id) throw new Error("NIP-46 event id does not match its contents");
   if (!verifySchnorrSignature(event.pubkey, event.id, event.sig)) throw new Error("NIP-46 event signature is invalid");
-  const conversationKey = nip44.getConversationKey(toSecretKeyBytes(recipientSecretKey), event.pubkey);
+  const secretKey = toSecretKeyBytes(recipientSecretKey);
+  // Defense in depth: the wire layer must not rely solely on relay-side #p
+  // filtering — require the event to be addressed to this recipient.
+  const recipientPubkey = bytesToHex(schnorr.getPublicKey(secretKey));
+  if (!event.tags.some((tag) => tag[0] === "p" && tag[1] === recipientPubkey)) {
+    throw new Error("NIP-46 event is not addressed to this recipient");
+  }
+  const conversationKey = nip44.getConversationKey(secretKey, event.pubkey);
   return nip44.decrypt(event.content, conversationKey);
 }

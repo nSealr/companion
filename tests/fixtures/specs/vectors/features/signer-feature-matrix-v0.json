@@ -152,7 +152,7 @@
   ],
   "solutions": {
     "raspberry_qr_vault": {
-      "label": "Raspberry/Pi Stateless QR Vault",
+      "label": "nSealr Vault — Pi edition",
       "repository": "raspberry",
       "product_goal": "A SeedSigner-like airgapped Nostr signer for Raspberry/Pi hardware with RAM-only key custody and QR request/response workflows.",
       "features": {
@@ -220,7 +220,7 @@
           "target": "required",
           "current": "partial",
           "contract_id": "seedsigner-seedqr-session-import-v0",
-          "notes": "Standard SeedQR and CompactSeedQR parser/signing harnesses are implemented through shared vectors for RAM-only NIP-06 session loading. The Raspberry package now classifies decoded Standard SeedQR text and CompactSeedQR bytes through a package-owned session-source QR boundary, then routes those sources through the shared secret-hidden import review pages and import approval digest before RAM-only keyring load. Final Pi camera/display/button import UX remains pending."
+          "notes": "Standard SeedQR and CompactSeedQR parser/signing harnesses are implemented through shared vectors for RAM-only NIP-06 session loading. The Raspberry package now classifies decoded Standard SeedQR text and CompactSeedQR bytes through a package-owned session-source QR boundary, then routes those sources through the shared secret-hidden import review pages and import approval digest before RAM-only keyring load. Final Pi camera/display/button import UX remains pending. Per device-matrix §2.3, Standard SeedQR and CompactSeedQR are supported bidirectionally: scan-in and display-back (device-to-SeedQR/CompactSeedQR export), SeedSigner-interoperable both ways."
         },
         "nip19_nsec_session_import": {
           "target": "required",
@@ -232,7 +232,7 @@
           "target": "required",
           "current": "partial",
           "contract_id": "session-source-generation-v0",
-          "notes": "Package-owned helpers can generate 12- or 24-word BIP-39 sources and standalone nsec-equivalent private-key sources into the RAM-only session-source boundary with injected entropy for tests. Raspberry now consumes shared danger-zone backup review vectors and reveals BIP-39 words/SeedQR or NIP-19 nsec payloads only after final-page local approval. Final Pi physical backup display/output acceptance and power-cycle evidence remain pending."
+          "notes": "Package-owned helpers can generate 12- or 24-word BIP-39 sources and standalone nsec-equivalent private-key sources into the RAM-only session-source boundary with injected entropy for tests. Raspberry now consumes shared danger-zone backup review vectors and reveals BIP-39 words/SeedQR or NIP-19 nsec payloads only after final-page local approval. Final Pi physical backup display/output acceptance and power-cycle evidence remain pending. Per §2.3, session-source inputs include BIP-39 word entry, generate-on-device, dice-roll entropy, and camera-snap entropy (the Pi kit has a camera); a BIP-39 passphrase is supported for NIP-06 derivation."
         },
         "manual_only_policy": {
           "target": "required",
@@ -291,9 +291,9 @@
       }
     },
     "esp32_qr_vault": {
-      "label": "ESP32 Stateless QR Vault",
+      "label": "nSealr Vault — ESP32 edition",
       "repository": "esp32",
-      "product_goal": "An airgapped ESP32-S3 QR signer with camera, display, local controls, RAM-only key custody, and behavior matching the Raspberry QR vault where features overlap.",
+      "product_goal": "An air-gapped ESP32-P4 QR signer on the Waveshare ESP32-P4-WIFI6-Touch-LCD-3.5 (OV5647 camera, ST7796 320x480 display, FT6336 touch; onboard C6 radio disabled for the air-gap), libwally/Kern-aligned with RAM-only key custody, and behavior matching the Pi QR vault where features overlap.",
       "features": {
         "request_validation_v0": {
           "target": "required",
@@ -335,13 +335,13 @@
           "target": "required",
           "current": "partial",
           "contract_id": "qr-envelope-static-v0",
-          "notes": "Decoded static QR behavior is modeled; real camera ingestion on the final QR board remains pending."
+          "notes": "Decoded static QR behavior is modeled; real OV5647 camera ingestion on the ESP32-P4 QR board (Waveshare ESP32-P4-WIFI6-Touch-LCD-3.5) remains pending."
         },
         "qr_animated_request": {
           "target": "required",
           "current": "partial",
           "contract_id": "qr-envelope-animated-v0",
-          "notes": "Chunk reassembly behavior is modeled; camera-frame acceptance remains pending."
+          "notes": "Chunk reassembly behavior is modeled; OV5647 camera-frame acceptance on the ESP32-P4 QR board remains pending."
         },
         "qr_response": {
           "target": "required",
@@ -359,7 +359,7 @@
           "target": "required",
           "current": "partial",
           "contract_id": "seedsigner-seedqr-session-import-v0",
-          "notes": "Host-core decodes SeedSigner Standard SeedQR and CompactSeedQR into checked BIP-39 word indexes against the shared vector, can render those checked indexes back to mnemonic words, normalizes decoded Standard SeedQR text and CompactSeedQR bytes into the RAM-only SessionKeySource boundary, and routes decoded QR source material through the local import-review button flow before RAM-only keyring load. Physical camera input, NIP-06 derivation, hardware import-review acceptance, response QR output, and signing remain pending."
+          "notes": "Host-core decodes SeedSigner Standard SeedQR and CompactSeedQR into checked BIP-39 word indexes against the shared vector, can render those checked indexes back to mnemonic words, normalizes decoded Standard SeedQR text and CompactSeedQR bytes into the RAM-only SessionKeySource boundary, and routes decoded QR source material through the local import-review button flow before RAM-only keyring load. Physical camera input, NIP-06 derivation, hardware import-review acceptance, response QR output, and signing remain pending. Per device-matrix §2.3, Standard SeedQR and CompactSeedQR are supported bidirectionally: scan-in and display-back export, SeedSigner-interoperable both ways."
         },
         "nip19_nsec_session_import": {
           "target": "required",
@@ -371,7 +371,7 @@
           "target": "required",
           "current": "partial",
           "contract_id": "session-source-generation-v0",
-          "notes": "Host-core can generate BIP-39 sources from 16- or 32-byte entropy and standalone nsec-equivalent private-key sources from valid secp256k1 scalar entropy into the same RAM-only source/review boundary. ESP32 now consumes shared danger-zone backup review vectors and reveals BIP-39 words/SeedQR or NIP-19 nsec payloads only after final-page local approval. Hardware RNG wiring, physical backup display/output acceptance, reset-loss evidence, response QR output, and real signing remain pending."
+          "notes": "Host-core can generate BIP-39 sources from 16- or 32-byte entropy and standalone nsec-equivalent private-key sources from valid secp256k1 scalar entropy into the same RAM-only source/review boundary. ESP32 now consumes shared danger-zone backup review vectors and reveals BIP-39 words/SeedQR or NIP-19 nsec payloads only after final-page local approval. Hardware RNG wiring, physical backup display/output acceptance, reset-loss evidence, response QR output, and real signing remain pending. Per §2.3, session-source inputs include BIP-39 word entry, generate-on-device, dice-roll entropy, and camera-snap entropy (the P4 board has an OV5647 camera); a BIP-39 passphrase is supported for NIP-06 derivation."
         },
         "manual_only_policy": {
           "target": "required",
@@ -383,7 +383,7 @@
           "target": "required",
           "current": "partial",
           "contract_id": "device-display-review-v0",
-          "notes": "Display rendering is validated on T-Display S3; final QR-board display acceptance remains pending."
+          "notes": "Display rendering targets the ESP32-P4 board (Waveshare ESP32-P4-WIFI6-Touch-LCD-3.5, ST7796 320x480); final P4 QR-board display acceptance remains pending."
         },
         "serial_usb_transport": {
           "target": "not_applicable",
@@ -430,9 +430,9 @@
       }
     },
     "esp32_usb_nip46": {
-      "label": "ESP32 USB/NIP-46 Signer",
+      "label": "nSealr Key",
       "repository": "esp32",
-      "product_goal": "A daily-use connected ESP32-S3 signer with USB/display review, optional scoped policy automation through the companion, and real signing disabled until hardening gates pass.",
+      "product_goal": "A connected touch signer running one universal Rust firmware across the curated Waveshare ESP32-S3-Touch-LCD family (2.8 V2 primary, 1.69 compact, 2.0, 3.5B premium), hardened with Secure Boot v2 + Flash Encryption and no discrete secure element, with USB/display review, optional scoped policy automation through the companion, and real signing disabled until hardening gates pass.",
       "features": {
         "request_validation_v0": {
           "target": "required",
@@ -539,7 +539,7 @@
           "target": "required",
           "current": "planned",
           "contract_id": "persistent-secret-custody-v0",
-          "notes": "Provisioning and storage design remain acceptance gates before production signing."
+          "notes": "Provisioning and storage design remain acceptance gates before production signing. Per device-matrix §2.3, custody is persistent in encrypted flash: a device PIN (firmware-enforced, rate-limited) gates use, backup-at-creation exports BIP-39 words + SeedQR on the trusted display one-time at seed creation, and an optional BIP-39 passphrase is supported."
         },
         "smartcard_apdu": {
           "target": "not_applicable",
@@ -566,9 +566,9 @@
       }
     },
     "smartcard": {
-      "label": "JavaCard/NFC Smartcard Signer",
+      "label": "nSealr Card",
       "repository": "smartcard",
-      "product_goal": "A display-less card custody line that can sign through APDUs only after external review acknowledgement and deterministic policy checks.",
+      "product_goal": "A display-less in-card signing line: a Satochip JavaCard on NXP J3R180 (JCOP4 P71, EAL6+) running the Satochip v0.14+ applet that produces in-card BIP-340 Schnorr signatures (Nostr + Taproot), signing through APDUs only after external review acknowledgement and deterministic policy checks.",
       "features": {
         "request_validation_v0": {
           "target": "required",
@@ -603,7 +603,7 @@
           "target": "required",
           "current": "partial",
           "contract_id": "nostr-sign-event-bip340-v0",
-          "notes": "Simulator signing exists; card profile and hardware behavior remain under development."
+          "notes": "Simulator signing exists; card profile and hardware behavior remain under development. Release gate: the private key never leaves the secure element; all signatures are produced in-card (secp256k1 BIP-340 Schnorr)."
         },
         "qr_static_request": {
           "target": "not_applicable",
@@ -671,7 +671,7 @@
           "target": "required",
           "current": "partial",
           "contract_id": "persistent-secret-custody-v0",
-          "notes": "The card is the intended persistent-secret boundary."
+          "notes": "The card is the intended persistent-secret boundary. Per device-matrix §2.3, access is gated by Satochip PIN/PUK with card-enforced retry limits, and the applet supports up to 16 identities (Satochip v0.14)."
         },
         "smartcard_apdu": {
           "target": "required",
@@ -699,9 +699,9 @@
       }
     },
     "custom_hardware_wallet": {
-      "label": "Custom Nostr Hardware Wallet With Persistent Secret",
+      "label": "nSealr One",
       "repository": "hardware",
-      "product_goal": "A research family for a purpose-built persistent-secret Nostr hardware wallet, now centered on a USB-C bus-powered TROPIC01-assisted Rev A scaffold before any KiCad or production claim.",
+      "product_goal": "A minimal, all-SMD, display-agnostic hardware-wallet board (KiCad custom-wallet-min): an ESP32-S3-WROOM-1-N16R8 host paired with a mandatory TROPIC01 open secure element (encrypted seed vault, hardware-PIN anti-bruteforce, TRNG/PUF, attestation, Ed25519/P-256) plus a provisioned 2nd-vendor SE (OPTIGA Trust M populated by default / ATECC608B alternate DNP) for Coldcard-style key-split, with USB-C, a physical confirm button, and an external SPI panel driven over an FPC connector (reference Waveshare 1.69-inch ST7789V2/CST816); battery-operable via an MX1.25 LiPo connector (user-supplied/optional battery); no JavaCard, no socket, no NFC, no camera.",
       "features": {
         "request_validation_v0": {
           "target": "required",
@@ -737,7 +737,7 @@
           "target": "required",
           "current": "research",
           "contract_id": "nostr-sign-event-bip340-v0",
-          "notes": "Rev A keeps BIP-340 signing on the ESP32-S3 host MCU; direct TROPIC01 Schnorr remains future-gated until a public API, firmware release, or written vendor path is verified."
+          "notes": "The Rust firmware signs secp256k1 ECDSA + BIP-340 Schnorr on the ESP32-S3 host: the seed is unwrapped from the TROPIC01 vault into RAM at sign time and wiped after. This is the hardened firmware-signer + SE-backed vault + key-split model (Trezor/Coldcard mainstream tier); all-signatures-in-SE is an explicit non-goal for this board. TROPIC01's own Ed25519/P-256 signing is reserved for SSH/FIDO/attestation, not Nostr Schnorr."
         },
         "qr_static_request": {
           "target": "optional",
@@ -790,10 +790,10 @@
           "notes": "Trusted device review is mandatory for production hardware-wallet claims."
         },
         "serial_usb_transport": {
-          "target": "optional",
+          "target": "required",
           "current": "planned",
           "contract_id": "serial-usb-transport-v0",
-          "notes": "Connected transport may use the same bounded serial frame contract."
+          "notes": "USB-C is the only v1 signing transport for this board (spec §3): connected transport uses the same bounded serial frame contract with explicit size bounds, checksums, and deterministic parse errors."
         },
         "nip46_decrypted_bridge": {
           "target": "optional",
@@ -811,7 +811,7 @@
           "target": "required",
           "current": "research",
           "contract_id": "persistent-secret-custody-v0",
-          "notes": "Rev A now consumes the shared persistent-secret-custody-v0 lifecycle contract: no plaintext secrets at rest, wrapped or encrypted storage before persistent custody, ESP32-S3 RAM only after TROPIC01-assisted unlock, mandatory wipe events, MAC-and-Destroy PIN hardening, and disabled-by-default backup/export behind device review plus physical approval. TROPIC01 secure channel, TRNG, pairing lifecycle, key wrapping/unlock material, and device authenticity remain research gates."
+          "notes": "Rev A now consumes the shared persistent-secret-custody-v0 lifecycle contract: no plaintext secrets at rest, wrapped or encrypted storage before persistent custody, ESP32-S3 RAM only after TROPIC01-assisted unlock, mandatory wipe events, MAC-and-Destroy PIN hardening, and disabled-by-default backup/export behind device review plus physical approval. TROPIC01 secure channel, TRNG, pairing lifecycle, key wrapping/unlock material, and device authenticity remain research gates. Per device-matrix §2.2/§2.3 this is the hardened firmware-signer + SE-backed vault + key-split model: the seed is stored encrypted in TROPIC01 behind a hardware PIN enforced by TROPIC01 anti-bruteforce (escalating delays; configurable wipe-after-N), with the decryption key split MCU + TROPIC01 + 2nd-vendor SE so no single chip holds the plaintext; backup-at-creation exports BIP-39 words + SeedQR on the trusted display one-time at seed creation; a BIP-39 passphrase is supported; anti-klepto sign-to-contract and RAM wipe post-sign apply; duress/decoy-wallet PIN is tracked [DEC] for v1.1 (spec §6), not this phase's gate. The board is battery-operable (USB-C and an optional MX1.25 LiPo battery both power it) and exposes a gated Qwiic/STEMMA-QT JST-SH I2C port plus a gated 0.1-inch expansion header, both default-off (no attack surface when unused); the WROOM module's BLE radio is present but disabled by default and out of scope for v1 (NIP-46-over-BLE reserved as a future opt-in, never enabled in a high-assurance profile), and WiFi is never used."
         },
         "smartcard_apdu": {
           "target": "not_applicable",

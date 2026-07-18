@@ -292,7 +292,7 @@
     },
     "esp32_qr_vault": {
       "label": "nSealr Vault — ESP32 edition",
-      "repository": "esp32",
+      "repository": "firmware",
       "product_goal": "An air-gapped ESP32-P4 QR signer on the Waveshare ESP32-P4-WIFI6-Touch-LCD-3.5 (OV5647 camera, ST7796 320x480 display, FT6336 touch; onboard C6 radio disabled for the air-gap), libwally/Kern-aligned with RAM-only key custody, and behavior matching the Pi QR vault where features overlap.",
       "features": {
         "request_validation_v0": {
@@ -431,7 +431,7 @@
     },
     "esp32_usb_nip46": {
       "label": "nSealr Key",
-      "repository": "esp32",
+      "repository": "firmware",
       "product_goal": "A connected touch signer running one universal Rust firmware across the curated Waveshare ESP32-S3-Touch-LCD family (2.8 V2 primary, 1.69 compact, 2.0, 3.5B premium), hardened with Secure Boot v2 + Flash Encryption and no discrete secure element, with USB/display review, optional scoped policy automation through the companion, and real signing disabled until hardening gates pass.",
       "features": {
         "request_validation_v0": {

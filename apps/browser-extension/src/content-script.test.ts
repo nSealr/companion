@@ -31,7 +31,7 @@ function routeSelectionResponse(request: LocalServiceRequest): unknown {
         account_id: routeRequest.account_id,
         public_key: publicKey,
         route_type: "esp32_usb_nip46",
-        repository: "esp32",
+        repository: "firmware",
         transport: "usb",
         custody: "device_persistent",
         trusted_review: "device_display",

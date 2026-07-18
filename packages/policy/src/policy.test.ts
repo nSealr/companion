@@ -574,7 +574,7 @@ describe("identity, recovery, and policy contracts", () => {
 
     expect(() => parseRouteSelection({
       ...routeSelection,
-      repository: "esp32"
+      repository: "firmware"
     })).toThrow(/repository does not match/u);
     expect(() => parseRouteSelection({
       ...routeSelection,

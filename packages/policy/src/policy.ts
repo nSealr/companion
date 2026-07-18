@@ -18,7 +18,7 @@ export type RouteCustody =
 
 export type SignerRoute = {
   type: RouteType;
-  repository?: "raspberry" | "esp32" | "smartcard" | "hardware";
+  repository?: "raspberry" | "firmware" | "smartcard" | "hardware";
   transport: "qr" | "usb" | "smartcard" | "nfc" | "nip46_relay" | "embedded";
   custody: RouteCustody;
   trusted_review: "device_display" | "external_review" | "external_policy" | "display_less";
@@ -205,8 +205,8 @@ const ROUTE_TYPES = new Set<RouteType>([
 const QR_ROUTE_TYPES = new Set<RouteType>(["raspberry_qr_vault", "esp32_qr_vault"]);
 const ROUTE_REPOSITORIES = new Map<RouteType, string>([
   ["raspberry_qr_vault", "raspberry"],
-  ["esp32_qr_vault", "esp32"],
-  ["esp32_usb_nip46", "esp32"],
+  ["esp32_qr_vault", "firmware"],
+  ["esp32_usb_nip46", "firmware"],
   ["smartcard", "smartcard"],
   ["custom_hardware_wallet", "hardware"]
 ]);

@@ -48,6 +48,60 @@ describe("S01 stream retained-state bounds", () => {
 });
 
 describe("S01 stream limits, errors and cleanup", () => {
+  // F01 was independently reproduced in review/s01 at 67804a5d1995504a69d2fe49618da8e263ec3d89.
+  // Compare listener identities as well as counts: the port must preserve inherited listeners.
+  const listeners = (stream: PassThrough) => stream.eventNames().map(name => [name, stream.listeners(name)]);
+  const tick = () => new Promise<void>(resolve => setImmediate(resolve));
+
+  for (const emitClose of [true, false]) {
+    for (const asyncDestroy of [false, true]) {
+      for (const shared of [false, true]) {
+        it(`cleans completed destruction: emitClose=${emitClose}, async=${asyncDestroy}, shared=${shared}`, async () => {
+          const options = { emitClose, ...(asyncDestroy ? {
+            destroy(error: Error | null, callback: (error?: Error | null) => void) {
+              setImmediate(() => callback(error));
+            }
+          } : {}) };
+          const input = new PassThrough(options), output = shared ? input : new PassThrough(options);
+          const inheritedInput = listeners(input), inheritedOutput = listeners(output);
+          const port = new SerialLineStreamPort({ input, output });
+          port.close();
+          port.close();
+          await tick();
+          await tick();
+          expect(input.closed && output.closed).toBe(true);
+          expect(listeners(input)).toEqual(inheritedInput);
+          expect(listeners(output)).toEqual(inheritedOutput);
+        });
+      }
+    }
+
+    it(`keeps errors handled until delayed destruction completes: emitClose=${emitClose}`, async () => {
+      const completions: (() => void)[] = [];
+      const error = new Error("asynchronous destruction failure");
+      const options = { emitClose, destroy(_error: Error | null, callback: (error?: Error | null) => void) {
+        completions.push(() => callback(error));
+      } };
+      const input = new PassThrough(options), output = new PassThrough(options);
+      const inheritedInput = listeners(input), inheritedOutput = listeners(output);
+      const port = new SerialLineStreamPort({ input, output });
+      const pendingRead = expect(port.readLine()).rejects.toThrow(/closed/);
+      port.close();
+      await pendingRead;
+      await tick();
+      expect(input.closed || output.closed).toBe(false);
+      expect(input.listenerCount("error")).toBe(1);
+      expect(output.listenerCount("error")).toBe(1);
+      completions.forEach(complete => complete());
+      await tick();
+      await tick();
+      expect(input.closed && output.closed).toBe(true);
+      expect(listeners(input)).toEqual(inheritedInput);
+      expect(listeners(output)).toEqual(inheritedOutput);
+      await expect(port.readLine()).rejects.toThrow(/closed/);
+    });
+  }
+
   it("bounds complete line count independently from byte count", async () => {
     const input = new PassThrough(), output = new PassThrough();
     const port = new SerialLineStreamPort({ input, output, maxBufferedBytes: 128, maxBufferedLines: 2 });

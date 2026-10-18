@@ -45,6 +45,8 @@
     "signed_event_shape_checked": false,
     "signed_event_id_verified": false,
     "signed_event_signature_verified": false,
+    "result_pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+    "result_pubkey_bound_to_expected_user": true,
     "decrypts_content": false,
     "opens_relay": false,
     "creates_grants": false,
@@ -52,9 +54,7 @@
     "dispatches_signer": false,
     "relay_event_signature_verified": true,
     "stores_production_secrets": false,
-    "persists_session_state": false,
-    "result_pubkey_bound_to_expected_user": true,
-    "result_pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+    "persists_session_state": false
   },
   "scope": "NIP-46 relay response step evaluation for an already decrypted get_public_key result. It validates the plaintext response shape, verifies the relay event signature, and binds the result pubkey to the explicitly expected user identity without opening relays, decrypting NIP-44 content, acknowledging connect, creating grants, dispatching a signer, or persisting session state.",
   "expected_user_pubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"

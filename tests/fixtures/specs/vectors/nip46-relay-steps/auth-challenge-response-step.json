@@ -48,6 +48,7 @@
     "signed_event_shape_checked": false,
     "signed_event_id_verified": false,
     "signed_event_signature_verified": false,
+    "result_pubkey_bound_to_expected_user": false,
     "decrypts_content": false,
     "opens_relay": false,
     "creates_grants": false,
@@ -55,8 +56,7 @@
     "dispatches_signer": false,
     "relay_event_signature_verified": true,
     "stores_production_secrets": false,
-    "persists_session_state": false,
-    "result_pubkey_bound_to_expected_user": false
+    "persists_session_state": false
   },
   "scope": "NIP-46 relay response step evaluation for an already decrypted auth challenge response. It validates and verifies the relay event signature plus safe auth URL metadata without opening relays, decrypting NIP-44 content, acknowledging connect, creating grants, dispatching a signer, opening the URL, or persisting session state."
 }

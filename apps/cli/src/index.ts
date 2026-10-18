@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { Command } from "commander";
+import { isDeepStrictEqual } from "node:util";
 import { SerialPort } from "serialport";
 import {
   appendLocalGrant,
@@ -851,7 +852,7 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         const actual = relayStep.format === "nsealr-nip46-relay-response-step-v1"
           ? evaluateNip46RelayResponseStep(relayStep)
           : evaluateNip46RelayRequestStep(relayStep);
-        if (JSON.stringify(actual) !== JSON.stringify(relayStep.expected_step)) {
+        if (!isDeepStrictEqual(actual, relayStep.expected_step)) {
           throw new Error(`invalid NIP-46 relay step fixture ${relayStep.name}: step mismatch`);
         }
       }

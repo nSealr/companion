@@ -74,7 +74,7 @@ describe.skipIf(!process.env.NSEALR_LIVE_E2E)("NIP-46 live e2e over a Docker rel
           const message = JSON.parse(decryptNip46Event(remoteSk, event)) as { id: string; method: string; params: string[] };
           const result = message.method === "sign_event"
             ? JSON.stringify(signEventTemplate(JSON.parse(message.params[0]), userSk))
-            : "ack";
+            : message.method === "get_public_key" ? bytesToHex(schnorr.getPublicKey(userSk)) : "ack";
           const response = JSON.stringify({ id: message.id, result });
           await remoteRelay.publish(buildNip46RequestEvent(remoteSk, event.pubkey, response, Math.floor(Date.now() / 1000)));
         } catch {

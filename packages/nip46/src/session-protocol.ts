@@ -8,6 +8,7 @@
 import { schnorr } from "@noble/curves/secp256k1.js";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 import { computeEventId, nip44, verifySchnorrSignature } from "@nsealr/core";
+import { utf8ByteLength } from "@nsealr/protocol";
 import type { RelayEvent } from "./relay-transport.js";
 
 const NIP46_EVENT_KIND = 24133;
@@ -43,13 +44,21 @@ export function buildNip46RequestEvent(
 // content using the recipient's secret key and the event sender's pubkey.
 export function decryptNip46Event(recipientSecretKey: string | Uint8Array, event: RelayEvent): string {
   if (event.kind !== NIP46_EVENT_KIND) throw new Error(`NIP-46 event kind must be ${NIP46_EVENT_KIND}`);
+  if (!/^[0-9a-f]{64}$/u.test(event.pubkey) || !/^[0-9a-f]{64}$/u.test(event.id) || !/^[0-9a-f]{128}$/u.test(event.sig) ||
+    !Array.isArray(event.tags) || event.tags.length > 16 || event.tags.some(tag =>
+    !Array.isArray(tag) || tag.length > 8 || tag.some(field => typeof field !== "string" || field.length > 64 || utf8ByteLength(field) > 64)
+  ) || typeof event.content !== "string" || event.content.length > 2048 || utf8ByteLength(event.content) > 2048 ||
+    !Number.isSafeInteger(event.created_at) || event.created_at < 0) {
+    throw new Error("NIP-46 event exceeds envelope bounds or has invalid fields");
+  }
   if (computeEventId(event) !== event.id) throw new Error("NIP-46 event id does not match its contents");
   if (!verifySchnorrSignature(event.pubkey, event.id, event.sig)) throw new Error("NIP-46 event signature is invalid");
   const secretKey = toSecretKeyBytes(recipientSecretKey);
   // Defense in depth: the wire layer must not rely solely on relay-side #p
   // filtering — require the event to be addressed to this recipient.
   const recipientPubkey = bytesToHex(schnorr.getPublicKey(secretKey));
-  if (!event.tags.some((tag) => tag[0] === "p" && tag[1] === recipientPubkey)) {
+  const recipients = event.tags.filter(tag => tag[0] === "p");
+  if (recipients.length !== 1 || recipients[0][1] !== recipientPubkey) {
     throw new Error("NIP-46 event is not addressed to this recipient");
   }
   const conversationKey = nip44.getConversationKey(secretKey, event.pubkey);

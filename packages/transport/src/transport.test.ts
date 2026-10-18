@@ -461,16 +461,15 @@ describe("transport adapters", () => {
     ).rejects.toThrow(/serial line port buffer exceeded/u);
   });
 
-  it("does not reject batched short serial lines whose total chunk exceeds the line limit", async () => {
+  it("rejects batched short serial lines whose total exceeds the retained-byte limit", async () => {
     const input = new PassThrough();
     const output = new PassThrough();
     const port = new SerialLineStreamPort({ input, output, maxBufferedBytes: 4 });
 
     input.write("a\nb\nc\n");
 
-    await expect(port.readLine()).resolves.toBe("a\n");
-    await expect(port.readLine()).resolves.toBe("b\n");
-    await expect(port.readLine()).resolves.toBe("c\n");
+    await expect(port.readLine()).rejects.toThrow(/buffer exceeded/);
+    port.close();
   });
 
   it("can close stream-backed serial line ports after failed exchanges", async () => {

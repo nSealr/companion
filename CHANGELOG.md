@@ -5,6 +5,21 @@ public npm release.
 
 ## Unreleased
 
+### Security and contract changes
+
+- NIP-46 sessions authenticate transport authors independently of adapter
+  filters, resolve and pin user identity before activation, and verify every
+  signed result against the selected user and submitted template.
+- Bound request IDs, pending requests and unsettled adapter operations; make
+  close terminal and connection errors retryable with explicit stalled-adapter
+  limits. Clear the manager-owned transport-key copy on close.
+- Introduce metadata response-step v1 with separate transport/user identity and
+  optional expected-user binding; migrate CLI and fixture consumers together.
+- Reject duplicate/escaped duplicate JSON members, trailing data and excessive
+  nesting at raw NIP-46 and serial-frame boundaries.
+- Bound total stream-port retained bytes, line counts and pending operations;
+  apply backpressure and cancel/clean up on terminal errors and close.
+
 ### Added
 
 - NIP-46 relay response-step handling now recognizes `connect` `result:

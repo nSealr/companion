@@ -614,7 +614,7 @@ function validateInvalidHardeningFixture(fixture: {
   if (fixture.category === "nip46-relay-step") {
     expectFixtureRejection(fixture.name, fixture.expected_error, () => {
       const relayStep = fixture.relay_step;
-      if (isRecord(relayStep) && relayStep.format === "nsealr-nip46-relay-response-step-v0") {
+      if (isRecord(relayStep) && relayStep.format === "nsealr-nip46-relay-response-step-v1") {
         evaluateNip46RelayResponseStep(relayStep);
         return;
       }
@@ -848,7 +848,7 @@ export function buildCli(options: BuildCliOptions = {}): Command {
         }
       }
       for (const relayStep of fixtures.nip46RelaySteps) {
-        const actual = relayStep.format === "nsealr-nip46-relay-response-step-v0"
+        const actual = relayStep.format === "nsealr-nip46-relay-response-step-v1"
           ? evaluateNip46RelayResponseStep(relayStep)
           : evaluateNip46RelayRequestStep(relayStep);
         if (JSON.stringify(actual) !== JSON.stringify(relayStep.expected_step)) {

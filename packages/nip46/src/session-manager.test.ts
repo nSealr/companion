@@ -24,6 +24,7 @@ function startRemoteSigner(transport: RelayTransport, remoteSecretKey: Uint8Arra
     void (async () => {
       const message = JSON.parse(decryptNip46Event(remoteSecretKey, event)) as { id: string; method: string; params: string[] };
       let result = "ack";
+      if (message.method === "get_public_key") result = bytesToHex(schnorr.getPublicKey(userSecretKey));
       if (message.method === "sign_event") {
         result = JSON.stringify(signEventTemplate(JSON.parse(message.params[0]), userSecretKey));
       }

@@ -1,6 +1,6 @@
 # @nsealr/nip46
 
-Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
+NIP-46 metadata helpers and a bounded client session manager for nSealr Bridge.
 
 ## Purpose
 
@@ -17,8 +17,8 @@ Decrypted NIP-46 payload bridge for nSealr companion access surfaces.
   metadata without decrypting NIP-44 content or opening relay connections.
 - Evaluate metadata-only relay request and response steps after a future
   NIP-44 layer has supplied plaintext, returning deterministic bridge decisions
-  or response-shape metadata. Public-key and signed-event response results are
-  bound to the relay event sender, and signed-event response results must have
+  or response-shape metadata. Public-key and signed-event response results identify the user separately
+  from the relay transport author and can be bound to an explicit expected user, and signed-event response results must have
   a valid NIP-01 event id and BIP-340 signature before later session code can
   accept them. Connect ack and switch-relays responses remain metadata-only,
   and auth challenge responses expose only safe http(s) URL metadata without
@@ -103,16 +103,17 @@ Request steps reuse the same request validation, permission checks, and bridge
 decision logic as local decrypted payload handling, including local
 `switch_relays` `null` no-change responses that do not open or switch relay
 transports. Response steps shape-check NIP-46 response messages and signed-event
-result payloads, verify signed-event result ids/signatures, and bind
-public-key/signed-event result pubkeys to the relay event sender. Connect ack
+result payloads, verify signed-event result ids/signatures, and optionally bind
+public-key/signed-event result pubkeys to `expected_user_pubkey`. The v1 response
+step reports `result_pubkey` and `result_pubkey_bound_to_expected_user`; equality
+with the transport author is neither required nor an account-selection proof. Connect ack
 responses are accepted only as `result: "ack"` metadata and do not activate a
 session. Switch-relays responses are accepted only as normalized relay-list or
 `null` no-change metadata and do not switch transports. Auth challenge
 responses are accepted only as `result: "auth_url"` plus a safe http(s) URL
 without credentials or fragments in `error`; the package returns that URL as
 metadata and does not open it. Relay steps still do not decrypt NIP-44 content,
-open relays, acknowledge `connect`, create grants, dispatch a signer, verify
-signatures, or persist session state.
+open relays, acknowledge `connect`, create grants, dispatch a signer or persist session state.
 
 Auth challenge review is the next manual boundary after response-step
 normalization. The package renders the remote signer pubkey, client pubkey, and
@@ -134,3 +135,43 @@ matches the remote-signer pubkey, that the session has not expired, and that the
 decrypted request has a valid permission requirement. The result is a
 `connect_ack_pending` NIP-46 error with no session-permission use, relay I/O,
 grant creation, signer dispatch, or persistence.
+
+## Runtime session boundary
+
+`Nip46SessionManager` is separate from the metadata helpers. Its caller must
+supply an authenticated `remoteSignerPubkey` and a client transport secret.
+After a direct connect ack it calls `get_public_key`, validates the returned
+curve point and optional `expectedUserPubkey`, and exposes `userPubkey` only
+when active. Each signed response must match the submitted template and that
+user key, with valid event ID and signature. Transport and user keys may differ.
+Changing accounts requires a new manager and caller-owned account selection.
+The manager does not grant device approval or establish browser origin permission.
+
+Incoming responses must have the configured transport author, valid signature,
+kind 24133, and exactly one matching recipient tag. Unauthenticated, ambiguous,
+unknown-ID and replayed responses cannot consume a pending request. IDs contain
+a fresh random manager namespace and a counter that never resets on retry;
+`randomId`, when supplied, adds only a bounded test suffix. JSON rejects duplicate
+members, escaped duplicate names, trailing data and depth above 32. Raw plaintext
+is limited to 1,024 UTF-8 bytes, encrypted content to 2,048, and tags to 16 arrays
+of at most eight fields of 64 UTF-8 bytes each.
+
+`requestTimeoutMs` defaults to 30,000 (valid range 1..300,000).
+`maxPendingRequests` defaults to 32 (valid range 1..256); unsettled adapter
+publications have a separate count with the same cap even after logical timeout.
+A response succeeds after both publication and authenticated response complete;
+the timeout and close remain effective if either never settles. Only one
+subscription acquisition can remain unresolved. A timed-out acquisition blocks
+retry until it settles; late subscription handles are closed. Other connect
+failures return to idle and permit retry. `close()` is terminal, cancels requests,
+closes the transport and clears the manager's private copy of its client secret.
+The caller's original key buffer is unchanged. JavaScript cannot guarantee wiping
+runtime or cryptographic-library copies.
+
+`NostrToolsRelay` provides real relay I/O and `InMemoryRelay` provides test I/O.
+The manager independently enforces author binding even if an adapter ignores its
+filter. This package holds client transport secrets in RAM; user signing keys
+remain at the remote signer. Metadata `SessionStore` records contain no secret
+and do not restore an authenticated manager. Token onboarding, auth challenge UI,
+relay switching and external-client compatibility are not implemented by this
+manager. The Docker relay harness exercises the in-repository signer only.

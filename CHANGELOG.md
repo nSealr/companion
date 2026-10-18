@@ -19,6 +19,8 @@ public npm release.
   nesting at raw NIP-46 and serial-frame boundaries.
 - Bound total stream-port retained bytes, line counts and pending operations;
   apply backpressure and cancel/clean up on terminal errors and close.
+- Observe owned-stream destruction completion even with `emitClose: false`,
+  preserving queued error handling and restoring hooks/listeners after closure.
 
 ### Added
 

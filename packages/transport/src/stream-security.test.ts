@@ -123,6 +123,94 @@ describe("S01 stream limits, errors and cleanup", () => {
     });
   }
 
+  it("restores the destruction hook and its property descriptor, preserving this and the first callback", async () => {
+    const error = new Error("first destruction error");
+    let calls = 0;
+    const input = new PassThrough({ emitClose: false, destroy(failure, callback) {
+      expect(this).toBe(input);
+      expect(failure).toBe(error);
+      ++calls;
+      setImmediate(() => { callback(failure); callback(new Error("duplicate callback")); });
+    } });
+    const output = new PassThrough();
+    const original = input._destroy;
+    Object.defineProperty(input, "_destroy", { get: () => original, configurable: true, enumerable: false });
+    const descriptor = Object.getOwnPropertyDescriptor(input, "_destroy");
+    const inheritedInput = listeners(input), inheritedOutput = listeners(output);
+    const port = new SerialLineStreamPort({ input, output });
+    const pendingRead = expect(port.readLine()).rejects.toBe(error);
+    input.destroy(error);
+    await pendingRead;
+    await tick();
+    await tick();
+    expect(calls).toBe(1);
+    expect(Object.getOwnPropertyDescriptor(input, "_destroy")).toEqual(descriptor);
+    expect(Object.hasOwn(output, "_destroy")).toBe(false);
+    expect(listeners(input)).toEqual(inheritedInput);
+    expect(listeners(output)).toEqual(inheritedOutput);
+  });
+
+  for (const side of ["input", "output"] as const) {
+    for (const outcome of ["throw", "suppress-error"] as const) {
+      it(`observes ${side} destruction with ${outcome} and no close event`, async () => {
+        const error = new Error(`${side} failure`);
+        const options = { emitClose: false, destroy(_error: Error | null, callback: (error?: Error | null) => void) {
+          if (outcome === "throw") throw error;
+          setImmediate(() => callback(null));
+        } };
+        const input = new PassThrough(side === "input" ? options : {});
+        const output = new PassThrough(side === "output" ? options : {});
+        const inheritedInput = listeners(input), inheritedOutput = listeners(output);
+        const port = new SerialLineStreamPort({ input, output });
+        const pendingRead = expect(port.readLine()).rejects.toBe(error);
+        ({ input, output })[side].destroy(error);
+        await pendingRead;
+        await tick();
+        await tick();
+        expect(input.closed && output.closed).toBe(true);
+        expect(listeners(input)).toEqual(inheritedInput);
+        expect(listeners(output)).toEqual(inheritedOutput);
+      });
+    }
+    for (const restriction of ["readonly", "nonextensible", "already-destroying"] as const) {
+      it(`rejects ${restriction} ${side} without partially installing hooks or listeners`, async () => {
+        let finishDestroy = () => {};
+        const input = new PassThrough(), output = new PassThrough();
+        const stream = ({ input, output })[side];
+        if (restriction === "readonly") Object.defineProperty(stream, "_destroy", { value: stream._destroy, writable: false, configurable: false });
+        else if (restriction === "nonextensible") Object.preventExtensions(stream);
+        else {
+          stream._destroy = (_error, callback) => { finishDestroy = () => callback(null); };
+          stream.destroy();
+        }
+        const inputHook = Object.getOwnPropertyDescriptor(input, "_destroy"), outputHook = Object.getOwnPropertyDescriptor(output, "_destroy");
+        const inheritedInput = listeners(input), inheritedOutput = listeners(output);
+        expect(() => new SerialLineStreamPort({ input, output })).toThrow(/replaceable|already closed/);
+        expect(listeners(input)).toEqual(inheritedInput);
+        expect(listeners(output)).toEqual(inheritedOutput);
+        expect(Object.getOwnPropertyDescriptor(input, "_destroy")).toEqual(inputHook);
+        expect(Object.getOwnPropertyDescriptor(output, "_destroy")).toEqual(outputHook);
+        input.destroy();
+        output.destroy();
+        finishDestroy();
+        await tick();
+      });
+    }
+  }
+
+  it("does not overwrite a later destruction-hook replacement", async () => {
+    const input = new PassThrough({ emitClose: false });
+    const port = new SerialLineStreamPort({ input, output: input });
+    const ownedHook = input._destroy;
+    input._destroy = function (error, callback) { ownedHook.call(this, error, callback); };
+    const replacement = input._destroy;
+    port.close();
+    await tick();
+    expect(input._destroy).toBe(replacement);
+    expect(input.listenerCount("error")).toBe(0);
+    expect(input.listenerCount("close")).toBe(0);
+  });
+
   it("bounds complete line count independently from byte count", async () => {
     const input = new PassThrough(), output = new PassThrough();
     const port = new SerialLineStreamPort({ input, output, maxBufferedBytes: 128, maxBufferedLines: 2 });

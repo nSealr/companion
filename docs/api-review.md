@@ -311,7 +311,11 @@ software signing helpers. `SerialLineStreamPort` now bounds total retained bytes
 (default 1,024; maximum 1,048,576), buffered lines including a partial tail
 (default 64; maximum 4,096), and pending read/write counts (one each). It pauses
 queued input, honors output drain and discards data on terminal error/close.
-Owned listeners are removed after stream closure; normal EOF drains bounded data.
+Owned listeners are removed after stream closure, including asynchronous
+destruction with `emitClose: false`; error handlers remain through Node's queued
+destruction errors. Streams must be live and exclusively owned, with replaceable
+`_destroy` hooks. Constructor rejection rolls back hooks/listeners. Normal EOF
+drains bounded data.
 
 ## Open Before npm Alpha
 

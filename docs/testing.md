@@ -812,6 +812,8 @@ with/without close events, delayed and queued errors, callback identity and
 deduplication, thrown/suppressed errors, descriptor restoration and transactional
 constructor rejection. Protocol/framing tests reject duplicate, escaped duplicate,
 trailing and overly nested JSON without changing existing schema limits.
+F02 additionally checks recorded destruction errors after EOF with emitted or
+suppressed error/close events, alongside error-free EOF tail-draining controls.
 
 Run targeted checks after `pnpm build`:
 

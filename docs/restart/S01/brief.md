@@ -265,3 +265,12 @@ the four synchronous/asynchronous and emit/suppress-close combinations with
 separate and shared streams, queued/delayed errors, original receiver/error,
 duplicate callbacks, throw/error suppression, descriptor restoration, a later
 replacement, and readonly/nonextensible/already-destroying constructor rollback.
+
+F02, independently recorded in review commit
+`63cff320864552888c0666f972dacf7ea5ec2084`, further clarifies the existing first-error
+rule: a known public `input.errored` value is terminal even after normal EOF and
+with no pending write. It takes precedence over tail draining, whether the
+destruction hook emits or suppresses the error event and whether `close` is
+emitted. The port preserves that error, discards retained input and destroys its
+peer; error-free closure after EOF still drains the bounded tail normally. The
+fix changes only that error/EOF decision, not the completion wrapper or fixtures.

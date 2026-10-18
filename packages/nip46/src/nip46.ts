@@ -900,7 +900,7 @@ function relayResponseResultType(message: Nip46ResponseMessage): {
   try {
     event = parseStrictJson(result, NSEALR_V0_LIMITS.max_nip46_decrypted_message_json_bytes);
   } catch (error) {
-    throw new Error("NIP-46 response message result is not a supported v0 response shape");
+    throw new Error("NIP-46 response message result is not a supported response shape");
   }
   if (event === null) {
     return { resultType: "relay_no_change_result", signedEventShapeChecked: false, relayUrls: null };

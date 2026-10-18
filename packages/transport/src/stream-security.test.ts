@@ -54,6 +54,57 @@ describe("S01 stream limits, errors and cleanup", () => {
   const tick = () => new Promise<void>(resolve => setImmediate(resolve));
 
   for (const emitClose of [true, false]) {
+    // F02 independent probe: review/s01 at 63cff320864552888c0666f972dacf7ea5ec2084.
+    for (const suppressErrorEvent of [false, true]) {
+      it(`discards EOF data after a recorded destruction error: emitClose=${emitClose}, suppress=${suppressErrorEvent}`, async () => {
+        const input = new PassThrough({ autoDestroy: false, emitClose, destroy(error, callback) {
+          setImmediate(() => callback(suppressErrorEvent ? null : error));
+        } });
+        const output = new PassThrough();
+        const inheritedInput = listeners(input), inheritedOutput = listeners(output);
+        const port = new SerialLineStreamPort({ input, output });
+        input.end("stale");
+        await tick();
+        expect(input.readableEnded).toBe(true);
+        const error = new Error("destruction failure after EOF");
+        input.destroy(error);
+        await tick();
+        await tick();
+        try {
+          expect(input.closed).toBe(true);
+          expect(input.errored).toBe(error);
+          await expect(port.readLine()).rejects.toBe(error);
+          await expect(port.writeLine("x")).rejects.toBe(error);
+          expect((port as unknown as { buffer: string }).buffer).toBe("");
+          expect(output.destroyed).toBe(true);
+          expect(listeners(input)).toEqual(inheritedInput);
+          expect(listeners(output)).toEqual(inheritedOutput);
+          port.close();
+          await expect(port.readLine()).rejects.toBe(error);
+        } finally { port.close(); }
+      });
+    }
+
+    it(`preserves normal EOF data after error-free destruction: emitClose=${emitClose}`, async () => {
+      const input = new PassThrough({ autoDestroy: false, emitClose, destroy(error, callback) {
+        setImmediate(() => callback(error));
+      } });
+      const output = new PassThrough();
+      const port = new SerialLineStreamPort({ input, output });
+      input.end("tail");
+      await tick();
+      input.destroy();
+      await tick();
+      await tick();
+      try {
+        expect(input.closed).toBe(true);
+        expect(input.errored).toBeNull();
+        expect(await port.readLine()).toBe("tail");
+        expect(await port.readLine()).toBeNull();
+        expect(output.destroyed).toBe(false);
+      } finally { port.close(); }
+    });
+
     for (const asyncDestroy of [false, true]) {
       for (const shared of [false, true]) {
         it(`cleans completed destruction: emitClose=${emitClose}, async=${asyncDestroy}, shared=${shared}`, async () => {

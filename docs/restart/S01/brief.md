@@ -1,8 +1,9 @@
 # S01 — Bridge identity and bounded input
 
-Specification candidate, 2026-10-18. Implementation must wait for independent
-specification review. This brief records requirements and experiments, not task
-completion. The canonical task state remains in the main repository's
+Specification reviewed by coordinator `/root` on 2026-10-18 against candidate
+`55bee979fff2db784c2cedbad67e24cbb1262d26`, accepted with the explicit curve-point
+validation and never-reset retry-counter clarifications incorporated here. This
+brief records requirements and experiments, not task completion. The canonical task state remains in the main repository's
 `docs/restart/work-items.json`.
 
 ## Authority, inputs and scope
@@ -89,7 +90,7 @@ created manager and renewed caller selection, not a server response mutation.
 | ID | Contract | Independent negative/control oracle |
 | --- | --- | --- |
 | S01-ID-01 | Manager checks expected outer author itself before consuming any pending response, then verifies outer ID/signature, kind and exactly one matching `p` recipient. | Signed foreign author injected past filters cannot acknowledge connect, select a user key, fail another request, or return a signature. A later valid response still succeeds. Invalid signature, wrong recipient and ambiguous recipients reject. |
-| S01-ID-02 | `connect()` obtains ack, requests `get_public_key`, validates a lowercase 32-byte x-only user key and optional `expectedUserPubkey`, then enters `session_active`. `userPubkey` remains unavailable until successful resolution. | Failed key discovery, malformed key, error, auth challenge and expected-key mismatch never activate. Distinct transport/user keys succeed. |
+| S01-ID-02 | `connect()` obtains ack, requests `get_public_key`, validates both the discovered user key and optional `expectedUserPubkey` as lowercase 32-byte x-only keys that lift to valid secp256k1 curve points, then enters `session_active`. `userPubkey` remains unavailable until successful resolution. | Failed key discovery, malformed key, a correctly sized hex value that is not a curve point, error, auth challenge and expected-key mismatch never activate. Distinct transport/user keys succeed. |
 | S01-ID-03 | Every signed result passes strict shape, requested-template, NIP-01 ID, Schnorr signature and pinned user-key checks. The submitted template is validated and snapshotted before asynchronous work. | A valid signature by a different fixture user is rejected; altering caller template after submission cannot alter the comparison oracle. Matching selected user succeeds. |
 | S01-ID-04 | Requests carry a fresh cryptographically random per-manager namespace and a monotonic counter; IDs are never reused, including after failed connect. At most 32 requests are pending by default, configurable within 1..256. Counter exhaustion at 2^32-1 rejects. | Duplicate, late, timed-out, previous-attempt and other-manager responses cannot satisfy a new request. A repeated caller RNG value cannot reuse IDs. Pending count overflow fails before publish. |
 | S01-ID-05 | A failed connect closes its subscription, removes/rejects its pending work, leaves the manager idle, and permits retry. `close()` is terminal, cancels pending requests promptly, closes subscriptions acquired concurrently, clears session identity and its secret copy, and cannot be reversed by late completion. | Close during subscribe, publish, ack and user discovery; publish rejects or never settles; timeout and error; concurrent connect; connect retry; repeated close. No unhandled rejection, leaked timer or late activation. |
@@ -136,8 +137,9 @@ outside this bounded fix.
 Manager phase remains `idle -> session_active -> session_closed`; `connecting`
 is exclusive internal state within idle. Failed connection returns idle unless
 close has already made it terminal. A resolved user key is immutable throughout
-an active session. Retry receives fresh request counters, and a new manager
-receives a fresh namespace. Input overflow never yields a partially accepted
+an active session. The monotonic request counter is never reset within a manager, including after
+failed connect; retry continues that counter. A new manager receives a fresh
+mandatory namespace. Input overflow never yields a partially accepted
 response.
 
 ## Owned files and consumers

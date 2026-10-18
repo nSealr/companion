@@ -167,7 +167,12 @@ additional required source scope is reported before expansion.
 Scope extension accepted by reviewer `/root` on 2026-10-18: migrate the metadata
 v1 dispatch in `apps/cli/src/index.ts` and the fixture type/assertions in
 `packages/fixtures/src/{fixtures.ts,fixtures.test.ts}` atomically. No v0
-compatibility layer is required.
+compatibility layer is required. A subsequent reviewer correction requires the
+CLI relay-step comparison to use strict structural JSON equality, with object
+key reordering accepted and changed values/types, array order, missing fields
+and extra fields rejected. `apps/cli/src/index.test.ts` owns those independent
+controls. Event/wire canonicalization is unchanged; unrelated legacy CLI JSON
+text comparisons remain an A02 disposition item.
 
 The sibling specs repository contains historical v0 fixtures and is outside this
 author's write scope. If integration selects those stale fixtures, report the

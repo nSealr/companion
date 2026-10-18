@@ -240,6 +240,36 @@ describe("nsealr CLI", () => {
     ]);
   });
 
+  it("S01 metadata fixture comparison ignores object key order", async () => {
+    const tempSpecsRoot = join(mkdtempSync(join(tmpdir(), "nsealr-cli-metadata-order-")), "specs");
+    cpSync(specsRoot, tempSpecsRoot, { recursive: true });
+    const path = resolve(tempSpecsRoot, "vectors/nip46-relay-steps/switch-relays-response-step.json");
+    const vector = loadJson(path) as { expected_step: Record<string, unknown> };
+    const reverseKeys = (value: unknown): unknown => {
+      if (Array.isArray(value)) return value.map(reverseKeys);
+      if (typeof value !== "object" || value === null) return value;
+      return Object.fromEntries(Object.entries(value).reverse().map(([key, field]) => [key, reverseKeys(field)]));
+    };
+    vector.expected_step = reverseKeys(vector.expected_step) as Record<string, unknown>;
+    writeFileSync(path, JSON.stringify(vector));
+    await expect(runCli(["fixture", "verify", "--specs", tempSpecsRoot])).resolves.toBeUndefined();
+  });
+
+  it.each(["value", "type", "extra", "missing", "array order"])("S01 metadata fixture comparison rejects changed %s", async mutation => {
+    const tempSpecsRoot = join(mkdtempSync(join(tmpdir(), "nsealr-cli-metadata-negative-")), "specs");
+    cpSync(specsRoot, tempSpecsRoot, { recursive: true });
+    const path = resolve(tempSpecsRoot, "vectors/nip46-relay-steps/switch-relays-response-step.json");
+    const vector = loadJson(path) as { expected_step: Record<string, unknown> };
+    const expected = vector.expected_step;
+    if (mutation === "value") expected.message_id = "different";
+    if (mutation === "type") expected.opens_relay = "false";
+    if (mutation === "extra") expected.extra = false;
+    if (mutation === "missing") delete expected.result_type;
+    if (mutation === "array order") (expected.relay_urls as string[]).reverse();
+    writeFileSync(path, JSON.stringify(vector));
+    await expect(runCli(["fixture", "verify", "--specs", tempSpecsRoot])).rejects.toThrow(/relay step fixture.*step mismatch/);
+  });
+
   it("rejects policy decision fixture drift", async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), "nsealr-cli-invalid-policy-decision-"));
     const tempSpecsRoot = join(tempRoot, "specs");

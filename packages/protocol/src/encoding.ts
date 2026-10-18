@@ -82,3 +82,37 @@ export function decodeBase64Url(value: string, errorMessage: string): Uint8Array
   }
   return output;
 }
+
+// Parse bounded wire JSON without losing ambiguous duplicate members. Native
+// JSON.parse remains the syntax/value authority; this nonrecursive token walk
+// checks properties that JSON.parse deliberately does not preserve.
+export function parseStrictJson(text: string, maxBytes: number): unknown {
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 1_048_576) {
+    throw new Error("JSON byte limit must be an integer in 1..1048576");
+  }
+  if (typeof text !== "string" || text.length > maxBytes || TEXT_ENCODER.encode(text).length > maxBytes) {
+    throw new Error("JSON exceeds byte limit");
+  }
+  const value: unknown = JSON.parse(text);
+  const stack: Array<{ keys?: Set<string>; expectsKey: boolean }> = [];
+  // JSON.parse already proved token syntax, escapes and matching delimiters.
+  for (const match of text.matchAll(/"(?:\\[\s\S]|[^"\\])*"|[{}\[\],:]|[^\s{}\[\],:]+/gu)) {
+    const token = match[0];
+    if (token === "{" || token === "[") {
+      if (stack.length >= 32) throw new Error("JSON exceeds nesting limit of 32");
+      stack.push({ ...(token === "{" ? { keys: new Set<string>() } : {}), expectsKey: token === "{" });
+    } else if (token === "}" || token === "]") {
+      stack.pop();
+    } else {
+      const current = stack.at(-1);
+      if (token === "," && current?.keys) current.expectsKey = true;
+      else if (token.startsWith('"') && current?.keys && current.expectsKey) {
+        const name = JSON.parse(token) as string;
+        if (current.keys.has(name)) throw new Error("JSON contains duplicate object member");
+        current.keys.add(name);
+        current.expectsKey = false;
+      }
+    }
+  }
+  return value;
+}

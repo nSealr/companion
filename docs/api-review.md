@@ -4,7 +4,7 @@ This review records the current pre-alpha public package surface. It is a
 release gate for npm publication, not a compatibility guarantee. Breaking
 changes remain allowed before the first public package release.
 
-API surface digest: `sha256:450cc599c998cb271044362118fe95bc7fab713fb98eac9a58c703cfcc718430`
+API surface digest: `sha256:eac6f4c4329f95e03e9598ec8b480940c25d19d65bd39649ff61be71ede34149`
 
 Source: `docs/api.md`
 
@@ -16,9 +16,9 @@ Source: `docs/api.md`
   imports stay inside the package `src` boundary, `@nsealr/*` imports use
   reviewed public entrypoints/subpaths, and private apps or test-only packages
   stay out of production code.
-- Public packages must remain secretless. They must not generate, import,
-  persist, export, or custody production private keys, mnemonics, passphrases,
-  `nsec` values, or decrypted signing material.
+- User identity/signing secrets, mnemonics, passphrases and decrypted signing
+  material must remain outside Bridge custody. NIP-46 client transport secrets
+  have a separate bounded in-memory lifecycle; they do not authorize user signing.
 - `@nsealr/dev-signer` must remain private and test-only.
 - Companion APIs may prepare requests, validate payloads, verify responses,
   render untrusted review previews, and route to signers. Trusted review and
@@ -29,9 +29,10 @@ Source: `docs/api.md`
   verification, relay event envelopes, and metadata-only relay request/response
   steps, plus pending-session request gates that block signer dispatch with
   `connect_ack_pending` for
-  approved-but-unacknowledged session checkpoints. Relay sessions, NIP-44
-  encryption, `connect` acknowledgements, browser URL opening, persistent
-  grants, and browser extension packaging remain outside this reviewed surface.
+  approved-but-unacknowledged session checkpoints. The separate exported runtime
+  session manager and relay adapters perform NIP-44 client transport and direct
+  ack/user discovery under the S01 bounds below. Browser URL opening and device
+  approval are not implied by either surface.
 
 ## @nsealr/browser-provider
 
@@ -157,7 +158,7 @@ stricter approved-permission inputs, parses read-only policy files, and
 enforces permission checks. It also evaluates
 relay request and response steps only
 after plaintext has been
-supplied by a future NIP-44 layer: request steps return deterministic bridge
+supplied by a caller: request steps return deterministic bridge
 decisions, while response steps shape-check plaintext signed-event, public-key,
 ping, auth challenge, and error responses after signed relay-event envelopes
 are NIP-01 id checked and BIP-340 verified. Signed-event response results are
@@ -185,11 +186,42 @@ only and rejects secret material, NIP-44 key derivation, relay opening, connect
 acknowledgement, grant creation, signer dispatch, production secret storage,
 and session persistence. Session checkpoint creation validates the
 review/approval digest pair, client pubkey, relay list, expiry, and approved
-permission subset before returning the same secretless object. It deliberately
+permission subset before returning the same secretless object. This checkpoint API deliberately
 excludes relay sessions, NIP-44
 encryption/decryption, persistent grants, connect acknowledgement, browser
 storage, and signer I/O; connect approval artifacts explicitly preserve those
 false side-effect flags.
+
+
+S01 runtime and metadata contract (independent final candidate review is recorded
+under `docs/restart/S01/`, not asserted by this API inventory):
+
+- `Nip46SessionManager` pins the authenticated configured transport author and
+  resolves a separate curve-valid user key through `get_public_key` before
+  activation. Optional `expectedUserPubkey` constrains first resolution;
+  `userPubkey` exposes the active identity. Signed results bind that identity,
+  requested template, event ID and signature. The caller owns origin and account
+  selection; the remote signer owns user key custody and device approval.
+- Fresh per-manager request namespaces and monotonic counters prevent ID reuse.
+  Pending requests and unsettled publications each default to 32, capped at 256;
+  one unresolved subscription acquisition blocks further acquisition. Timeouts
+  default to 30 seconds, capped at 300 seconds. Close is terminal and clears the
+  owned transport-key copy. Failed connect retries retain the monotonic counter;
+  an unresolved adapter acquisition must settle before retry. Arbitrary adapter
+  promises cannot be forcibly cancelled by this interface.
+- `buildNip46RequestEvent` and `decryptNip46Event` implement signed NIP-44 client
+  transport. `NostrToolsRelay` opens relays via SimplePool; `InMemoryRelay` is the
+  deterministic test adapter. Metadata session storage does not restore the
+  runtime manager or persist its secret. These exports existed before S01 and
+  the regenerated API inventory now includes them accurately.
+- Response-step output is explicitly v1: `result_pubkey` and
+  `result_pubkey_bound_to_expected_user` replace transport/user equality.
+  Optional input `expected_user_pubkey` rejects a conflicting result. Metadata
+  alone does not establish an authenticated session. The CLI and shared fixture
+  consumers migrate together; there is no experimental v0 compatibility layer.
+- Raw NIP-46/serial JSON rejects duplicate keys, trailing data and depth above 32.
+  NIP-46 messages remain capped at 1,024 bytes; encrypted content at 2,048 bytes;
+  tag count/width/field limits are 16/8/64. These are nSealr profile limits.
 
 ## @nsealr/policy
 
@@ -218,7 +250,8 @@ signing-status, implementation-limit validation, and small browser-safe
 encoding helpers shared by QR and serial framing packages. Its limits are
 nSealr safety limits for constrained signers, not Nostr protocol limits. All
 access surfaces should validate through this package before contacting signer
-routes.
+routes. `parseStrictJson` adds bounded raw JSON syntax, duplicate-member and
+32-container depth validation before schema checks.
 
 ## @nsealr/qr
 
@@ -274,7 +307,11 @@ The transport package owns secretless host-side transport interfaces and
 adapters for JSON files, JSON-lines stdio, serial frames, and serial-line
 ports. It validates requests and responses and verifies successful `sign_event`
 responses before returning them. Production transport code must not depend on
-software signing helpers.
+software signing helpers. `SerialLineStreamPort` now bounds total retained bytes
+(default 1,024; maximum 1,048,576), buffered lines including a partial tail
+(default 64; maximum 4,096), and pending read/write counts (one each). It pauses
+queued input, honors output drain and discards data on terminal error/close.
+Owned listeners are removed after stream closure; normal EOF drains bounded data.
 
 ## Open Before npm Alpha
 

@@ -46,3 +46,136 @@ describe("S01 stream retained-state bounds", () => {
     await expect(port.writeLine("x")).rejects.toThrow(/clos/i);
   });
 });
+
+describe("S01 stream limits, errors and cleanup", () => {
+  it("bounds complete line count independently from byte count", async () => {
+    const input = new PassThrough(), output = new PassThrough();
+    const port = new SerialLineStreamPort({ input, output, maxBufferedBytes: 128, maxBufferedLines: 2 });
+    input.write("a\nb\nc");
+    await expect(port.readLine()).rejects.toThrow(/maxBufferedLines/);
+    expect((port as unknown as { buffer: string }).buffer).toBe("");
+    expect(input.destroyed).toBe(true);
+    expect(output.destroyed).toBe(true);
+  });
+
+  it("drains the exact line bound including the trailing partial line at EOF", async () => {
+    const input = new PassThrough(), output = new PassThrough();
+    const port = new SerialLineStreamPort({ input, output, maxBufferedBytes: 4, maxBufferedLines: 2 });
+    input.end("a\nb");
+    try {
+      expect(await port.readLine()).toBe("a\n");
+      expect(await port.readLine()).toBe("b");
+      expect(await port.readLine()).toBeNull();
+    } finally { port.close(); }
+  });
+
+  it("counts UTF-8 bytes and CRLF delimiters at the exact boundary", async () => {
+    const input = new PassThrough(), output = new PassThrough();
+    const port = new SerialLineStreamPort({ input, output, maxBufferedBytes: 4 });
+    try {
+      const bytes = Buffer.from("€\n");
+      input.write(bytes.subarray(0, 1));
+      input.write(bytes.subarray(1));
+      expect(await port.readLine()).toBe("€\n");
+      input.write("ab\r\n");
+      expect(await port.readLine()).toBe("ab\r\n");
+      input.write("€\r\n");
+      await expect(port.readLine()).rejects.toThrow(/maxBufferedBytes/);
+    } finally { port.close(); }
+  });
+
+  it("honors input backpressure for repeated short writes", async () => {
+    const input = new PassThrough({ highWaterMark: 4 }), output = new PassThrough();
+    const port = new SerialLineStreamPort({ input, output, maxBufferedBytes: 4 });
+    let accepted = 0;
+    while (accepted < 10000) {
+      ++accepted;
+      if (!input.write("x\n")) break;
+    }
+    try {
+      expect(accepted).toBeLessThan(10);
+      expect(Buffer.byteLength((port as unknown as { buffer: string }).buffer)).toBeLessThanOrEqual(4);
+      for (let i = 0; i < accepted; ++i) expect(await port.readLine()).toBe("x\n");
+    } finally { port.close(); }
+  });
+
+  it("waits for output backpressure and caps pending writes", async () => {
+    let complete: (error?: Error | null) => void = () => undefined;
+    const output = new Writable({ highWaterMark: 1, write(_chunk, _encoding, callback) { complete = callback; } });
+    const port = new SerialLineStreamPort({ input: new PassThrough(), output });
+    try {
+      let settled = false;
+      const write = port.writeLine("x").then(() => { settled = true; });
+      await expect(port.writeLine("second")).rejects.toThrow(/pending/);
+      await Promise.resolve();
+      expect(settled).toBe(false);
+      complete();
+      await write;
+      expect(settled).toBe(true);
+      expect(output.listenerCount("drain")).toBe(0);
+    } finally { port.close(); }
+  });
+
+  it("discards buffered data and permanently preserves the first error", async () => {
+    const input = new PassThrough(), output = new PassThrough();
+    const observer = () => undefined;
+    input.on("data", observer);
+    const port = new SerialLineStreamPort({ input, output });
+    input.write("stale\n");
+    const failure = new Error("device fault");
+    input.emit("error", failure);
+    input.emit("data", "x\n".repeat(10000));
+    port.close();
+    await expect(port.readLine()).rejects.toBe(failure);
+    await expect(port.writeLine("x")).rejects.toBe(failure);
+    expect((port as unknown as { buffer: string }).buffer).toBe("");
+    await new Promise(resolve => setImmediate(resolve));
+    expect(input.listenerCount("data")).toBe(1);
+    expect(input.listenerCount("error")).toBe(0);
+    expect(input.listenerCount("close")).toBe(0);
+    expect(output.listenerCount("error")).toBe(0);
+    expect(output.listenerCount("close")).toBe(0);
+    input.off("data", observer);
+  });
+
+  it("handles premature input and output close without hanging a read", async () => {
+    for (const side of ["input", "output"] as const) {
+      const input = new PassThrough(), output = new PassThrough();
+      const port = new SerialLineStreamPort({ input, output });
+      const check = expect(port.readLine()).rejects.toThrow(/closed/);
+      ({ input, output })[side].destroy();
+      await check;
+      expect(input.destroyed && output.destroyed).toBe(true);
+    }
+  });
+
+  it("settles callback failures, removes listeners and supports shared duplex", async () => {
+    const error = new Error("output fault");
+    const output = new Writable({ write(_chunk, _encoding, callback) { callback(error); } });
+    const port = new SerialLineStreamPort({ input: new PassThrough(), output });
+    await expect(port.writeLine("x")).rejects.toBe(error);
+    await new Promise(resolve => setImmediate(resolve));
+    expect(output.listenerCount("error")).toBe(0);
+    const duplex = new PassThrough();
+    const inheritedEvents = duplex.eventNames();
+    const shared = new SerialLineStreamPort({ input: duplex, output: duplex });
+    const check = expect(shared.readLine()).rejects.toThrow(/clos/);
+    shared.close();
+    shared.close();
+    await check;
+    await new Promise(resolve => setImmediate(resolve));
+    expect(duplex.eventNames()).toEqual(inheritedEvents);
+  });
+
+  it("rejects invalid resource settings and over-limit writes before buffering", async () => {
+    for (const maxBufferedBytes of [0, -1, NaN, Infinity, 1.5, 1048577]) {
+      expect(() => new SerialLineStreamPort({ input: new PassThrough(), output: new PassThrough(), maxBufferedBytes })).toThrow();
+    }
+    for (const maxBufferedLines of [0, 4097, 1.5]) {
+      expect(() => new SerialLineStreamPort({ input: new PassThrough(), output: new PassThrough(), maxBufferedLines })).toThrow();
+    }
+    const port = new SerialLineStreamPort({ input: new PassThrough(), output: new PassThrough() });
+    await expect(port.writeLine("x".repeat(1024))).rejects.toThrow(/max_serial_frame_bytes/);
+    port.close();
+  });
+});

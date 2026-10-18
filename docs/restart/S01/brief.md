@@ -120,6 +120,14 @@ outside this bounded fix.
 - Manager request timeout defaults to 30,000 ms; configured timeouts must be
   finite safe integers in 1..300,000 ms. A blocked publish does not defer this
   deadline or close cancellation. Pending count defaults to 32, maximum 256.
+  Unsettled adapter publications have a separate count with the same cap, even
+  after logical timeout; only settlement reclaims that count. Publication and
+  response must both complete before request success, bounded by the request
+  deadline. At most one subscription acquisition can be unresolved; after its
+  timeout, retry fails immediately until that acquisition settles, and a late
+  handle is closed. This refinement was accepted by reviewer `/root` on
+  2026-10-18 after an adversarial retained-callback analysis. It does not promise
+  cancellation of arbitrary caller adapter promises.
   IDs fit the existing 128-character ID limit. No replay-history set grows with
   completed requests. Existing `randomId` test customization cannot control the
   mandatory fresh namespace; any retained suffix is validated and bounded.
@@ -155,6 +163,11 @@ Update the Docker relay harness's signer to answer `get_public_key` correctly.
 The metadata helper's v1 shape is an explicit experimental API break. Generated
 API docs and their reviewed digest must be regenerated, not bypassed. Any
 additional required source scope is reported before expansion.
+
+Scope extension accepted by reviewer `/root` on 2026-10-18: migrate the metadata
+v1 dispatch in `apps/cli/src/index.ts` and the fixture type/assertions in
+`packages/fixtures/src/{fixtures.ts,fixtures.test.ts}` atomically. No v0
+compatibility layer is required.
 
 The sibling specs repository contains historical v0 fixtures and is outside this
 author's write scope. If integration selects those stale fixtures, report the

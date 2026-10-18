@@ -609,7 +609,8 @@ single-repository CI. Cross-repository drift remains guarded by
   challenge, and error response messages, rejects arbitrary result/error pairs
   outside `auth_url`, rejects auth URLs with credentials, fragments, or
   non-http(s) schemes, rejects unsafe switch-relays relay lists, and rejects
-  public-key or signed-event results whose pubkey is not the relay event sender.
+  public-key or signed-event results that conflict with an explicitly expected
+  user key. Response-step v1 preserves distinct transport and user identities.
   Signed relay-event envelopes and signed-event response results are NIP-01 id
   checked and BIP-340 verified. Neither opens relays, decrypts NIP-44 content,
   acknowledges `connect`, creates grants, dispatches signers, or persists
@@ -782,8 +783,8 @@ single-repository CI. Cross-repository drift remains guarded by
   for every publishable package are now executed from CI, and the public API
   review is digest-bound to `docs/api.md`. The remaining npm-facing gate is
   trusted-publishing/provenance activation.
-- Full NIP-46 relay-session tests with local relay fixtures after NIP-44
-  session lifecycle and reviewed `connect` acknowledgement are specified.
+- Named external NIP-46 client/version interoperability and device approval
+  workflows. The in-repository relay harness does not establish those claims.
 - Large QR payload strategy tests once chunking or compression is designed.
 - Hardware serial smoke tests before adding WebUSB, HID, CDC, or persistent
   local transport session adapters.
@@ -791,3 +792,31 @@ single-repository CI. Cross-repository drift remains guarded by
 ## Rule
 
 Production behavior changes require test-driven development.
+
+
+## S01 boundary regressions
+
+`packages/nip46/src/session-security.test.ts` uses public fixture scalars and
+nostr-tools as an independent signing/public-key oracle. It reproduces the
+baseline manager's changed-user and conditional foreign-author acceptance;
+its default SimplePool control replaces only WebSocket I/O and confirms foreign
+author filtering. Identity discovery, curve points, signed content, request
+correlation/replay, retry, cancellation and bounded unsettled operations are
+covered independently of relay subscription filters.
+
+`packages/transport/src/stream-security.test.ts` reproduces exactly 20,000 queued
+bytes from 10,000 short lines under a four-byte limit. It tests aggregate bytes,
+line count, UTF-8 boundaries, pending reads/writes, backpressure, EOF, errors and
+shared-duplex cleanup. Protocol/framing tests reject duplicate, escaped duplicate,
+trailing and overly nested JSON without changing existing schema limits.
+
+Run targeted checks after `pnpm build`:
+
+```sh
+pnpm exec vitest run --maxWorkers=4 packages/nip46 packages/transport packages/protocol packages/framing
+```
+
+`make ci` includes all browser/Node consumers and package gates. The separately
+gated Docker harness uses `NSEALR_LIVE_E2E=1`; its results, image digest and all
+baseline/failure evidence are recorded under `docs/restart/S01/`. This is an
+in-repository signer harness, not third-party client or physical-device proof.

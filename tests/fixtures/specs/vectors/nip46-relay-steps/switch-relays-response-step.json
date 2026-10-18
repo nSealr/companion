@@ -1,6 +1,6 @@
 {
   "name": "switch-relays-response-step",
-  "format": "nsealr-nip46-relay-response-step-v0",
+  "format": "nsealr-nip46-relay-response-step-v1",
   "direction": "remote_signer_to_client",
   "event": {
     "id": "fb28d105e99a675fad0822b246be6840ed480d77a4dac5ec67f3efbb3acb6a8a",
@@ -21,7 +21,7 @@
     "result": "[\"wss://relay3.example.com/\",\"wss://relay4.example.com/path\"]"
   },
   "expected_step": {
-    "format": "nsealr-nip46-relay-response-step-v0",
+    "format": "nsealr-nip46-relay-response-step-v1",
     "envelope": {
       "format": "nsealr-nip46-relay-event-envelope-v0",
       "direction": "remote_signer_to_client",
@@ -49,7 +49,6 @@
     "signed_event_shape_checked": false,
     "signed_event_id_verified": false,
     "signed_event_signature_verified": false,
-    "result_pubkey_bound_to_sender": false,
     "decrypts_content": false,
     "opens_relay": false,
     "creates_grants": false,
@@ -57,7 +56,8 @@
     "dispatches_signer": false,
     "relay_event_signature_verified": true,
     "stores_production_secrets": false,
-    "persists_session_state": false
+    "persists_session_state": false,
+    "result_pubkey_bound_to_expected_user": false
   },
   "scope": "NIP-46 relay response step evaluation for an already decrypted switch_relays result with a replacement relay list. It verifies the relay event signature, validates, and normalizes relay URL metadata only; it does not open relays, switch transports, decrypt NIP-44 content, acknowledge connect, activate a session, create grants, dispatch a signer, or persist session state."
 }

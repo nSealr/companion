@@ -199,7 +199,7 @@ describe("fixture loading", () => {
     const authStep = fixtures.nip46RelaySteps.find((vector) => vector.name === "auth-challenge-response-step");
     expect(requestStep?.format).toBe("nsealr-nip46-relay-request-step-v0");
     expect(JSON.stringify(requestStep?.expected_step)).toContain("persists_session_state");
-    expect(responseStep?.format).toBe("nsealr-nip46-relay-response-step-v0");
+    expect(responseStep?.format).toBe("nsealr-nip46-relay-response-step-v1");
     expect(JSON.stringify(responseStep?.expected_step)).toContain("relay_event_signature_verified");
     const authExpectedStep = authStep?.expected_step as { result_type?: unknown; auth_url?: unknown } | undefined;
     expect(authExpectedStep?.result_type).toBe("auth_challenge");

@@ -54,3 +54,21 @@ assert.equal((response as { ok?: boolean }).ok, false);
 Production transport code must not depend on software signing helpers and must
 not store production signing material. Test-only signing transport lives in
 private `@nsealr/dev-signer`.
+
+
+`SerialLineStreamPort` owns its input/output streams and closes both on terminal
+error or explicit close (one shared duplex is supported). `maxBufferedBytes`
+limits the total queued decoded UTF-8 data, including delimiters and partial
+lines, to 1,024 bytes by default (range 1..1,048,576). `maxBufferedLines` limits
+complete lines plus a nonempty tail to 64 (range 1..4,096). An oversized delivery
+fails before it is retained. The port pauses while complete lines await reading
+and resumes when they drain; upstream stream/driver queues have their own bounds
+and producers must honor backpressure.
+
+Only one read and one write may be pending. Output lines including newline are
+limited to 1,024 UTF-8 bytes; writes wait for callback and, when required, drain.
+The first stream or overflow error clears retained data, cancels pending I/O and
+remains the error for future operations. Close is idempotent and cancels with a
+closed error. Owned listeners are removed after stream closure. Normal EOF drains
+bounded buffered lines and any trailing partial line, then returns null. The
+one-shot exchange helper closes its port on success, timeout and error.

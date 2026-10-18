@@ -1,6 +1,6 @@
 {
   "name": "connect-ack-response-step",
-  "format": "nsealr-nip46-relay-response-step-v0",
+  "format": "nsealr-nip46-relay-response-step-v1",
   "direction": "remote_signer_to_client",
   "event": {
     "id": "5b49f326b62609219e3106d02990684c9ff855a5a0f2051afcf7d907c40d66ea",
@@ -21,7 +21,7 @@
     "result": "ack"
   },
   "expected_step": {
-    "format": "nsealr-nip46-relay-response-step-v0",
+    "format": "nsealr-nip46-relay-response-step-v1",
     "envelope": {
       "format": "nsealr-nip46-relay-event-envelope-v0",
       "direction": "remote_signer_to_client",
@@ -45,7 +45,6 @@
     "signed_event_shape_checked": false,
     "signed_event_id_verified": false,
     "signed_event_signature_verified": false,
-    "result_pubkey_bound_to_sender": false,
     "decrypts_content": false,
     "opens_relay": false,
     "creates_grants": false,
@@ -53,7 +52,8 @@
     "dispatches_signer": false,
     "relay_event_signature_verified": true,
     "stores_production_secrets": false,
-    "persists_session_state": false
+    "persists_session_state": false,
+    "result_pubkey_bound_to_expected_user": false
   },
   "scope": "NIP-46 relay response step evaluation for an already decrypted connect acknowledgement result. It validates the plaintext response shape and verifies the relay event signature only; it does not open relays, decrypt NIP-44 content, acknowledge connect, activate a session, create grants, dispatch a signer, or persist session state."
 }

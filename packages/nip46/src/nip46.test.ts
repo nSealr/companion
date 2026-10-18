@@ -327,7 +327,7 @@ describe("NIP-46 bridge payloads", () => {
       "switch-relays-response-step"
     ]);
     for (const vector of fixtures.nip46RelaySteps) {
-      const actual = vector.format === "nsealr-nip46-relay-response-step-v0"
+      const actual = vector.format === "nsealr-nip46-relay-response-step-v1"
         ? evaluateNip46RelayResponseStep(vector)
         : evaluateNip46RelayRequestStep(vector);
       expect(actual).toEqual(vector.expected_step);
@@ -372,7 +372,7 @@ describe("NIP-46 bridge payloads", () => {
         result: "ack"
       },
       signed_event_shape_checked: false,
-      result_pubkey_bound_to_sender: false,
+      result_pubkey_bound_to_expected_user: false,
       acknowledges_connect: false,
       opens_relay: false,
       creates_grants: false,
@@ -631,7 +631,7 @@ describe("NIP-46 bridge payloads", () => {
             typeof relayStep === "object" &&
             relayStep !== null &&
             "format" in relayStep &&
-            relayStep.format === "nsealr-nip46-relay-response-step-v0"
+            relayStep.format === "nsealr-nip46-relay-response-step-v1"
           ) {
             evaluateNip46RelayResponseStep(relayStep);
             return;

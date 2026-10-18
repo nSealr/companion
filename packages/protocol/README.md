@@ -34,3 +34,10 @@ package does not perform signing and must be used before any companion access
 surface contacts a signer route. Its encoding helpers are low-level transport
 primitives; callers should prefer `@nsealr/qr` or `@nsealr/framing` for complete
 envelope formats.
+
+
+`parseStrictJson(text, maxBytes)` checks raw UTF-8 byte length, JSON syntax,
+duplicate object members (including escaped aliases), trailing data and a maximum
+nesting depth of 32 containers. `maxBytes` is an integer in 1..1,048,576. It returns
+JSON values without performing protocol schema validation; callers must still
+validate their request or response shape.

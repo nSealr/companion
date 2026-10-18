@@ -22,112 +22,160 @@ export class SerialLineStreamPort implements SerialLinePort {
   private readonly input: Readable;
   private readonly output: Writable;
   private buffer = "";
+  private bufferedBytes = 0;
   private ended = false;
   private inputError: Error | null = null;
-  private readonly waiters: Array<() => void> = [];
+  private reading = false;
+  private wakeReader: (() => void) | undefined;
+  private cancelWrite: ((error: Error) => void) | undefined;
   private readonly maxBufferedBytes: number;
+  private readonly maxBufferedLines: number;
+  private readonly encoding: BufferEncoding;
 
-  constructor(options: { input: Readable; output: Writable; encoding?: BufferEncoding; maxBufferedBytes?: number }) {
-    const encoding = options.encoding ?? "utf8";
+  constructor(options: { input: Readable; output: Writable; encoding?: BufferEncoding; maxBufferedBytes?: number; maxBufferedLines?: number }) {
+    this.maxBufferedBytes = this.limit(options.maxBufferedBytes ?? NSEALR_V0_LIMITS.max_serial_frame_bytes, 1_048_576, "maxBufferedBytes");
+    this.maxBufferedLines = this.limit(options.maxBufferedLines ?? 64, 4096, "maxBufferedLines");
+    this.encoding = options.encoding ?? "utf8";
     this.input = options.input;
     this.output = options.output;
-    this.maxBufferedBytes = options.maxBufferedBytes ?? NSEALR_V0_LIMITS.max_serial_frame_bytes;
-    this.input.setEncoding(encoding);
-    this.input.on("data", (chunk: string | Buffer) => {
-      this.buffer += typeof chunk === "string" ? chunk : chunk.toString(encoding);
-      if (!this.inputError && this.hasOversizedBufferedLine()) {
-        this.inputError = new Error("serial line port buffer exceeded max_serial_frame_bytes");
-      }
-      this.notifyWaiters();
-    });
-    this.input.on("end", () => {
-      this.ended = true;
-      this.notifyWaiters();
-    });
-    this.input.on("error", (error) => {
-      this.inputError = error instanceof Error ? error : new Error(String(error));
-      this.notifyWaiters();
-    });
+    this.input.setEncoding(this.encoding);
+    this.input.on("data", this.onData);
+    this.input.on("end", this.onEnd);
+    this.input.on("error", this.onError);
+    this.input.on("close", this.onInputClose);
+    if (this.output !== (this.input as unknown)) {
+      this.output.on("error", this.onError);
+      this.output.on("close", this.onOutputClose);
+    }
+    if (this.input.destroyed || this.output.destroyed) this.fail(new Error("serial line port stream already closed"));
   }
 
-  async writeLine(line: string): Promise<void> {
+  private limit(value: number, max: number, name: string): number {
+    if (!Number.isSafeInteger(value) || value < 1 || value > max) throw new Error(`${name} must be an integer in 1..${max}`);
+    return value;
+  }
+
+  private readonly onData = (chunk: string | Buffer): void => {
+    if (this.inputError || this.ended) return;
+    const text = typeof chunk === "string" ? chunk : chunk.toString(this.encoding);
+    // Check before concatenating so even one oversized delivery is not retained.
+    if (text.length > this.maxBufferedBytes || this.bufferedBytes + utf8ByteLength(text) > this.maxBufferedBytes) {
+      this.fail(new Error("serial line port buffer exceeded maxBufferedBytes"));
+      return;
+    }
+    let lines = 0;
+    for (const char of this.buffer) if (char === "\n") ++lines;
+    for (const char of text) if (char === "\n") ++lines;
+    const last = text.length ? text.at(-1) : this.buffer.at(-1);
+    if (last !== undefined && last !== "\n") ++lines;
+    if (lines > this.maxBufferedLines) {
+      this.fail(new Error("serial line port buffer exceeded maxBufferedLines"));
+      return;
+    }
+    this.buffer += text;
+    this.bufferedBytes += utf8ByteLength(text);
+    if (this.buffer.includes("\n")) this.input.pause();
+    this.notifyReader();
+  };
+  private readonly onEnd = (): void => { this.ended = true; this.notifyReader(); };
+  private readonly onError = (error: Error): void => this.fail(error instanceof Error ? error : new Error(String(error)));
+  private readonly onInputClose = (): void => {
+    if ((!this.ended || this.cancelWrite) && !this.inputError) this.fail(new Error("serial line port input closed prematurely"));
+    this.detachInput();
+  };
+  private readonly onOutputClose = (): void => {
+    if (!this.inputError) this.fail(new Error("serial line port output closed"));
+    this.detachOutput();
+  };
+
+  writeLine(line: string): Promise<void> {
+    if (this.inputError) return Promise.reject(this.inputError);
+    if (this.cancelWrite) return Promise.reject(new Error("serial line port write already pending"));
     const outputLine = line.endsWith("\n") ? line : `${line}\n`;
-    await new Promise<void>((resolve, reject) => {
-      this.output.write(outputLine, "utf8", (error?: Error | null) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
-      });
+    if (outputLine.length > NSEALR_V0_LIMITS.max_serial_frame_bytes || utf8ByteLength(outputLine) > NSEALR_V0_LIMITS.max_serial_frame_bytes) {
+      return Promise.reject(new Error("serial line port output exceeded max_serial_frame_bytes"));
+    }
+    return new Promise<void>((resolve, reject) => {
+      let settled = false, callbackDone = false, drained = false, returned = false;
+      const finish = (error?: Error): void => {
+        if (settled || (!error && !(returned && callbackDone && drained))) return;
+        settled = true;
+        this.cancelWrite = undefined;
+        this.output.off("drain", onDrain);
+        if (error) reject(error); else resolve();
+      };
+      const onDrain = (): void => { drained = true; finish(); };
+      this.cancelWrite = error => finish(error);
+      this.output.on("drain", onDrain);
+      try {
+        const accepted = this.output.write(outputLine, "utf8", error => {
+          if (error) this.fail(error);
+          else { callbackDone = true; finish(); }
+        });
+        drained ||= accepted;
+        returned = true;
+        finish();
+      } catch (error) { this.fail(error instanceof Error ? error : new Error(String(error))); }
     });
   }
 
   async readLine(): Promise<string | null> {
-    while (true) {
-      if (this.inputError) {
-        throw this.inputError;
-      }
-      const line = this.shiftLine();
-      if (line !== null) {
-        return line;
-      }
-      if (this.ended) {
-        if (this.buffer.length === 0) {
-          return null;
+    if (this.inputError) throw this.inputError;
+    if (this.reading) throw new Error("serial line port read already pending");
+    this.reading = true;
+    try {
+      while (true) {
+        if (this.inputError) throw this.inputError;
+        const newline = this.buffer.indexOf("\n");
+        if (newline !== -1 || (this.ended && this.buffer.length)) {
+          const length = newline === -1 ? this.buffer.length : newline + 1;
+          const line = this.buffer.slice(0, length);
+          this.buffer = this.buffer.slice(length);
+          this.bufferedBytes -= utf8ByteLength(line);
+          if (!this.ended && !this.buffer.includes("\n")) this.input.resume();
+          return line;
         }
-        const trailingLine = this.buffer;
-        this.buffer = "";
-        return trailingLine;
+        if (this.ended) return null;
+        await new Promise<void>(resolve => { this.wakeReader = resolve; });
       }
-      await this.waitForInput();
-    }
+    } finally { this.reading = false; }
   }
 
-  close(): void {
+  close(): void { this.fail(new Error("serial line port closed")); }
+
+  private fail(error: Error): void {
+    if (this.inputError) return;
+    this.inputError = error;
+    this.buffer = "";
+    this.bufferedBytes = 0;
     this.ended = true;
+    this.input.pause();
+    this.input.off("data", this.onData);
+    this.input.off("end", this.onEnd);
+    this.cancelWrite?.(error);
+    this.notifyReader();
+    // Keep error handlers until close so destruction cannot cause an unhandled
+    // stream error; remove only this port's listeners after closure.
     this.input.destroy();
-    this.output.destroy();
-    this.notifyWaiters();
+    if (this.output !== (this.input as unknown)) this.output.destroy();
+    if (this.input.closed) this.detachInput();
+    if (this.output.closed) this.detachOutput();
   }
-
-  private shiftLine(): string | null {
-    const newlineIndex = this.buffer.indexOf("\n");
-    if (newlineIndex === -1) {
-      return null;
-    }
-    const line = this.buffer.slice(0, newlineIndex + 1);
-    this.buffer = this.buffer.slice(newlineIndex + 1);
-    return line;
+  private detachInput(): void {
+    this.input.off("data", this.onData);
+    this.input.off("end", this.onEnd);
+    this.input.off("error", this.onError);
+    this.input.off("close", this.onInputClose);
   }
-
-  private hasOversizedBufferedLine(): boolean {
-    let lineStart = 0;
-    while (true) {
-      const newlineIndex = this.buffer.indexOf("\n", lineStart);
-      if (newlineIndex === -1) {
-        break;
-      }
-      const completeLine = this.buffer.slice(lineStart, newlineIndex + 1);
-      if (utf8ByteLength(completeLine) > this.maxBufferedBytes) {
-        return true;
-      }
-      lineStart = newlineIndex + 1;
-    }
-    return utf8ByteLength(this.buffer.slice(lineStart)) > this.maxBufferedBytes;
+  private detachOutput(): void {
+    if (this.output === (this.input as unknown)) return;
+    this.output.off("error", this.onError);
+    this.output.off("close", this.onOutputClose);
   }
-
-  private async waitForInput(): Promise<void> {
-    await new Promise<void>((resolve) => {
-      this.waiters.push(resolve);
-    });
-  }
-
-  private notifyWaiters(): void {
-    const waiters = this.waiters.splice(0);
-    for (const waiter of waiters) {
-      waiter();
-    }
+  private notifyReader(): void {
+    const wake = this.wakeReader;
+    this.wakeReader = undefined;
+    wake?.();
   }
 }
 

@@ -40,3 +40,7 @@ assert.deepEqual(decodeSerialFrame(frame), {
 
 This package only frames bytes for transport. It does not open devices, select
 routes, store keys, or sign events.
+
+Decoded serial payload JSON rejects duplicate object members, escaped aliases,
+trailing data and more than 32 nested containers. The existing 1,024-byte serial
+frame limit remains; checksum validation does not replace payload validation.

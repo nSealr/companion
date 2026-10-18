@@ -5,6 +5,7 @@ import {
   decodeBase64Url,
   encodeBase64Url,
   jsonToUtf8Bytes,
+  parseStrictJson,
   NSEALR_V0_LIMITS,
   utf8ByteLength
 } from "@nsealr/protocol";
@@ -86,7 +87,7 @@ export function decodeSerialFrame(line: string): SerialFrame {
   try {
     return {
       type,
-      payload: JSON.parse(json)
+      payload: parseStrictJson(json, NSEALR_V0_LIMITS.max_serial_frame_bytes)
     };
   } catch (error) {
     throw new Error("serial frame payload is not valid JSON", { cause: error });

@@ -1,7 +1,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import { computeEventId, verifySchnorrSignature } from "@nsealr/core";
-import { compactJsonUtf8ByteLength, NSEALR_V0_LIMITS, validateRequest, validateResponse } from "@nsealr/protocol";
+import { compactJsonUtf8ByteLength, NSEALR_V0_LIMITS, parseStrictJson, validateRequest, validateResponse } from "@nsealr/protocol";
 
 export type Nip46RequestMessage = {
   id: string;
@@ -118,7 +118,7 @@ export type Nip46RelayResponseResultType =
   | "error";
 
 export type Nip46RelayResponseStep = {
-  format: "nsealr-nip46-relay-response-step-v0";
+  format: "nsealr-nip46-relay-response-step-v1";
   envelope: Nip46RelayEventEnvelope;
   message_id: string;
   response_message: Nip46ResponseMessage;
@@ -128,7 +128,8 @@ export type Nip46RelayResponseStep = {
   signed_event_shape_checked: boolean;
   signed_event_id_verified: boolean;
   signed_event_signature_verified: boolean;
-  result_pubkey_bound_to_sender: boolean;
+  result_pubkey?: string;
+  result_pubkey_bound_to_expected_user: boolean;
   decrypts_content: false;
   opens_relay: false;
   creates_grants: false;
@@ -572,7 +573,7 @@ export function requireResponseMessage(value: unknown): Nip46ResponseMessage {
 
 function parseJsonParam(param: string, label: string): unknown {
   try {
-    return JSON.parse(param);
+    return parseStrictJson(param, NSEALR_V0_LIMITS.max_nip46_decrypted_message_json_bytes);
   } catch (error) {
     throw new Error(`NIP-46 ${label} param must be valid JSON`);
   }
@@ -869,7 +870,7 @@ function parseNip46RelayResponseStepParts(value: unknown): {
   };
 }
 
-function relayResponseResultType(message: Nip46ResponseMessage, senderPubkey: string): {
+function relayResponseResultType(message: Nip46ResponseMessage): {
   resultType: Nip46RelayResponseResultType;
   signedEventShapeChecked: boolean;
   signedEventIdVerified?: boolean;
@@ -897,7 +898,7 @@ function relayResponseResultType(message: Nip46ResponseMessage, senderPubkey: st
   }
   let event: unknown;
   try {
-    event = JSON.parse(result);
+    event = parseStrictJson(result, NSEALR_V0_LIMITS.max_nip46_decrypted_message_json_bytes);
   } catch (error) {
     throw new Error("NIP-46 response message result is not a supported v0 response shape");
   }
@@ -926,9 +927,6 @@ function relayResponseResultType(message: Nip46ResponseMessage, senderPubkey: st
   }
   if (!isRecord(event) || typeof event.pubkey !== "string" || !X_ONLY_PUBKEY.test(event.pubkey)) {
     throw new Error("NIP-46 signed-event response pubkey is invalid");
-  }
-  if (event.pubkey !== senderPubkey) {
-    throw new Error("NIP-46 signed-event response pubkey does not match relay event sender");
   }
   const computedId = computeEventId({
     pubkey: event.pubkey,
@@ -962,17 +960,15 @@ export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayRespon
     resultPubkey,
     authUrl,
     relayUrls
-  } = relayResponseResultType(responseMessage, envelope.sender_pubkey);
-  const resultPubkeyBoundToSender = resultPubkey !== undefined && resultPubkey === envelope.sender_pubkey;
-  if (resultPubkey !== undefined && !resultPubkeyBoundToSender) {
-    throw new Error(
-      resultType === "public_key_result"
-        ? "NIP-46 public-key response does not match relay event sender"
-        : "NIP-46 signed-event response pubkey does not match relay event sender"
-    );
+  } = relayResponseResultType(responseMessage);
+  const expectedUser = isRecord(value) && value.expected_user_pubkey !== undefined
+    ? requireXOnlyPubkey(value.expected_user_pubkey, "expected user pubkey") : undefined;
+  const resultPubkeyBoundToExpectedUser = resultPubkey !== undefined && expectedUser !== undefined && resultPubkey === expectedUser;
+  if (resultPubkey !== undefined && expectedUser !== undefined && !resultPubkeyBoundToExpectedUser) {
+    throw new Error("NIP-46 result pubkey does not match expected user pubkey");
   }
   return {
-    format: "nsealr-nip46-relay-response-step-v0",
+    format: "nsealr-nip46-relay-response-step-v1",
     envelope,
     message_id: responseMessage.id,
     response_message: responseMessage,
@@ -982,7 +978,8 @@ export function evaluateNip46RelayResponseStep(value: unknown): Nip46RelayRespon
     signed_event_shape_checked: signedEventShapeChecked,
     signed_event_id_verified: signedEventIdVerified,
     signed_event_signature_verified: signedEventSignatureVerified,
-    result_pubkey_bound_to_sender: resultPubkeyBoundToSender,
+    ...(resultPubkey !== undefined && { result_pubkey: resultPubkey }),
+    result_pubkey_bound_to_expected_user: resultPubkeyBoundToExpectedUser,
     decrypts_content: false,
     opens_relay: false,
     creates_grants: false,

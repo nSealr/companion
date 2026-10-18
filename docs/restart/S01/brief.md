@@ -98,7 +98,7 @@ created manager and renewed caller selection, not a server response mutation.
 | S01-PARSE-01 | NIP-46 raw response JSON, nested signed-event JSON, stringified request params, and decoded serial-frame JSON reject duplicate object keys, including escaped aliases, trailing non-whitespace, invalid JSON and excessive nesting. Check raw UTF-8 size before parsing, preserve existing exact-field validators afterward. | Duplicate `id`, `result`, `pubkey` and nested member; escaped duplicate; valid whitespace/escaped strings; trailing object/token; depth boundary. Duplicate/trailing wire envelopes have no trustworthy correlation ID and are ignored until timeout; well-formed correlated shape errors reject promptly. |
 | S01-QUEUE-01 | `maxBufferedBytes` bounds all port-owned decoded UTF-8 bytes, including queued complete lines and the incomplete tail. No over-limit concatenation is retained. A separate `maxBufferedLines` bounds complete lines plus a nonempty partial tail. | Retain at most 4 bytes under the 10,000-short-line reproduction; over-limit delivery is terminal and retains zero bytes. Below/exact/above byte and line limits; UTF-8 multibyte and CRLF; partial lines and EOF. |
 | S01-QUEUE-02 | Pause input while complete buffered lines await reads; resume when those lines drain. One read and one write may be pending; further calls reject before queuing. Writes are capped and honor callback/error plus backpressure. | Producer sees pause/resume, flood cannot grow private queue, stalled read/write counts are bounded, write `false` waits for drain, failed write/closed output settles promptly. |
-| S01-QUEUE-03 | First I/O/overflow error is terminal: discard data, reject pending and future operations with that error, stop/destroy owned streams, and remove owned data/listener references after closure. Explicit close is idempotent and cancels pending I/O with a closed error. | Error after buffered data returns no stale line; repeated hostile data is not retained; shared duplex teardown; premature close; listener count and pending-operation cleanup. Normal EOF drains bounded buffered lines/tail then returns null. |
+| S01-QUEUE-03 | First I/O/overflow error is terminal: discard data, reject pending and future operations with that error, stop/destroy owned streams, and remove owned data/listener references after closure. Explicit close is idempotent and cancels pending I/O with a closed error. | Error after buffered data returns no stale line; repeated hostile data is not retained; shared duplex teardown; premature close; listener count and pending-operation cleanup. Synchronous/asynchronous destruction with/without close events; queued/delayed destruction errors; thrown/suppressed errors; constructor rollback. Normal EOF drains bounded buffered lines/tail then returns null. |
 
 No new NIP-46 methods or token onboarding flow are promised. The current manager
 supports an already selected remote signer that acknowledges connect directly;
@@ -225,3 +225,43 @@ equating transport and user keys contradicts NIP-46; pinning the first signed
 event accepts first-response substitution; clearing an unbounded replay set
 permits old IDs; per-line-only bounds do not bound retained queues; silently
 dropping overflow lines makes response correlation and diagnosis unreliable.
+
+## F01 destruction completion clarification
+
+Independent review `67804a5d1995504a69d2fe49618da8e263ec3d89` found that
+asynchronous `_destroy` completion with `emitClose: false` left both streams'
+port-owned error/close listeners attached in candidate `d385ddb0`. The retained
+regression also shows that `.closed === true` can precede Node's queued error
+event, so removing handlers immediately is unsafe even for synchronous callbacks.
+
+The port owns live Node `Readable`/`Writable` streams and temporarily wraps the
+documented `_destroy(error, callback)` implementation hook, once per distinct
+stream. The wrapper delegates with the original receiver/error, forwards only
+the first completion (including a thrown error), and restores the exact own
+property descriptor or inherited lookup only if the installed hook is still its
+own. One `setImmediate` after completion retains error handling through Node's
+queued destruction error before listener cleanup; there is no polling, private
+stream-state read, or undocumented `destroy` callback. Close events can perform
+cleanup earlier after Node's error delivery. Suppressed errors and absent close
+events still reach completion cleanup; public `errored` preserves a destruction
+error whose event was suppressed. Ordinary EOF behavior is unchanged.
+
+Already destroyed streams and hooks that cannot be replaced are rejected by the
+constructor. Failure rolls back earlier hook installation and leaves no port
+listeners. Ownership excludes callers replacing/freezing hooks during use; the
+conditional restore still avoids overwriting a later replacement. The observer
+requires no timers while destruction is pending and schedules at most one
+completion task per distinct stream. A custom hook that never completes can
+retain its observer until it does; port-owned buffers and pending reads/writes
+still clear/cancel immediately. This is a lifecycle dependency, not a claim that
+the port can force arbitrary stream implementations to finish destruction.
+
+The Node v24.22.0 [stream contract](https://raw.githubusercontent.com/nodejs/node/v24.22.0/doc/api/stream.md),
+[destruction implementation](https://raw.githubusercontent.com/nodejs/node/v24.22.0/lib/internal/streams/destroy.js)
+and [finished implementation](https://raw.githubusercontent.com/nodejs/node/v24.22.0/lib/internal/streams/end-of-stream.js)
+support this timing distinction. Parent review authorized this bounded wrapper
+design subject to renewed independent review of the exact candidate. Tests cover
+the four synchronous/asynchronous and emit/suppress-close combinations with
+separate and shared streams, queued/delayed errors, original receiver/error,
+duplicate callbacks, throw/error suppression, descriptor restoration, a later
+replacement, and readonly/nonextensible/already-destroying constructor rollback.

@@ -18,6 +18,39 @@ export type SerialLinePort = {
 
 export type SerialLinePortOpener = (path: string) => Promise<SerialLinePort> | SerialLinePort;
 
+// The port owns these streams. Observe the documented implementation hook because
+// emitClose:false permits destruction to finish without any public completion event.
+function observeDestruction(stream: Readable | Writable, completed: () => void): () => void {
+  const original = stream._destroy;
+  const descriptor = Object.getOwnPropertyDescriptor(stream, "_destroy");
+  const restore = (): void => {
+    if (stream._destroy !== observed) return;
+    if (descriptor) Object.defineProperty(stream, "_destroy", descriptor);
+    else Reflect.deleteProperty(stream, "_destroy");
+  };
+  function observed(this: Readable | Writable, error: Error | null, callback: (error?: Error | null) => void): void {
+    let settled = false;
+    const done = (failure?: Error | null): void => {
+      if (settled) return;
+      settled = true;
+      restore();
+      // Node queues a possible error event after this callback. One check-phase
+      // turn keeps our handler until that nextTick work has run, even in ESM.
+      try { callback(failure); } finally { setImmediate(completed); }
+    };
+    try { original.call(this, error, done); }
+    catch (failure) { done(failure instanceof Error ? failure : new Error(String(failure))); }
+  }
+  try {
+    Object.defineProperty(stream, "_destroy", descriptor && "value" in descriptor
+      ? { ...descriptor, value: observed }
+      : { value: observed, configurable: true, writable: true, enumerable: descriptor?.enumerable ?? false });
+  } catch (cause) {
+    throw new Error("serial line port requires replaceable stream destruction hooks", { cause });
+  }
+  return restore;
+}
+
 export class SerialLineStreamPort implements SerialLinePort {
   private readonly input: Readable;
   private readonly output: Writable;
@@ -28,6 +61,8 @@ export class SerialLineStreamPort implements SerialLinePort {
   private reading = false;
   private wakeReader: (() => void) | undefined;
   private cancelWrite: ((error: Error) => void) | undefined;
+  private restoreInputDestroy: (() => void) | undefined;
+  private restoreOutputDestroy: (() => void) | undefined;
   private readonly maxBufferedBytes: number;
   private readonly maxBufferedLines: number;
   private readonly encoding: BufferEncoding;
@@ -38,16 +73,24 @@ export class SerialLineStreamPort implements SerialLinePort {
     this.encoding = options.encoding ?? "utf8";
     this.input = options.input;
     this.output = options.output;
-    this.input.setEncoding(this.encoding);
-    this.input.on("data", this.onData);
-    this.input.on("end", this.onEnd);
-    this.input.on("error", this.onError);
-    this.input.on("close", this.onInputClose);
-    if (this.output !== (this.input as unknown)) {
-      this.output.on("error", this.onError);
-      this.output.on("close", this.onOutputClose);
+    if (this.input.destroyed || this.output.destroyed) throw new Error("serial line port stream already closed");
+    try {
+      this.restoreInputDestroy = observeDestruction(this.input, this.onInputClose);
+      if (this.output !== (this.input as unknown)) this.restoreOutputDestroy = observeDestruction(this.output, this.onOutputClose);
+      this.input.setEncoding(this.encoding);
+      this.input.on("data", this.onData);
+      this.input.on("end", this.onEnd);
+      this.input.on("error", this.onError);
+      this.input.on("close", this.onInputClose);
+      if (this.output !== (this.input as unknown)) {
+        this.output.on("error", this.onError);
+        this.output.on("close", this.onOutputClose);
+      }
+    } catch (error) {
+      this.detachInput();
+      this.detachOutput();
+      throw error;
     }
-    if (this.input.destroyed || this.output.destroyed) this.fail(new Error("serial line port stream already closed"));
   }
 
   private limit(value: number, max: number, name: string): number {
@@ -80,11 +123,11 @@ export class SerialLineStreamPort implements SerialLinePort {
   private readonly onEnd = (): void => { this.ended = true; this.notifyReader(); };
   private readonly onError = (error: Error): void => this.fail(error instanceof Error ? error : new Error(String(error)));
   private readonly onInputClose = (): void => {
-    if ((!this.ended || this.cancelWrite) && !this.inputError) this.fail(new Error("serial line port input closed prematurely"));
+    if ((!this.ended || this.cancelWrite) && !this.inputError) this.fail(this.input.errored ?? new Error("serial line port input closed prematurely"));
     this.detachInput();
   };
   private readonly onOutputClose = (): void => {
-    if (!this.inputError) this.fail(new Error("serial line port output closed"));
+    if (!this.inputError) this.fail(this.output.errored ?? new Error("serial line port output closed"));
     this.detachOutput();
   };
 
@@ -154,14 +197,14 @@ export class SerialLineStreamPort implements SerialLinePort {
     this.input.off("end", this.onEnd);
     this.cancelWrite?.(error);
     this.notifyReader();
-    // Keep error handlers until close so destruction cannot cause an unhandled
-    // stream error; remove only this port's listeners after closure.
+    // Destruction completion (or its close event) removes our remaining handlers.
+    // .closed alone is insufficient: Node may still have an error event queued.
     this.input.destroy();
     if (this.output !== (this.input as unknown)) this.output.destroy();
-    if (this.input.closed) this.detachInput();
-    if (this.output.closed) this.detachOutput();
   }
   private detachInput(): void {
+    this.restoreInputDestroy?.();
+    this.restoreInputDestroy = undefined;
     this.input.off("data", this.onData);
     this.input.off("end", this.onEnd);
     this.input.off("error", this.onError);
@@ -169,6 +212,8 @@ export class SerialLineStreamPort implements SerialLinePort {
   }
   private detachOutput(): void {
     if (this.output === (this.input as unknown)) return;
+    this.restoreOutputDestroy?.();
+    this.restoreOutputDestroy = undefined;
     this.output.off("error", this.onError);
     this.output.off("close", this.onOutputClose);
   }

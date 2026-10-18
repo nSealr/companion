@@ -72,3 +72,15 @@ remains the error for future operations. Close is idempotent and cancels with a
 closed error. Owned listeners are removed after stream closure. Normal EOF drains
 bounded buffered lines and any trailing partial line, then returns null. The
 one-shot exchange helper closes its port on success, timeout and error.
+
+Streams must be live Node `Readable`/`Writable` instances with replaceable
+`_destroy` hooks, exclusively owned by the port. The port temporarily wraps that
+documented implementation hook to observe asynchronous destruction even with
+`emitClose: false`. It delegates the original hook with its receiver and error,
+restores its original property descriptor, and keeps error handlers through
+Node's queued destruction errors before removing them. Shared duplex streams
+have one wrapper. Constructor rejection (including already destroyed streams or
+nonreplaceable hooks) restores any installed hooks and leaves no port listeners.
+Do not alter the streams' hooks while the port owns them. A custom hook that never
+finishes cannot release its destruction observer; pending port I/O still cancels
+immediately. There is no polling or attempt to force that callback to run.

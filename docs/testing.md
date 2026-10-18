@@ -807,7 +807,10 @@ covered independently of relay subscription filters.
 `packages/transport/src/stream-security.test.ts` reproduces exactly 20,000 queued
 bytes from 10,000 short lines under a four-byte limit. It tests aggregate bytes,
 line count, UTF-8 boundaries, pending reads/writes, backpressure, EOF, errors and
-shared-duplex cleanup. Protocol/framing tests reject duplicate, escaped duplicate,
+shared-duplex cleanup. F01 regressions cover synchronous/asynchronous destruction
+with/without close events, delayed and queued errors, callback identity and
+deduplication, thrown/suppressed errors, descriptor restoration and transactional
+constructor rejection. Protocol/framing tests reject duplicate, escaped duplicate,
 trailing and overly nested JSON without changing existing schema limits.
 
 Run targeted checks after `pnpm build`:

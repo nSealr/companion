@@ -72,6 +72,8 @@ remains the error for future operations. Close is idempotent and cancels with a
 closed error. Owned listeners are removed after stream closure. Normal EOF drains
 bounded buffered lines and any trailing partial line, then returns null. The
 one-shot exchange helper closes its port on success, timeout and error.
+A recorded destruction error remains terminal after EOF, even when its error
+event is suppressed: retained input is discarded and the output is destroyed.
 
 Streams must be live Node `Readable`/`Writable` instances with replaceable
 `_destroy` hooks, exclusively owned by the port. The port temporarily wraps that

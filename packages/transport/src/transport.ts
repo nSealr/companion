@@ -123,7 +123,10 @@ export class SerialLineStreamPort implements SerialLinePort {
   private readonly onEnd = (): void => { this.ended = true; this.notifyReader(); };
   private readonly onError = (error: Error): void => this.fail(error instanceof Error ? error : new Error(String(error)));
   private readonly onInputClose = (): void => {
-    if ((!this.ended || this.cancelWrite) && !this.inputError) this.fail(this.input.errored ?? new Error("serial line port input closed prematurely"));
+    if (!this.inputError) {
+      if (this.input.errored) this.fail(this.input.errored);
+      else if (!this.ended || this.cancelWrite) this.fail(new Error("serial line port input closed prematurely"));
+    }
     this.detachInput();
   };
   private readonly onOutputClose = (): void => {

@@ -100,6 +100,27 @@ describe("S01 stream limits, errors and cleanup", () => {
       expect(listeners(output)).toEqual(inheritedOutput);
       await expect(port.readLine()).rejects.toThrow(/closed/);
     });
+
+    it(`keeps errors handled after synchronous destruction callback: emitClose=${emitClose}`, async () => {
+      const error = new Error("synchronous destruction failure");
+      const options = { emitClose, destroy(_error: Error | null, callback: (error?: Error | null) => void) { callback(error); } };
+      const input = new PassThrough(options), output = new PassThrough(options);
+      const errors: Error[] = [];
+      const observer = (failure: Error) => { errors.push(failure); };
+      input.on("error", observer);
+      output.on("error", observer);
+      const inheritedInput = listeners(input), inheritedOutput = listeners(output);
+      const port = new SerialLineStreamPort({ input, output });
+      port.close();
+      // .closed already true does not mean Node's queued error event has fired.
+      const guarded = input.listenerCount("error") === 2 && output.listenerCount("error") === 2;
+      await tick();
+      await tick();
+      expect(guarded).toBe(true);
+      expect(errors).toEqual([error, error]);
+      expect(listeners(input)).toEqual(inheritedInput);
+      expect(listeners(output)).toEqual(inheritedOutput);
+    });
   }
 
   it("bounds complete line count independently from byte count", async () => {
